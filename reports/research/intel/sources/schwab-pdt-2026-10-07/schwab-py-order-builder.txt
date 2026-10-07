@@ -1,0 +1,664 @@
+URL: https://schwab-py.readthedocs.io/en/latest/order-builder.html
+Fetched-UTC: 2026-10-07T19:53:13Z
+HTTP: 200 text/html; charset=utf-8
+raw: (html raw removed; text extract kept)
+---
+ 
+ OrderBuilder Reference — schwab-py documentation 
+ schwab-py
+ Contents: 
+ Transitioning from TDAmeritrade and tda-api 
+ Getting Started 
+ Authentication and Client Creation 
+ HTTP Client 
+ Streaming Client 
+ Order Templates 
+ OrderBuilder Reference 
+ Optional: Order Specification Introduction 
+ Constructing OrderBuilder Objects from Historical Orders 
+ OrderBuilder Reference 
+ Order Types 
+ OrderType 
+ OrderBuilder.set_order_type() 
+ OrderBuilder.clear_order_type() 
+ Session and Duration 
+ Session 
+ Duration 
+ OrderBuilder.set_duration() 
+ OrderBuilder.clear_duration() 
+ OrderBuilder.set_session() 
+ OrderBuilder.clear_session() 
+ Price 
+ Note on Truncation 
+ Order Legs 
+ OrderBuilder.add_equity_leg() 
+ EquityInstruction 
+ OrderBuilder.add_option_leg() 
+ OptionInstruction 
+ OrderBuilder.clear_order_legs() 
+ Requested Destination 
+ Destination 
+ OrderBuilder.set_destination_link_name() 
+ OrderBuilder.clear_destination_link_name() 
+ Special Instructions 
+ SpecialInstruction 
+ OrderBuilder.set_special_instruction() 
+ OrderBuilder.clear_special_instruction() 
+ Complex Options Strategies 
+ ComplexOrderStrategyType 
+ OrderBuilder.set_complex_order_strategy_type() 
+ OrderBuilder.clear_complex_order_strategy_type() 
+ Composite Orders 
+ OrderStrategyType 
+ OrderBuilder.set_order_strategy_type() 
+ OrderBuilder.clear_order_strategy_type() 
+ Undocumented Fields 
+ Quantity 
+ Stop Order Configuration 
+ Utilities 
+ Getting Help 
+ Contributing to schwab-py 
+ schwab-py 
+ OrderBuilder Reference
+ View page source 
+ OrderBuilder Reference  
+ The Client.place_order() method
+expects a rather complex JSON object that describes the desired order. Schwab
+provides some example order specs 
+to
+illustrate the process and provides a schema in the place order documentation ,
+but beyond that we’re on our own. schwab-py aims to be useful to everyone,
+from users who want to easily place common equities and options trades, to
+advanced users who want to place complex multi-leg, multi-asset type trades.
+ For users interested in simple trades, schwab-py supports pre-built
+ Order Templates that allow fast construction of many common trades.
+Advanced users can modify these trades however they like, and can even build
+trades from scratch.
+ This page describes the features of the complete order schema in all their
+complexity. It is aimed at advanced users who want to create complex orders.
+Less advanced users can use the order templates to
+create orders. If they find themselves wanting to go beyond those templates,
+they can return to this page to learn how.
+ Optional: Order Specification Introduction  
+ Before we dive in to creating order specs, let’s briefly introduce their
+structure. This section is optional, although users wanting to use more advanced
+featured like stop prices and complex options orders will likely want to read it.
+ Here is an example of a spec that places a limit order to buy 13 shares of
+ MSFT for no more than $190. This is exactly the order that would be returned
+by schwab.orders.equities.equity_buy_limit() :
+ { 
+ "session" : "NORMAL" , 
+ "duration" : "DAY" , 
+ "orderType" : "LIMIT" , 
+ "price" : "190.90" , 
+ "orderLegCollection" : [ 
+ { 
+ "instruction" : "BUY" , 
+ "instrument" : { 
+ "assetType" : "EQUITY" , 
+ "symbol" : "MSFT" 
+ }, 
+ "quantity" : 1 
+ } 
+ ], 
+ "orderStrategyType" : "SINGLE" 
+ } 
+ Some key points are:
+ The LIMIT order type notifies TD that you’d like to place a limit order.
+ The order strategy type is SINGLE , meaning this order is not a composite
+order.
+ The order leg collection contains a single leg to purchase the equity.
+ The price is specified outside the order leg. This may seem
+counterintuitive, but it’s important when placing composite options orders.
+ If this seems like a lot of detail to specify a rather simple order, it is. The
+thing about the order spec object is that it can express every order that can
+be made through the TD Ameritrade API. For an advanced example, here is a order
+spec for a standing order to enter a long position in GOOG at $1310 or less
+that triggers a one-cancels-other order that exits the position if the price
+rises to $1400 or falls below $1250:
+ { 
+ "session" : "NORMAL" , 
+ "duration" : "GOOD_TILL_CANCEL" , 
+ "orderType" : "LIMIT" , 
+ "price" : "1310.00" , 
+ "orderLegCollection" : [ 
+ { 
+ "instruction" : "BUY" , 
+ "instrument" : { 
+ "assetType" : "EQUITY" , 
+ "symbol" : "GOOG" 
+ }, 
+ "quantity" : 1 
+ } 
+ ], 
+ "orderStrategyType" : "TRIGGER" , 
+ "childOrderStrategies" : [ 
+ { 
+ "orderStrategyType" : "OCO" , 
+ "childOrderStrategies" : [ 
+ { 
+ "session" : "NORMAL" , 
+ "duration" : "GOOD_TILL_CANCEL" , 
+ "orderType" : "LIMIT" , 
+ "price" : "1400.00" , 
+ "orderLegCollection" : [ 
+ { 
+ "instruction" : "SELL" , 
+ "instrument" : { 
+ "assetType" : "EQUITY" , 
+ "symbol" : "GOOG" 
+ }, 
+ "quantity" : 1 
+ } 
+ ] 
+ }, 
+ { 
+ "session" : "NORMAL" , 
+ "duration" : "GOOD_TILL_CANCEL" , 
+ "orderType" : "STOP_LIMIT" , 
+ "stopPrice" : "1250.00" , 
+ "orderLegCollection" : [ 
+ { 
+ "instruction" : "SELL" , 
+ "instrument" : { 
+ "assetType" : "EQUITY" , 
+ "symbol" : "GOOG" 
+ }, 
+ "quantity" : 1 
+ } 
+ ] 
+ } 
+ ] 
+ } 
+ ] 
+ } 
+ While this looks complex, it can be broken down into the same components as the
+simpler buy order:
+ This time, the LIMIT order type applies to the top-level order.
+ The order strategy type is TRIGGER , which tells Schwab to hold off
+placing the the second order until the first one completes.
+ The order leg collection still contains a single leg, and the price is still
+defined outside the order leg. This is typical for equities orders.
+ There are also a few things that aren’t there in the simple buy order:
+ The childOrderStrategies contains the OCO order that is triggered
+when the first LIMIT order is executed.
+ If you look carefully, you’ll notice that the inner OCO is a
+fully-featured suborder in itself.
+ This order is large and complex, and it takes a lot of reading to understand
+what’s going on here. Fortunately for you, you don’t have to; schwab-py cuts
+down on this complexity by providing templates and helpers to make building
+orders easy:
+ from schwab.orders.common import OrderType 
+ from schwab.orders.generic import OrderBuilder 
+ one_triggers_other ( 
+ equity_buy_limit ( 'GOOG' , 1 , 1310 ), 
+ one_cancels_other ( 
+ equity_sell_limit ( 'GOOG' , 1 , 1400 ), 
+ equity_sell_limit ( 'GOOG' , 1 , 1240 ) 
+ . set_order_type ( OrderType . STOP_LIMIT ) 
+ . clear_price () 
+ . set_stop_price ( 1250 ) 
+ )) 
+ You can find the full listing of order templates and utility functions
+ here .
+ Now that you have some background on how orders are structured, let’s dive into
+the order builder itself.
+ Constructing OrderBuilder Objects from Historical Orders  
+ Schwab supports a huge array of order specifications, including both equity and
+option orders, stop, conditionals, etc. However, the exact format of these
+orders is tricky: if you don’t specify the order exactly how Schwab expects
+it, you’ll either have your order rejected for no reason, or you’ll end up
+placing a different order than you intended.
+ Meanwhile, thinkorswim and the Schwab web and app UIs let you easily place these
+orders, just not in a programmatic way. schwab-py helps bridge this gap by
+allowing you to place a complex order through your preferred UI and then
+producing code that would have generated this order using schwab-py . This
+process looks like this:
+ Place an order using your favorite UI.
+ Call the following script to generate code for the most recently-placed
+order:
+ # Notice we don't prefix this with "python" because this is a script that was 
+ # installed by pip when you installed tda-api 
+schwab-order-codegen.py --token_file <your token file path> --api_key <your
+API key>
+ Copy-paste the resulting code and adapt it to your needs.
+ This script is installed by pip , and will only be accessible if you’ve added
+pip’s executable locations to your $PATH . If you’re having a hard time, feel
+free to ask for help on our Discord server .
+ OrderBuilder Reference  
+ This section provides a detailed reference of the generic order builder. You can
+use it to help build your own custom orders, or you can modify the pre-built
+orders generated by schwab-py ’s order templates.
+ Unfortunately, this reference is largely reverse-engineered. It was initially
+generated from the schema provided in the official API documents ,
+but many of the finer points, such as which fields should be populated for which
+order types, etc. are best guesses. If you find something is inaccurate or
+missing, please let us know .
+ That being said, experienced traders who understand how various order types and
+complex strategies work should find this builder easy to use, at least for the
+order types with which they are familiar. Here are some resources you can use to
+learn more, courtesy of the Securites and Exchange Commission:
+ Trading Basics: Understanding the Different Ways to Buy and Sell Stock 
+ Trade Execution: What Every Investor Should Know 
+ Investor Bulletin: An Introduction to Options 
+ Order Types  
+ Here are the order types that can be used:
+ class schwab.orders.common. OrderType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Type of order to place.
+ MARKET = 'MARKET'  
+ Execute the order immediately at the best-available price.
+ More Info .
+ LIMIT = 'LIMIT'  
+ Execute the order at your price or better.
+ More info .
+ STOP = 'STOP'  
+ Wait until the price reaches the stop price, and then immediately place a
+market order.
+ More Info .
+ STOP_LIMIT = 'STOP_LIMIT'  
+ Wait until the price reaches the stop price, and then immediately place a
+limit order at the specified price. More Info .
+ TRAILING_STOP = 'TRAILING_STOP'  
+ Similar to STOP , except if the price moves in your favor, the stop
+price is adjusted in that direction. Places a market order if the stop
+condition is met.
+ More info .
+ CABINET = 'CABINET'  
+ NON_MARKETABLE = 'NON_MARKETABLE'  
+ MARKET_ON_CLOSE = 'MARKET_ON_CLOSE'  
+ Place the order at the closing price immediately upon market close.
+ More info 
+ EXERCISE = 'EXERCISE'  
+ Exercise an option.
+ TRAILING_STOP_LIMIT = 'TRAILING_STOP_LIMIT'  
+ Similar to STOP_LIMIT , except if the price moves in your favor, the
+stop price is adjusted in that direction. Places a limit order at the
+specified price if the stop condition is met.
+ More info .
+ NET_DEBIT = 'NET_DEBIT'  
+ Place an order for an options spread resulting in a net debit.
+ More info 
+ NET_CREDIT = 'NET_CREDIT'  
+ Place an order for an options spread resulting in a net credit.
+ More info 
+ NET_ZERO = 'NET_ZERO'  
+ Place an order for an options spread resulting in neither a credit nor a
+debit.
+ More info 
+ LIMIT_ON_CLOSE = 'LIMIT_ON_CLOSE'  
+ OrderBuilder. set_order_type ( order_type )  
+ Set the order type. See OrderType for
+details.
+ OrderBuilder. clear_order_type ( )  
+ Clear the order type.
+ Session and Duration  
+ Together, these fields control when the order will be placed and how long it
+will remain active. Note schwab-py ’s templates 
+place orders that are active for the duration of the current normal trading
+session. If you want to modify the default session and duration, you can use
+these methods to do so.
+ class schwab.orders.common. Session ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ The market session during which the order trade should be executed.
+ NORMAL = 'NORMAL'  
+ Normal market hours, from 9:30am to 4:00pm Eastern.
+ AM = 'AM'  
+ Premarket session, from 8:00am to 9:30am Eastern.
+ PM = 'PM'  
+ After-market session, from 4:00pm to 8:00pm Eastern.
+ SEAMLESS = 'SEAMLESS'  
+ Orders are active during all trading sessions except the overnight
+session. This is the union of NORMAL , AM , and PM .
+ class schwab.orders.common. Duration ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Length of time over which the trade will be active.
+ DAY = 'DAY'  
+ Cancel the trade at the end of the trading day. Note if the order cannot
+be filled all at once, you may see partial executions throughout the day.
+ GOOD_TILL_CANCEL = 'GOOD_TILL_CANCEL'  
+ Keep the trade open for six months, or until the end of the cancel date,
+whichever is shorter. Note if the order cannot be filled all at once, you
+may see partial executions over the lifetime of the order.
+ FILL_OR_KILL = 'FILL_OR_KILL'  
+ Either execute the order immediately at the specified price, or cancel it
+immediately.
+ IMMEDIATE_OR_CANCEL = 'IMMEDIATE_OR_CANCEL'  
+ END_OF_WEEK = 'END_OF_WEEK'  
+ END_OF_MONTH = 'END_OF_MONTH'  
+ NEXT_END_OF_MONTH = 'NEXT_END_OF_MONTH'  
+ OrderBuilder. set_duration ( duration )  
+ Set the order duration. See Duration for
+details.
+ OrderBuilder. clear_duration ( )  
+ Clear the order duration.
+ OrderBuilder. set_session ( session )  
+ Set the order session. See Session for
+details.
+ OrderBuilder. clear_session ( )  
+ Clear the order session.
+ Price  
+ Price is the amount you’d like to pay for each unit of the position you’re
+taking:
+ For equities and simple options limit orders, this is the price which you’d
+like to pay/receive.
+ For complex options limit orders (net debit/net credit), this is the total
+credit or debit you’d like to receive.
+ In other words, the price is the sum of the prices of the Order Legs .
+This is particularly powerful for complex multi-leg options orders, which
+support complex top and/or limit orders that trigger when the price of a
+position reaches certain levels. In those cases, the price of an order can drop
+below the specified price as a result of movements in multiple legs of the
+trade.
+ Note on Truncation  
+ Important Note: Under the hood, the Schwab API expects price as a string,
+whereas schwab-py allows setting prices as a floating point number for
+convenience. The passed value is then converted to a string under the hood,
+which involves some truncation logic:
+ If the price has absolute value less than one, truncate (not round!) to
+four decimal places. For example, 0.186992 will become 0.1869 .
+ For all other values, truncate to two decimal places. The above example would
+become 0.18 .
+ This behavior is meant as a sane heuristic, and there are almost certainly
+situations where it is not the correct thing to do. You can sidestep this entire
+process by passing your price as a string, although be forewarned that Schwab
+may reject your order or even interpret it in unexpected ways.
+ OrderBuilder. set_price ( price )  
+ Set the order price. Note price can be passed as either a float or an
+ str . See Note on Truncation .
+ OrderBuilder. copy_price ( price )  
+ Directly set the stop price, avoiding all the validation and truncation
+logic from set_price() .
+ OrderBuilder. clear_price ( )  
+ Clear the order price
+ Order Legs  
+ Order legs are where the actual assets being bought or sold are specified. For
+simple equity or single-options orders, there is just one leg. However, for
+complex multi-leg options trades, there can be more than one leg.
+ Note that order legs often do not execute all at once. Order legs can be
+executed over the specified Duration of the order.
+What’s more, if order legs request a large number of shares, legs themselves can
+be partially filled. You can control this setting using the
+ SpecialInstruction value ALL_OR_NONE .
+ With all that out of the way, order legs are relatively simple to specify.
+ schwab-py currently supports equity and option order legs:
+ OrderBuilder. add_equity_leg ( instruction , symbol , quantity )  
+ Add an equity order leg.
+ Parameters : 
+ instruction – Instruction for the leg. See
+ EquityInstruction for
+valid options.
+ symbol – Equity symbol
+ quantity – Number of shares for the order
+ class schwab.orders.common. EquityInstruction ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Instructions for opening and closing equity positions.
+ BUY = 'BUY'  
+ Open a long equity position
+ SELL = 'SELL'  
+ Close a long equity position
+ SELL_SHORT = 'SELL_SHORT'  
+ Open a short equity position
+ BUY_TO_COVER = 'BUY_TO_COVER'  
+ Close a short equity position
+ OrderBuilder. add_option_leg ( instruction , symbol , quantity )  
+ Add an option order leg.
+ Parameters : 
+ instruction – Instruction for the leg. See
+ OptionInstruction for
+valid options.
+ symbol – Option symbol
+ quantity – Number of contracts for the order
+ class schwab.orders.common. OptionInstruction ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Instructions for opening and closing options positions.
+ BUY_TO_OPEN = 'BUY_TO_OPEN'  
+ Enter a new long option position
+ SELL_TO_CLOSE = 'SELL_TO_CLOSE'  
+ Exit an existing long option position
+ SELL_TO_OPEN = 'SELL_TO_OPEN'  
+ Enter a short position in an option
+ BUY_TO_CLOSE = 'BUY_TO_CLOSE'  
+ Exit an existing short position in an option
+ OrderBuilder. clear_order_legs ( )  
+ Clear all order legs.
+ Requested Destination  
+ By default, Schwab sends trades to whichever exchange provides the best price.
+This field allows you to request a destination exchange for your trade, although
+whether your order is actually executed there is up to Schwab.
+ class schwab.orders.common. Destination ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Destinations for when you want to request a specific destination for your
+order.
+ INET = 'INET'  
+ ECN_ARCA = 'ECN_ARCA'  
+ CBOE = 'CBOE'  
+ AMEX = 'AMEX'  
+ PHLX = 'PHLX'  
+ ISE = 'ISE'  
+ BOX = 'BOX'  
+ NYSE = 'NYSE'  
+ NASDAQ = 'NASDAQ'  
+ BATS = 'BATS'  
+ C2 = 'C2'  
+ AUTO = 'AUTO'  
+ OrderBuilder. set_destination_link_name ( destination_link_name )  
+ Set the destination link name. See
+ Destination for details.
+ OrderBuilder. clear_destination_link_name ( )  
+ Clear the destination link name
+ Special Instructions  
+ Trades can contain special instructions which handle some edge cases:
+ class schwab.orders.common. SpecialInstruction ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Special instruction for trades.
+ ALL_OR_NONE = 'ALL_OR_NONE'  
+ Disallow partial order execution.
+ More info .
+ DO_NOT_REDUCE = 'DO_NOT_REDUCE'  
+ Do not reduce order size in response to cash dividends.
+ More info .
+ ALL_OR_NONE_DO_NOT_REDUCE = 'ALL_OR_NONE_DO_NOT_REDUCE'  
+ Combination of ALL_OR_NONE and DO_NOT_REDUCE .
+ OrderBuilder. set_special_instruction ( special_instruction )  
+ Set the special instruction. See
+ SpecialInstruction for details.
+ OrderBuilder. clear_special_instruction ( )  
+ Clear the special instruction.
+ Complex Options Strategies  
+ Schwab supports a number of complex options strategies. These strategies are
+complex affairs, with each leg of the trade specified in the order legs. TD
+performs additional validation on these strategies, so they are somewhat
+complicated to place. However, the benefit is more flexibility, as trades like
+trailing stop orders based on net debit/credit can be specified.
+ Unfortunately, due to the complexity of these orders and the lack of any real
+documentation, we cannot definitively say how to structure these orders. A few
+things have been observed, however:
+ The legs of the order can be placed by adding them as option order legs using
+ add_option_leg() .
+ For spreads resulting in a new debit/credit, the price represents the overall
+debit or credit desired.
+ If you successfully use these strategies, we want to know about it. Please let
+us know by joining our Discord server to
+chat about it, or by creating a feature request .
+ class schwab.orders.common. ComplexOrderStrategyType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Explicit order strategies for executing multi-leg options orders.
+ NONE = 'NONE'  
+ No complex order strategy. This is the default.
+ COVERED = 'COVERED'  
+ Covered call 
+ VERTICAL = 'VERTICAL'  
+ Vertical spread 
+ BACK_RATIO = 'BACK_RATIO'  
+ Ratio backspread 
+ CALENDAR = 'CALENDAR'  
+ Calendar spread 
+ DIAGONAL = 'DIAGONAL'  
+ Diagonal spread 
+ STRADDLE = 'STRADDLE'  
+ Straddle spread 
+ STRANGLE = 'STRANGLE'  
+ Strandle spread 
+ COLLAR_SYNTHETIC = 'COLLAR_SYNTHETIC'  
+ BUTTERFLY = 'BUTTERFLY'  
+ Butterfly spread 
+ CONDOR = 'CONDOR'  
+ Condor spread 
+ IRON_CONDOR = 'IRON_CONDOR'  
+ Iron condor spread 
+ VERTICAL_ROLL = 'VERTICAL_ROLL'  
+ Roll a vertical spread 
+ COLLAR_WITH_STOCK = 'COLLAR_WITH_STOCK'  
+ Collar strategy 
+ DOUBLE_DIAGONAL = 'DOUBLE_DIAGONAL'  
+ Double diagonal spread 
+ UNBALANCED_BUTTERFLY = 'UNBALANCED_BUTTERFLY'  
+ Unbalanced butterfy spread 
+ UNBALANCED_CONDOR = 'UNBALANCED_CONDOR'  
+ UNBALANCED_IRON_CONDOR = 'UNBALANCED_IRON_CONDOR'  
+ UNBALANCED_VERTICAL_ROLL = 'UNBALANCED_VERTICAL_ROLL'  
+ MUTUAL_FUND_SWAP = 'MUTUAL_FUND_SWAP'  
+ Mutual fund swap
+ CUSTOM = 'CUSTOM'  
+ A custom multi-leg order strategy.
+ OrderBuilder. set_complex_order_strategy_type ( complex_order_strategy_type )  
+ Set the complex order strategy type. See
+ ComplexOrderStrategyType for details.
+ OrderBuilder. clear_complex_order_strategy_type ( )  
+ Clear the complex order strategy type.
+ Composite Orders  
+ schwab-py supports composite order strategies, in which execution of one
+order has an effect on another:
+ OCO , or “one cancels other” orders, consist of a pair of orders where
+execution of one immediately cancels the other.
+ TRIGGER orders consist of a pair of orders where execution of one
+immediately results in placement of the other.
+ schwab-py provides helpers to specify these easily:
+ one_cancels_other() and
+ first_triggers_second() . This is almost certainly
+easier than specifying these orders manually. However, if you still want to
+create them yourself, you can specify these composite order strategies like so:
+ class schwab.orders.common. OrderStrategyType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Rules for composite orders.
+ SINGLE = 'SINGLE'  
+ No chaining, only a single order is submitted
+ CANCEL = 'CANCEL'  
+ RECALL = 'RECALL'  
+ PAIR = 'PAIR'  
+ FLATTEN = 'FLATTEN'  
+ TWO_DAY_SWAP = 'TWO_DAY_SWAP'  
+ BLAST_ALL = 'BLAST_ALL'  
+ OCO = 'OCO'  
+ Execution of one order cancels the other
+ TRIGGER = 'TRIGGER'  
+ Execution of one order triggers placement of the other
+ OrderBuilder. set_order_strategy_type ( order_strategy_type )  
+ Set the order strategy type. See
+ OrderStrategyType for more details.
+ OrderBuilder. clear_order_strategy_type ( )  
+ Clear the order strategy type.
+ Undocumented Fields  
+ Unfortunately, your humble author is not an expert in all things trading. The
+order spec schema describes some things that are outside my ability to document,
+so rather than make stuff up, I’m putting them here in the hopes that someone
+will come along and shed some light on them. You can make suggestions by filing
+an issue on our GitHub issues page , or by joining our Discord
+server .
+ Quantity  
+ This one seems obvious: doesn’t the quantity mean the number of stock I want to
+buy? The trouble is that the order legs also have a quantity field, which
+suggests this field means something else. The leading hypothesis is that is
+outlines the number of copies of the order to place, although we have yet to
+verify that.
+ OrderBuilder. set_quantity ( quantity )  
+ Exact semantics unknown. See Quantity for a
+discussion.
+ OrderBuilder. clear_quantity ( )  
+ Clear the order-level quantity. Note this does not affect order legs.
+ Stop Order Configuration  
+ Stop orders and their variants (stop limit, trailing stop, trailing stop limit)
+support some rather complex configuration. Both stops prices and the limit
+prices of the resulting order can be configured to follow the market in a
+dynamic fashion. The market dimensions that they follow can also be configured
+differently, and it appears that which dimensions are supported varies by order
+type.
+ We have unfortunately not yet done a thorough analysis of what’s supported, nor
+have we made the effort to make it simple and easy. While we’re pretty sure we
+understand how these fields work, they’ve been temporarily placed into the
+“undocumented” section, pending a followup. Users are invited to experiment with
+these fields at their own risk.
+ OrderBuilder. set_stop_price ( stop_price )  
+ Set the stop price. Note price can be passed as either a float or an
+ str . See Note on Truncation .
+ OrderBuilder. copy_stop_price ( stop_price )  
+ Directly set the stop price, avoiding all the validation and truncation
+logic from set_stop_price() .
+ OrderBuilder. clear_stop_price ( )  
+ Clear the stop price.
+ class schwab.orders.common. StopPriceLinkBasis ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ MANUAL = 'MANUAL'  
+ BASE = 'BASE'  
+ TRIGGER = 'TRIGGER'  
+ LAST = 'LAST'  
+ BID = 'BID'  
+ ASK = 'ASK'  
+ ASK_BID = 'ASK_BID'  
+ MARK = 'MARK'  
+ AVERAGE = 'AVERAGE'  
+ OrderBuilder. set_stop_price_link_basis ( stop_price_link_basis )  
+ Set the stop price link basis. See
+ StopPriceLinkBasis for details.
+ OrderBuilder. clear_stop_price_link_basis ( )  
+ Clear the stop price link basis.
+ class schwab.orders.common. StopPriceLinkType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ VALUE = 'VALUE'  
+ PERCENT = 'PERCENT'  
+ TICK = 'TICK'  
+ OrderBuilder. set_stop_price_link_type ( stop_price_link_type )  
+ Set the stop price link type. See
+ StopPriceLinkType for details.
+ OrderBuilder. clear_stop_price_link_type ( )  
+ Clear the stop price link type.
+ OrderBuilder. set_stop_price_offset ( stop_price_offset )  
+ Set the stop price offset.
+ OrderBuilder. clear_stop_price_offset ( )  
+ Clear the stop price offset.
+ class schwab.orders.common. StopType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ STANDARD = 'STANDARD'  
+ BID = 'BID'  
+ ASK = 'ASK'  
+ LAST = 'LAST'  
+ MARK = 'MARK'  
+ OrderBuilder. set_stop_type ( stop_type )  
+ Set the stop type. See
+ StopType for more details.
+ OrderBuilder. clear_stop_type ( )  
+ Clear the stop type.
+ class schwab.orders.common. PriceLinkBasis ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ MANUAL = 'MANUAL'  
+ BASE = 'BASE'  
+ TRIGGER = 'TRIGGER'  
+ LAST = 'LAST'  
+ BID = 'BID'  
+ ASK = 'ASK'  
+ ASK_BID = 'ASK_BID'  
+ MARK = 'MARK'  
+ AVERAGE = 'AVERAGE'  
+ OrderBuilder. set_price_link_basis ( price_link_basis )  
+ Set the price link basis. See
+ PriceLinkBasis for details.
+ OrderBuilder. clear_price_link_basis ( )  
+ Clear the price link basis.
+ class schwab.orders.common. PriceLinkType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ VALUE = 'VALUE'  
+ PERCENT = 'PERCENT'  
+ TICK = 'TICK'  
+ OrderBuilder. set_price_link_type ( price_link_type )  
+ Set the price link type. See
+ PriceLinkType for more details.
+ OrderBuilder. clear_price_link_type ( )  
+ Clear the price link basis.
+ OrderBuilder. set_activation_price ( activation_price )  
+ Set the activation price.
+ OrderBuilder. clear_activation_price ( )  
+ Clear the activation price.
+ Previous 
+ Next 
+ © Copyright 2024, Alex Golec.
+ Built with Sphinx using a
+ theme 
+ provided by Read the Docs .
+ 

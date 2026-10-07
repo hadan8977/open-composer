@@ -1,0 +1,171 @@
+URL: https://schwab.tos.mx/center/howToTos/thinkManual/Trade/Order-Entry-Tools
+Fetched-UTC: 2026-10-07T19:53:37Z
+HTTP: 200 text/html;charset=UTF-8
+raw: (html raw removed; text extract kept)
+---
+
+ Order Entry and Saved Orders 
+ skip to content 
+ thinkManual 
+ thinkScript 
+ Glossary 
+ FAQ 
+ Release Notes 
+ thinkManual
+ thinkScript
+ Glossary
+ FAQ
+ Release Notes
+ How to thinkorswim
+ Order Entry and Saved Orders
+ All Videos 
+ The main order entry tool appears at the bottom of your screen and can help you create several common orders (check out Order Types for a complete list) and save custom orders you create. You can open this tool by clicking BUY or SELL for a symbol. 
+ Once opened, click the dropdown in the Order column to select an order type. The entry tool will then change to the order template for that type. 
+ Notice how the order price, except for ~MKT market orders, automatically changes based on underlying mark price. This is an unlocked price value and can be “locked” by clicking the % lock icon next to the price.
+ An open lock % is an unlocked price that changes as the underlying changes. 
+ A closed lock & is a locked price that doesn’t automatically change.
+ Locked prices don’t change automatically but can be adjusted using the + and – buttons. Regardless of order type you can always type in or use the + and – buttons to adjust order price.
+ This page covers the following content:
+ Market Orders 
+ Limit Orders 
+ Stop Orders 
+ Stop Limit Orders 
+ Trailing Stop and Trailing Stop Limit Orders 
+ Market on Close (MOC) Orders 
+ Limit on Close (LOC) Orders 
+ Order Rules 
+ Saved Orders 
+ If you are interested in learning about Walk Limit® orders, please refer to this page .
+ Market Orders
+ Copy link to the section
+ Market orders seek to execute (fill the order) at the next available price. Market orders fill immediately, so the actual price an order executes at may be different than the mark price. 
+ To enter market orders, switch the order type under Order to MARKET . This sets order price to ~MKT since market orders fill at the best currently available price. 
+ Market orders can accept the following time in force, under TIF : 
+ DAY orders are good for the current trading day.
+ Note that other options are available as TIF for this order type but selecting them will result in error.
+ Once an order is ready, click Confirm and Send to check the confirmation dialog where you can edit, delete, send, or save the order. 
+ Note: If Auto Send is active, your orders are submitted immediately and without an Order Confirmation window. This means you will not have the opportunity to review order details before entry, and you will not see any warnings, cost disclosures, or informational messages related to the order. By enabling Auto Send, you accept the risks of placing trades without the warnings normally provided by the Order Confirmation dialog and related messaging.
+ Limit Orders
+ Copy link to the section
+ Limit orders seek to execute (fill the order) at the price you specify or better; this limit price is specified under Price . 
+ To enter limit orders, switch the order type under Order to LIMIT . This lets the order price be set as a price the order should fill at or below for BUY and at or above for SELL. 
+ Limit orders can accept the following time in force, under TIF : 
+ DAY orders are good for the current trading day.
+ GTC orders are “good 'til canceled” and continue until they fill or are canceled. 
+ EXT orders also try and fill during extended trading hours. 
+ GTC_EXT are “good 'til canceled” and continue to try and fill during extended trading hours. 
+ AM orders try and fill from 7:00 a.m. ET to 9:25 a.m. ET during the AM or pre-market trading hours. 
+ PM orders try and fill from 4:05 p.m. to 8:00 p.m. ET during the PM or post-market trading hours. 
+ In addition, limit orders can accept GTC_EXTO (good 'til canceled, extended overnight) and EXTO (extended overnight) as time in force for symbols that are eligible for extended overnight trading. Note that EXTO orders are expired after the first overnight session if unfilled, and GTC_EXTO orders remain in force till filled or canceled -- for a maximum of 6 months.
+ Once an order is ready, click Confirm and Send to check the confirmation dialog where you can edit, delete, send, or save the order.
+ Stop Orders
+ Copy link to the section
+ A stop order becomes a market order once a specific price, the activation price, is reached. With stop orders there is no guarantee the execution price will be equal to or near the activation price.
+ To enter a stop order, switch the order type under Order to STOP . The activation price can then be entered under MKT~ in Price . 
+ Activation price for stop orders can be based on the standard (STD), Mark, or Bid prices: 
+ STD orders are triggered by a trade occurring at that set price value. 
+ Mark orders are triggered by the Mark price reaching that price value. 
+ Bid orders are triggered by the Bid price reaching that price value. 
+ Stop orders accept the following time in force, under TIF : 
+ DAY orders are good for the current trading day.
+ GTC orders are “good till canceled” and continue until they fill or are canceled. 
+ Note that other options are available as TIF for this order type, but selecting them will result in error.
+ Once an order is ready, click Confirm and Send to check the confirmation dialog where you can edit, delete, send, or save the order. 
+ Stop Limit Orders
+ Copy link to the section
+ Stop limit orders seek to execute at a specific limit price or better after the activation price is reached. Stop limit orders risk missing the market all together since in a fast-moving market, it might be impossible to execute an order at the stop-limit price or better.
+ To enter an order, switch the order type under Order to STOPLIMIT . Like stop orders, stop limit orders are triggered by an activation price. Once triggered a stop limit order sends a limit order rather than a market order. 
+ The first price under price is marked as LMT price on the right. This is the price that the order tries to execute at or below for BUY orders and at or above for SELL orders. 
+ The second price under price is marked as STP on the right. This is the activation price that once set, determines when the stop limit order is triggered. 
+ Activation price for stop limit orders can be based on standard (STD), Mark, or Bid prices: 
+ STD orders are triggered by a trade occurring at that set price value. 
+ Mark orders are triggered by the Mark price reaching that price value. 
+ Bid orders are triggered by the Bid price reaching that price value. 
+ Stop limit orders accept the following time in force, under TIF : 
+ DAY orders are good for the current trading day.
+ GTC orders are “good till canceled” and continue until they fill or are canceled. 
+ Note that other options are available as TIF for this order type, but selecting them will result in error.
+ Once an order is ready, click Confirm and Send to check the confirmation dialog where you can edit, delete, send, or save the order. 
+ Trailing Stop and Trailing Stop Limit Orders
+ Copy link to the section
+ Trailing Stop orders are entered with a stop parameter that moves in lockstep (“trails”)—either by a dollar amount, percentage, or tick offset—with the price of the instrument. Once the stop (activation) price is reached, the trailing order becomes a market order, or the trailing stop limit order becomes a limit order. Both are accepted only for stocks that trade on NASDAQ, NYSE, and AMEX.
+ Check out Trailing Stop Orders for more about this type of stop order.
+ Market on Close (MOC) Orders
+ Copy link to the section
+ Market on Close (MOC) orders seek to execute at the market’s official closing price. These orders are submitted without a specific price, similar to a market order, but are held until the market close. 
+ To enter a market on close order in thinkorswim, switch the order type under Order to MOC . This sets the order to be routed for execution at the official close price. 
+ MOC orders are eligible for stocks only and must be submitted before 3:45 p.m. ET. After this time, MOC will no longer be available in the order type menu. 
+ Once an order is ready, click Confirm and Send to check the confirmation dialog where you can edit, delete, send, or save the order. 
+ Limit on Close (LOC) Orders
+ Copy link to the section
+ Limit on Close (LOC) orders are similar to MOC, but they include a limit price. The order will only be filled at the official close if the closing price is at or better than the specified limit.
+ To enter a limit on close order in thinkorswim, switch the type under Order to LOC . Then set your desired limit price under the Price column.
+ LOC orders are eligible for stocks only and must be submitted before 3:45 p.m. ET. After this time, LOC will no longer be available in the order type menu. 
+ Once an order is ready, click Confirm and Send to check the confirmation dialog where you can edit, delete, send, or save the order. 
+ Order Rules
+ Copy link to the section
+ Order Rules is a pop-up window that has additional parameters for when an order is created. Click the Settings icon " on the far right of an active order. In addition to what is already entered in the order (Price, Order Type, Time in Force, etc.), order rules can be used to change the order’s tax lot method from the default setting (your default tax lot method can be changed on Schwab.com ). The following tax lot methods are currently available:
+ First In First Out (FIFO)
+ Calculates the cost basis of the lot assuming that the oldest shares are sold first. 
+ Last In First Out (LIFO) 
+ Calculates the cost basis of the lot assuming that the most recent shares are sold first. 
+ High Cost Lot 
+ Calculates the cost basis of the lot assuming that the shares with the highest cost are sold first. 
+ Low Cost Lot 
+ Calculates the cost basis of the lot assuming that the shares with the lowest cost are sold first. 
+ Best Tax 
+ Calculates the cost basis of the lot assuming that the tax impact of each sale is minimized. 
+ Specified Lot 
+ Calculates the cost basis of the lot after you manually specify the order in which the shares are sold. Cannot be set as default. 
+ Note that your intraday Position Lot Details and Gain/Loss will be calculated using your default cost basis method and will be updated using your Specified Lot instructions the following business day.
+ You can also use the Order Rules window to create:
+ order conditions that impact when an order is initially submitted and or when it will be cancelled
+ order conditions based on date/time, underlying symbol price (underlying symbol may be different than the order symbol), and certain study-based conditions using thinkscript®
+ A description at the bottom summarizes each order based on the current details and can be double checked before saving and sending the order.
+ Click Save to save your order and Confirm and Send in the order editor to send it.
+ Schwab does not provide tax advice. Clients should consult a professional tax advisor for their tax advice needs. 
+ Saved Orders
+ Copy link to the section
+ Saved Orders can be reused to send an identical order again without having to reenter the same details. Note that the tax lot information cannot be saved with orders.
+ To save an order in the Order Entry tool, right click on it and click Save . Once created, saved orders can be reused, edited, or deleted on the Saved Orders tab next to the Order Entry header.
+ To edit a saved order, right click on it and then click Edit .
+ To use a saved order, right click on it and then click Confirm and send .
+ To delete existing saved order(s):
+ Check the boxes next to orders to be deleted.
+ Right click an order to open a dropdown menu.
+ Using this menu, you can either delete the order you clicked or all of the selected orders.
+ Click OK to confirm deletion. The deletion is permanent and cannot be undone.
+ Note : Selecting a part of a complex order will also select all other parts of that order.
+ Company Profile
+ Order Types
+ You may also like
+ Active Trader: Entering Orders
+ In this article: Entering a Market Order Entering Stop/Limit Orders Entering a First ...
+ Active Trader: Overview
+ The Active Trader tab is a thinkorswim trading interface that has a handy bid/ask price ladder, ...
+ Company Profile
+ Company Profile is a thinkorswim feature based on Trefis data* that gives you an insight into ...
+ This material is intended for general informational and educational purposes only. This should not be considered an individualized recommendation or personalized investment advice. The securities, investment products and investment strategies mentioned are not suitable for everyone. Each investor needs to review an investment strategy for his or her own particular situation before making any investment decisions.
+ All expressions of opinion are subject to change without notice in reaction to shifting market conditions. Data contained herein from third-party providers is obtained from what are considered reliable sources. However, its accuracy, completeness, or reliability cannot be guaranteed.
+ Investing involves risk, including loss of principal, and for some products and strategies, loss of more than your initial investment.
+ Equity and Index options carry a high level of risk and are not suitable for all investors. Certain requirements must be met to trade options through Schwab. Please read the options disclosure document titled "Characteristics and Risks of Standardized Options." Supporting documentation for any claims or statistical information is available upon request.
+ Multiple leg options strategies will involve multiple transaction costs.
+ Spread trading must be done in a margin account.
+ Hedging and protective strategies generally involve additional costs and do not assure a profit or guarantee against loss.
+ Uncovered options strategies are only appropriate for traders with the highest risk tolerance, involve potential for unlimited risk, and are only allowed in margin accounts.
+ Short options can be assigned at any time up to expiration regardless of the In-The-Money (ITM) amount. An ITM option has a higher risk of being assigned early. 
+ Schwab does not recommend the use of technical analysis as a sole means of investment research.
+ Past performance is no guarantee of future results.
+ Access to real-time market data is conditioned on acceptance of the exchange agreements. Fees apply. Market volatility, volume, and system availability may delay account access and trade executions.
+ Futures, and Futures options trading involves substantial risk and is not suitable for all investors. Please read the Risk Disclosure Statement for Futures and Options: https://www.schwab.com/Futures_RiskDisclosure prior to trading futures products.
+ Forex trading involves leverage, carries a substantial level of risk, and is not suitable for all investors. Please read the Risk Disclosure for Forex: https://www.schwab.com/resource/forex-risk-disclosure-statement .
+ Futures and forex accounts are not protected by the Securities Investor Protection Corporation (SIPC). Forex accounts do not receive a preference in any bankruptcy proceeding pursuant to Part 190 of the CFTC’s regulations.
+ Read additional CFTC and NFA futures and forex public disclosures for Charles Schwab Futures and Forex LLC: https://www.schwab.com/legal/futures-disclosures 
+ Futures, futures options, and forex trading services provided by Charles Schwab Futures and Forex LLC. Trading privileges subject to review and approval. Not all clients will qualify. Forex accounts are not available to residents of Ohio or Arizona.
+ Futures margin, also known as a “performance bond,” is the amount of money you are required to deposit in your futures account to establish and maintain a futures position. Futures margin is not a loan. If at any given time the funds in your account drop below the minimum regulatory requirement, or "house" margin requirements, you may be required to immediately deposit additional funds to maintain your position, or your position may be liquidated at a loss. You will be liable for any resulting debits. Charles Schwab Futures and Forex LLC may increase its “house” margin requirements at any time and is not required to provide you with advance notice of such requirement changes or liquidations initiated by Schwab. You are not entitled to an extension of time on any type of margin call.
+ Charles Schwab Futures and Forex LLC is a CFTC-registered Futures Commission Merchant and NFA Forex Dealer Member.
+ Charles Schwab Futures and Forex LLC (NFA Member) and Charles Schwab & Co., Inc. (Member SIPC) are separate but affiliated companies and subsidiaries of The Charles Schwab Corporation.
+ This site is designed for U.S. residents. Non-U.S. residents are subject to country-specific restrictions. Learn more about our services for non-U.S. residents.
+ © 2026 Charles Schwab & Co., Inc. All rights reserved. Member SIPC.
+ Terms of Use 
+ 

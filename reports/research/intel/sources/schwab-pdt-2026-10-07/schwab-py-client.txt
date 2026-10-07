@@ -1,0 +1,698 @@
+URL: https://schwab-py.readthedocs.io/en/latest/client.html
+Fetched-UTC: 2026-10-07T19:53:06Z
+HTTP: 200 text/html; charset=utf-8
+raw: (html raw removed; text extract kept)
+---
+ 
+ HTTP Client — schwab-py documentation 
+ schwab-py
+ Contents: 
+ Transitioning from TDAmeritrade and tda-api 
+ Getting Started 
+ Authentication and Client Creation 
+ HTTP Client 
+ Asyncio Support 
+ Calling Conventions 
+ Return Values 
+ Account Hashes 
+ Timeout Management 
+ Client.set_timeout() 
+ Token Age 
+ Client.token_age() 
+ Account Info 
+ Client.get_account_numbers() 
+ Client.get_account() 
+ Client.get_accounts() 
+ Account 
+ Account.Fields 
+ Price History 
+ Client.get_price_history_every_minute() 
+ Client.get_price_history_every_five_minutes() 
+ Client.get_price_history_every_ten_minutes() 
+ Client.get_price_history_every_fifteen_minutes() 
+ Client.get_price_history_every_thirty_minutes() 
+ Client.get_price_history_every_day() 
+ Client.get_price_history_every_week() 
+ Client.get_price_history() 
+ PriceHistory 
+ PriceHistory.Frequency 
+ PriceHistory.FrequencyType 
+ PriceHistory.Period 
+ PriceHistory.PeriodType 
+ Current Quotes 
+ Client.get_quote() 
+ Client.get_quotes() 
+ Option Chains 
+ Client.get_option_chain() 
+ Options 
+ Options.ContractType 
+ Options.Entitlement 
+ Options.ExpirationMonth 
+ Options.Strategy 
+ Options.StrikeRange 
+ Options.Type 
+ Instrument Searching and Fundamentals 
+ Client.get_instruments() 
+ Client.get_instrument_by_cusip() 
+ Instrument 
+ Instrument.Projection 
+ Orders 
+ Placing New Orders 
+ Client.place_order() 
+ Accessing Existing Orders 
+ Client.get_orders_for_account() 
+ Client.get_orders_for_all_linked_accounts() 
+ Client.get_order() 
+ Order 
+ Editing Existing Orders 
+ Client.cancel_order() 
+ Client.replace_order() 
+ Other Endpoints 
+ Transaction History 
+ Client.get_transaction() 
+ Client.get_transactions() 
+ Transactions 
+ User Preferences 
+ Client.get_user_preferences() 
+ Market Movers 
+ Client.get_movers() 
+ Movers 
+ Market Hours 
+ Client.get_market_hours() 
+ MarketHours 
+ Streaming Client 
+ Order Templates 
+ OrderBuilder Reference 
+ Utilities 
+ Getting Help 
+ Contributing to schwab-py 
+ schwab-py 
+ HTTP Client
+ View page source 
+ HTTP Client  
+ A naive, unopinionated wrapper around the
+ Schwab individual trader API . This
+client provides access to all endpoints of the API in as easy and direct a way
+as possible.
+ Do not attempt to use more than one Client object per token file, as
+this will likely cause issues with the underlying OAuth2 session management 
+ from schwab.auth import client_from_manual_flow 
+ # Follow the instructions on the screen to authenticate your client. 
+ c = easy_client ( 
+ api_key = 'APIKEY' , 
+ app_secret = 'APP_SECRET' , 
+ callback_url = 'https://127.0.0.1' , 
+ token_path = '/tmp/token.json' ) 
+ resp = c . get_price_history_every_day ( 'AAPL' ) 
+ assert resp . status_code == httpx . codes . OK 
+ history = resp . json () 
+ Note we we create a new client using the auth package as described in
+ Authentication and Client Creation . Creating a client directly is possible, but not recommended.
+ Asyncio Support  
+ An asynchronous variant is available through a keyword to the client
+constructor. This allows for higher-performance API usage, at the cost
+of slightly increased application complexity.
+ from schwab.auth import client_from_manual_flow 
+ async def main (): 
+ c = easy_client ( 
+ api_key = 'APIKEY' , 
+ redirect_uri = 'https://localhost' , 
+ token_path = '/tmp/token.json' , 
+ asyncio = True ) 
+ resp = await c . get_price_history_every_day ( 'AAPL' ) 
+ assert resp . status_code == httpx . codes . OK 
+ history = resp . json () 
+ if __name__ == '__main__' : 
+ import asyncio 
+ asyncio . run_until_complete ( main ()) 
+ Calling Conventions  
+ Function parameters are categorized as either required or optional. Required
+parameters are passed as positional arguments. Optional parameters, are passed
+as keyword arguments.
+ Parameters which have special values recognized by the API are
+represented by Python enums .
+This is because the API rejects requests which pass unrecognized values, and
+this enum wrapping is provided as a convenient mechanism to avoid consternation
+caused by accidentally passing an unrecognized value.
+ By default, passing values other than the required enums will raise a
+ ValueError . If you believe the API accepts a value that isn’t supported
+here, you can use set_enforce_enums to disable this behavior at your own
+risk. If you do find a supported value that isn’t listed here, please open an
+issue describing it or submit a PR adding the new functionality.
+ Return Values  
+ All methods return a response object generated under the hood by the
+ HTTPX module.
+For a full listing of what’s possible, read that module’s documentation. Most if
+not all users can simply use the following pattern:
+ r = client . some_endpoint () 
+ assert r . status_code == httpx . codes . OK , r . raise_for_status () 
+ data = r . json () 
+ The API indicates errors using the response status code, and this pattern will
+raise the appropriate exception if the response is not a success. The data can
+be fetched by calling the .json() method.
+ This data will be pure python data structures which can be directly accessed.
+You can also use your favorite data analysis library’s dataframe format using
+the appropriate library. For instance you can create a pandas dataframe using its conversion method .
+ Note: Because the author has no relationship whatsoever with Charles Schwab,
+this document makes no effort to describe the structure of the returned JSON
+objects. Schwab might change them at any time, at which point this document will
+become silently out of date. Instead, each of the methods described below
+contains a link to the official documentation. For endpoints that return
+meaningful JSON objects, it includes a JSON schema which describes the return
+value. Please use that documentation or your own experimentation when figuring
+out how to use the data returned by this API.
+ Account Hashes  
+ Many methods of this API are parametrized by account. However, the API does not
+accept raw account numbers, but rather account hashes. You can fetch these
+hashes using the get_account_numbers method (link) . This method provides a mapping from raw account
+number to the account hash that must be passed when referring to that account in
+API calls.
+ Here is an example of how to fetch an account hash and use it to place an order:
+ import atexit 
+ import httpx 
+ from selenium import webdriver 
+ from schwab.auth import easy_client 
+ from schwab.orders.equities import equity_buy_market 
+ def make_webdriver (): 
+ driver = webdriver . Firefox () 
+ atexit . register ( lambda : driver . quit ()) 
+ return driver 
+ c = easy_client ( 
+ token_path = '/path/to/token.json' , 
+ api_key = 'api-key' , 
+ app_secret = 'app-secret' , 
+ callback_url = 'https://callback.com' , 
+ webdriver_func = make_webdriver ) 
+ resp = c . get_account_numbers () 
+ assert resp . status_code == httpx . codes . OK 
+ # The response has the following structure. If you have multiple linked 
+ # accounts, you'll need to inspect this object to find the hash you want: 
+ # [ 
+ # { 
+ # "accountNumber": "123456789", 
+ # "hashValue":"123ABCXYZ" 
+ # } 
+ #] 
+ account_hash = resp . json ()[ 0 ][ 'hashValue' ] 
+ c . place_order ( account_hash , equity_buy_market ( 'AAPL' , 1 )) 
+ Timeout Management  
+ Timeouts for HTTP calls are managed under the hood by the httpx library.
+ schwab-py defaults to 30 seconds, which experience has shown should be more
+than enough to allow even the slowest API calls to complete. A different timeout
+specification can be set using this method:
+ Client. set_timeout ( timeout )  
+ Sets the timeout configuration for this client. Applies to all HTTP 
+calls.
+ Parameters : 
+ timeout – httpx timeout configuration. Passed directly to 
+underlying httpx library. See
+ here for
+examples.
+ Token Age  
+ Client. token_age ( )  
+ Get the age of the token used to create this client, in seconds. For 
+users who prefer to proactively delete their token files before the 
+become expired, this method can offer a hint for when to do so.
+ Note that the actual expiration is governed by Schwab’s internal 
+implementation, and the token might become expired sooner or later 
+than the documented seven day term.
+ Account Info  
+ These methods provide access to useful information about accounts. An incomplete
+list of the most interesting bits:
+ Account balances, including available trading balance
+ Positions
+ Order history
+ See the official documentation for each method for a complete response schema.
+ Client. get_account_numbers ( )  
+ Returns a mapping from account IDs available to this token to the 
+account hash that should be passed whenever referring to that account in 
+API calls.
+ Client. get_account ( account_hash , * , fields = None )  
+ Account balances, positions, and orders for a given account hash..
+ Parameters : 
+ fields – Balances displayed by default, additional fields can be
+added here by adding values from Account.Fields .
+ Client. get_accounts ( * , fields = None )  
+ Account balances, positions, and orders for all linked accounts. Note 
+this method does not return account hashes. See 
+ this method for more detail.
+ Parameters : 
+ fields – Balances displayed by default, additional fields can be
+added here by adding values from Account.Fields .
+ class schwab.client.Client. Account  
+ class Fields ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Account fields passed to get_account() and
+ get_accounts() 
+ POSITIONS = 'positions'  
+ Price History  
+ Schwab provides price history for equities and ETFs. It does not provide price
+history for options, futures, or any other instruments.
+ In the raw API, fetching price history is somewhat complicated: the API offers a
+single endpoint Client.get_price_history() that accepts a complex variety
+of inputs, but fails to document them in any meaningful way.
+ Thankfully, we’ve reverse engineered this endpoint and built some helpful
+utilities for fetching prices by minute, day, week, etc. Each method can be
+called with or without date bounds. When called without date bounds, it returns
+all data available. Each method offers a different lookback period, so make sure
+to read the documentation below to learn how much data is available.
+ Client. get_price_history_every_minute ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a per-minute
+granularity. This endpoint currently appears to return up to 48 days of
+data.
+ Client. get_price_history_every_five_minutes ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a per-five-minutes
+granularity. This endpoint currently appears to return approximately
+nine months of data.
+ Client. get_price_history_every_ten_minutes ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a per-ten-minutes
+granularity. This endpoint currently appears to return approximately
+nine months of data.
+ Client. get_price_history_every_fifteen_minutes ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a per-fifteen-minutes
+granularity. This endpoint currently appears to return approximately
+nine months of data.
+ Client. get_price_history_every_thirty_minutes ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a per-thirty-minutes
+granularity. This endpoint currently appears to return approximately
+nine months of data.
+ Client. get_price_history_every_day ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a daily granularity. 
+The exact period of time over which this endpoint returns data is 
+unclear, although it has been observed returning data as far back as 
+1985 (for AAPL ).
+ Client. get_price_history_every_week ( symbol , * , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Fetch price history for a stock or ETF symbol at a weekly granularity.
+The exact period of time over which this endpoint returns data is 
+unclear, although it has been observed returning data as far back as 
+1985 (for AAPL ).
+ For the sake of completeness, here is the documentation for the raw price
+history endpoint, in all its complexity.
+ Client. get_price_history ( symbol , * , period_type = None , period = None , frequency_type = None , frequency = None , start_datetime = None , end_datetime = None , need_extended_hours_data = None , need_previous_close = None )  
+ Get price history for a symbol.
+ Parameters : 
+ period_type – The type of period to show.
+ period – The number of periods to show. Should not be provided if
+ start_datetime and end_datetime .
+ frequency_type – The type of frequency with which a new candle
+is formed.
+ frequency – The number of the frequencyType to be included in each
+candle.
+ start_datetime – Start date.
+ end_datetime – End date. Default is previous trading day.
+ need_extended_hours_data – If true, return extended hours data.
+Default is true.
+ need_previous_close – If true, return the previous close price and 
+date.
+ class schwab.client.Client. PriceHistory  
+ class Frequency ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ EVERY_MINUTE = 1  
+ EVERY_FIVE_MINUTES = 5  
+ EVERY_TEN_MINUTES = 10  
+ EVERY_FIFTEEN_MINUTES = 15  
+ EVERY_THIRTY_MINUTES = 30  
+ DAILY = 1  
+ WEEKLY = 1  
+ MONTHLY = 1  
+ class FrequencyType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ MINUTE = 'minute'  
+ DAILY = 'daily'  
+ WEEKLY = 'weekly'  
+ MONTHLY = 'monthly'  
+ class Period ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ ONE_DAY = 1  
+ TWO_DAYS = 2  
+ THREE_DAYS = 3  
+ FOUR_DAYS = 4  
+ FIVE_DAYS = 5  
+ TEN_DAYS = 10  
+ ONE_MONTH = 1  
+ TWO_MONTHS = 2  
+ THREE_MONTHS = 3  
+ SIX_MONTHS = 6  
+ ONE_YEAR = 1  
+ TWO_YEARS = 2  
+ THREE_YEARS = 3  
+ FIVE_YEARS = 5  
+ TEN_YEARS = 10  
+ FIFTEEN_YEARS = 15  
+ TWENTY_YEARS = 20  
+ YEAR_TO_DATE = 1  
+ class PeriodType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ DAY = 'day'  
+ MONTH = 'month'  
+ YEAR = 'year'  
+ YEAR_TO_DATE = 'ytd'  
+ Current Quotes  
+ Client. get_quote ( symbol , * , fields = None )  
+ Get quote for a symbol. Note due to limitations in URL encoding, this
+method is not recommended for instruments with symbols symbols
+containing non-alphanumeric characters, for example as futures like
+ /ES . To get quotes for those symbols, use Client.get_quotes() .
+ Parameters : 
+ symbol – Single symbol to fetch
+ fields – Fields to request. If unset, return all available data. 
+i.e. all fields. See GetQuote.Field for options.
+ Client. get_quotes ( symbols , * , fields = None , indicative = None )  
+ Get quote for a symbol. This method supports all symbols, including
+those containing non-alphanumeric characters like /ES .
+ Parameters : 
+ symbols – Iterable of symbols to fetch.
+ fields – Fields to request. If unset, return all available data. 
+i.e. all fields. See GetQuote.Field for options.
+ Option Chains  
+ Unfortunately, option chains are well beyond the ability of your humble author.
+You are encouraged to read the official API documentation to learn more.
+ If you are knowledgeable enough to write something more substantive here,
+please follow the instructions in Contributing to schwab-py to send in a patch.
+ Client. get_option_chain ( symbol , * , contract_type = None , strike_count = None , include_underlying_quote = None , strategy = None , interval = None , strike = None , strike_range = None , from_date = None , to_date = None , volatility = None , underlying_price = None , interest_rate = None , days_to_expiration = None , exp_month = None , option_type = None , entitlement = None )  
+ Get option chain for an optionable Symbol.
+ Parameters : 
+ contract_type – Type of contracts to return in the chain. See
+ Options.ContractType for choices.
+ strike_count – The number of strikes to return above and below
+the at-the-money price.
+ include_underlying_quote – Include a quote for the underlying 
+alongside the options chain?
+ strategy – If passed, returns a Strategy Chain. See
+ Options.Strategy for choices.
+ interval – Strike interval for spread strategy chains (see
+ strategy param).
+ strike – Return options only at this strike price.
+ strike_range – Return options for the given range. See
+ Options.StrikeRange for choices.
+ from_date – Only return expirations after this date. For
+strategies, expiration refers to the nearest term
+expiration in the strategy. Accepts datetime.date .
+ to_date – Only return expirations before this date. For
+strategies, expiration refers to the nearest term
+expiration in the strategy. Accepts datetime.date .
+ volatility – Volatility to use in calculations. Applies only to
+ ANALYTICAL strategy chains.
+ underlying_price – Underlying price to use in calculations.
+Applies only to ANALYTICAL strategy chains.
+ interest_rate – Interest rate to use in calculations. Applies only
+to ANALYTICAL strategy chains.
+ days_to_expiration – Days to expiration to use in calculations.
+Applies only to ANALYTICAL strategy
+chains
+ exp_month – Return only options expiring in the specified month. See
+ Options.ExpirationMonth for choices.
+ option_type – Types of options to return. See
+ Options.Type for choices.
+ entitlement – Entitlement of the client.
+ class schwab.client.Client. Options  
+ class ContractType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ CALL = 'CALL'  
+ PUT = 'PUT'  
+ ALL = 'ALL'  
+ class Entitlement ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ PAYING_PRO = 'PP'  
+ NON_PRO = 'NP'  
+ NON_PAYING_PRO = 'PN'  
+ class ExpirationMonth ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ JANUARY = 'JAN'  
+ FEBRUARY = 'FEB'  
+ MARCH = 'MAR'  
+ APRIL = 'APR'  
+ MAY = 'MAY'  
+ JUNE = 'JUN'  
+ JULY = 'JUL'  
+ AUGUST = 'AUG'  
+ SEPTEMBER = 'SEP'  
+ OCTOBER = 'OCT'  
+ NOVEMBER = 'NOV'  
+ DECEMBER = 'DEC'  
+ ALL = 'ALL'  
+ class Strategy ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ SINGLE = 'SINGLE'  
+ ANALYTICAL = 'ANALYTICAL'  
+ COVERED = 'COVERED'  
+ VERTICAL = 'VERTICAL'  
+ CALENDAR = 'CALENDAR'  
+ STRANGLE = 'STRANGLE'  
+ STRADDLE = 'STRADDLE'  
+ BUTTERFLY = 'BUTTERFLY'  
+ CONDOR = 'CONDOR'  
+ DIAGONAL = 'DIAGONAL'  
+ COLLAR = 'COLLAR'  
+ ROLL = 'ROLL'  
+ class StrikeRange ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ IN_THE_MONEY = 'ITM'  
+ NEAR_THE_MONEY = 'NTM'  
+ OUT_OF_THE_MONEY = 'OTM'  
+ STRIKES_ABOVE_MARKET = 'SAK'  
+ STRIKES_BELOW_MARKET = 'SBK'  
+ STRIKES_NEAR_MARKET = 'SNK'  
+ ALL = 'ALL'  
+ class Type ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ STANDARD = 'S'  
+ NON_STANDARD = 'NS'  
+ ALL = 'ALL'  
+ Instrument Searching and Fundamentals  
+ Client. get_instruments ( symbols , projection )  
+ Get instrument details by using different search methods. Also used 
+to get fundamental instrument data by use of the FUNDAMENTAL 
+projection.
+ Parameters : 
+ symbol – For FUNDAMENTAL projection, the symbol for which to 
+get fundamentals. For other projections, a search term. 
+See below for details.
+ projection – Search mode, or FUNDAMENTAL for instrument 
+fundamentals. See Instrument.Projection .
+ This method is a bit of a chimera because it supports both symbol 
+search and fundamentals lookup. The format and interpretation of the 
+ symbol parameter differs according ot the value of the 
+ projection parameter:
+ projection value
+ Accepted values of symbol 
+ symbol interpretation
+ SYMBOL_SEARCH 
+ String, or array of strings
+ Symbols for which to search results
+ SYMBOL_REGEX 
+ Single string
+ Regular expression to match against symbols
+ DESCRIPTION_SEARCH 
+ Single string
+ String to search for in symbol description
+ DESCRIPTION_REGEX 
+ Single string
+ Regex to search for in symbol description
+ SEARCH 
+ Single string
+ Regular expression to match against symbols
+ FUNDAMENTAL 
+ String, or array of strings
+ Symbols for which to return fundamentals. Exact match.
+ Client. get_instrument_by_cusip ( cusip )  
+ Get instrument information for a single instrument by CUSIP.
+ Parameters : 
+ cusip – String representing CUSIP of instrument for which to fetch 
+data. Note leading zeroes must be preserved.
+ class schwab.client.Client. Instrument  
+ class Projection ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ SYMBOL_SEARCH = 'symbol-search'  
+ SYMBOL_REGEX = 'symbol-regex'  
+ DESCRIPTION_SEARCH = 'desc-search'  
+ DESCRIPTION_REGEX = 'desc-regex'  
+ SEARCH = 'search'  
+ FUNDAMENTAL = 'fundamental'  
+ Orders  
+ Placing New Orders  
+ Placing new orders can be a complicated task. The Client.place_order() 
+method is used to create all orders, from equities to options. The precise order
+type is defined by a complex order spec. Schwab provides some example order
+specs to illustrate the process and provides a schema in the place order
+documentation ,
+but beyond that we’re on our own.
+ schwab-api includes some helpers, described in Order Templates , which
+provide an incomplete utility for creating various order types. While it only
+scratches the surface of what’s possible, we encourage you to use that module
+instead of creating your own order specs.
+ Client. place_order ( account_hash , order_spec )  
+ Place an order for a specific account. If order creation was
+successful, the response will contain the ID of the generated order. See
+ schwab.utils.Utils.extract_order_id() for more details. Note unlike
+most methods in this library, responses for successful calls to this
+method typically do not contain json() data, and attempting to
+extract it will likely result in an exception.
+ Accessing Existing Orders  
+ Client. get_orders_for_account ( account_hash , * , max_results = None , from_entered_datetime = None , to_entered_datetime = None , status = None )  
+ Orders for a specific account. Optionally specify a single status on 
+which to filter.
+ Parameters : 
+ max_results – The maximum number of orders to retrieve.
+ from_entered_datetime – Specifies that no orders entered before
+this time should be returned. Date must
+be within 60 days from today’s date.
+ toEnteredTime must also be set.
+ to_entered_datetime – Specifies that no orders entered after this
+time should be returned. fromEnteredTime 
+must also be set.
+ status – Restrict query to orders with this status. See
+ Order.Status for options.
+ statuses – Restrict query to orders with any of these statuses.
+See Order.Status for options.
+ Client. get_orders_for_all_linked_accounts ( * , max_results = None , from_entered_datetime = None , to_entered_datetime = None , status = None )  
+ Orders for all linked accounts. Optionally specify a single status on 
+which to filter.
+ Parameters : 
+ max_results – The maximum number of orders to retrieve.
+ from_entered_datetime – Specifies that no orders entered before
+this time should be returned. Date must
+be within 60 days from today’s date.
+ toEnteredTime must also be set.
+ to_entered_datetime – Specifies that no orders entered after this
+time should be returned. fromEnteredTime 
+must also be set.
+ status – Restrict query to orders with this status. See
+ Order.Status for options.
+ Client. get_order ( order_id , account_hash )  
+ Get a specific order for a specific account by its order ID
+ class schwab.client.Client. Order  
+ class Status ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Order statuses passed to get_orders_for_account() and
+ get_orders_for_all_linked_accounts() 
+ AWAITING_PARENT_ORDER = 'AWAITING_PARENT_ORDER'  
+ AWAITING_CONDITION = 'AWAITING_CONDITION'  
+ AWAITING_STOP_CONDITION = 'AWAITING_STOP_CONDITION'  
+ AWAITING_MANUAL_REVIEW = 'AWAITING_MANUAL_REVIEW'  
+ ACCEPTED = 'ACCEPTED'  
+ AWAITING_UR_OUT = 'AWAITING_UR_OUT'  
+ PENDING_ACTIVATION = 'PENDING_ACTIVATION'  
+ QUEUED = 'QUEUED'  
+ WORKING = 'WORKING'  
+ REJECTED = 'REJECTED'  
+ PENDING_CANCEL = 'PENDING_CANCEL'  
+ CANCELED = 'CANCELED'  
+ PENDING_REPLACE = 'PENDING_REPLACE'  
+ REPLACED = 'REPLACED'  
+ FILLED = 'FILLED'  
+ EXPIRED = 'EXPIRED'  
+ NEW = 'NEW'  
+ AWAITING_RELEASE_TIME = 'AWAITING_RELEASE_TIME'  
+ PENDING_ACKNOWLEDGEMENT = 'PENDING_ACKNOWLEDGEMENT'  
+ PENDING_RECALL = 'PENDING_RECALL'  
+ UNKNOWN = 'UNKNOWN'  
+ Editing Existing Orders  
+ Endpoints for canceling and replacing existing orders.
+ These endpoints require the order ID. Because the API does not return a JSON
+response when creating an order, the workflow for extracting this order ID is a
+little complicated. You can fetch the order ID from the response to a
+ place_order request using this
+helper function . Otherwise, see
+ Accessing Existing Orders to finding historical orders.
+ Client. cancel_order ( order_id , account_hash )  
+ Cancel a specific order for a specific account
+ Client. replace_order ( account_hash , order_id , order_spec )  
+ Replace an existing order for an account. The existing order will be
+replaced by the new order. Once replaced, the old order will be canceled
+and a new order will be created.
+ Other Endpoints  
+ Note If your account limited to delayed quotes, these quotes will also be
+delayed.
+ Transaction History  
+ Client. get_transaction ( account_hash , transaction_id )  
+ Transaction for a specific account.
+ Parameters : 
+ account_hash – Account hash corresponding to the account whose 
+transactions should be returned.
+ transaction_id – ID of the transaction for which to return to 
+return data.
+ Client. get_transactions ( account_hash , * , start_date = None , end_date = None , transaction_types = None , symbol = None )  
+ Transaction for a specific account.
+ Parameters : 
+ account_hash – Account hash corresponding to the account whose 
+transactions should be returned.
+ start_date – Only transactions after this date will be returned.
+Date must be within 60 days of the current date. If 
+this parameter is not set, it will be set to 60 days 
+prior to now.
+Accepts datetime.date and datetime.datetime .
+ end_date – Only transactions before this date will be returned. If 
+this parameter is not set, it will be set to the 
+current time.
+Accepts datetime.date and datetime.datetime .
+ transaction_types – Only transactions with one of the specified 
+types will be returned.
+ symbol – Only transactions with the specified symbol will be
+returned.
+ class schwab.client.Client. Transactions  
+ class TransactionType ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ TRADE = 'TRADE'  
+ RECEIVE_AND_DELIVER = 'RECEIVE_AND_DELIVER'  
+ DIVIDEND_OR_INTEREST = 'DIVIDEND_OR_INTEREST'  
+ ACH_RECEIPT = 'ACH_RECEIPT'  
+ ACH_DISBURSEMENT = 'ACH_DISBURSEMENT'  
+ CASH_RECEIPT = 'CASH_RECEIPT'  
+ CASH_DISBURSEMENT = 'CASH_DISBURSEMENT'  
+ ELECTRONIC_FUND = 'ELECTRONIC_FUND'  
+ WIRE_OUT = 'WIRE_OUT'  
+ WIRE_IN = 'WIRE_IN'  
+ JOURNAL = 'JOURNAL'  
+ MEMORANDUM = 'MEMORANDUM'  
+ MARGIN_CALL = 'MARGIN_CALL'  
+ MONEY_MARKET = 'MONEY_MARKET'  
+ SMA_ADJUSTMENT = 'SMA_ADJUSTMENT'  
+ User Preferences  
+ Client. get_user_preferences ( )  
+ Preferences for the logged in account, including all linked
+accounts.
+ Market Movers  
+ Client. get_movers ( index , * , sort_order = None , frequency = None )  
+ Get a list of the top ten movers for a given index.
+ Parameters : 
+ index – Category of mover. See Movers.Index for valid 
+values.
+ sort_order – Order in which to return values. See 
+ Movers.SortOrder for valid values 
+ frequency – Only return movers that saw this magnitude or greater. 
+See Movers.Frequency for valid values.
+ class schwab.client.Client. Movers  
+ class Frequency ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ To return movers with the specified directions of up or down
+ ZERO = 0  
+ ONE = 1  
+ FIVE = 5  
+ TEN = 10  
+ THIRTY = 30  
+ SIXTY = 60  
+ class Index ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ DJI = '$DJI'  
+ COMPX = '$COMPX'  
+ SPX = '$SPX'  
+ NYSE = 'NYSE'  
+ NASDAQ = 'NASDAQ'  
+ OTCBB = 'OTCBB'  
+ INDEX_ALL = 'INDEX_ALL'  
+ EQUITY_ALL = 'EQUITY_ALL'  
+ OPTION_ALL = 'OPTION_ALL'  
+ OPTION_PUT = 'OPTION_PUT'  
+ OPTION_CALL = 'OPTION_CALL'  
+ class SortOrder ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ Sort by a particular attribute
+ VOLUME = 'VOLUME'  
+ TRADES = 'TRADES'  
+ PERCENT_CHANGE_UP = 'PERCENT_CHANGE_UP'  
+ PERCENT_CHANGE_DOWN = 'PERCENT_CHANGE_DOWN'  
+ Market Hours  
+ Client. get_market_hours ( markets , * , date = None )  
+ Retrieve market hours for specified markets
+ Parameters : 
+ markets – Markets for which to return trading hours.
+ date – Date for which to return market hours. Accepts values up to 
+one year from today. Accepts datetime.date .
+ class schwab.client.Client. MarketHours  
+ class Market ( value , names=<not given> , *values , module=None , qualname=None , type=None , start=1 , boundary=None )  
+ EQUITY = 'equity'  
+ OPTION = 'option'  
+ BOND = 'bond'  
+ FUTURE = 'future'  
+ FOREX = 'forex'  
+ Previous 
+ Next 
+ © Copyright 2024, Alex Golec.
+ Built with Sphinx using a
+ theme 
+ provided by Read the Docs .
+ 
