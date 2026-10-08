@@ -75,7 +75,9 @@ LOG_FILE = ROOT / "logs/refresh_equity_book_live.log"
 BACKUP_ROOT = ROOT / "data/live/backup-refresh"
 STAGE_ROOT = FEATURES / "_refresh_tmp"
 VENDOR_REVISION_SYMBOLS = FEATURES / "_t02_stage/vendor_revision_symbols.txt"
-CAPPED = ["scripts/run_capped.sh", "--mem", "1.8G", "--"]
+# --class paper: this feeds the paper book, so run_capped neither queues nor refuses it (the
+# research class refuses --mem above 1.2G since 10-07, which stopped the 10-07 22:45 refresh)
+CAPPED = ["scripts/run_capped.sh", "--class", "paper", "--mem", "1.8G", "--"]
 PY = ["uv", "run", "python"]
 NEW_YORK = ZoneInfo("America/New_York")
 
