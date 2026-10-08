@@ -1886,6 +1886,7 @@
 
   - 2026-10-05 05:56 UTC 执行轮 2c717355（子代理 sonnet-high，提交 ebee03d）：`reports/research/program/forward-record-2026-10-06/` 的 record.csv（122 行）、summary.json、hash_chain.jsonl（90 行，子代理独立重算 0 断链）、README.md（含四档衰减规则草案，阈值全部"待主审校准"）已提交；脚本 `scripts/forward_record_t70.py` + `tests/test_forward_record_t70.py` 测试通过。S1–S3、C2 三段齐全（累计收益 设计时看过/影子/模拟盘：S1 +0.91%/+0.28%/+1.55%；S2 +0.52%/+0.71%/+3.50%；S3 −1.48%/−0.15%/+1.70%；C2（冻结 09-25）+0.48%/−0.67%/+0.39%；数字取自 summary.json，子代理报告，我抽查了文件结构，未逐项重算）。F1/F2/T-43 只有 09-01..09-15 设计时看过段（F1 +0.27%、F2 −1.42%、T-43 −1.55%）。v1.2 影子重跑（读 live 根，写 /tmp）因机器负载 8–15、本进程只拿到 6 CPU 分钟/90 分钟，没跑完，已停；续跑命令：`scripts/run_capped.sh --mem 1.0G -- uv run python scripts/forward_record_t70.py book`，完成后 `uv run python scripts/forward_record_t70.py assemble /tmp/t70_notes.md`（备注文件 /tmp 下，丢了就重写）。发现：(1) S3 九月差是数据翻转（修复后 SIP 档案持 SHY、模拟盘持 UPRO，T-55 §1），不是执行；(2) S2/S3 的波动叠加 09-24 才进模拟盘（预注册 09-22），09-21..09-23 的跟踪差是规则差，严格说 S2/S3 影子日 09-18 也算看过；(3) 每个 sleeve 的 `reports/execution/*-target-weights.json` 每天被覆盖，哈希链只覆盖最新状态，要每日存档需改模拟盘管线（未动）；(4) 预修复档案只到 09-17，修复前 S3 信号的跟踪差分解没做。本机负载高，10-06 22:00 前续跑 F1/F2/T-43 需要在安静时段。待主审。
   - 2026-10-05 07:56 UTC 07:07 主审轮（Opus）审核：从 record.csv 逐段重算累计收益，S1–S3、C2 全部与 summary.json 一致（S1 +0.91%/+0.28%/+1.55%，S2 +0.52%/+0.71%/+3.50%，S3 −1.48%/−0.15%/+1.70%，C2 +0.48%/−0.67%/+0.39%）；S3 前向 z（全期 −0.03、近期 −0.23）在噪声内，模拟盘段波动 26.0% 对影子 12.4% 来自 T-55 的数据翻转（模拟盘持 UPRO、修复后档案持 SHY）。已交部分接受。剩余：下一执行轮在本机安静时续跑 `scripts/run_capped.sh --mem 1.0G -- uv run python scripts/forward_record_t70.py book`，再 `uv run python scripts/forward_record_t70.py assemble /tmp/t70_notes.md`（备注文件丢了就按 README 的"发现的问题"重写）。衰减规则四档阈值的校准、目标权重文件每日存档（哈希链只覆盖最新状态，要改模拟盘管线）交 19:07 主审轮（P4）和交互会话；S2/S3 的 09-18 影子日按严格口径也算看过，已在 README 注明。
+  - 2026-10-08 04:41 UTC 交互会话（Opus 99e00fc9）：机主 10-08 决定给不了高夏普就不上实盘，“实盘快速通道”被取代（`docs/owner-rules-register.zh.md` 10-08 行）。拼接的前向记录本身照常延长，以后每周记分牌要用；不再作为实盘试点的前置。怎么并进记分牌，等机主看过 `reports/owner/global-review-2026-10-08.zh.md` 后由主会话排。
 ### T-20261004-71 实盘快速通道 A3：v1.2 在实盘资金下的容量（集中版预注册）
 - status: done（2026-10-05 06:07 UTC 交互会话审核通过并提交）
 - priority: 1
@@ -1908,6 +1909,7 @@
 - done_when: 清单、代码、测试、`docs/runbook-live-pilot.zh.md`；**10-12 前**（取决于授权时间）。
 - notes:
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。CLAUDE.md 现写明实盘写入不在范围内，必须机主明确改。
+  - 2026-10-08 04:41 UTC 交互会话：机主 10-08 决定未过高夏普门槛不上实盘，实盘待定事项推迟（`reports/owner/live-track.json` 的 owner_decisions_postponed）。本任务保持 blocked，不推进。
 
 ### T-20261004-73 看板改版：首页按四个问题重排，新增报告中心 /reports
 - status: done（2026-10-04 18:41 UTC 交互会话验收：29881ef 已上线，/healthz 200，/、/reports、/paper、/research 均 200，首页热缓存约 0.3 秒；看过手机深色截图，四个问题按顺序回答。小问题：整页截图里底部导航条压住了钱那一块，需要在真机确认，留到第二轮）
@@ -2748,3 +2750,4 @@
 - done_when: `reports/live-shadow/` 下 spec、ledger、orders、summary、README（lint 0 错误）、replay；`scripts/live_shadow.py` 和测试；交互会话审核后装每天的定时任务。10-09 18:00 UTC 前。
 - notes:
   - 2026-10-08 02:38 UTC 交互会话（Opus 99e00fc9）登记。
+  - 2026-10-08 04:41 UTC 交互会话：代理 04:0x 交付第 0–5 步（第 0 步 5a4ae22；账户 P 09-01 至 10-07 +3.08%，最大回撤 −0.39%）。冲突的决定：账户 P 按试点规格只用账户线和 z 值；S3 规格的 25% 子策略退出是模拟盘授权规则，任务书误带进来，改成敏感性账户 P-sleeve-exit。这个决定是在看到回放之后做的，依据是 10-07 已定稿的试点规格。只用账户线时，近期 2024-01-08 至 10-07 为 +188.2%（月末单一调仓日，年化 47.2%，夏普 1.78，最大回撤 −14.6%）；带子策略退出为 +27.4%（2024-08-05 触发后一直空仓）；四段回放里账户线都没触发。追加：开户规则、S1/S2/C2 一致率、README 措辞，期限 10-08 12:00。机主 10-08 取消实盘试点，本任务是模拟，照做，改作将来上实盘前的前向记录。
