@@ -2127,6 +2127,7 @@
   - 2026-10-07 05:37 UTC 执行轮（Sonnet）按简报 addendum A 在 Modal 跑完（约 592 s，花费约 $0.06，本月 billed 1.6083）。提交 b009505：scripts/p1_stage0_decay.py、tests/test_p1_stage0_decay.py、t20261005_p1_s0_decay/{results.json,report.md,trial-ledger.json,identity.json}。验收：mechanical_status=measured_promotions；恒等 max abs diff 0.0（2250 天）；ON5、ID5 符号均 -1（压力期 CIC -0.0149、-0.0107，固定于 05:19:42Z，先于近期窗首次取数）；73 个对象、7 种速度+MOO、台账 70 行、data_checks 最大 trade_date 2026-09-17。单信号无一过 BH（最好 ON5 t 1.49、q 0.25）；合成：FC_EW information_ok 且 net_ok（CIC(2..6) t 3.12、κ* k0.1、净夏普 0.45、安慰剂名次 1/21），FC_WF252、FC_WF63 未过 information_ok；m0_composite κ* k0.05 近期净夏普 0.90。注意：所有对象 MDE 均 >0.01（REV5 0.036），全部标 underpowered；安慰剂逐日独立洗牌，门槛偏低。待主审。
   - 2026-10-06 16:08–16:27 UTC 执行轮（Sonnet）未取到：简报第 0 步要求可用内存 ≥ 2500 MB，实测 1809–1899 MB（本轮自身代理在内，交互和主审会话也占着），等了约 20 分钟未满足，退回 ready，没写任何产物。需要主审轮决定：放宽内存门槛，或在没有别的代理会话时跑。
   - 2026-10-05 01:33 UTC 01:07 主审轮（Opus）登记。第二版计划草稿 P1 阶段 0，即第一版计划 C2（10-09 前出第一批结果）。10-06 01:07 主审轮审核，并按结果写第 2 阶段合同（快腿进 v1.2 构造）或转阶段 1（学习式残差信号）。
+  - 2026-10-08 03:59 UTC 交互会话：10-08 01:07 的主审轮在写阶段 1（DLSA）的预注册档案，01:53 守护进程重启时被杀，没写日志，也没提交；01:55 闸门把它的锁挪成 `round.lock.dead`。留在工作区的文件：`reports/research/iterations/t20261008_p1_s1_dlsa/`、`scripts/p1s1_make_dossier.py`、来源卡 `reports/harness/source_cards/t20261008_p1_s1_dlsa.jsonl`、快照 `reports/research/intel/sources/p1-s1-dlsa-2026-10-08/`。下一轮主审从这些文件接着做：先在队列登记任务，再跑 direction-check 和 validate。
 
 ### T-20261005-02 v1.2 首单前核实：收盘竞价单（time_in_force=cls）在 quant1/quant2 模拟账户能否被接受并成交（数据坑 #55）
 - status: done（交互会话 2026-10-05 20:19 UTC：两户都接受 cls 单。quant1 买 1 股 SPY 在 19:59:59Z 成交，$774.78；quant2 卖空 1 股 AAPL 在 20:01:13Z 过期，成交 0。按 Alpaca 员工说明（论坛 19155 帖），这是模拟盘随机部分成交、剩余在收盘后过期的行为，不是拒单。数据坑 #55 和开始清单第 10 节 E2 已更新，`--tif-mode market` 已写好并测试，首单用哪种单在 10-06 第二次彩排后决定。10-06 18:50 的平仓探针照常：quant1 卖 1 股 SPY，因为持有 +1；quant2 不会发单，因为没有持仓）
@@ -2213,7 +2214,7 @@
   - 2026-10-06 14:21 UTC 交互会话：报告第 5 节的两条 cron 原样装上（19:40、20:40 UTC 周一到周五；crontab 备份 `/tmp/lead/crontab.bak.20261006T142105Z`），今天 19:40 UTC（美东 15:40）第一次定时运行。用的是 `.env` 里主模拟账户的数据密钥，和 quant1/quant2 的下单密钥分开限速，不会和 19:30 起的 v1.2 下单抢额度。Drive 任务 `options-push`：push 类型，只增不删，每天 00:00 UTC，`data/options` → `datasets/options`，已手动先跑一次。文件名每个分区固定，所以定时运行替换手动运行的那天时，Drive 上会被覆盖；只有手动运行有、定时运行没有的代码，会在 Drive 上留旧文件，只影响 10-06 这一天。
 
 ### T-20261005-34 P5 研究门补强：跨项目试验总数、语义查重和族配额、盈亏平衡成本、门槛变更留痕
-- status: ready（定时执行轮可取）
+- status: partial（10-06 17:03 执行轮开始，没做完、没提交；2026-10-08 03:59 UTC 交互会话核对，等主审轮决定）
 - priority: 2
 - not_before: 无
 - goal: 深挖和进化式搜索会大量增加试验，最容易自欺。按第二版计划第 3.5 节第 3 条、第 2 节第 4 条，在 `oc research iteration` 门里补四项；已有的试验台账、候选去重、最终回执、锁箱不重做。
@@ -2222,9 +2223,10 @@
 - brief: reports/research/control/briefs/T-20261005-34.md
 - notes:
   - 2026-10-05 06:52 UTC 交互会话（Opus）登记。
+  - 2026-10-08 03:59 UTC 交互会话（Opus 99e00fc9）核对：没有代理在做这项。10-06 17:08–17:10 写下的 `open_composer/research/gate_additions.py`、`config/research-gate-additions.json`、`config/evaluation-standard-changelog.jsonl`、`tests/test_gate_additions.py`，以及 `open_composer/research/iteration_dossier.py`、`repo_check.py`、`cli.py` 里的接入，都没提交。它们已经在共享工作区生效：10-06 以后登记的迭代跑 `oc research iteration validate`，用的就是这段没审过的门槛代码。主审轮先跑 `tests/test_gate_additions.py`，再对已有迭代做 validate 回归（简报要求结果不变）；过了就按简报补完、提交，不过就把这些改动挪到 worktree 分支，工作区恢复成 HEAD。同一工作区里 `scripts/run_capped.sh`、`scripts/round_limit_gate.py`、`tests/conftest.py` 等的未提交改动属于内存管理会话，不要一起动。
 
 ### T-20261005-35 旧否定的功效复查（只追加）和外部负面证据登记
-- status: ready（定时执行轮可取）
+- status: done（待主审；执行轮子代理 2026-10-06 17:19 UTC 已提交 3ef67ae，队列当时没更新）
 - priority: 2
 - not_before: 无
 - goal: 按 P-1，凡是按单一规格或功效不足判的否定，追加"未到深度"记录和当时的最小可检出效应；外部负面证据（I-08 第 6 项）登记进方向登记。
@@ -2233,6 +2235,7 @@
 - brief: reports/research/control/briefs/T-20261005-35.md
 - notes:
   - 2026-10-05 06:52 UTC 交互会话（Opus）登记。来源：第二版计划第 2 节第 8 条、第 3.5 节第 6 项。
+  - 2026-10-08 03:59 UTC 交互会话核对：交付在 3ef67ae，即 `reports/research/program/power-reaudit-2026-10-08/` 下的 audit.json、report.md、compute.py、apply_registry.py，外加登记簿追加和 `tests/test_harvest_registry.py`；复查 111 条否定，追加 3 条外部负面证据。等主审轮审核。
 
 ### T-20261005-36 调研一页纸四份：小资金多空构造、基金内部日报、期权隐含选股信号、加密和盘后隔夜
 - status: done（四份调研全部交付并审核，2026-10-05）
