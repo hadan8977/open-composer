@@ -1,3 +1,7 @@
+机主2026-10-13现行方法入口（优先于下文旧模型默认、固定研究轮与逐次复核要求）：先读 `docs/task-owned-research.zh.md`，角色单处配置为 `config/research-agent-roles.json`；Astra/xhigh 写详细完整 brief 与最终判断，Sol/xhigh 独立拥有完整执行任务，Sol 整理既有证据并按原路线汇报。旧固定 Astra 研究轮退役，恢复也不按旧周期重启。
+
+首先核对 `reports/research/control/owner-compute-hold.json`。当前全部研究、训练、代理、自动研究与报告生成暂停；缺失或不可读不能自动启动，仅机主明确恢复的范围可继续。本次明确授权的方法维护与 GitHub 发布不解除暂停、不启动经济工作或设备；已完成结果、原生断点、累计预算/试验、冻结标准和既有模拟盘授权保留。历史正文保留供追溯，冲突时以此入口和现行方法为准。
+
 # 研究使命与工作方式
 
 用户于 2026-09-21 重申；Codex、Claude Code 和后台研究任务共用。新会话先读本文件，再读 `docs/current-view.zh.md` 的最新日期章节。

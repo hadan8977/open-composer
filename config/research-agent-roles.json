@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "updated_at_utc": "2026-10-13",
+  "purpose": "Single model mapping for task-owned research; declarative configuration, not proof of runtime activation.",
+  "authorization": "Owner-authorized method maintenance only; research/training/agents/schedules/report generation remain paused until explicit scoped owner resume.",
+  "pause_authority": "reports/research/control/owner-compute-hold.json",
+  "missing_or_unreadable_hold": "do_not_autostart; record concrete gap",
+  "method": "docs/task-owned-research.zh.md",
+  "startup": {
+    "settings": {
+      "modeId": "full-access"
+    },
+    "set_and_read_back_once": [
+      "provider",
+      "effectiveThinkingOptionId"
+    ],
+    "verify_if_exposed": [
+      "currentModeId",
+      "runtimeInfo.modeId"
+    ],
+    "unsupported_or_unreadable": "record actual limitation; do not claim verified activation; do not launch merely to verify"
+  },
+  "roles": {
+    "decision": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Detailed complete task brief, important choices and final evidence-based decision; event-driven role, not periodic standby.",
+      "prompt": "prompts/continuous-alpha-lead.zh.md"
+    },
+    "execution": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "One logical owner completes preparation, implementation, ordinary repair, empirical evaluation, explanation and resumable handoff within admitted scope.",
+      "prompt": "prompts/continuous-alpha-execution.zh.md"
+    },
+    "scientific_review": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Independent important scientific plan/result review; separate from execution authorship and final Astra decision; not per-fix approval."
+    },
+    "reporting": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Report verified existing artifacts through the existing single hub and mail route; no new experiments or substituted final decisions.",
+      "prompts": [
+        "prompts/owner-daily-weekly-writer.zh.md",
+        "prompts/owner-report-dispatch.zh.md",
+        "prompts/owner-report-hub.zh.md"
+      ],
+      "runtime_route_dependencies": [
+        "config/owner-reporting.json",
+        "config/autonomous-report-target.json"
+      ]
+    }
+  },
+  "astra_notification_triggers": [
+    "meaningful_actual_result",
+    "material_blocker",
+    "material_scientific_input_or_evaluation_change",
+    "budget_or_permission_change",
+    "owner_requested_decision"
+  ],
+  "ordinary_progress_or_repair": "save small task state; do not repeatedly notify Astra or create polling turns",
+  "retired_schedules": "Old fixed Astra/research rounds remain retired on future resume; preserve three existing Sol reporting cadences only within explicit resume scope.",
+  "evolution": "Revise mapping from complete-task quality, empirical outcome and time/cost evidence as models improve; preserve historical science, cumulative exposure, budgets and device/order boundaries."
+}
