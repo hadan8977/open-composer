@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "version_id": "host-forward-v1-20261014",
+  "year": 2026,
+  "anchor_end": "2026-10-07",
+  "version_directory": "data/features/_forward_v1",
+  "archive_source_root": ".",
+  "activation_requires_Root_independent_acceptance": true,
+  "tables": {
+    "daily": {
+      "anchor_sha256": "2dc3646256036d600152900eb1625fc5cd5495aab4fb6f9485b0ce2a4f7db729",
+      "anchor_end": "2026-10-07"
+    },
+    "daily_broad": {
+      "anchor_sha256": "5f7a8ae15a908af08843b3337ae436baa6c6f2fb80c32dd2b5c12243e9cd28b1",
+      "anchor_end": "2026-10-07"
+    },
+    "sec_fundamentals_daily": {
+      "anchor_sha256": "a6d62f77cb6b346662b9871659a7034e6c1844acae93c0edb05f246b2c9ec8fc",
+      "anchor_end": "2026-10-07"
+    },
+    "nsi": {
+      "anchor_sha256": "1d5e05e8e6ae2d6a55f310ff5d2cad72670ab9a0545a1a5ac788789b0a4e7771",
+      "anchor_end": "2026-10-07"
+    },
+    "insider_broad": {
+      "anchor_sha256": "407fc9e93c1fa46e19faf5bb129600d60852f955c4a4c961573a93f653405912",
+      "anchor_end": "2026-10-07"
+    },
+    "short_volume_broad": {
+      "anchor_sha256": "8b70ef814f78577179e5efa0c45d9976cecd9c48bcced1ec8a2eef593b896cd5",
+      "anchor_end": "2026-10-08"
+    },
+    "short_interest": {
+      "anchor_sha256": "4c50af0d0ed1f7a207a34ff37f70690280a3db95ca61b316eb5ad95872cad288",
+      "anchor_end": "2026-10-07"
+    },
+    "news_attention": {
+      "anchor_sha256": "74eb58fef9fbe2d424cfa436c4c48c374c19b2ed4a4449deac2ec778a4b94fc6",
+      "anchor_end": "2026-10-07"
+    }
+  },
+  "source_corrections": {
+    "AZN_manifest": "reports/research/program/day-goal-20261011-2/host-freshness-repair/recovery-preparation/quarantine-manifest.json",
+    "AZN_manifest_sha256": "3f1b6b603b2793bed8444559213103eafa2eb65bdd98ad2e257155ee14c93f21",
+    "canonical69": "reports/research/program/day-goal-20261011-2/host-exact-observation-materialization/canonical-observations.parquet",
+    "canonical69_sha256": "75c3c579d5a80e595d679f48092f039b60b15b163ab2c3a5a208eec78aff026e",
+    "canonical_input_paths": [
+      "data/sip/daily/2026/shard-0397.parquet",
+      "data/sip-delisted/by_year/2026/delisted-broad-batch-0226.parquet"
+    ]
+  },
+  "legacy_whole_panel_pass": null,
+  "preserve_pre2026_feature_products": true,
+  "strategy_parameter_changes": 0,
+  "manual_broker_writes_allowed": false,
+  "scope": "Root-review candidate: exact published price and required daily dependency prefixes; no changed strategy/risk/selection formulas",
+  "readers": {
+    "reader-panel-2026": {
+      "anchor_sha256": "05e3f50109fa524c513f868d4b0a0b7d2d636134a8f78c372c34a42a4e764c31",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/panel/2026.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-prices-2026": {
+      "anchor_sha256": "c80acb13af437c46c33772136a8514ee665cbc68f7ce8505b0a3ba3fa21a6746",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/prices/2026.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-etf_daily": {
+      "anchor_sha256": "9a8117de45ae297dc92bba7b9010e66b40d36b70d18cffa6d94ae7b1d6a5a3b3",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/etf_daily.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-signals-2026": {
+      "anchor_sha256": "ad66bba1e1287de0b38cfff3dac191139bbff872bb9361d31b1a6da2406b8901",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/signals/2026.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-alpha-book_v1-themes_2026": {
+      "anchor_sha256": "8bdedf1b7b511986ce02e139d7fad46fd5a12d38bd7b33b13bfd15aefeab16f3",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/alpha/book_v1/themes_2026.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-risk-factor_returns_2026": {
+      "anchor_sha256": "7b63cb52c009d028d3c0d89839edeab0971f09eaebb58b5d9daa68dec370aa9f",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/risk/factor_returns_2026.parquet",
+      "keys": [
+        "factor",
+        "trade_date"
+      ]
+    },
+    "reader-risk-residuals_2026": {
+      "anchor_sha256": "202d21e9485d9607c7e3fdefa5a9bc6810c67ac016b9e5bc998ab1b8673bfe30",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/risk/residuals_2026.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-risk-exposures_2026": {
+      "anchor_sha256": "4bb079b0c80864f3d2cce04b9437078fb7e012520e69321b7f7baf03cc57e148",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/risk/exposures_2026.parquet",
+      "keys": [
+        "symbol",
+        "trade_date"
+      ]
+    },
+    "reader-risk-cov_2026": {
+      "anchor_sha256": "d944856b267e0600499d21f7438b01e6011a27994b315944993784e7ed098441",
+      "anchor_end": "2026-10-13",
+      "output_relative_path": "data/live/equity_book/risk/cov_2026.parquet",
+      "keys": [
+        "factor_i",
+        "factor_j",
+        "trade_date"
+      ]
+    }
+  },
+  "disk_spill_bound_bytes": 2147483648,
+  "revision": "continuity-v2-M1-M2-M3"
+}

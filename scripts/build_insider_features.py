@@ -656,6 +656,7 @@ def build_year(
     sessions: pd.DatetimeIndex,
     universe_panel: pd.DataFrame,
     top_n: int,
+    output_symbols: set[str] | None = None,
 ) -> pd.DataFrame:
     year_mask = sessions.year == year
     target_positions = np.flatnonzero(year_mask)
@@ -672,6 +673,10 @@ def build_year(
         timestamp: universe_as_of_calendar_month(universe_panel, timestamp, top_n=top_n)
         for timestamp in target_dates
     }
+    # Evaluate the normal full-population cohort guard before partitioning.
+    # Every calculation below is issuer-local; no rank or cohort is recomputed.
+    if output_symbols is not None:
+        cohorts = {timestamp: names & output_symbols for timestamp, names in cohorts.items()}
     symbols = sorted(set().union(*cohorts.values())) if cohorts else []
     if not symbols:
         return pd.DataFrame()

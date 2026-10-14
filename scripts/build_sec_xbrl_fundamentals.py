@@ -1035,6 +1035,9 @@ def write_facts_from_batches() -> Path:
     con = duckdb.connect()
     try:
         con.execute("SET memory_limit='700MB'")
+        from forward_io_limits import apply_forward_limits
+
+        apply_forward_limits(con)
         glob = str(FACTS_BATCH_ROOT / "batch_*.parquet")
         con.execute(
             f"COPY (SELECT * FROM read_parquet('{glob}', union_by_name=true)) "
@@ -1077,6 +1080,16 @@ def build_daily_year(
     if not path.exists():
         return pd.DataFrame()
     price = pd.read_parquet(path, columns=["symbol", "trade_date"])
+    return merge_daily_prices(price, events, symbol_to_cik, session_pos)
+
+
+def merge_daily_prices(
+    price: pd.DataFrame,
+    events: pd.DataFrame,
+    symbol_to_cik: dict[str, int],
+    session_pos: dict[pd.Timestamp, int],
+) -> pd.DataFrame:
+    """Apply the original issuer-local as-of join to a bounded price chunk."""
     price = price.loc[price["symbol"].isin(symbol_to_cik)].copy()
     if price.empty or events.empty:
         return pd.DataFrame()

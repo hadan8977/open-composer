@@ -99,6 +99,9 @@ def main() -> None:
     con = duckdb.connect()
     con.execute("SET memory_limit='1000MB'")
     con.execute("SET threads=2")
+    from forward_io_limits import apply_forward_limits
+
+    apply_forward_limits(con)
     uni = con.execute(
         f"SELECT DISTINCT symbol FROM read_parquet('{FEATURES}/universe_broad/*.parquet') "
         "WHERE adv_rank <= 3000 AND close >= 5"

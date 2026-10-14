@@ -130,13 +130,20 @@ def build_daily_features(
     memory_limit: str = DEFAULT_MEMORY_LIMIT,
     temp_directory: str | None = None,
     con: duckdb.DuckDBPyConnection | None = None,
-) -> pd.DataFrame:
+    output_parquet: Path | None = None,
+    output_year: int | None = None,
+    threads: int = 2,
+) -> pd.DataFrame | None:
     """Daily-archive-only feature block (see module docstring for the phased
     scope). Every window is a trailing, PIT-safe ``ROWS BETWEEN N-1 PRECEDING
     AND CURRENT ROW`` computation -- no column ever uses same-day-or-later
     information from another symbol or the future.
     """
     symbols = sorted({symbol.upper() for symbol in universe_symbols})
+    if (output_parquet is None) != (output_year is None):
+        raise ValueError("output_parquet and output_year must be supplied together")
+    if threads not in (1, 2):
+        raise ValueError("daily feature execution supports one or two threads")
     if not symbols:
         return pd.DataFrame(columns=_all_columns(return_windows, vol_windows, adv_windows))
 
@@ -144,7 +151,10 @@ def build_daily_features(
     connection = con or duckdb.connect()
     try:
         connection.execute(f"SET memory_limit='{memory_limit}'")
-        connection.execute("SET threads=2")
+        connection.execute(f"SET threads={threads}")
+        from scripts.forward_io_limits import apply_forward_limits
+
+        apply_forward_limits(connection)
         connection.execute("SET preserve_insertion_order=false")
         if temp_directory is not None:
             Path(temp_directory).mkdir(parents=True, exist_ok=True)
@@ -302,6 +312,19 @@ def build_daily_features(
             FROM with_momentum
             ORDER BY symbol, trade_date
         """
+        if output_parquet is not None:
+            if output_parquet.exists():
+                raise ValueError("bounded query output already exists")
+            output_parquet.parent.mkdir(parents=True, exist_ok=True)
+            target = output_parquet.as_posix().replace("'", "''")
+            # Filter only the completed query, after its trailing windows and
+            # cross-sectional medians. Retain all original lookback inputs.
+            connection.execute(
+                f"COPY (SELECT * FROM ({query}) full_features "
+                f"WHERE year(trade_date) = {int(output_year)} ORDER BY symbol, trade_date) "
+                f"TO '{target}' (FORMAT PARQUET)"
+            )
+            return None
         frame = connection.execute(query).fetchdf()
     finally:
         if owns_connection:

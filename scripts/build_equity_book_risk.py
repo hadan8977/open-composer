@@ -80,6 +80,12 @@ def main() -> None:
     ap.add_argument("--start", default="2017-01-01")
     ap.add_argument("--end", default=None)
     ap.add_argument("--out", default=str(rk.RISK_DIR))
+    ap.add_argument(
+        "--write-from-year",
+        type=int,
+        default=None,
+        help="Limit persisted years only; compute the full original risk history.",
+    )
     args = ap.parse_args()
     t0 = time.time()
     out = Path(args.out)
@@ -233,7 +239,7 @@ def main() -> None:
             ("exposures", exp_rows),
             ("cov", cov_rows),
         ):
-            if rows:
+            if rows and (args.write_from_year is None or year >= args.write_from_year):
                 pd.concat(rows, ignore_index=True).to_parquet(
                     out / f"{name}_{year}.parquet", index=False
                 )

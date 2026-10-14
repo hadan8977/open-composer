@@ -57,7 +57,13 @@ from open_composer.book_paper.targets import (  # noqa: E402
     target_path,
     write_target_file,
 )
-from open_composer.market_sessions import NEW_YORK  # noqa: E402
+from open_composer.market_sessions import (  # noqa: E402
+    NEW_YORK,
+    next_us_equity_session,
+    previous_us_equity_session,
+    us_equity_session_close,
+)
+from open_composer.paper_freshness import latest_completed_us_equity_session  # noqa: E402
 from scripts import build_book_prices_file as prices_builder  # noqa: E402
 
 LIVE_ROOT = ROOT / "data/live/equity_book"
@@ -82,12 +88,23 @@ def submit_enabled(env: dict[str, str] | None = None) -> bool:
     return (env if env is not None else os.environ).get(SUBMIT_ENV) == "1"
 
 
-def run_targets(root: Path, data_root: Path, decision: date | None, variant: str | None) -> int:
+def run_targets(
+    root: Path,
+    data_root: Path,
+    decision: date | None,
+    variant: str | None,
+    *,
+    now: datetime | None = None,
+) -> int:
     if not (data_root / "panel/_calendar.parquet").exists():
         log.error("data root %s has no calendar: not fresh", data_root)
         return EXIT_FRESH
     last = v12.last_session(data_root)
-    day = decision or last
+    required = latest_completed_us_equity_session(now or datetime.now(UTC))
+    day = decision or required
+    if day > required or us_equity_session_close(day) is None:
+        log.error("decision %s is not a completed market session (latest %s)", day, required)
+        return EXIT_FRESH
     if last < day:
         log.error("data root last session %s is before decision date %s: not fresh", last, day)
         return EXIT_FRESH
@@ -126,20 +143,55 @@ def run_plans(
     submit: bool,
     tif_mode: str = "close",
     accounts: tuple[str, ...] = BOOK_ACCOUNTS,
+    execution_date: date | None = None,
+    now: datetime | None = None,
 ) -> int:
     """Plan (and with ``submit`` submit) each of ``accounts``.  10-06 (C1006-ACCT): only quant1
     trades the v1.2 book; the submit cron passes ``--accounts quant1`` and quant2 keeps the
     18:30 dry plan and the reconcile (no orders)."""
+    observed = now or datetime.now(UTC)
+    today = observed.astimezone(NEW_YORK).date()
+    execution = execution_date or today
+    completed = latest_completed_us_equity_session(observed)
+    if us_equity_session_close(execution) is None:
+        log.error("execution date %s is not a market session", execution)
+        return EXIT_FRESH
+    if execution != today and (submit or execution != next_us_equity_session(completed)):
+        log.error(
+            "refused backdated/future execution %s (today %s, submit=%s)", execution, today, submit
+        )
+        return EXIT_FRESH
+    required_decision = previous_us_equity_session(execution)
+    if required_decision > completed:
+        log.error(
+            "execution %s needs an uncompleted decision session %s", execution, required_decision
+        )
+        return EXIT_FRESH
     if decision is None:
         newest = latest_target_path(root, accounts[0])
         if newest is None:
             log.error("no target file for %s", accounts[0])
             return EXIT_REFUSED
         decision = load_target_file(newest).decision_date
+    if decision != required_decision:
+        log.error(
+            "stale target decision %s: execution %s requires %s",
+            decision,
+            execution,
+            required_decision,
+        )
+        return EXIT_FRESH
     for account in accounts:
-        if not target_path(root, account, decision).exists():
+        path = target_path(root, account, decision)
+        if not path.exists():
             log.error("no target file for %s on %s", account, decision)
             return EXIT_REFUSED
+        target = load_target_file(path)
+        if target.decision_date != decision or target.execution_date != execution:
+            log.error(
+                "target %s dates do not match decision %s / execution %s", path, decision, execution
+            )
+            return EXIT_FRESH
     failed_accounts: list[str] = []
     for account in accounts:
         base = [*oc_command(), "book-paper"]
@@ -194,6 +246,17 @@ def run_reconcile(
     for account in todo:
         if not plan_path(root, account, execution_date).exists():
             log.error("no plan file for %s on %s", account, execution_date)
+            from open_composer.book_paper.account_valuation import capture_account_valuation
+
+            try:
+                observed = capture_account_valuation(root, account, execution_date)
+                log.info(
+                    "unattributed observed account valuation: %s (strategy ledger still missing)",
+                    observed,
+                )
+            except Exception as exc:
+                # Never turn an account-read failure into a successful strategy reconciliation.
+                log.error("account valuation unavailable: %s", type(exc).__name__)
             return EXIT_REFUSED
     try:
         path, payload = prices_builder.build_and_write(
@@ -236,7 +299,14 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--plan", action="store_true")
     mode.add_argument("--submit", action="store_true")
     mode.add_argument("--reconcile", action="store_true")
-    ap.add_argument("--execution-date", default=None, help="--reconcile; default: today (New York)")
+    ap.add_argument(
+        "--execution-date",
+        default=None,
+        help=(
+            "--plan/--reconcile: default today (New York); "
+            "plan may preview the next session after close"
+        ),
+    )
     ap.add_argument("--sip-root", default=None, help="--reconcile; default: <root>/data/sip")
     ap.add_argument("--decision-date", default=None)
     ap.add_argument(
@@ -285,7 +355,12 @@ def main(argv: list[str] | None = None) -> int:
             sip_root = Path(args.sip_root) if args.sip_root else None
             return run_reconcile(root, day, sip_root=sip_root, accounts=accounts)
         return run_plans(
-            root, decision, submit=args.submit, tif_mode=args.tif_mode, accounts=accounts
+            root,
+            decision,
+            submit=args.submit,
+            tif_mode=args.tif_mode,
+            accounts=accounts,
+            execution_date=date.fromisoformat(args.execution_date) if args.execution_date else None,
         )
 
 

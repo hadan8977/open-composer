@@ -110,6 +110,9 @@ def _duck(mem: str = "1100MB"):
     con = duckdb.connect()
     con.execute(f"SET memory_limit='{mem}'")
     con.execute("SET threads=2")
+    from forward_io_limits import apply_forward_limits
+
+    apply_forward_limits(con)
     con.execute(f"SET temp_directory='{tmp}'")
     con.execute("SET TimeZone='UTC'")
     return con
@@ -282,6 +285,8 @@ def stage_panel(years: list[int] | None = None) -> dict:
         )
     )
     td = pd.DatetimeIndex(cal["trade_date"])
+    if years is not None:
+        td = td[td.year.isin(years)]
     pos = mes.searchsorted(td, side="right") - 1
     cmap = pd.DataFrame({"trade_date": td[pos >= 0], "month_end": mes[pos[pos >= 0]]})
     con.register("cmap", cmap)
@@ -375,7 +380,7 @@ def stage_panel(years: list[int] | None = None) -> dict:
 PRICES_DIR = OUT / "prices"
 
 
-def stage_prices() -> dict:
+def stage_prices(years: list[int] | None = None) -> dict:
     """``prices/<year>.parquet``: (trade_date, symbol, open, close) for *every* panel-universe
     symbol after hygiene, with no rank filter.  A held name that drops out of the top 4000 by
     ADV (and so out of ``panel/``) must keep its returns; a name with no price row from some date
@@ -388,6 +393,8 @@ def stage_prices() -> dict:
     PRICES_DIR.mkdir(parents=True, exist_ok=True)
     tot = {"rows": 0}
     for p in sorted(DAILY.glob("*.parquet")):
+        if years is not None and int(p.stem) not in years:
+            continue
         df = con.execute(
             f"""
             select d.trade_date, d.symbol, case when d.open > 0 then d.open end as open, d.close
@@ -467,7 +474,7 @@ def main() -> None:
     if args.stage in ("panel", "all"):
         manifest["panel"] = stage_panel(args.years)
     if args.stage in ("prices", "all"):
-        manifest["prices"] = stage_prices()
+        manifest["prices"] = stage_prices(args.years)
     if args.stage in ("etf", "all"):
         manifest["etf"] = stage_etf()
     manifest["built_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())

@@ -110,6 +110,9 @@ def build_pit_universe_panel(
     admission_sql = " AND ".join(admission)
     owns_connection = con is None
     connection = con or duckdb.connect()
+    from scripts.forward_io_limits import apply_forward_limits
+
+    apply_forward_limits(connection)
     try:
         connection.execute(f"SET memory_limit='{memory_limit}'")
         if temp_directory is not None:

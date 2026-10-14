@@ -219,6 +219,9 @@ UPSTREAM: tuple[Table, ...] = (
             "facts",
             "--source",
             "bulk",
+            "--force",
+            "--batch-size",
+            "50",
         ),
         fetch=(
             (
@@ -329,7 +332,7 @@ UPSTREAM: tuple[Table, ...] = (
                 "--start",
                 "{start}",
             ),
-            (*PY, "scripts/collect_finra_short_volume.py", "--stage", "parse"),
+            (*PY, "scripts/collect_finra_short_volume.py", "--stage", "parse", "--force"),
             (*PY, "scripts/collect_finra_short_volume.py", "--stage", "manifest"),
         ),
     ),
@@ -360,7 +363,7 @@ UPSTREAM: tuple[Table, ...] = (
                 "--start",
                 "{start}",
             ),
-            (*PY, "scripts/collect_finra_short_interest.py", "--stage", "parse"),
+            (*PY, "scripts/collect_finra_short_interest.py", "--stage", "parse", "--force"),
         ),
         link_prior_years=True,
         values_follow="daily",
@@ -384,6 +387,7 @@ UPSTREAM: tuple[Table, ...] = (
                 *PY,
                 "scripts/build_news_attention_features.py",
                 "articles",
+                "--force",
                 "--as-of",
                 "{as_of}",
                 "--out-root",
@@ -441,15 +445,10 @@ UPSTREAM: tuple[Table, ...] = (
 
 
 def expected_session(now: datetime | None = None) -> date:
-    """Latest weekday session whose close has passed (New York): today after 16:00, else the day
-    before; weekends roll back to Friday.  Exchange holidays are not modelled: on a holiday the SIP
-    archive never reaches this date and the run exits 2, which is harmless."""
-    now = now or datetime.now(UTC)
-    local = now.astimezone(NEW_YORK)
-    day = local.date() if local.hour >= 16 else local.date() - timedelta(days=1)
-    while day.weekday() >= 5:
-        day -= timedelta(days=1)
-    return day
+    """Latest completed exchange session, including holidays and early closes."""
+    from open_composer.paper_freshness import latest_completed_us_equity_session
+
+    return latest_completed_us_equity_session(now or datetime.now(UTC))
 
 
 def latest_sip_date(sip_root: Path = SIP_DAILY) -> date | None:
@@ -523,6 +522,7 @@ def build_plan(
     upstream: bool = True,
     extra_daily_years: Sequence[int] = (),
     last_dates: dict[str, date] | None = None,
+    forward_config: dict | None = None,
 ) -> list[Step]:
     """The ordered steps of one refresh for session ``day`` (pure; reads nothing).
 
@@ -563,7 +563,25 @@ def build_plan(
                 ),
             ]
             for y in years:
-                plan.append(Step(f"up:{table.name}", f"build {y}", [*CAPPED, *r(table.build, y)]))
+                argv = r(table.build, y)
+                cap = CAPPED
+                if forward_config and table.name in {"daily", "daily_broad"}:
+                    if y != day.year:
+                        # Old accepted feature history remains immutable in this epoch.
+                        continue
+                    argv += [
+                        "--bounded-output",
+                        "--daily-root",
+                        forward_config["runtime_primary_root"],
+                    ]
+                    if "--memory-limit" in argv:
+                        argv[argv.index("--memory-limit") + 1] = "450MB"
+                    if "--extra-daily-root" in argv:
+                        argv[argv.index("--extra-daily-root") + 1] = forward_config[
+                            "runtime_delisted_root"
+                        ]
+                    cap = ("scripts/run_capped.sh", "--class", "paper", "--mem", "900M", "--")
+                plan.append(Step(f"up:{table.name}", f"build {y}", [*cap, *argv]))
             plan.append(
                 Step(f"up:{table.name}", f"check+swap ({table.check})", [table.name], kind="check")
             )
@@ -592,11 +610,30 @@ def build_plan(
     }
     for stage in stages:
         for cmd in live_cmds[stage]:
+            if forward_config:
+                if stage == "prices":
+                    cmd += ["--years", str(year)]
+                if stage in {"risk", "alpha"}:
+                    cmd += ["--write-from-year", str(year)]
             plan.append(Step(f"live:{stage}", "build", [*CAPPED, *cmd], env=dict(env)))
         if stage == "alpha":
             plan.append(
                 Step("live:alpha", "merge formation_ic", ["merge_formation_ic"], kind="merge")
             )
+    if forward_config:
+        for step in plan:
+            if step.kind == "run":
+                if "--mem" in step.argv:
+                    step.argv[step.argv.index("--mem") + 1] = "900M"
+                if "--memory-limit" in step.argv:
+                    step.argv[step.argv.index("--memory-limit") + 1] = "450MB"
+                if "--" in step.argv:
+                    index = step.argv.index("--") + 1
+                    step.argv[index:index] = ["taskset", "-c", "0"]
+                step.env.update(OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")
+                step.env["OC_FORWARD_SPILL_BYTES"] = str(
+                    forward_config.get("disk_spill_bound_bytes", 2 * 1024**3)
+                )
     return plan
 
 
@@ -940,7 +977,7 @@ def wait_for_quiet(
 
 
 def run_command(step: Step, runner: Runner = subprocess.run) -> int:
-    if step.argv[: len(CAPPED)] == CAPPED and not wait_for_quiet():
+    if step.argv and step.argv[0] == "scripts/run_capped.sh" and not wait_for_quiet():
         log.error("gave up waiting for other heavy processes before %s", step.label)
         return 75
     env = {**os.environ, **step.env}
@@ -1191,12 +1228,45 @@ def run_upstream_table(
     *,
     extra_years: Sequence[int] = (),
     member_cut: date | None = None,
+    forward_config: dict | None = None,
 ) -> int:
     """Backup, fetch, build, check, swap one table.  0 ok, 3 check failed, 4 command failed."""
     if table.monthly:
         return run_monthly_table(table, day, steps, runner)
     year = day.year
     out = FEATURES / table.output.format(year=year)
+    if forward_config and table.name in forward_config["tables"] and out.exists():
+        from prepare_host_forward_version import sha256
+
+        latest = ROOT / forward_config["version_directory"] / "latest" / (table.name + ".json")
+        if latest.exists():
+            head = json.loads(latest.read_text())
+            if head["version_id"] != forward_config["version_id"] or head["output"][
+                "sha256"
+            ] != sha256(out):
+                log.error("forward %s: current published head/receipt mismatch", table.name)
+                return EXIT_UPSTREAM
+            if date.fromisoformat(head["suffix_end"]) == day:
+                log.info(
+                    "forward %s already published through %s; other dependencies still checked",
+                    table.name,
+                    day,
+                )
+                return EXIT_OK
+    if forward_config:
+        from forward_refresh_io import prior_year_copy_plan, stage_admission
+
+        try:
+            copies = prior_year_copy_plan(FEATURES, [table], year)
+            stage_admission(
+                ROOT,
+                forward_config,
+                out.stat().st_size if out.exists() else 0,
+                sum(item["bytes"] for item in copies),
+            )
+        except OSError as exc:
+            log.error("%s", exc)
+            return 75
     backup = _backup_path(table, year, day)
     had_old = out.exists()
     if had_old:
@@ -1212,12 +1282,75 @@ def run_upstream_table(
             for p in sorted(src.glob("[0-9][0-9][0-9][0-9].parquet")):
                 if int(p.stem) < year:
                     shutil.copy2(p, stage / p.name)
+    consumer_frozen = False
     for step in steps:
+        if (
+            forward_config
+            and table.name in forward_config["tables"]
+            and step.kind == "run"
+            and step.label.startswith("build")
+            and not consumer_frozen
+            and (
+                "runtime_context_manifest" in forward_config
+                or "runtime_source_manifest" in forward_config
+            )
+        ):
+            from forward_refresh_io import bind_consumer
+
+            dependencies = [
+                p
+                for group in ("universe", "universe_broad")
+                for p in (FEATURES / group).glob("20*.parquet")
+            ]
+            dependencies += [
+                FEATURES / f"intraday_daily/{year}.parquet",
+                ROOT / "scripts/build_daily_features.py",
+                ROOT / "open_composer/research/features/daily_features.py",
+            ]
+            if table.name not in {"daily", "daily_broad"}:
+                dependencies += [
+                    p
+                    for group in ("daily", "daily_broad", "sec_fundamentals")
+                    for p in (FEATURES / group).glob("*.parquet")
+                    if p != out
+                ]
+            bind_consumer(ROOT, forward_config, table.name, dependencies)
+            consumer_frozen = True
         if step.kind == "run" and run_command(step, runner) != 0:
             if table.in_place and had_old:
-                shutil.copy2(backup, out)
+                from forward_publication import atomic_restore
+
+                atomic_restore(backup, out)
             return EXIT_COMMAND
     new = out if table.in_place else stage / out.name
+    if forward_config and table.name in forward_config["tables"]:
+        if not had_old or not new.exists():
+            log.error(
+                "forward %s needs the accepted old prefix and actual staged candidate", table.name
+            )
+            return EXIT_UPSTREAM
+        from forward_feature_epoch import publish_forward_table
+
+        try:
+            result = publish_forward_table(ROOT, table.name, backup, new, out, day, forward_config)
+        except Exception as exc:
+            journals = (ROOT / forward_config["version_directory"] / "transactions").glob(
+                table.name + "-*.json"
+            )
+            pending = any(json.loads(p.read_text())["status"] == "prepared" for p in journals)
+            if table.in_place and had_old and not pending:
+                from forward_publication import atomic_restore
+
+                atomic_restore(backup, out)
+            log.error("forward %s failed (%s); candidate/backup retained", table.name, exc)
+            return EXIT_UPSTREAM
+        log.info(
+            "forward %s published prefix through %s plus %s rows; legacy whole check not certified",
+            table.name,
+            result["prefix_end"],
+            result["suffix_rows"],
+        )
+        return EXIT_OK
     if table.check != "none" and had_old and new.exists():
         old_dates = _dates_of(backup, table.date_col)
         cut = strict_cut(old_dates) if table.check == "price" else max(old_dates)
@@ -1304,6 +1437,7 @@ def run_plan(
     *,
     extra_years: Sequence[int] = (),
     member_cut: date | None = None,
+    forward_config: dict | None = None,
 ) -> int:
     by_stage: dict[str, list[Step]] = {}
     for step in plan:
@@ -1317,7 +1451,29 @@ def run_plan(
                 runner,
                 extra_years=extra_years,
                 member_cut=member_cut,
+                forward_config=forward_config,
             )
+            if code != EXIT_OK:
+                return code
+            continue
+        if forward_config and stage.startswith("live:"):
+            from forward_refresh_io import run_live_stage
+
+            try:
+                code = run_live_stage(
+                    ROOT,
+                    forward_config,
+                    LIVE,
+                    day,
+                    stage[5:],
+                    steps,
+                    run_command,
+                    runner,
+                    merge_ic=lambda view: merge_formation_ic(live=view, snapshot=SNAPSHOT),
+                )
+            except Exception as exc:
+                log.error("forward reader %s failed; retained attempt: %s", stage, exc)
+                return EXIT_UPSTREAM
             if code != EXIT_OK:
                 return code
             continue
@@ -1367,9 +1523,41 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-fetch", action="store_true", help="skip the upstream fetch commands")
     ap.add_argument("--no-upstream", action="store_true", help="live layer only")
     ap.add_argument("--stages", default=",".join(LIVE_STAGES), help="live stages, comma separated")
+    ap.add_argument(
+        "--forward-config",
+        type=Path,
+        default=ROOT / "config/equity-book-forward.json",
+        help="Root-reviewed epoch config; absent preserves the original legacy checks",
+    )
     ap.add_argument("--lock-file", default=str(LOCK_FILE))
     ap.add_argument("--log-file", default=str(LOG_FILE))
     args = ap.parse_args(argv)
+    forward_config = None
+    if args.forward_config.exists():
+        forward_config = json.loads(args.forward_config.read_text())
+        names = set(forward_config["tables"])
+        allowed = {
+            "daily",
+            "daily_broad",
+            "sec_fundamentals_daily",
+            "nsi",
+            "insider_broad",
+            "short_volume_broad",
+            "short_interest",
+            "news_attention",
+        }
+        if not {"daily", "daily_broad"} <= names or names - allowed:
+            ap.error(
+                "forward epoch requires both price tables and only registered daily dependencies"
+            )
+        version_root = ROOT / forward_config["version_directory"]
+        if not version_root.resolve().is_relative_to(ROOT.resolve()):
+            ap.error("forward version directory must remain inside project root")
+        preview = version_root / "context" / "PREPARE_AT_EXECUTION"
+        forward_config.update(
+            runtime_primary_root=str(preview / "data/sip/daily"),
+            runtime_delisted_root=str(preview / "data/sip-delisted/by_year"),
+        )
 
     day = date.fromisoformat(args.day) if args.day else expected_session()
     stages = [s for s in args.stages.split(",") if s]
@@ -1391,6 +1579,7 @@ def main(argv: list[str] | None = None) -> int:
             stages=stages,
             fetch=not args.no_fetch,
             upstream=not args.no_upstream,
+            forward_config=forward_config,
         ):
             print(step.text())
         return EXIT_OK
@@ -1435,6 +1624,100 @@ def main(argv: list[str] | None = None) -> int:
                 sorted({r["symbol"] for r in records}),
                 extra_years,
             )
+        if forward_config and not args.no_upstream:
+            from forward_publication import atomic_json, recover_pending
+            from forward_refresh_io import already_published, disk_admission, recover_metadata
+            from prepare_forward_source_context import prepare_context
+
+            recover_pending(version_root)
+            recover_metadata(version_root)
+            if already_published(ROOT, forward_config, day, list(tables), LIVE, stages):
+                log.info(
+                    "all requested forward products already published; no snapshot or producer writes"
+                )
+                return EXIT_OK
+
+            context = version_root / "context" / datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+            source_root = Path(forward_config.get("archive_source_root") or ROOT)
+            if not source_root.is_absolute():
+                source_root = ROOT / source_root
+            source_root = source_root.resolve()
+            try:
+                disk_admission(
+                    ROOT,
+                    forward_config,
+                    source_root=source_root,
+                    tables=list(tables),
+                    live=LIVE,
+                    stages=stages,
+                    year=day.year,
+                    fetch=not args.no_fetch,
+                )
+            except OSError as exc:
+                log.error("%s", exc)
+                return 75
+            previous_path = version_root / "context/latest-source.json"
+            previous = None
+            if previous_path.exists():
+                pointer = json.loads(previous_path.read_text())
+                previous_manifest = ROOT / pointer["manifest"]
+                if _sha256(previous_manifest) != pointer["sha256"]:
+                    raise ValueError("retained source context manifest changed")
+                previous = previous_manifest.parent
+            context_receipt = prepare_context(
+                source_root, forward_config, context, day.year, previous=previous
+            )
+            manifest_path = context / "source-manifest.json"
+            manifest_path.write_text(json.dumps(context_receipt, indent=2) + "\n")
+            atomic_json(
+                previous_path,
+                {
+                    "manifest": manifest_path.relative_to(ROOT).as_posix(),
+                    "sha256": _sha256(manifest_path),
+                },
+            )
+            forward_config.update(
+                runtime_primary_root=str(context / "data/sip/daily"),
+                runtime_delisted_root=str(context / "data/sip-delisted/by_year"),
+                runtime_source_manifest=str(manifest_path),
+                runtime_context_manifest=str(manifest_path),
+            )
+        elif forward_config:
+            from forward_publication import recover_pending
+            from forward_refresh_io import already_published, disk_admission, recover_metadata
+
+            recover_pending(version_root)
+            recover_metadata(version_root)
+            if already_published(ROOT, forward_config, day, [], LIVE, stages):
+                return EXIT_OK
+            pointer_path = version_root / "context/latest-source.json"
+            if not pointer_path.exists():
+                log.error(
+                    "forward live-only refresh needs an installed verified source context; use the normal upstream refresh"
+                )
+                return EXIT_UPSTREAM
+            pointer = json.loads(pointer_path.read_text())
+            manifest_path = ROOT / pointer["manifest"]
+            if _sha256(manifest_path) != pointer["sha256"]:
+                return EXIT_UPSTREAM
+            forward_config.update(
+                runtime_source_manifest=str(manifest_path),
+                runtime_context_manifest=str(manifest_path),
+            )
+            try:
+                disk_admission(
+                    ROOT,
+                    forward_config,
+                    source_root=ROOT,
+                    tables=[],
+                    live=LIVE,
+                    stages=stages,
+                    year=day.year,
+                    fetch=False,
+                )
+            except OSError as exc:
+                log.error("%s", exc)
+                return 75
         plan = build_plan(
             day,
             tables=tables,
@@ -1442,12 +1725,14 @@ def main(argv: list[str] | None = None) -> int:
             fetch=not args.no_fetch,
             upstream=not args.no_upstream,
             extra_daily_years=extra_years,
+            forward_config=forward_config,
         )
         code = run_plan(
             day,
             plan,
             extra_years=extra_years,
             member_cut=membership_cut(),
+            forward_config=forward_config,
         )
         payload = freshness(LIVE, sip_last, day.year)
         payload["upstream"] = upstream_last_dates(FEATURES, day.year, sip_last)

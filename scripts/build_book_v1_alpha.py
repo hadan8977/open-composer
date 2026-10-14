@@ -216,7 +216,8 @@ def build(args: argparse.Namespace) -> None:
                 check_diff,
                 float(np.abs(th[t].to_numpy() - stored[f"theme_{t}"].to_numpy()).max()),
             )
-        th.to_parquet(OUT_DIR / f"themes_{year}.parquet", index=False)
+        if args.write_from_year is None or year >= args.write_from_year:
+            th.to_parquet(OUT_DIR / f"themes_{year}.parquet", index=False)
         by_date = {d: g for d, g in th.groupby("trade_date", sort=False)}
         for p in form_by_year.get(year, []):
             d = dates[p]
@@ -309,6 +310,11 @@ def build(args: argparse.Namespace) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--write-from-year",
+        type=int,
+        help="Persist themes only from this year; compute the full original IC history",
+    )
     args = ap.parse_args()
     build(args)
 

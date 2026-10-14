@@ -78,13 +78,109 @@ DUCKDB_TMP = ROOT / "data" / "_duckdb_tmp"
 LOOKBACK_YEARS = 1
 
 
-def _available_archive_years() -> list[int]:
-    return sorted(int(p.name) for p in DAILY_ROOT.iterdir() if p.is_dir() and p.name.isdigit())
+def write_bounded_year(
+    glob_paths: list[str],
+    universe_symbols: list[str],
+    year: int,
+    out_path: Path,
+    intraday_path: Path | None,
+    memory_limit: str,
+    *,
+    symbol_chunk: int = 160,
+) -> dict:
+    """Original full query, then independent symbol chunks for the original join.
+
+    The intraday join uses only each symbol's trailing history. Its pandas
+    implementation and rolling guards remain unchanged.
+    """
+    import duckdb
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    daily_only = out_path.with_suffix(".daily-only.parquet")
+    build_daily_features(
+        glob_paths,
+        universe_symbols,
+        memory_limit=memory_limit,
+        temp_directory=str(DUCKDB_TMP),
+        output_parquet=daily_only,
+        output_year=year,
+        threads=1,
+    )
+    con = duckdb.connect()
+    con.execute(f"SET memory_limit='{memory_limit}'")
+    con.execute("SET threads=1")
+    from forward_io_limits import apply_forward_limits
+
+    apply_forward_limits(con)
+    con.execute(f"SET temp_directory='{DUCKDB_TMP.as_posix()}'")
+    path_text = daily_only.as_posix().replace("'", "''")
+    symbols = [
+        r[0]
+        for r in con.execute(
+            f"SELECT DISTINCT symbol FROM read_parquet('{path_text}') ORDER BY symbol"
+        ).fetchall()
+    ]
+    temporary = out_path.with_suffix(".parquet.tmp")
+    if temporary.exists() or out_path.exists():
+        raise ValueError("bounded year output exists; preserve prior attempt")
+    rows = 0
+    columns = 0
+    writer = None
+    try:
+        for start in range(0, len(symbols), symbol_chunk):
+            names = symbols[start : start + symbol_chunk]
+            con.register("_output_symbols", pd.DataFrame({"symbol": names}))
+            frame = con.execute(
+                f"SELECT d.* FROM read_parquet('{path_text}') d "
+                "SEMI JOIN _output_symbols s ON d.symbol=s.symbol ORDER BY symbol,trade_date"
+            ).fetchdf()
+            frame["trade_date"] = pd.to_datetime(frame["trade_date"])
+            if intraday_path is not None:
+                intraday_text = intraday_path.as_posix().replace("'", "''")
+                intraday = con.execute(
+                    f"SELECT i.* FROM read_parquet('{intraday_text}') i "
+                    "SEMI JOIN _output_symbols s ON i.symbol=s.symbol"
+                ).fetchdf()
+                intraday["trade_date"] = pd.to_datetime(intraday["trade_date"])
+                frame = join_intraday_rolling_features(frame, intraday)
+                del intraday
+            frame = frame.sort_values(["symbol", "trade_date"])
+            table = pa.Table.from_pandas(frame, preserve_index=False)
+            if writer is None:
+                writer = pq.ParquetWriter(temporary, table.schema)
+            writer.write_table(table)
+            rows += len(frame)
+            columns = len(frame.columns)
+            print(
+                f"{year}: bounded symbols {start + len(names)}/{len(symbols)}, rows {rows}",
+                flush=True,
+            )
+            del frame, table
+            gc.collect()
+    finally:
+        if writer is not None:
+            writer.close()
+        con.close()
+    if writer is None:
+        raise ValueError("no feature rows for bounded year")
+    temporary.replace(out_path)
+    return {"rows": rows, "columns": columns, "intraday_joined": intraday_path is not None}
+
+
+def _available_archive_years(daily_root: Path = DAILY_ROOT) -> list[int]:
+    return sorted(int(p.name) for p in daily_root.iterdir() if p.is_dir() and p.name.isdigit())
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--memory-limit", default="1.2GB")
+    parser.add_argument("--daily-root", type=Path, default=DAILY_ROOT)
+    parser.add_argument(
+        "--bounded-output",
+        action="store_true",
+        help="retain the original full query but write/join one bounded symbol block at a time",
+    )
     parser.add_argument(
         "--skip-intraday-join",
         action="store_true",
@@ -129,7 +225,7 @@ def main() -> int:
     universe_symbols = sorted(universe_union_symbols(Path(args.universe_root)))
     print(f"universe union: {len(universe_symbols)} symbols", flush=True)
 
-    archive_years = _available_archive_years()
+    archive_years = _available_archive_years(args.daily_root)
     first_archive_year = archive_years[0]
     target_years = args.years if args.years else archive_years
     print(f"archive years available: {archive_years}", flush=True)
@@ -139,7 +235,7 @@ def main() -> int:
     for year in target_years:
         window_years = [y for y in (year - LOOKBACK_YEARS, year) if y >= first_archive_year]
         window_years = sorted(set(window_years))
-        glob_paths = [str(DAILY_ROOT / str(y) / "*.parquet") for y in window_years]
+        glob_paths = [str(args.daily_root / str(y) / "*.parquet") for y in window_years]
         if extra_root is not None:
             glob_paths += [
                 str(extra_root / str(y) / "*.parquet")
@@ -148,6 +244,21 @@ def main() -> int:
             ]
 
         started = time.monotonic()
+        if args.bounded_output:
+            intraday_path = INTRADAY_ROOT / f"{year}.parquet"
+            intraday = (
+                intraday_path if intraday_path.exists() and not args.skip_intraday_join else None
+            )
+            summary[str(year)] = write_bounded_year(
+                glob_paths,
+                universe_symbols,
+                year,
+                out_dir / f"{year}.parquet",
+                intraday,
+                args.memory_limit,
+            )
+            summary[str(year)]["elapsed_seconds"] = round(time.monotonic() - started, 1)
+            continue
         print(
             f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {year}: scanning {window_years} ...",
             flush=True,

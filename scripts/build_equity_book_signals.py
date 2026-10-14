@@ -77,6 +77,9 @@ def _duck():
     con = duckdb.connect()
     con.execute("SET memory_limit='600MB'")
     con.execute("SET threads=2")
+    from forward_io_limits import apply_forward_limits
+
+    apply_forward_limits(con)
     return con
 
 

@@ -938,13 +938,25 @@ def write_plan_file(root: Path, plan: OrderPlan) -> Path:
             existing = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             existing = None
-        if isinstance(existing, dict) and existing.get("orders") == plan.payload.get("orders"):
+        submitted = orders_receipt_path(root, account, plan.execution_date).exists()
+        same_orders = isinstance(existing, dict) and existing.get("orders") == plan.payload.get(
+            "orders"
+        )
+        if submitted and same_orders:
             return path
-        if orders_receipt_path(root, account, plan.execution_date).exists():
+        if submitted:
             raise BookEngineError(
                 f"plan for {plan.execution_date.isoformat()} already has an orders receipt; "
                 "refusing to overwrite the submitted plan"
             )
+        # Equal order quantities do not imply equal account, safety or input
+        # state. Refresh an unsubmitted plan when those facts have changed.
+        ignored = {"created_at_utc", "plan_sha256"}
+        if isinstance(existing, dict) and (
+            {k: v for k, v in existing.items() if k not in ignored}
+            == {k: v for k, v in plan.to_dict().items() if k not in ignored}
+        ):
+            return path
     return write_json_atomic(path, plan.to_dict())
 
 

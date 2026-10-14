@@ -627,6 +627,21 @@ def test_plan_file_kept_for_same_orders_and_never_replaced_after_submission(
     assert json.loads(path.read_text())["orders"] == changed.payload["orders"]
 
 
+def test_unsubmitted_equal_orders_refresh_changed_safety_state(tmp_path: Path) -> None:
+    ready = plan_for()
+    blocked = OrderPlan({**ready.payload, "status": "blocked", "blocked_by": ["kill_switch_clear"]})
+    path = write_plan_file(tmp_path, blocked)
+    assert json.loads(path.read_text())["status"] == "blocked"
+    write_plan_file(tmp_path, ready)
+    assert json.loads(path.read_text())["status"] == ready.payload["status"]
+    protected = path.read_bytes()
+    write_json_atomic(
+        orders_receipt_path(tmp_path, ready.payload["account"], ready.execution_date), {"sent": []}
+    )
+    write_plan_file(tmp_path, blocked)
+    assert path.read_bytes() == protected
+
+
 def test_cli_submit_fails_loudly_when_an_order_is_not_accepted(monkeypatch, tmp_path) -> None:
     from typer.testing import CliRunner
 
