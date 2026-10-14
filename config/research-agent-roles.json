@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "updated_at_utc": "2026-10-13T10:00:48.609210+00:00",
+  "purpose": "Single model mapping for task-owned research; declarative configuration, not proof of runtime activation.",
+  "authorization": "Read the current action-specific owner-compute-hold.json and admitted task scope; this configuration grants no compute, device, spending or order permission and does not cache pause/resume status.",
+  "pause_authority": "reports/research/control/owner-compute-hold.json",
+  "missing_or_unreadable_hold": "do_not_autostart; record concrete gap",
+  "method": "docs/task-owned-research.zh.md",
+  "startup": {
+    "settings": {
+      "modeId": "full-access"
+    },
+    "set_and_read_back_once": [
+      "provider",
+      "effectiveThinkingOptionId"
+    ],
+    "verify_if_exposed": [
+      "currentModeId",
+      "runtimeInfo.modeId"
+    ],
+    "unsupported_or_unreadable": "record actual limitation; do not claim verified activation; do not launch merely to verify"
+  },
+  "roles": {
+    "decision": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Own intent, evidence-based priority, consequential choices and final judgment; provide sufficient context without fixing every implementation step. Event-driven, not periodic standby.",
+      "prompt": "prompts/continuous-alpha-lead.zh.md"
+    },
+    "execution": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "One logical owner owns source interpretation, next experiments within admitted scope, tools, implementation, ordinary repair, empirical results and resumable handoff; may improve methods within authority.",
+      "prompt": "prompts/continuous-alpha-execution.zh.md"
+    },
+    "scientific_review": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Independently reconstruct the owner decision, challenge the experiment premise and distinguish research validity from later deployment; then review decisive implementation/evidence. Not per-fix approval.",
+      "prompt": ".agents/skills/research-plan-reviewer/SKILL.md"
+    },
+    "reporting": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Report verified existing artifacts through the existing single hub and mail route; no new experiments or substituted final decisions.",
+      "prompts": [
+        "prompts/owner-daily-weekly-writer.zh.md",
+        "prompts/owner-report-dispatch.zh.md",
+        "prompts/owner-report-hub.zh.md"
+      ],
+      "runtime_route_dependencies": [
+        "config/owner-reporting.json",
+        "config/autonomous-report-target.json"
+      ]
+    }
+  },
+  "astra_notification_triggers": [
+    "complete_task_outcome_or_evidence_based_stop",
+    "owner_cannot_resolve_blocker_requiring_external_action",
+    "decision_required_material_scientific_change",
+    "decision_required_budget_or_permission_change",
+    "owner_requested_decision",
+    "goal_fit_or_decisive_assumption_mismatch"
+  ],
+  "ordinary_progress_or_repair": "Continue admitted scope with the logical owner. Use existing state/reporting for routine progress; communicate mid-run when information changes an action or a timely decision, without duplicate notifications or LLM polling.",
+  "retired_schedules": "Old fixed Astra/research rounds remain retired on future resume; preserve three existing Sol reporting cadences only within explicit resume scope.",
+  "evolution": "Current model/effort mappings are revisable defaults, not a permanent capability hierarchy. Choose organization by task dependencies, quality and real cost; methods, skills, prompts and tools may be added, removed or replaced. Preserve current fallback scope, running owners, historical science, cumulative exposure and device/order budgets. Only material uncertain changes need bounded outcome comparison; no fixed three-arm or per-edit trial requirement.",
+  "temporary_task_overrides": {
+    "2df73225-951f-4539-9d8d-506a3b8a73fe": {
+      "task_id": "DAY3-NEWS-EMBEDDING",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+      "reason": "gpt-6.1-sol at capacity; same-model recovery failed once per affected task",
+      "authority_scope": "These two existing sessions only; preserve source/resource/scientific contracts. No automatic switchback or global reporting change.",
+      "previous_provider": "codex/gpt-6-sol"
+    },
+    "4355e32e-2ee2-4499-b814-7a912ac2b7c3": {
+      "task_id": "DAY3-EQUITY-PLAN-REVIEW",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+      "reason": "gpt-6.1-sol at capacity; same-model recovery failed once per affected task",
+      "authority_scope": "These two existing sessions only; preserve source/resource/scientific contracts. No automatic switchback or global reporting change.",
+      "previous_provider": "codex/gpt-6-sol"
+    },
+    "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3": {
+      "task_ids": [
+        "DAY3-ATTENTION-COMPLETE",
+        "DAY3-DLSA-DEEPENING"
+      ],
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "trigger": "Selected model is at capacity",
+      "at_utc": "2026-10-13T10:00:48.609210+00:00",
+      "reason": "Actual selected6.1capacity error; same owner continuation, original native training retained",
+      "runtime_verified": true
+    },
+    "f9add224-744b-471c-b812-c43cc179fa38": {
+      "task_id": "PAPER-CONTINUITY-20261014",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "trigger": "Selected model is at capacity",
+      "at_utc": "2026-10-14T13:44:53.324333+00:00",
+      "same_session": true,
+      "native_work_preserved": true,
+      "runtime_verified": true,
+      "next_action": "Independent review of completed revision first; actual fallback readback on next required author turn.",
+      "runtime_readback": {
+        "at_utc": "2026-10-14T13:59:54.902412+00:00",
+        "status": "running",
+        "model": "gpt-6-astra",
+        "thinkingOptionId": "high",
+        "modeId": "full-access",
+        "actual_turn": "codex-turn-42"
+      }
+    }
+  },
+  "Astra_review_for_temporary_fallback": {
+    "applies_to": [
+      "2df73225-951f-4539-9d8d-506a3b8a73fe",
+      "4355e32e-2ee2-4499-b814-7a912ac2b7c3",
+      "dd82be2c-580c-4ff7-9db4-27158a68b632",
+      "b497883a-0236-422c-929b-f9b5998fff83"
+    ],
+    "decision_owner": "codex/gpt-6-astra/xhigh",
+    "focus": [
+      "Read actual primary evidence behind consequential claims; separate fact, inference and unknown.",
+      "Check causal clocks, source fidelity, baseline information parity and material economic assumptions before accepting conclusions.",
+      "Check actual runtime/results and appropriate bounded numerical evidence; artifact presence/hash alone does not establish scientific correctness.",
+      "Retain original success thresholds and scope; false or weak evidence leads to targeted revision, not automatic approval."
+    ],
+    "ordinary_fixes": "Remain with complete-task owner; no extra checklist layers, unconditional retest or Astra execution takeover."
+  },
+  "fallback_policy": {
+    "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+    "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+    "primary": "codex/gpt-6.1-sol",
+    "primary_thinking": "xhigh",
+    "fallback": "codex/gpt-6-astra",
+    "fallback_thinking": "high",
+    "scope": "Execution and independent review when preferred6.1Sol is unavailable; existing reporter remains preferredSol unless actually unavailable. Decision Root remainsAstra/xhigh.",
+    "trigger": "Confirmed selected-model capacity/unavailability, not a workaround for financial caps or denied permissions.",
+    "method": "Use existing agent settings; preserve logical owner/session/native work. No new routing daemon, retry loops or quota reset.",
+    "previous_gpt6sol_fallback_superseded": true,
+    "switchback": "No polling to test6.1recovery and no interruption of a good running native job."
+  },
+  "notification_delivery": "One delivery per decision event: native finish notification for normal final handoff; no duplicate explicit Root message. Urgent mid-run decision may notify once. Existing in-flight notifications are not claimed disabled.",
+  "review_handoff": "Scope-preserving independent implementation/delta review returns directly to task owner where the existing contract permits; no author self-review, and preserve explicitly required Root admissions. Specify this routing in the complete brief.",
+  "resolved_task_overrides": {
+    "dd82be2c-580c-4ff7-9db4-27158a68b632": {
+      "previous_override": {
+        "task_id": "DAY3-OPENCODE-STEP5-RECOVERY",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "high",
+          "modeId": "full-access"
+        },
+        "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+        "scope": "Current complete-task continuation during6.1capacity shortage",
+        "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+        "previous_provider": "codex/gpt-6-sol"
+      },
+      "resolved_at_utc": "2026-10-13T08:08:33.852872+00:00",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "mode": "full-access",
+      "evidence": "One actual get_agent_status readback: runtimeInfo.model=gpt-6.1-sol, effectiveThinkingOptionId=xhigh, currentModeId=runtimeInfo.modeId=full-access; real continuation running since 2026-10-13T07:57:17.271Z."
+    },
+    "b497883a-0236-422c-929b-f9b5998fff83": {
+      "previous_override": {
+        "task_id": "DAY3-EQUITY-ROLE",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "high",
+          "modeId": "full-access"
+        },
+        "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+        "scope": "Current complete-task continuation during6.1capacity shortage",
+        "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+        "previous_provider": "codex/gpt-6-sol"
+      },
+      "resolved_at_utc": "2026-10-13T08:10:57.131002+00:00",
+      "requested_model": "gpt-6.1-sol",
+      "requested_thinking": "xhigh",
+      "mode": "full-access",
+      "evidence": "update_agent success and real full-task continuation dispatched; owner performs one runtime readback. No separate probe or polling."
+    },
+    "7b109880-ac40-447e-b2a6-f0ed1266ebac": {
+      "previous_override": {
+        "task_id": "HF-FACTOR-RETURN-CONTINUATION",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "high",
+          "modeId": "full-access"
+        },
+        "owner_authority": "existing fallback_policy; selected Sol route repeatedly unavailable",
+        "trigger": "Two actual stream disconnected errors; one same-route recovery failed",
+        "request_ids": [
+          "3a7a7df3-aabe-4104-bd62-4fa64b3feb92",
+          "8c8ed442-2661-4a39-ba6e-86a362d9cef8"
+        ],
+        "at_utc": "2026-10-14T02:00:48.840516+00:00",
+        "runtime_readback": "owner to verify once on resumed turn",
+        "native_job_restart": false,
+        "global_primary_unchanged": true
+      },
+      "resolved_at_utc": "2026-10-14T07:14:49.568444+00:00",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "mode": "full-access",
+      "evidence": "Astra capacity failure; returned same session to preferred model, which also returned capacity. No further automatic retry.",
+      "actual_status": "both_authorized_routes_capacity_error"
+    }
+  },
+  "task_replenishment": {
+    "responsible_role": "decision",
+    "trigger": "complete task outcome, substantive blocked state, and before ending an owner-interaction turn while research remains authorized",
+    "desired_active_complete_task_owners": [
+      2,
+      3
+    ],
+    "conditional_on": "valuable independent work, actual concurrency, fresh memory admission and cumulative resource/science/input scope",
+    "blocked_owner_counts_as_active": false,
+    "source_led_candidate_questions_to_keep": 2,
+    "no_ready_economic_task": "Dispatch a bounded full research owner to resolve source/input choice and proceed via independent review to empirical decision; do not merely record waiting.",
+    "continuity": "Owner questions steer active work; only explicit pause/cancel stops it. Preserve original task ownership/cumulative records.",
+    "implementation": "Existing day-goal/next-actions and native events only; no polling, new scheduler, fixed Astra standby or busywork."
+  },
+  "prompt_assembly": {
+    "command": "python3 scripts/research_task_prompt.py --role <role> --brief <existing-brief>",
+    "create_payload": "create_agent",
+    "continuation_field": "continuation_prompt",
+    "purpose": "Render canonical current role text/settings and task context; no scheduler, dispatch, permission or runtime verification."
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "schema_version": 3,
+  "task_id": "DAY3-HF-FACTOR-RETURN",
+  "author": "7b109880-ac40-447e-b2a6-f0ed1266ebac",
+  "reviewer": "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3",
+  "created_at_utc": "2026-10-13T17:24:33.873379+00:00",
+  "verdict": "approve_deep_plan",
+  "review_scope": "仅对已独立审完整计划的 R1-R4 科学定义差异验收；旧 v1 意见及原字节保留，不重做十一项表。",
+  "summary": "四项决定性修订通过；批准完整条件科学定义，20 固定预测管线与原资源上界不变。源条件时钟不是已验证历史交易所日历；完整源包接收另见独立 input receipt。此批准允许既有 scope 内冻结的只读 SPY intake/实施准备，不等于市场输入或经济 go。",
+  "bindings": {
+    "scientific_plan": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/scientific-plan.json",
+      "sha256": "666b4048c26f98ce9ce02c9b66b2e1982e805d9ec43e8e94de9a314280a7e7fd",
+      "bytes": 44193
+    },
+    "execution_contract": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-contract.json",
+      "sha256": "63d57d661fe9adf7a32896ec4dae50d39941f087ce780a286a1194c7cac452f6",
+      "bytes": 29425
+    },
+    "revision": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/scientific-plan-revision.json",
+      "sha256": "ecb593246c536325e6df391e7849bad6d3667522dd04264293d7d4e606717fab",
+      "bytes": 68778
+    },
+    "prior_plan": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/scientific-plan-v1.json",
+      "sha256": "e8681f8c8ea2e38c23c5ecdc381604940aaac41724d4cf3dab6e08f1fcb6b3e9",
+      "bytes": 34690
+    },
+    "prior_contract": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-contract-v1.json",
+      "sha256": "4a8694af66d6fd28c5e9a5fff8bcc2821adafae6a9512429db914aecdbae28d9",
+      "bytes": 20862
+    },
+    "prior_review": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-plan-review-v1.json",
+      "sha256": "f9a6b588da01a35cb8cab661726abb66e6e0e1dd94deaaadb81cf0b452cc42e2",
+      "bytes": 16994
+    },
+    "source_conditional_clock": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/source-conditional-clock.json",
+      "sha256": "6d9cb99ce53d515f04d64e5613761e8c40f6a115929c72cc3a9477995dae65b8",
+      "bytes": 1468906
+    },
+    "funded_clock_proposed": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/funded-SPY-clock-proposed.json",
+      "sha256": "5c09d9f413433eb32f9f38025105b61fbf98e6c05cd0931c3e71f64d3aff707e",
+      "bytes": 156721
+    },
+    "verification": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-source-and-plan-verification.json",
+      "sha256": "4cba01aabe2b35114e23a6eee9dc4d5ab1142eeca766b555cc4737f2065998ca",
+      "bytes": 85595
+    },
+    "resource": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-plan-source-review-resource.json",
+      "sha256": "c6fffd3545315df9c471c04250745177ef608a260d537cb539f83c552f27e63a",
+      "bytes": 2189
+    }
+  },
+  "diff_acceptance": [
+    {
+      "id": "R1",
+      "status": "accepted",
+      "reason": "SSE/n_train 与 alpha=n_train*lambda、100 原 grid、训练中心/缩放/不惩罚截距均明确。n_train 为成熟训练 80% 行数；闭式解/solver 数值等价仍须实施验收。"
+    },
+    {
+      "id": "R2",
+      "status": "accepted_conditional_clock",
+      "reason": "6524 weekday 行逐行与冻结日期公式核对；观察到 09:30 才激活，不以 helper holiday 删除源 MLK，不查当日未来尾行筛当前 packet。截止后隔离、缺格不填、previous packet day min4/已成熟格求和、tau 过去完整26格日及 stale20 packetdays 已冻结。",
+      "qualification": "使用未核全历史 helper 早收盘公式仅是公开声明的条件源时钟；不能因此称原 HAR close-to-close、原腿15m、实际历史 venue 因果复现。真实 SPY funded clock 仍独立 input gate。"
+    },
+    {
+      "id": "R3",
+      "status": "accepted",
+      "reason": "每侧 c=h 数值明确；FF log 仅作 APP score。09:30/首小时0、pending 先执行、实际 holding 决定 v、一次失效、缺包明确清仓 fallback、收盘前15分钟已知 preceding close 冻 night lot/实际 close 整单 affordability 已给七步事件表。参考 bar 成交及 cash proxy 限定保留。"
+    },
+    {
+      "id": "R4",
+      "status": "accepted",
+      "reason": "六对 exact IDs、共同 All target、loss 方向与共同时间交集冻结；Cts 同目标仅描述。HGB 只作同全信息算法增量，宽信息归因由匹配 PLS 提供，未添 HGB MKT 或扩大20候选。"
+    }
+  ],
+  "verification": {
+    "all_plan_bindings_verified": 26,
+    "five_contract_sections_equal": [
+      "feature_and_label",
+      "validation_and_models",
+      "execution_and_capital",
+      "inference_and_contribution",
+      "resources_and_gates"
+    ],
+    "actual_diff_matches_revision": true,
+    "candidate_inventory_unchanged": true,
+    "candidate_count": 20,
+    "source_market_economic_allocations_unchanged": true,
+    "source_clock_rows": 6524
+  },
+  "resource_calibration_condition": "固定 HGB_IDX_CTS/2019/depth6/lr.1/seed20261013/50-150-350，450CPU stop；必须全部输入/实施/native/fresh资源门后，模型成本计原经济池。完整包估算超额则具体决定，不删除 NL 或改称完整负结果；900MiB 不由本输入 review 的400MiB测试替代。",
+  "required_corrections": [],
+  "scientific_plan_approved": true,
+  "input_ready": false,
+  "implementation_ready": false,
+  "native_ready": false,
+  "resource_ready": false,
+  "economic_execution_admitted": false,
+  "research_pass": false,
+  "paper_ready_pass": false,
+  "next_owner_action": "原 owner 沿已冻结范围连续接续只读 SPY intake（旧15 requests/12,657,184B余额）、源特征准备和完整实施；市场输入/完整实施/native/resource 独立通过后才可拟合/经济。无需 Root 逐步审。",
+  "resource": {
+    "receipt": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-plan-source-review-resource.json",
+      "sha256": "c6fffd3545315df9c471c04250745177ef608a260d537cb539f83c552f27e63a",
+      "bytes": 2189
+    },
+    "count_once_shared_with_source_acceptance": true
+  }
+}

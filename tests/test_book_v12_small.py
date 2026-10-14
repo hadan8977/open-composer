@@ -119,7 +119,29 @@ def test_config_table_counts():
     assert sum(1 for v in t.values() if v.get("family") == "cand") == 16
     assert sum(1 for v in t.values() if v.get("family") == "tier") == 20
     assert sum(1 for v in t.values() if v.get("family") == "placebo") == 40
-    assert len(t) == 76 + 6
+    assert len(t) == 76 + 8
+    assert t["I2b_F1"]["rehedge"] is True and t["I2_F1"]["rehedge"] is False
+    assert t["I2b_F2"]["group"] == "G_REF"
+
+
+def test_i2b_diagnostic_toy():
+    idx = pd.date_range("2024-01-01", periods=4)
+    bv_eq = sm.bv.EQUITY
+
+    def frame(hedge_w, pnl):
+        spy_ret = pd.Series([0.01, -0.02, 0.0, 0.03], index=idx)
+        return pd.DataFrame(
+            {"net_pnl": pnl, "spy_ret": spy_ret, "spy_pnl": hedge_w * bv_eq * spy_ret}, index=idx
+        )
+
+    a = frame(-0.5, [10.0, 20.0, 30.0, 40.0])
+    b = frame(-0.4, [10.0, 25.0, 30.0, 40.0])
+    data = {"ORIG_F1": a, "I2b_F1": b, "ORIG_F2": a, "I2b_F2": a}
+    out = sm.i2b_diagnostic(data)
+    assert np.isclose(out["F1"]["max_abs_daily_return_diff"], 5.0 / bv_eq)
+    assert np.isclose(out["F1"]["mean_abs_hedge_weight_diff"], 0.1)
+    assert out["F2"]["max_abs_daily_return_diff"] == 0.0
+    assert out["F1"]["gate"] is False
 
 
 def test_names_without_price_pass_through():

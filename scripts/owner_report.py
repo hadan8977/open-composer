@@ -5,6 +5,7 @@
     uv run python scripts/owner_report.py weekly --send --force
     uv run python scripts/owner_report.py tables           # business-named trading tables
     uv run python scripts/owner_report.py lint <file.md>   # internal codes, paths, long brackets
+    uv run python scripts/owner_report.py health <event-id> # actual report artifact, no send
 
 The body is the writer's plain-language report (`reports/owner/daily/<UTC date>.zh.md`,
 weekly `reports/owner/weekly/<ISO week>.zh.md`) or, when it is missing, a short
@@ -46,6 +47,7 @@ from open_composer.reports.owner_digest import (  # noqa: E402
     render_internal_log,
     render_paper_section,
 )
+from open_composer.reports.owner_health import report_event_health  # noqa: E402
 from open_composer.reports.owner_style import (  # noqa: E402
     format_findings,
     lint_errors,
@@ -103,13 +105,20 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("kind", choices=("daily", "weekly", "auto", "tables", "lint"))
+    ap.add_argument("kind", choices=("daily", "weekly", "auto", "tables", "lint", "health"))
     ap.add_argument("path", nargs="?", type=Path, help="lint: the markdown file to check")
     ap.add_argument("--send", action="store_true", help="e-mail it (default: print only)")
     ap.add_argument("--force", action="store_true", help="send even if today's marker exists")
     ap.add_argument("--mail-env", type=Path, default=None, help="mail config file (KEY=VALUE)")
     ap.add_argument("--now", default=None, help="ISO time to report as of (tests, backfills)")
     args = ap.parse_args(argv)
+
+    if args.kind == "health":
+        if args.path is None:
+            ap.error("health needs an event id")
+        health = report_event_health(ROOT, str(args.path))
+        print(json.dumps(health, ensure_ascii=False, indent=2))
+        return 0 if health["status"] in {"written", "not_authorized"} else 1
 
     if args.kind == "lint":
         if args.path is None:

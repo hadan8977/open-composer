@@ -1,0 +1,42 @@
+# quant2 intraday runner: one observation sleeve, QQQ noise band (T-20261006-15, group A).
+# Not P1-qualified (DSR 0.17): shadow run 2026-10-09, small paper orders from 2026-10-12 only with an
+# authorization written by the coordinator. Spec: reports/research/iterations/t20261006_15_intraday_rules/
+# paper-sleeve-noiseband-qqq.md (sleeve NAV 100,000 USD = 10 percent of the account, cap 1).
+runner_name: quant2-intraday
+account: quant2
+live_feed: iex
+shadow_slippage_bps: 0.15
+session:
+  flatten_et: "15:55"
+  bar_delay_seconds: 5
+  max_tick_staleness_seconds: 90
+  order_ttl_seconds: 60
+  max_resubmit_age_seconds: 120
+account_caps:
+  max_gross_notional_usd: 100000
+  max_daily_loss_usd: 5000   # extreme-case guard only (coordinator 10-07)
+  max_orders_per_day: 40
+fees:
+  commission_per_share: 0.0
+  sec_fee_per_million_sold: 20.6   # SEC section 31 rate (2026-04-04), survey I-20261006-01
+  taf_per_share_sold: 0.0          # FINRA TAF: 0 per the Alpaca schedule template, to be re-checked
+strategies:
+  - name: noiseband_qqq_obs
+    plugin: "open_composer.intraday_runner.strategies.noise_band_qqq:NoiseBandQQQ"
+    params:
+      symbol: QQQ
+      mult: 1.0
+      lookback: 14
+      cap: 1.0
+      raw_daily_path: data/features/t15_raw_daily/QQQ.parquet   # fallback anchor only; the runner supplies ctx.prev_close_raw (live: Alpaca raw SIP daily bar)
+    flatten_et: "15:58"         # per-strategy exit (runner v1.1); the session default stays 15:55
+    symbols: [QQQ]
+    timeframe: 1m               # the plugin acts only at 10:00, 10:30 ... 15:30 ET (needs minute bars for VWAP)
+    capital_usd: 100000         # sleeve NAV
+    caps:
+      max_notional_usd: 100000
+      max_symbol_notional_usd: 100000
+      max_daily_loss_usd: 2500  # 2.5 percent of the sleeve; extreme-case guard only, the backtest has no stop
+      max_orders_per_day: 12
+    assumed_cost_bps: 0.15      # per side: half spread about 0.08 + slippage 0.02 + margin for the 15:55 exit
+    # no stop_loss_pct: the rule carries its own exit (band / VWAP)

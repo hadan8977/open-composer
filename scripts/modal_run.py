@@ -95,6 +95,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import modal_budget  # noqa: E402
 
+# Memory cap of the local `modal run` driver (run_capped.sh --mem). One shard's
+# output tarball must fit; larger outputs belong on the volume, not in the return.
+MODAL_DRIVER_MEM = "1G"
+
 APP_TEMPLATE = ROOT / "scripts" / "modal_app.py"
 MANIFEST_PATH = ROOT / "reports/research/control/modal-data-manifest.json"
 LEDGER_ACTUALS_PATH = ROOT / "reports/research/control/modal-ledger-actuals.jsonl"
@@ -439,7 +443,23 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         t0 = time.time()
-        proc = subprocess.run(["modal", "run", str(APP_TEMPLATE)], cwd=str(ROOT), env=env)
+        # The local driver runs inside the project memory budget (owner 2026-10-07,
+        # docs/runbook-memory.zh.md): it holds one shard's output tarball at a time.
+        proc = subprocess.run(
+            [
+                str(ROOT / "scripts" / "run_capped.sh"),
+                "--mem",
+                MODAL_DRIVER_MEM,
+                "--wait-min",
+                "30",
+                "--",
+                "modal",
+                "run",
+                str(APP_TEMPLATE),
+            ],
+            cwd=str(ROOT),
+            env=env,
+        )
         wall_seconds = time.time() - t0
 
     shards_path = local_dest / "_modal_shards.json"

@@ -1,0 +1,946 @@
+{
+  "schema_version": 1,
+  "task_id": "DAY3-NEWS-EMBEDDING",
+  "review_task_id": "DAY3-NEWS-PLAN-REVIEW",
+  "verdict": "revise_plan",
+  "verdict_scope": "完整经济设计；与下方独立 S0 scope verdict 分开。",
+  "reviewer": {
+    "agent_id": "d1431044-f325-4b17-bfd2-57b983a434dc",
+    "role": "independent_scientific_reviewer",
+    "author": false,
+    "actual_model": "gpt-6.1-sol",
+    "effectiveThinkingOptionId": "xhigh",
+    "currentModeId": "full-access",
+    "runtimeInfo_modeId": "full-access",
+    "runtime_session_id": "01a133fd-5101-72b3-9c1a-8c27f9851ea4",
+    "verified_once_at_utc": "2026-10-13T06:41:05.230Z",
+    "verification_source": "Paseo get_agent_status；snapshot、runtimeInfo 与 parent label 实际回读",
+    "decision_owner_agent_id": "fc66ee6a-2b84-493a-8aaa-3c78973405c8",
+    "execution_owner_agent_id": "2df73225-951f-4539-9d8d-506a3b8a73fe"
+  },
+  "timing": {
+    "started_at_utc": "2026-10-13T06:40:07.832Z",
+    "finished_at_utc": "2026-10-13T06:54:08.402808+00:00",
+    "elapsed_seconds": 840.571,
+    "requested_target_minutes": 20,
+    "measurement": "起点为实际 lastUserMessageAt；终点在落盘时读取 UTC，包含证据读取与审查写作时间。",
+    "within_requested_20_minutes": true,
+    "delivery_completed_at_utc": "2026-10-13T06:55:07.733000+00:00",
+    "total_elapsed_seconds_including_notification": 899.901
+  },
+  "authorization": {
+    "authority": "reports/research/control/owner-compute-hold.json",
+    "as_of_utc": "2026-10-13T03:37:23.959157+00:00",
+    "research_paused": false,
+    "status": "task_owned_research_conditionally_resumed",
+    "old_pause_text": "历史；不据此拒绝本审查或获准 S0。",
+    "review_changes_paid_cap": false,
+    "resets_old_consumption": false,
+    "legacy_schedules_restarted": false,
+    "DS": "parked"
+  },
+  "summary": "保留 SEC 业绩披露语义作为条件适配研究对象，批准作者在精确绑定和现场内存条件满足后完成有界 S0 输入核验。完整经济计划需修订，S1、模型下载/载入、价格标签、推理/拟合/回测及 1064-fit 分配均未准入。关键不是是否能训练，而是删表后是否还有值得交易的结构信息、基线是否完整、时间/置换是否因果有效，以及能否保留该信号的部署后续路径。",
+  "applicability": {
+    "economic_eleven_checks": "全部适用：新事件文本/表征收益假设，新的标签、D1/D2 时点、候选与验证定义；不是旧已批准实验的普通恢复。",
+    "S0_economic_eleven_checks": "不适用为 S0 的逐项执行门；S0 是来源/输入资格与删表损失核验，另作 scope verdict，不计算经济信息、不生成模型候选。",
+    "campaign": "完整经济包按新 SEC 披露收益机制的多模型/时钟发现与优化处理，适用 campaign pre-discovery；组件或 R-only 名称不产生豁免。当前 plan blueprints 是提案，尚非已准入候选。S0 文档资格清单不等于经济候选生成，可先完成。",
+    "latest_portfolio_scope": "本周先做各自收益，跨策略组合独立性下阶段；本包同宿主 Q2/C1 的数据/模型净增量不可延后。未要求在本次补做 F1/G3 混合。"
+  },
+  "findings": [
+    {
+      "check": 1,
+      "name": "外部和本地 prior art",
+      "applicable": true,
+      "status": "pass",
+      "evidence": [
+        "source-fidelity.json / primary",
+        "ckx-essec-2024.txt §2.2.4、§3.2、§3.4、§3.5、§3.7",
+        "old-results.json / findings[id=news_attention_semantics_and_horizon] 及其原结果"
+      ],
+      "judgment": "已持久原文并区分 2024 副本与未读的 2026 修订；原文表征+监督映射与旧零样本重排不同。未核到独立净利润复现，不把毛 Sharpe 作为预期本地收益。旧 tone/SUE 下游时钟仍有修复边界，具体见 prior_art。",
+      "required_changes": [
+        "E1"
+      ]
+    },
+    {
+      "check": 2,
+      "name": "独立经济机制与组合边际",
+      "applicable": true,
+      "status": "revise",
+      "evidence": [
+        "plan.json / economic_role、route_decision、negative_experiments、cost_and_portfolio"
+      ],
+      "judgment": "C2 对 Q2/C1 的匹配增量终点合适，但新旧指引变化/相对预期的机制尚未被当前删表、单篇 prefix 输入实现。无 PIT 预期不得称 surprise Alpha；目前仅能问缓存残存叙事的条件预测相关性。先证明有结构信息并能保留到可执行后续。",
+      "required_changes": [
+        "E2",
+        "E7"
+      ]
+    },
+    {
+      "check": 3,
+      "name": "14 天与历史等待口径",
+      "applicable": true,
+      "status": "pass",
+      "evidence": [
+        "plan.json / daily_empirical_milestones、paper_transition"
+      ],
+      "judgment": "没有把前向两周变成历史研究等待；08:00 是送审里程碑。跨日可因输入、表征和真实经济比较连续推进，不需为了当天结算削深度。",
+      "required_changes": []
+    },
+    {
+      "check": 4,
+      "name": "真实深度、固定选择与累计 trials",
+      "applicable": true,
+      "status": "revise",
+      "evidence": [
+        "plan.json / three_economic_depth_points、validation、cumulative_budgets、economic_acceptance"
+      ],
+      "judgment": "来源、信息表示和实施是有价值的三条轴，但 S0 不是经济深度点，base/large 两档加成本档也不证明达到机制深度；年度扩窗混合了市场时间和训练样本效应。392+672 算术可成立，1064 是上限，不能写 finish1064fitcap 为研究完成条件。需冻结各信息层比较的真实可用样本/信息/容量及证据终点，不为耗满上限执行无识别力控制。",
+      "required_changes": [
+        "E2",
+        "E6",
+        "E7"
+      ]
+    },
+    {
+      "check": 5,
+      "name": "忠实方法、简单基线、placebo 与功效",
+      "applicable": true,
+      "status": "revise",
+      "evidence": [
+        "ckx-essec-2024.txt §2.4、§3.2、§3.5/Figure5、§3.7/Table12",
+        "plan.json / proposed_model_blueprints_not_admitted_candidates、placebo_and_missing、validation"
+      ],
+      "judgment": "不是商业新闻利润复现；B1 是 TF-IDF ridge，原文 BOW 是 SESTM，需如实标适配。数值缺失置零可能使 N0/Q2 过弱。训练所有 issuer 后的 20% 子组不是 held-out generalization。同 issuer/year 置换及循环移位可读未来文档；同日期 ADV 匹配未定义事件类型/时钟与交换性。每族仅8随机重复，精确 Monte Carlo p 最小1/9，不能给该族5%显著性；24个不同 null 不可无论证混合。100个日期只是样本门，不是80%功效证明。",
+      "required_changes": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E6"
+      ]
+    },
+    {
+      "check": 6,
+      "name": "PIT、成本、执行、借券与容量先于收益",
+      "applicable": true,
+      "status": "blocked",
+      "evidence": [
+        "input-audit.json / sec_performance_updates",
+        "scripts/build_earnings_events.py / html_to_text、fetch_exhibit_text、current company map",
+        "plan.json / input_contract、execution_contracts、label_contract、cost_and_portfolio"
+      ],
+      "judgment": "未有合格 corpus/version/security/partition、历史 ETB/quote 或资金执行证据。D1 09:00 与60分钟不一致。D2 可以因果执行，但不是原文即时交易或必然的首次价格反应。20bps 与实际摩擦、未成交机会损失的加法尚不明确，整数股不能仅按前收盘 floor 宣称开盘仍符合资金/毛敞口上限。",
+      "required_changes": [
+        "E2",
+        "E3",
+        "E5",
+        "E7"
+      ]
+    },
+    {
+      "check": 7,
+      "name": "模型角色、fallback、缺失模态",
+      "applicable": true,
+      "status": "pass",
+      "evidence": [
+        "plan.json / models、representation_contract、model_role_matrix"
+      ],
+      "judgment": "主要角色为冻结表征+收益排序，风险/定仓/状态不交给 LLM，C2→Q2、纯文本→现金及10/30%遮挡已声明。2022 artifact 指针与2024事件降低记忆污染，但尚非实际权重/配置验证；后续必须同一事件资格和缺失状态比较，不能只保留成功文本。角色声明通过不等于模型或贡献准入。",
+      "required_changes": [
+        "E2",
+        "E7"
+      ]
+    },
+    {
+      "check": 8,
+      "name": "连续历史推进、每日实证、预算",
+      "applicable": true,
+      "status": "pass",
+      "evidence": [
+        "plan.json / daily_empirical_milestones、cumulative_budgets、native_entry",
+        "current-state.json / owner、cumulative"
+      ],
+      "judgment": "有同一 owner、输入核验/资源 profile/结果里程碑与原生分片；允许多日。S0 后不需逐修复回 Astra。资源上限仍是请求，不能占用别人的 reservation；完成标准须由1064fit改为判定性证据。",
+      "required_changes": [
+        "E7"
+      ]
+    },
+    {
+      "check": 9,
+      "name": "同宿主组合净边际而非 IC/单体 Sharpe",
+      "applicable": true,
+      "status": "revise",
+      "evidence": [
+        "plan.json / cost_and_portfolio.host_marginal、risk_matching、benchmark_family"
+      ],
+      "judgment": "比较对象正确，但 same exposure as possible 不是可重放风险匹配；需共同连续日期、现金/缺失/未成交全部保留，固定事前风险缩放。区分 Sharpe(C2)-Sharpe(Q2) 与每日净收益差的 Sharpe/均值，不把差分 Sharpe 当账户增量。加入收益量级、相关性、压力共损、DD/恢复和20k实际资金占用；跨策略混合可留下一阶段。",
+      "required_changes": [
+        "E5",
+        "E7"
+      ]
+    },
+    {
+      "check": 10,
+      "name": "工程/门禁是否伪进展",
+      "applicable": true,
+      "status": "pass",
+      "evidence": [
+        "root-source-decision.json / scientific_object、S0_decision",
+        "direction-check-receipt.json / meaning",
+        "plan.json / workflow_vs_returns、gates_passed"
+      ],
+      "judgment": "有界 S0 能决定是否值得训练，具有信息价值。source direction-check ok 只证明该次来源绑定检查，经济准入仍 false。review、hash、解析器完成不记 Alpha、完整经济包或 paper 成功；不需要新平台、全仓 tests 或行情。",
+      "required_changes": []
+    },
+    {
+      "check": 11,
+      "name": "停止、pivot、paper/shadow 入口",
+      "applicable": true,
+      "status": "revise",
+      "evidence": [
+        "plan.json / economic_acceptance.stop、route_decision.alternate_if_Root_rejects、paper_transition",
+        "root-source-decision.json / full_study_judgment"
+      ],
+      "judgment": "已有 dependency_block/not_at_depth 与 R 不晋级边界，但 paper_transition 是条件列表，缺能取得的输入/身份/借券/未来评估路径及投入判断。若 S0 证明只剩套话、数值控制不可恢复或无可部署后续，应暂缓本适配的大批训练；不是 refute 新闻机制。Benzinga/Refinitiv 续取亦未获本审准入。",
+      "required_changes": [
+        "E2",
+        "E7"
+      ]
+    }
+  ],
+  "prior_art": {
+    "primary_file": "sources/ckx-essec-2024.txt",
+    "directly_verified": [
+      {
+        "locator": "§2.2.4，lines469–484",
+        "finding": "初始512/1024 token，均值 token vectors；RoBERTa-large1024d 与 frozen vectors→ridge 是方法依据。特殊 token pooling 未明，计划须报告实现选择。"
+      },
+      {
+        "locator": "§3.1，lines611–634；§3.2，lines957–995",
+        "finding": "Refinitiv articles/alerts，US CRSP，1996–2019；6年 train+2年 validation、下一年测试。短2024训练扩窗、SEC文本与 SPY超额目标是本地适配。"
+      },
+      {
+        "locator": "§2.4，lines554 onward；§3.2",
+        "finding": "原 BOW 基线是 SESTM，不是本地 TF-IDF ridge。这里允许简单TF-IDF匹配对照，但不能称其完成原 SESTM 复现或单独否定复杂度效应。"
+      },
+      {
+        "locator": "§3.4，lines1071–1084",
+        "finding": "原文09:00–09:30 ET新闻延至次日；非计划60分钟通用延迟。"
+      },
+      {
+        "locator": "§3.5/Figure5，lines1351–1449",
+        "finding": "持有期仍1个open-to-open session，变化的是开始交易的延迟；Day1→Day2明显下降，Day3左右新闻情绪被吸收。计划/source-fidelity误称Figure6；Figure6是国际市场股票数与Sharpe。原图提供衰减反证，不保证SEC/D2延迟后残余利润。"
+      },
+      {
+        "locator": "§3.7 footnote8、Table12，lines1494–1578",
+        "finding": "下一日open-to-open直接ridge预测才是本计划更相关的来源；Table12 RoBERTa EW4.54/VW1.31属该副本组合结果，不是已核净利润。Table6的情绪毛4.10/OPT4.51不能混作本计划直接收益回归绩效。"
+      }
+    ],
+    "latest_revision": "2026-02-24的78页全文未持久/未读；本 reviewer 不网络补取。最新净成本表、独立净利润复现和发表后可部署记录未知。",
+    "counterevidence": [
+      {
+        "path": "reports/research/iterations/h20260916_02_news_attention/report.json",
+        "locator": "llm_used、screen.n_tests/n_fdr_pass、precheck.overall.book、variants",
+        "finding": "无LLM，新闻覆盖97.424%、48项0过BH，139调仓日的粗注意力门净匹配改善失败；不否定语义。"
+      },
+      {
+        "path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/results.json",
+        "locator": "clean_window、stop_continue_rule",
+        "finding": "CLEAN仅5次形成，L-B Sharpe=-0.238530993；1451旧调用及4次attempt/~5.5h保留。受污染14窗不能再称第二个clean样本，也不能说记忆只能帮助L；旧冻结结论仍保留，不重写。"
+      },
+      {
+        "path": "reports/research/iterations/h20260922_01_earnings_text/summary.json",
+        "locator": "scored_events、tradable_events、results[signal=tone]",
+        "finding": "2210已评分、2199可交易、tone仅39日；10bp Q5 d0=-83.4000bp/t=-1.6700，d1=-33.3912bp/t=-0.5536，d5=+88.2239bp/t=.9625；不足选择5日或普遍否定语义。"
+      },
+      {
+        "path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/results.json",
+        "locator": "join_stats、primary_horizon_20d",
+        "finding": "1032事件、20d t1.064、20bp年超额-.14%；不是可信正贡献。其从filing-date转accepted的改善，不等于已消除随后发现的UTC双移缺陷。"
+      },
+      {
+        "path": "reports/research/program/earnings-events-timing-fix-2026-10-04/report.md",
+        "locator": "§3、§4、§5；对应checks.json",
+        "finding": "独立20/20 accepted核验；98重复accession涉及多类ticker；当前16089包括新增至10月2日，须按提案9月17日截止再筛。明确旧tone及SUE下游未重建、旧accepted晚4–5h：旧结果是特定实现负参考，不能对当前D1/D2时钟直接作成熟否定。本审不重算旧数据。"
+      },
+      {
+        "path": "reports/research/signal-cards/news-hf-v1-summary.md",
+        "locator": "three rows；news_hf_reaction_event_p90.json coverage/car.h5",
+        "finding": "三种反应信号旧结果负；p90=20448事件/674日期，h5均值-.0029254/t=-1.8623。价格反应本身不是从未试过的新信息。"
+      },
+      {
+        "path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/decision-record.md",
+        "locator": "P1",
+        "finding": "pending，不计实测成功或失败，避免同义重复。"
+      }
+    ],
+    "research_priority": "强方法来源与不同监督用途足以支持30分钟源核验；净利润证据和本地反证尚不足支持大批 R-only 拟合。最值得识别的是指引/经营叙事的条件残余信息，前提是数值控制完整并有可迁移路径。"
+  },
+  "depth_curve": {
+    "status": "revise_not_at_depth",
+    "accepted_axes": [
+      {
+        "axis": "信息完整性",
+        "meaning": "缓存叙事 vs 原exhibit布局/数值/指引损失；S0仅决定输入可用性，不计经济深度完成。",
+        "required": "实际删表损失与baseline资格；需要全exhibit时另获恢复准入，64样本不能外推还原16089。"
+      },
+      {
+        "axis": "匹配信息与表征",
+        "meaning": "同事件Q2、C1与C2；simple numeric/BoW到contextual representation，base/large容量对照。",
+        "required": "等信息、实际N0覆盖、token截断位置、有效自由度、训练/验证规模；明确mean-loss lambda与实现sum-loss alpha的换算，防止三个lambda都退化为同一个过强收缩。"
+      },
+      {
+        "axis": "可执行净值",
+        "meaning": "D1→D2延迟、实际可用借券/资金/整股/缺失后的净增量及压力恢复。",
+        "required": "至少有一种真实可继续的输入/时钟/交易路径；缺该路径只能条件R诊断，不把成本档或拟合数量充作第三经济层。"
+      }
+    ],
+    "selection": "保留 C2-large+D2 事前主对比与按时间 validation MSE 选alpha；不得用旧d5正号、新R结果、issuer stress或成本档挑赢家。",
+    "trial_accounting": "392 core+672 placebo是拟合尝试上限；区分fit attempts、distinct candidate streams、outer predictions、失败、缺识别力跳过及后处理检查。变更比较清单前冻结实际manifest，累计旧曝光不清零；不得为了耗完预算运行没有研究价值的训练。",
+    "refutation_boundary": "仅完成完整输入、忠实适配实现、有意义经济深度、预注册可用预算、足够功效与有效对照后可停止该适配；本包永不据此否定未复现的原商业新闻机制。"
+  },
+  "clock_and_training": {
+    "D1": "当前两句冲突。若保留acceptance+60min，09:30 regular open只能接纳<=08:30 ET可用文本；08:45例进入下一regular open。原论文09:00 cutoff对应最多30min，不得同时声称源时钟忠实。作者须冻结一套不矛盾规则与交易日历；本审不替作者选择新实验。",
+    "D2": "若沿提案：s=首个open>=accepted+60min的session；decision=close(s)+30min；entry=open(s+1)，exit=open(s+2)。D2允许价格特征到close(s)，禁止entry open；晚间/日内披露可能到下一session才选s，须称操作性reaction session，不能称首次市场反应。Acceptance不是真正首次公关发布时间，旧8-K可能更晚；结论是该可用时钟之后的残余。",
+    "label_maturity": "label_end=open(e+1)，visible_at须明确为再下一交易session的open或确切数据可用timestamp；不能用calendar+1day。每个train/validation/refit样本均要求自身feature可用<=样本decision、label_visible_at<=相应fit cutoff，fit完成<=预测decision。5session purge不能代替这两个条件。",
+    "forecast_end": "最后entry不能因最后文档日期固定到9月17日就自动有成熟标签；D1/D2可能需要9月18日以后open。作者须按已准入价格终点逐样本处理成熟性，不能以未来价缺失筛掉已下单亏损或静默扩span。",
+    "training_selection": "2024内层10–11/11–12等具体2个月边界、五session清除、alpha/scaler/vocab fit与refit cutoff需逐fold明示；validation MSE只能使用该时点已成熟标签，refit不得使用当季测试结果。",
+    "issuer_group": "最小修订是改称 hash-defined issuer subgroup performance/stress；主训练含其issuer，不得叫held-out/cross-issuer generalization。只有另立完整issuer排除训练/validation的对比才可主张issuer泛化，该额外实验未准入。"
+  },
+  "placebo_review": {
+    "verdict": "revise",
+    "causal_constraints": "记录每个recipient-event/donor-document/decision/fit-cutoff；donor公开时钟<=recipient decision，训练标签成熟<=fit cutoff，所有原和伪样本使用同一允许R分区、覆盖及风险执行规则。不可从测试未来月份借文本，即便仍在同一年或同fold。",
+    "issuer_null": "entry-date+ADV不足以保证交换性：须同时控制披露事件族/可用时钟、数值missing/重要暴露，文本关联与Q2条件信息的变化须解释。固定bin merge优先级及禁止自配/重复cluster，记录可交换组数和有效排列数。",
+    "event_null": "within issuer/year/season会拿较晚的季度文本放到较早事件；若因果限制后每issuer不足peer，则标not_identifiable，不能自动放宽到未来，也不能假称placebo pass。",
+    "time_null": "循环20session移位会在年度/折边界wrap后引入未来文本；须冻结仅向过去、无wrap的有效映射及边界处理，或停止该null的识别声明。重打时间后重算decision/label mature，不继承原clock字段。",
+    "replications": "每族8seed的随机化检验最小p=1/9；不同null合并24样本一般无交换性依据。作者需在672上限内选择足够重复的主null/精确枚举，或把这些仅报为描述性robustness，不宣称5%permutation pass；重复排列不增加有效样本。",
+    "power": "以独立entry日期和issuer/event重叠计算n_eff/MDE及paired-net区间；1000 events/100 dates门不能代替经济功效。PBO/DSR的1000 daily rows是本计划限制，不是普遍理论豁免；若做不了则N/A，SPA也须说明有效family/日期block，R结果仍非未见验证。",
+    "inferential_limit": "即使合格placebo通过，识别的是特定条件预测关联/信息贡献，不证明发行人文本对收益的结构因果效应。"
+  },
+  "cost_execution": {
+    "status": "revise_and_input_blocked",
+    "primary_fixed_cost": "20bps one-way乘实际交易金额，入/出每笔一次；相邻日同证券按真实净订单记换手并保留每日open-to-open持仓账，不能无条件把延续持仓当全平重开。0/5/40仅诊断。应报告按当前冻结定义的20bps结果。",
+    "actual_friction": "另报spread+impact+fees+borrow+funding+inference实际/区间模型；说明20bps覆盖哪些项及哪些确属额外项。固定摩擦情景与实际摩擦不得未经定义相加，spread/impact不能重复扣。",
+    "borrow": "先知道ETB才做空；缺历史ETB的成交路径现金/不可实施，不能以想象0 borrow填充。敏感性上界只能R研究说明，不能 paper_ready。各模型用相同借券资格池，不能一方享有不同可成交宇宙。",
+    "whole_shares": "用当时可知价拟定整股订单，但entry gap会使实际gross/单名/资金超限；需要事先确定订单样式与资金缓冲/缩单/拒单逻辑及其机会损失。计划还须处理issuer多证券、多事件同日、归并净单、未成交覆盖、现金/short collateral、融资基数及BIL收益，不能把卖空款自由再投资。",
+    "opportunity_cost": "未成交后现金已经失去该仓位收益；另算implementation shortfall/未成交机会成本作为归因，不再从实际现金路径净值第二次扣同一收益。费用只对实际成交notional；持有借券/资金按实际时长。",
+    "capacity_and_clock": "gross1、每腿>=5导致至少约25个当日事件才有五分位双边书；需实际覆盖分布与现金天数，16089metadata不是连续每日可交易数。开盘order style、quote/auction fill、arrival及实时推理miss需后续证据；本次没有该执行准入。"
+  },
+  "portfolio_marginal": {
+    "baseline": "固定宿主 Q2 与 C1，共同事件资格、允许信息、时钟、风险/资金/借券规则，C2只改变文本表征；保留无文本fallback，不只评估成功文档。",
+    "required_matrix": "共同连续regular-session日期的C2/Q2/C1及适用benchmark净收益；不删cash/underfilled/无事件日，不按活跃日Sharpe年化冒充账户Sharpe。R-only来源不产生新unseen矩阵。",
+    "risk_matching": "先冻结同一过去校准窗口、ex-ante risk scalar数学规则与gross<=1，报告raw与matched；不以全评估窗事后波动归一化，不把降风险当独立增量。",
+    "statistics": "每日Delta=C2-Q2、C2-C1的净均值/区间、协方差、增量截距；另报宿主总Sharpe差、相关性、stress共损、回撤/恢复、净CAGR/绝对20k利润与资本占用。差分流自身Sharpe不是最终账户目标。",
+    "cross_strategy": "按10月13日机主最新周范围，本次可延后F1/G3组合选择，不能延后同宿主增量。"
+  },
+  "S0": {
+    "scope_verdict": "approve_bounded_input_verification_with_pre_execution_bindings",
+    "approved_scientific_scope": true,
+    "executed": false,
+    "author_may_execute_now_without_bindings": false,
+    "author_may_complete_after_conditions": true,
+    "economic_execution_admitted": false,
+    "purpose": "最小有信息价值的来源核验：核真实文档资格、删表/布局丢失、数字/指引控制是否可定义、时钟/版本/身份缺口以及可继续路径；不形成收益判断。",
+    "limits": {
+      "small_metadata_bytes": 8388608,
+      "existing_text_bytes": 419430400,
+      "new_exhibit_request_attempts": 64,
+      "new_exhibit_payload_bytes": 16777216,
+      "wall_seconds": 1800,
+      "memory_bytes": 402653184,
+      "paid_spend": 0,
+      "price_reads": 0,
+      "labels": 0,
+      "model_downloads": 0,
+      "model_loads": 0,
+      "inference": 0,
+      "fits": 0,
+      "backtests": 0
+    },
+    "input_bindings": "仅 plan.input_contract.existing_metadata_bindings 的三个2024/2025/2026 parquet；启动时核SHA/size与本审已核plan/audit绑定。当前三文件共2348893 bytes，由作者S0实际复核。reviewer未读这些数据文件。",
+    "eligibility_binding": [
+      "作者先在该目录冻结一份S0 manifest：三metadata实SHA、截止2026-09-17的Item2.02/form筛选语义、资格/排除码、canonical accession+URL+CIK及多证券关系。无ex99、缺text、hash mismatch、类型/身份不明须各报分母，不静默丢弃。现有16089含截止以后记录、重复accession和no_ex99，不能称16089usable。",
+      "缓存文本只读由这些metadata实际指向且realpath在data/raw/earnings_text内的文件；按canonical accession排序逐文件stream/hash/计字节，去重同文件，<=400MiB。记录每文件path/bytes/raw hash/metadata hash比较、extraction版本。不能把现有normalized txt hash当原HTML hash，不修改原缓存、不整仓glob。",
+      "S0身份检查仅记录CIK/issuer与证券/多类权益的歧义；未知普通股/历史永久security资格留unknown或quarantine，不能猜。任何新身份数据集、市场成分或价格归并不在S0。小既有provenance片段如需读取计入8MiB，精确文件及hash先入manifest；不存在fetch clock就留unknown。"
+    ],
+    "sample_selection_binding": {
+      "selection_version": "DAY3-NEWS-S0-v1",
+      "recipe": "先完成无收益信息的文档清单，再冻结64或更少原URL。年配额2024=22、2025=21、2026=21；年内按已有标题/描述或本地文本可证的document kind分层(earnings / production-delivery / guidance / mixed / unknown)，分类规则与其实现SHA先冻结；无法支持类型则全部unknown，不猜类型。各年按kind数量比例largest-remainder分配，余数相等按kind字典序。每层按SHA256('DAY3-NEWS-S0-v1|'+CIK+'|'+accession+'|'+canonical_ex99_url)升序取，不按数字损失/可成交性/收益挑。",
+      "shortfall": "不足的层取全，余量在该年按同一比例规则分配；整个年份不足，余量按2024/2025/2026固定顺序补到其他有余量的年。总unique URL<=64；如仍不足就报告更小样本，不追加新发现URL。无返回或过大URL不替换，避免成功样本偏差。",
+      "requested_manifest_rows": "每个被选URL绑定year、kind及其证据、CIK/accession、缓存path/hash、rank与stratum/quota、request ordinal、精确https://www.sec.gov/Archives/edgar/data/... URL。列表及SHA落盘后才GET；此处算法不是实际64名单或已执行证据。"
+    },
+    "request_binding": [
+      "仅上述原exhibit GET；不新增index/submissions/news/model/provider请求。最多64次实际网络尝试，失败、重试和redirect每跳均计；固定总16MiB实际响应内容(含失败/部分)和30min，不只计成功文档。顺序流式读取、并发1；到任一上限即保留partial退出，不能先完整下载再截断以掩盖超额。",
+      "按既有SEC实名User-Agent/限速实践，不新增credential。仅HTTPS SEC archive；自动redirect关闭，允许的同SEC/同accession目标须加入同一manifest并扣请求数；其他域/路径停止该项。无代理/换key/反复403/429。不要直接使用现有builder默认重试而不计本scope总额。",
+      "新HTML保存在本任务目录的S0专属取证子目录，保存exact URL/status/headers中可见版本信息/fetched_at/bytes/hash/失败及累计表；不覆盖author原缓存或全量metadata。重抓的fetched_at是现在的，不回填历史firstseen。"
+    ],
+    "memory_conditions": {
+      "checked_live_by_reviewer": false,
+      "preflight_entry": "python3 scripts/memory_budget.py admit --kind job --mem 384；必须正常exit0，并留同期memory_budget.py status输出在S0结果。",
+      "actual_current_rule": "当前config要求reserve500MiB；384MiB job的admit需要min(384,heavy_job_mb=200)=200MiB现场headroom及research_room>=200MiB，故当前配置MemAvailable至少700MiB。不是要求owner另开全384MiB闲置预留，也不是只看384MiB进程上限。",
+      "execution_entry": "scripts/run_capped.sh --mem 384M --swap 256M --wait-min 0 -- <作者实现的S0命令>；同一owner本地顺序stream，不启动新agent/remote/cloud。",
+      "failure_handling": "若admit报错、字段不可读、拒绝或caps不生效，停止该次启动，记录具体资源缺口；run_capped存在非2检查错误后仍启动的fallback，本scope不得利用它。现场须保留约500MiB owner reserve、现有oc.slice(2200MiB)/research caps；resource是启动时证据，此review不是现场内存通过证明。"
+    },
+    "required_outputs": [
+      "精确metadata/text资格、缺失、hash、canonical去重/多证券/截止日期、issuer与日期分布；对不能完成的400MiB部分报read boundary，不 extrapolate。",
+      "64样本或更少的逐URL原HTML、table-preserving提取与旧缓存对照，分开比较EPS/收入/利润/指引范围/同比数值、标题/管理层经营解释和布局table中的整段 prose。_TABLE_RE删的是整个<table>，不只财务表；可能剩下免责声明/联系信息。只在审计样本记录是否可构建N0及paired prior period，不产出下游factor。",
+      "每文档clock证据(accepted、若有original publication、当前fetch、version/amend/PAC、unknown)与缓存差异；accepted20/20和archive URL不自动证明缓存vintage。修订文件不逆向合并到旧事件，raw/normalized hash分开。",
+      "为下一步给出corpus/content/baseline可用、限定用途/不可知、现有可取得继续路径或defer原因；不得宣布PIT、全exhibit已恢复、永久身份或paper ready。"
+    ],
+    "acceptance_and_branches": [
+      "如果保留有意义经营叙事、数值控制能在相同信息集定义、来源/版本问题可隔离：完成S0结论，再由作者合并本审E1–E7形成修订经济包与真实输入接受请求；不自动执行S1或训练。",
+      "如果主要数值/指引被删、布局导致主文大量丢失，或N0/Q2只能missing/0：S0成功发现阻塞。可把该缓存定为叙事诊断，不能证明超越完整披露；全量table-preserving恢复另需准入，不借64请求恢复或新增当时预期。",
+      "如果哈希/版本/类型不明占主导，或无可保留信号的免费/PIT/身份/执行后续：暂缓该R-only经济批次，报告dependency_block/not_ready；不是否定商业新闻/语义机制。",
+      "同scope路径、解析/日志、流式内存、有限重试修补由2df73225同一作者完成到实际结果。按真实hash/预算/结果验收，不逐修复回Astra；只有新来源/新经济定义/超限或实质输入结论才送相应审查。"
+    ],
+    "minimum_S0_changes": [
+      "冻结真实文件/资格/样本/请求manifest及其SHA；不是另建格式平台。",
+      "启动时通过上述memory admission并约束所有请求、内容与时间累计。",
+      "将数值/布局丢失、N0公平性、版本边界和可部署后续作为S0结果，保持全部经济准入false。"
+    ],
+    "actual_continuation_entry": "作者2df73225从现有current-state.json进入S0 manifest→现场memory admission→本地有界S0实现/取证/结果。无需新owner、Astra逐文件确认或重开经济11项；这是该review唯一可执行的获准scope。"
+  },
+  "required_changes": [
+    {
+      "id": "E1",
+      "before": "完整经济准入",
+      "paths": [
+        "plan.json / source_evidence、route_decision、execution_contracts",
+        "source-fidelity.json / recovered_method"
+      ],
+      "change": "修正Figure6→Figure5、列Table12/§3.7 direct-return比较；明确原文SESTM vs TF-IDF、8年滚窗 vs短扩窗、原30min/source clock vs60min/accepted适配。保留最新全文/净成本未知；加入旧tone/SUE下游4–5h晚时钟限制，不覆盖旧结果。",
+      "decisive_evidence": "已持久论文与timing-fix report，无需新网络或重算。"
+    },
+    {
+      "id": "E2",
+      "before": "任何模型/标签/经济计算",
+      "paths": [
+        "plan.json / input_contract、N0/Q2/C1/C2、three_economic_depth_points"
+      ],
+      "change": "用S0说明到底测经营叙事、数值变化还是条件surprise；冻结一个可辨识的披露对象/异质类别控制和数值N0定义(字段、period、单位、prior source时钟、覆盖/缺失)。全部比较用相同信息和资格；不得用删表使N0=0的胜出称超越完整披露。若所需paired原文本/数字不可取，则缩窄结论或另提恢复，不能假增量。明确各深度点的实际信息/样本/容量对比及归一化ridge lambda数学单位。",
+      "decisive_evidence": "S0 input quality与逐项N0可定义性；不要求S0执行模型。"
+    },
+    {
+      "id": "E3",
+      "before": "价格标签准备及训练",
+      "paths": [
+        "plan.json / execution_contracts、label_contract、validation"
+      ],
+      "change": "消除D1截止/60min冲突，逐行绑定D1/D2 decision-entry-exit-label_visible-fit_cutoff(交易日历含DST/holiday/early close)。保留D2固定主对比，注明它是操作性延迟而非原图利润保证。标签成熟约束同时覆盖alpha训练、validation和refit；末样本不能越准入价span。将20%issuer group改称已训练子组stress，或另立不含这些issuer训练的真正泛化实验。",
+      "decisive_evidence": "时间表和样本/成熟筛选定义先验，不用测试窗收益决定。"
+    },
+    {
+      "id": "E4",
+      "before": "placebo经济执行",
+      "paths": [
+        "plan.json / placebo_and_missing、economic_acceptance.family_stats"
+      ],
+      "change": "冻结recipient/donor因果可用性、同事件类型/时钟/数值missing匹配、固定bin合并和唯一排列规则，删除未来文档置换与环绕时间移位。识别不足就N/A/not_at_depth。为主随机化null取得可支持所声明显著性的重复/枚举，或仅描述性报告；不混合非交换null，也不自动增672预算。",
+      "decisive_evidence": "有效donor/peer/permutation inventory与成熟时钟，保持原标签/覆盖/风险/成本。"
+    },
+    {
+      "id": "E5",
+      "before": "回测/收益判断",
+      "paths": [
+        "plan.json / cost_and_portfolio、economic_acceptance、portfolio marginal"
+      ],
+      "change": "给单一可重放20bps与actual cost分类公式，避免spread/impact/borrow/funding/未成交机会损失双扣；规定相邻事件净订单、整股gap资金控制、现金和short collateral/融资、ETB未知路径及共同资格。冻结事前risk scalar及共同连续矩阵，分别报告净Delta、总Sharpe差、风险与20k美元价值。",
+      "decisive_evidence": "真实执行/借券/费用资源未接受时仅条件R敏感性，不能paper_ready。"
+    },
+    {
+      "id": "E6",
+      "before": "完整经济准入/训练",
+      "paths": [
+        "plan.json / validation、cumulative_budgets、economic_acceptance、native_entry"
+      ],
+      "change": "实际corpus/issuer/security/partition哈希与R-only已见声明入manifest；列有效候选流、trial/失败/后处理、不具识别控制与剩余额度，保留累计1451 calls/2210评分/旧screens/source402661376等。适用campaign/iteration/knowledge/capability门必须实际通过；source direction-check不得置economic gate=true。功效以日期/cluster/MDE衡量，N/A family stats不是pass。",
+      "decisive_evidence": "真实原生回执与输入接受；当前未有。"
+    },
+    {
+      "id": "E7",
+      "before": "任何批量R-only模型分配",
+      "paths": [
+        "plan.json / daily_empirical_milestones、requested_full_economic_cap、paper_transition",
+        "current-state.json"
+      ],
+      "change": "把finish1064fitcap改为判定性证据终点；392/672只为上限。S0后先给出具体可取得的PIT正文/版本、永久证券、ETB/资金和未见评估路径及信息不变的继续方案、需另获准的部分/成本/owner。若只能永久停留有偏R cohort且无近期可实施后续，暂缓bulk R训练；不能靠报全16streams完成周目标。计划修订接受、真实输入/权重/资源和native门通过后再分配；不因模型文件现成而投入。",
+      "decisive_evidence": "可保留核心信息的真实续接证据；forward metadata/shadow方案亦未由本review启动。"
+    }
+  ],
+  "same_day_closure": {
+    "scope": "本次一次完整计划+S0 scope审查交付；不是完整经济研究完成。",
+    "today_empirical_milestone": "原论文方法/时钟/对照核验、原负结果与下游时钟限制追溯；S0获准的可继续入口。",
+    "after_this_review": "原作者冻结绑定并完成S0实际取证；结果含信息损失、可用数字基线与具体继续/暂停决定。",
+    "full_study_closure": "修订经济包先获适用独立接受，再通过真实输入/资源/native门，连续完成匹配净比较和有效对照直到判定性证据；可以跨日，不以用完1064fit当完成。",
+    "remaining": "S0尚未执行；未有行情/标签/模型结果，当前绩效和模型增量N/A。"
+  },
+  "stop_or_pivot": {
+    "immediate": "无现场资源或超S0上限时partial/dependency_block；不扩大预算或换来源。",
+    "after_S0": "语义有效但数值基线/部署路径缺失则暂停经济批次；有意义信息和可继续路径才进入一次合并修订。若只剩generic tone或旧重排名义变体，停止该实现而保留原机制未否定。",
+    "alternative": "若需要全exhibit，提独立原正文恢复输入scope；若需要商业新闻，提精确entitlement/content-vintage来源scope。上述均未由本审准入，不恢复FNSPID/DS/GRPO。没有可行免费来源时回到已授权frontier比较其他机制，由Root判断，不在本审新开研究。",
+    "no_small_sample_refutation": "未到有效深度/功效、删表或时钟不忠实造成的失败仅not_at_depth/implementation failure。"
+  },
+  "unverified_scope": [
+    "SEC真实可用/完整文档、历史raw vintage/first availability/fetched_at和永久security/PIT universe；reviewer只读作者小审计与取证来源，不执行S0数据核验。",
+    "原Refinitiv新闻、2026论文净成本和独立利润复现；不以现有SEC稿或FNSPID替代。",
+    "N0数值/paired-period覆盖、有效日期/书的可成交覆盖、完整因果placebo及样本功效。",
+    "两模型实际文件/权重/config/tokenizer SHA、下载/加载/推理/CPU-GPU资源profile。",
+    "价格/成熟标签/partition/campaign/iteration/knowledge输入准入与真正未见未来样本。",
+    "quotes/ETB/融资/现金整股/开盘order style和20k/券商支持；本次没有broker或paper活动。",
+    "现场memory、Hadan ready/usage、Modal剩余/预留；均未探测或分配。"
+  ],
+  "admission_matrix": {
+    "source_method_object": "conditionally accepted SEC adaptation",
+    "S0_design": "approved within exact bindings and fresh memory conditions",
+    "S0_inventory_and_requests": "not yet created/verified; author self-binds under this scope",
+    "S0_live_resource": "not checked; preflight required at actual launch",
+    "full_economic_plan": "revise_plan",
+    "economic_input": "not admitted",
+    "S1_prepare_prices_labels": "not admitted",
+    "model_download_load": "not admitted",
+    "model_inference_fits_backtests": "not admitted",
+    "compute_reservation": "none granted",
+    "new_paid_spending": "not authorized",
+    "campaign_iteration_knowledge_capability": "applicable actual gates not passed",
+    "promotion_or_new_unseen_OOS": "not admitted",
+    "forward_shadow_or_paper": "not started or authorized by this review",
+    "current_returns_Sharpe_increment": "N/A"
+  },
+  "reviewer_actions": {
+    "spawned_agents": 0,
+    "new_network_source_or_data_requests": 0,
+    "price_reads": 0,
+    "labels": 0,
+    "model_loads": 0,
+    "fits": 0,
+    "backtests": 0,
+    "tests": 0,
+    "author_plan_modifications": 0,
+    "remote_compute_actions": 0,
+    "new_paid_allocation": 0,
+    "runtime_status_reads": 1,
+    "files_written": [
+      "reports/research/program/day-goal-20261013/news-embedding/independent-plan-review.json"
+    ],
+    "root_notifications": 1
+  },
+  "exact_bindings": [
+    {
+      "path": ".agents/skills/research-plan-reviewer/SKILL.md",
+      "sha256": "0953ed30bdf4ff6aafff5f8a88ea10b166b28926fa16c5b49aab7fd527864f8b",
+      "bytes": 4072,
+      "review_read_boundary": "完整技能",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "config/memory-budget.json",
+      "sha256": "5c40dd93c52afa1adfdfcfefdbfda7b2a547194119c0a4aeed45b98fc09bf456",
+      "bytes": 1684,
+      "review_read_boundary": "S0内存现场条件",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "config/research-agent-roles.json",
+      "sha256": "52247f69a5e1a0d0d9b02fa551ebc684dba103aba6cf9bd69e848645fd4ed210",
+      "bytes": 3370,
+      "review_read_boundary": "角色声明；不代替实际runtime",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "docs/plan-v2-requirements-2026-10-04.zh.md",
+      "sha256": "38132d28cbda758a9a69885bf45448556a67f4ffa5abe0a152bf70247bc424f1",
+      "bytes": 5119,
+      "review_read_boundary": "完整适用标准；旧review角色条款由当前roles替代",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "docs/research-autonomy-policy.zh.md",
+      "sha256": "05b1c3c1316ad23e03789f9c5ee7c88f117462b7c1052e0772b77325ddcb31d2",
+      "bytes": 12746,
+      "review_read_boundary": "适用性与连续执行政策",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "docs/research-mission.zh.md",
+      "sha256": "3a55b68c4bff1a62d188f6843c82134d4c1285cffe10fc6954e2ce3ee4773ff1",
+      "bytes": 21508,
+      "review_read_boundary": "必要使命段与选题/组合价值",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "docs/research-plan-review-standard.zh.md",
+      "sha256": "9455cbecbcbd16bec52c251136608b847e30ba5a3c3b3f63e53113be555ce6e4",
+      "bytes": 10107,
+      "review_read_boundary": "完整标准，§6十一项",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "docs/task-owned-research.zh.md",
+      "sha256": "8313680d69db7ee475cfd0124c63da71d845c1265471644f55dfd43f4f2c30e8",
+      "bytes": 13455,
+      "review_read_boundary": "当前方法与历史暂停段的优先级",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/control/day-goal.json",
+      "sha256": "1aa5ab1fb2940ae385a79b9bf9b080fbc644b47ee16596f0eab959b922747c30",
+      "bytes": 6891,
+      "review_read_boundary": "本任务owner与范围",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/control/owner-compute-hold.json",
+      "sha256": "31032d80c00176b86d0427a0fb602eb7ade1562e701e77a6f7916666cadc42f4",
+      "bytes": 8659,
+      "review_read_boundary": "完整最新授权状态",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/iterations/h20260916_02_news_attention/report.json",
+      "sha256": "903cbe6122a39357c9215ce2b4a647f21e154ba5264ea9e3e5772010f37d90a5",
+      "bytes": 96930,
+      "review_read_boundary": "llm_used、precheck统计、screen与归一化variants子集",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/iterations/h20260922_01_earnings_text/summary.json",
+      "sha256": "6a4eb01a4be07edc8dae024a6a6d55dcbeb99dfffd4f380bf1ce3d5bb143bb23",
+      "bytes": 7085,
+      "review_read_boundary": "完整tone结果及统计样本/时间边界",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/results.json",
+      "sha256": "fb6aecaa1f5f145a57cb76a3ff81230b35a67d7a4ac8a040de47dfe637eb5665",
+      "bytes": 3775,
+      "review_read_boundary": "join_stats、primary_horizon_20d、旧verdict",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/decision-record.md",
+      "sha256": "e470b959fbefa75304afdb9b3ad1490df8d5ef814e05fbe6acc6a2054ebbc3ec",
+      "bytes": 499,
+      "review_read_boundary": "pending only",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/report.md",
+      "sha256": "2a647eb525b4bf8738b3801b69da87b31e2eccfaed0538f1ca54ecbcab0f55c6",
+      "bytes": 6815,
+      "review_read_boundary": "旧调用/污染/偏离与成本",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/results.json",
+      "sha256": "1d421434e98d0ca4e5edace447829330c5073e5c7ee0e62336ccadd42945779d",
+      "bytes": 14214,
+      "review_read_boundary": "clean_window、stop_continue_rule",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/knowledge/llm-internals-20261011/memory.json",
+      "sha256": "cbbbf6453e95c9d0f9cfb1d761ac55e69523d8dc6f3c355767748f9a79e14eee",
+      "bytes": 6096,
+      "review_read_boundary": "仅decisions_to_retain与operational_lessons",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/lessons/L-20260916-02.md",
+      "sha256": "0ed3c241facf144ba22ad44356d1366be57d5d534dc333689b084d5add83da0b",
+      "bytes": 12563,
+      "review_read_boundary": "原粗注意力研究叙述与对照限制",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding-task.md",
+      "sha256": "6e2772ac969c513b86a531e45c6e445822cb48af8cedac725fd257c27448b99b",
+      "bytes": 5785,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "6e2772ac969c513b86a531e45c6e445822cb48af8cedac725fd257c27448b99b",
+      "sha256_matches": true,
+      "expected_bytes": 5785,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/current-state.json",
+      "sha256": "3bf1d513dab90c3a475035238dfd4385876a6dc350fa33beaa448137db23fd65",
+      "bytes": 4447,
+      "review_read_boundary": "review前状态；后续可变，不锁定作者不能更新state",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/direction-check-receipt.json",
+      "sha256": "80ae239e47e0eae26ebcbc595b64ab672b497c85f280f5c38708c1a0b03abade",
+      "bytes": 422,
+      "review_read_boundary": "既有回执完整；本审未执行direction-check",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/direction-review.json",
+      "sha256": "7edd3773a983ab304ddec7d82506334a33906cd40b751ab307500136becbce3e",
+      "bytes": 14596,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "7edd3773a983ab304ddec7d82506334a33906cd40b751ab307500136becbce3e",
+      "sha256_matches": true,
+      "expected_bytes": 14596,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/independent-review-task.json",
+      "sha256": "91f90e7a5b880064f8e001061304b82557a4db96d4a9be18af6daa33ac018c65",
+      "bytes": 1784,
+      "review_read_boundary": "完整任务入口；作者/reviewer/输入/output与scope",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/input-audit.json",
+      "sha256": "f42ad73aa982028b7e2146f393efc98d15fba35262c83f4a67c4406d4e6a28c5",
+      "bytes": 13264,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "f42ad73aa982028b7e2146f393efc98d15fba35262c83f4a67c4406d4e6a28c5",
+      "sha256_matches": true,
+      "expected_bytes": 13264,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/plan.json",
+      "sha256": "dabe741b79fb8d35605914eab51e8efd0bc9b1cdce6945bde26831e5a186f9db",
+      "bytes": 36463,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "dabe741b79fb8d35605914eab51e8efd0bc9b1cdce6945bde26831e5a186f9db",
+      "sha256_matches": true,
+      "expected_bytes": 36463,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/pre-iteration-knowledge-baseline.json",
+      "sha256": "e6312dc6eb90f983146d184a9e7abaa1b9dfe3d7b88fd4111100f30f688baaf4",
+      "bytes": 54125,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "e6312dc6eb90f983146d184a9e7abaa1b9dfe3d7b88fd4111100f30f688baaf4",
+      "sha256_matches": true,
+      "expected_bytes": 54125,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/query-manifest.json",
+      "sha256": "735ebad003a2c329503e3bf55abd2053ca024daab157c4308800648b75710f6f",
+      "bytes": 984,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "735ebad003a2c329503e3bf55abd2053ca024daab157c4308800648b75710f6f",
+      "sha256_matches": true,
+      "expected_bytes": 984,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/root-source-decision.json",
+      "sha256": "018b03eb7412a566dc3564e514e9c44fa5e3ebef119be10032d9e0e319110844",
+      "bytes": 6272,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "018b03eb7412a566dc3564e514e9c44fa5e3ebef119be10032d9e0e319110844",
+      "sha256_matches": true,
+      "expected_bytes": 6272,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/source-cards.jsonl",
+      "sha256": "c8019f56445c2a6b750175904b7490b66a431460dc9aa64a73d2375fb7257f73",
+      "bytes": 6390,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "c8019f56445c2a6b750175904b7490b66a431460dc9aa64a73d2375fb7257f73",
+      "sha256_matches": true,
+      "expected_bytes": 6390,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/source-fidelity.json",
+      "sha256": "701f59fdb925a34f3636305ba09c1de5b52e850c04d5b9a73c562433a8b20b77",
+      "bytes": 4828,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "701f59fdb925a34f3636305ba09c1de5b52e850c04d5b9a73c562433a8b20b77",
+      "sha256_matches": true,
+      "expected_bytes": 4828,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/ckx-essec-2024.pdf",
+      "sha256": "6212ce720ef999bf30024aaa76fe5220b8339260202cf7eb07532a34d3e492d6",
+      "bytes": 3598182,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "6212ce720ef999bf30024aaa76fe5220b8339260202cf7eb07532a34d3e492d6",
+      "sha256_matches": true,
+      "expected_bytes": 3598182,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/ckx-essec-2024.txt",
+      "sha256": "1e8df9718b66c2ea819162bdb76d8a01233866b2db177d3e2d5384ff1bb125ad",
+      "bytes": 228381,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "1e8df9718b66c2ea819162bdb76d8a01233866b2db177d3e2d5384ff1bb125ad",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/memory-paper.snapshot",
+      "sha256": "26265f343ea9a2c9306cb766dc6edec0533857b3c8ad40e464833ffc5970e56d",
+      "bytes": 629642,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "26265f343ea9a2c9306cb766dc6edec0533857b3c8ad40e464833ffc5970e56d",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/opt-license.snapshot",
+      "sha256": "11203fa656a6dfd929ded198012b18d5d0f2b95e24d13298be37b70c327329a4",
+      "bytes": 11117,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "11203fa656a6dfd929ded198012b18d5d0f2b95e24d13298be37b70c327329a4",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/roberta-base-README.snapshot",
+      "sha256": "139c5c5c8d734a8841928308cf7f083018aa5cc49f903c5199e3f1563b3ded51",
+      "bytes": 9079,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "139c5c5c8d734a8841928308cf7f083018aa5cc49f903c5199e3f1563b3ded51",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/roberta-base-weights-provenance.snapshot",
+      "sha256": "f06c705dbc3d724c291be9de038b5fb51c006d27208843f394c3927f8e4d66ef",
+      "bytes": 133811,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "f06c705dbc3d724c291be9de038b5fb51c006d27208843f394c3927f8e4d66ef",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/roberta-large-config.snapshot",
+      "sha256": "82ba49810e6441735e696033ac2512ee09da555507b2917ac3865b202d592cc3",
+      "bytes": 482,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "82ba49810e6441735e696033ac2512ee09da555507b2917ac3865b202d592cc3",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/roberta-large-weights-provenance.snapshot",
+      "sha256": "b925a20609e20bf57730f97c7dbc2db000bf1ad8f40721edb209ad1adbb173c7",
+      "bytes": 132738,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "b925a20609e20bf57730f97c7dbc2db000bf1ad8f40721edb209ad1adbb173c7",
+      "sha256_matches": true
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/research-frontier/old-results.json",
+      "sha256": "fc204db78f6be799d12703738f27eb049c9e332200fd85ee4b2ef853c8d2a085",
+      "bytes": 51867,
+      "review_read_boundary": "任务精确引用；核心plan/fidelity/audit/direction完整阅读，论文txt按prior_art locator，PDF仅持久文件hash核对，knowledge baseline只读与本任务相关字段",
+      "expected_sha256": "fc204db78f6be799d12703738f27eb049c9e332200fd85ee4b2ef853c8d2a085",
+      "sha256_matches": true,
+      "expected_bytes": 51867,
+      "bytes_matches": true
+    },
+    {
+      "path": "reports/research/program/earnings-events-timing-fix-2026-10-04/checks.json",
+      "sha256": "a55381446c32b0ed0be57aad7975b0d591a656246085ce4bf93984695483c2e6",
+      "bytes": 29868,
+      "review_read_boundary": "b_index_sample统计与pass字段；并非重新校验原data",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/program/earnings-events-timing-fix-2026-10-04/report.md",
+      "sha256": "b9869a8e2ba780dcb891e6234a57cecca91f44e87080b9b634576ac03e7adef1",
+      "bytes": 7191,
+      "review_read_boundary": "完整时钟修复报告，§3重复accession、§4未修下游",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/program/grpo-news-realignment-2026-10-10/local-news-timestamp-audit.json",
+      "sha256": "08fb6f8c8894724fd12c2dc6267b524e4e9c9f65bb6d548957e4656aa710e622",
+      "bytes": 2258,
+      "review_read_boundary": "totals、inference、source_builder",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/signal-cards/news-hf-v1-summary.md",
+      "sha256": "076180f192f7599e9ad395b87fd944ecf3043573bcfd2a171e29a1dac10b1a4a",
+      "bytes": 1072,
+      "review_read_boundary": "三项负结果",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "reports/research/signal-cards/news_hf_reaction_event_p90.json",
+      "sha256": "e9cf9be0b24f2c7b23239d2b8ba788bad4919614d92c491cafdb3c057e4b8a91",
+      "bytes": 11901,
+      "review_read_boundary": "coverage、car.h5",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "scripts/build_earnings_events.py",
+      "sha256": "fda6e9653aa45f03005eba788f5cd914597cfb7ceb050bd58c5b30d080eb7a86",
+      "bytes": 34808,
+      "review_read_boundary": "current ticker map、ex99选择、html_to_text、fetch_exhibit_text，只读",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "scripts/memory_budget.py",
+      "sha256": "047123e45110a0649119b22123ab712825c9225224dd668da95d2364d7e81f61",
+      "bytes": 21392,
+      "review_read_boundary": "admit函数及CLI入口，只读",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "scripts/run_capped.sh",
+      "sha256": "b6fe4e916a700550f983d52c16d0cca216409017e6f94b9b7cf9fcc47733a853",
+      "bytes": 6535,
+      "review_read_boundary": "启动内存门与cap，非2检查错误fallback，只读",
+      "binding_class": "reviewer_observed_evidence_or_norm"
+    },
+    {
+      "path": "data/features/earnings_events/2024.parquet",
+      "sha256": "af15853fce3ef5a2cdcacf1dcfd0471d607dc9792c70e3bbd6f95d821012775b",
+      "bytes": 819747,
+      "rows_metadata": 5662,
+      "binding_class": "author_supplied_S0_data_binding",
+      "reviewer_reverified": false,
+      "read_boundary": "reviewer未读取/哈希data；作者须在S0启动复核实际文件"
+    },
+    {
+      "path": "data/features/earnings_events/2025.parquet",
+      "sha256": "58649973e642dd58084548d45c6475e250df6a1a934ce893542285f5d9646cc1",
+      "bytes": 845145,
+      "rows_metadata": 5826,
+      "binding_class": "author_supplied_S0_data_binding",
+      "reviewer_reverified": false,
+      "read_boundary": "reviewer未读取/哈希data；作者须在S0启动复核实际文件"
+    },
+    {
+      "path": "data/features/earnings_events/2026.parquet",
+      "sha256": "534ed2fea50757cfc5a014ce946c17a6f122481ca9b2adc68b706be1fe412130",
+      "bytes": 684001,
+      "rows_metadata": 4601,
+      "binding_class": "author_supplied_S0_data_binding",
+      "reviewer_reverified": false,
+      "read_boundary": "reviewer未读取/哈希data；作者须在S0启动复核实际文件"
+    }
+  ],
+  "notification": {
+    "target_agent_id": "fc66ee6a-2b84-493a-8aaa-3c78973405c8",
+    "sent": true,
+    "rule": "交付后仅一次结果通知Root；后续执行owner仍2df73225，不触发新代理或作者逐修复审批。",
+    "accepted_at_utc": "2026-10-13T06:55:07.733000+00:00",
+    "receipt": {
+      "success": true,
+      "status": "running",
+      "background": true,
+      "notifyOnFinish": false
+    },
+    "delivery_limit": "工具接受并排队；不声称Root已阅读或执行作者后续。"
+  },
+  "binding_check": {
+    "task_expected_and_source_claim_bindings_checked": 18,
+    "mismatches": 0,
+    "additional_evidence_and_norm_files_bound": 29,
+    "S0_actual_data_files_reverified": 0,
+    "claim": "sha match只证明文件身份，不证明输入PIT或经济准入。"
+  }
+}

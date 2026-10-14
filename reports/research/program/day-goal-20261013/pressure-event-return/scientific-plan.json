@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "task_id": "DAY3-PRESSURE-EVENT-RETURN",
+  "iter_id": "t20261013_pressure_deletions_application",
+  "author": "7b109880-ac40-447e-b2a6-f0ed1266ebac",
+  "status": "proposed_not_admitted",
+  "created_at_utc": "2026-10-13T09:15:00Z",
+  "objective": "Evaluate whether index-deletion long-horizon reversal, through intact publicly traded NIXT, supplies substantial after-cost absolute returns or matched portfolio value for an unlevered $20,000 account.",
+  "research_object": "Conditional-cohort investment exposure application study; no optimized strategy, no original causal event replication claim, no promotion.",
+  "selection": "All5fixed application definitions and12controls reported; no chooser, optimizer, model training or promotion. Twenty-percent matched replacement compares NIXT against identical IWN replacement. Weak application result rejects current account use, not deletion mechanism.",
+  "input": {
+    "verified_pre_review": "input-symbol-evidence.json:524NIXT rows;697rows each eight benchmark funds in2024-2026, symbol/metadata only, no prices or returns calculated.",
+    "market": "Existing adjusted-all AlpacaSIP daily bars: NIXT,IWN,IWM,VBR,IWV,SPY,QQQ,RSP,BIL. ETFshare history retains live implementation, not reconstructed current-underlying portfolio.",
+    "optional_read_only": "After approve_deep_plan, <=12no-retry HTTPmarket requests, <=10MiBresponses: <=2multi-symbol daily bars raw/all through2026-10-12, <=8NIXTquote/trade requests for four fixed dates at09:45ET, <=2asset metadata/current snapshots. Existing authorized Alpaca reads only, never log keys.",
+    "fidelity": "RA1991-2023 rawevent returns/historicalGEIU/free-float/quality constituents missing. Cannot independently reproduce original source effect or certify custom stock implementation. Applicationstudy exactly retains intactNIXTproduct, with this limitation.",
+    "host": "data/research/account_review_2026_10/returns.parquet F1__net10,S1__net10,S2__net10,S3__net10,C2__net10. Preserve realization datingF1lag2, C2restatement caveat; no production recompute. G3 absent -> unavailable."
+  },
+  "hypotheses": [
+    "H1: After shareholder execution costs, NIXT preserves a meaningful absolute return compared with cash, without leverage.",
+    "H2: Net NIXT performance exceeds risk-matched small-value proxies IWN,VBR,IWM, beyond equity beta.",
+    "H3: Fixed20% NIXT replacement supplies matched net incremental return and Sharpe to SPY/F1/equal-weight existing hosts, with acceptable prolonged loss/recovery risk."
+  ],
+  "clocks": {
+    "signal": "No fitted stock signal. NIXT owns externally managed historical holdings. Completed close information precedes investor next09:45ET execution. No exact-open fill from OHLC.",
+    "returns": "Daily adjusted-total returns verified against rawdistribution-cash series and issuer published monthend performance. Primary continuous series has no terminal liquidation; liquidation sensitivity separate.",
+    "capital": "$20,000, unlevered whole shares, no shorts/margin/borrow/financing. Idle cash BILreturn proxy disclosed. No unsettled cash recycling or automatic leverage.",
+    "seen": "Every pre2026-10-13 date is development/diagnostic; headline selected and old account dates seen. No newOOS claimed, no old sealed window reopened."
+  },
+  "depth_curve": [
+    {
+      "id": "D1",
+      "economic_information": "Full live post-publication implementation2024-09-10..2026-10-12; distributions, fee and issuer replication; launch2024 vs2025 vs2026state. Source33year chart/table audit separate, not independent raw-source replication."
+    },
+    {
+      "id": "D2",
+      "economic_information": "Deletion information versus small-value/size controls IWN,VBR,IWM: excess returns, common-date risk matching, beta/multifactor intercept and portfolio marginal comparison. Regression is attribution, never a fitted trading model."
+    },
+    {
+      "id": "D3",
+      "economic_information": "Executable20k whole-share and actual quotation/laggedliquidity constraints, conservative20bpsside primary and40bpsstress; fixed20%source/host replacement. Missingquotes -> readiness false."
+    }
+  ],
+  "application_definitions": [
+    "NIXT_full_capital",
+    "NIXT50_BIL50",
+    "SPY80_NIXT20",
+    "F1_80_NIXT20",
+    "HOST_EW80_NIXT20"
+  ],
+  "diagnostic_controls": [
+    "IWN",
+    "IWM",
+    "VBR",
+    "IWV",
+    "SPY",
+    "QQQ",
+    "RSP",
+    "BIL",
+    "EW8",
+    "SPY80_IWN20",
+    "F1_80_IWN20",
+    "HOST_EW80_IWN20"
+  ],
+  "partition": "One development/diagnostic partition through last completed2026-10-12. Chronological2024launch,2025,2026YTD; account-host comparisons only truly common dates through their valid last observation, never fill stale returns. No frozenOOSevaluation.",
+  "costs": {
+    "primary": "20bps each actual executed shareholder notional side,40bpsstress. Live fund internal costs/fees embedded in ETFprice/NAV, do not double subtract fee. B&H initialentry only; annualrebalance as source only when applicable; no fictitious daily turnover.",
+    "quote": "Issuer30daymedianbidask15bps asof2026-10-12 must be retained. Four fixed09:45ET dates:2024-09-10,2025-04-03,2025-09-10,2026-09-10. Actualquotes arrival-mid/crossing; observedsize does not prove fill. No auction/queue claim.",
+    "capacity": "Prior20sessiondollarADV; full20k must be<=1%ADV for immediate readiness, otherwise a staggered rule needs separate scientific definition. Currentquotepartialfill/delay reported. No costs below20bps primary to pass.",
+    "borrow_financing": "Long-only fully funded0borrow/financing by construction; brokerfee uncertainty retained inside20bpsbuffer, no claim universalzero-fee."
+  },
+  "comparisons": "Common-date daily matrix of all9funds,EW8excludingNIXT, same-symbolB&H, ex-postbest benchmark diagnostic; F1,S1,S2,S3,C2 and fixed equal-weight HOST_EW. G3 unavailable flagged. Report CAGR, arithmeticnetmean, SharpeexBIL, volatility, matched-risk excess, beta/intercept, marginalSharpe, shared stress losses, maxdrawdown,21/42sessionlosses,longestunderwater/recovery. Ex-postriskmatched scales only attribution, no leverage implementation.",
+  "placebo_power": "HAC21 pairedmean/intercept SE;21sessionstationaryblockbootstrap1000 seed4201 paired commonreturns for95%CI and marginalSharpe; circular21session shifts alignmentplacebo preservingmarginals, not causalproof. MDE80% annualized netdifference fromHACSE; Holm5comparisonfamily. DSR5stream diagnostic. PBO N/A(no selection algorithm); SPA pairedbenchmark diagnostics, no promotionfamilypass. Two-year sample cannot refute multi-year mechanism.",
+  "model_roles": "No factor generator, ranked forecast, signal model, regime gate or LLM/newsmodality. OLS only attribution; fixed sizing; HAC/bootstrap uncertainty; deterministicfallbackcash/noorders when valid input unavailable.",
+  "accept": "Separate workflow/research/ML/LLM/paper. research_pass can mean adequate application use/defer evidence, never profitableAlpha. Original mechanism not_at_depth; no paper readiness without prospective promotion/capability/execution gates. HighSharpelowreturn requires actual matchedportfolio role.",
+  "stop": "Complete real-input/costedcomparison/attribution/execution package and recommend use/defer/not_at_depth. Missing licensed original eventPIT or requiredquotes after boundedreads -> concrete input-failure evidence and finish admitted subset, no invented fills or duplicate blocked reports. Need larger budget/new direction only as explicit Root material decision.",
+  "resources": {
+    "local_core_seconds_cap": 7200,
+    "job": "oneCPU<=900MiB capped, freshmemoryadmission,500MiBownerreserve",
+    "public_download_requests_cap": 40,
+    "public_download_bytes_cap": 67108864,
+    "market_requests_cap": 12,
+    "market_response_bytes_cap": 10485760,
+    "paid_dollars_cap": 0,
+    "Hadan": "not needed, do not probe or take Chinco lane",
+    "cloud": "none planned; no reservation"
+  },
+  "gates": "directionv3 verifiedsourcecards+snapshots; single fixed mechanism <=8 application definitions only if native lightweight structural exemption applies; market_component_method canonical scientifically reviewed definition with implementation bindings; iterationpre-backtest pass mandatory before economic compute. ApprovedAlpaca bars; scoped historical quotes only research audit notpaper capability certification. NoAI/ML/newmodalityknowledge gate, no fit.",
+  "milestone": "Today actual live product full-series costed application and account use/defer decision. Original decades eventfidelity requires missingPIT/license, not pointless forwardwaiting."
+}

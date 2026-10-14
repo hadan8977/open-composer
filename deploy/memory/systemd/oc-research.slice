@@ -1,0 +1,10 @@
+# open-composer research jobs (scripts/run_capped.sh): all jobs together.
+# 2.4G since 2026-10-08 (owner: 1.2G was too strict). The project's RAM limit in
+# oc.slice (2200M) still applies, so a 2.4G job next to busy agents keeps part of
+# itself compressed or in swap and runs slower; big jobs are faster on Modal.
+[Unit]
+Description=open-composer research jobs
+
+[Slice]
+MemoryMax=2.4G
+MemorySwapMax=2G

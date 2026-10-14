@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "author": "7b109880-ac40-447e-b2a6-f0ed1266ebac",
+  "reviewer": "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3",
+  "as_of_utc": "2026-10-13T20:11:05.486395+00:00",
+  "verdict": "revise_implementation",
+  "scope": "Complete implementation review of approved conditional HF method, with same-semantics native streaming-hash addendum. Not a new economic-plan review or economic admission.",
+  "bindings": {
+    "implementation_manifest": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/implementation-manifest.json",
+      "sha256": "0c297b1c0ed87e9a83d5cee986c9357cc7aff47a5181f7e8006064ee14514e08",
+      "bytes": 20174
+    },
+    "scientific_plan": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/scientific-plan.json",
+      "sha256": "666b4048c26f98ce9ce02c9b66b2e1982e805d9ec43e8e94de9a314280a7e7fd",
+      "bytes": 44193
+    },
+    "execution_contract": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-contract.json",
+      "sha256": "63d57d661fe9adf7a32896ec4dae50d39941f087ce780a286a1194c7cac452f6",
+      "bytes": 29425
+    },
+    "native_hash_repair": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/native-large-binding-hash-repair.json",
+      "sha256": "88d81073bc4e96790e96e76a00ae3b914d9992019dfc160b7729964a28240afa",
+      "bytes": 2344
+    },
+    "partial_verification": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-implementation-verification-partial.json",
+      "sha256": "d4d905f92a6366a8ab9c011f6efe483c9253f75885d07b8d8f9f051cca15e4d3",
+      "bytes": 15293
+    },
+    "small_checks": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-implementation-small-checks.json",
+      "sha256": "3a8ee865ac6d0834aa3a74ce887c62fa199ab69f4b5567b2224ba949c7cc16cf",
+      "bytes": 1971
+    },
+    "large_hash_resource": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-implementation-feature-resource.txt",
+      "sha256": "570ecd2bc76efa27f46ddc4837dfb0e73ae1482722794df4a27a6a91e951e0af",
+      "bytes": 884
+    },
+    "small_check_resource": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-implementation-small-resource.txt",
+      "sha256": "9a5289b2fe518feda51786d0f1d61232b834487a23ec93d46e8db4c0fad791d3",
+      "bytes": 846
+    },
+    "diagnostics": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/hf_diagnostics.py",
+      "sha256": "4fa75a9f0014963e14a567e1a39d75f801d47832473ea761c7f7a7fa31dc0717",
+      "bytes": 4835
+    },
+    "evaluation": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/hf_evaluate.py",
+      "sha256": "724ce010283e54ce485be42aa4754ef2b4ec1735e4a9e844c6b6ceb303775eb9",
+      "bytes": 27243
+    },
+    "verification_code": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent_implementation_verify.py",
+      "sha256": "c38f09905bd17d5574002e8ecfb6c269a552ae5b75c6ed66bd1900d1561b730f",
+      "bytes": 7522
+    },
+    "small_verification_code": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent_implementation_small_checks.py",
+      "sha256": "8b3ded7b0f99a783174cf2fb6d0001c47e08e8b223b663b1a83a4954e215831f",
+      "bytes": 4789
+    }
+  },
+  "findings": [
+    {
+      "id": "I1",
+      "severity": "required_correction",
+      "subject": "Approved four signal rules are not implemented by two threshold rules crossed with overnight on/off",
+      "evidence": [
+        "scientific-plan.execution_and_capital.signal_rules explicitly retains diagnostic Sign/Positive as well as SSign/SPositive",
+        "scientific-plan.inference_and_contribution.uncertainty_and_trials specifies all 5 fees / 4 signal rules / 2 latency views",
+        "hf_diagnostics.desired always uses +/-cost threshold and hold inside band",
+        "hf_evaluate.fractional_diagnostics loops sign x night x latency; no plain-rule dimension"
+      ],
+      "decisive_counterexample": {
+        "score": 0.001,
+        "cost": 0.002,
+        "held": 0,
+        "implemented_SPositive": 0,
+        "PlainPositive": 1
+      },
+      "consequence": "Cannot separate plain turnover/cost loss from threshold hysteresis or deliver the source-led diagnostic comparison; zero-cost coincidence does not supply nonzero-cost plain paths.",
+      "required_change": "Implement explicit Sign/Positive/SSign/SPositive rule identity and corresponding exact logical trial inventory. Preserve frozen overnight-plus-one and meaningful intraday/overnight decomposition. Reconcile the 800 diagnostic assertion with the actual accepted dimensions; do not rename overnight variants into four signal rules or silently omit plain paths. If extra independently simulated night-off books are retained, disclose count/workload within existing caps. Add a small nonzero-cost parity check, including hold-inside-band versus plain exit/entry, without fitting market data."
+    },
+    {
+      "id": "I2",
+      "severity": "incomplete_verification_hold",
+      "subject": "Fresh new-feature guards are partial; no full feature input acceptance yet",
+      "passed_bindings": 60,
+      "total_direct_bindings": 62,
+      "pending_bindings": [
+        {
+          "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/hf-factor-return/features/HAR-IDX.npy",
+          "sha256": "54da782b85ba5f6ef82e038cbdfc7b45aa8a2cad556990783e9fc708b4abaf1f",
+          "bytes": 904062848
+        },
+        {
+          "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/hf-factor-return/features/labels.npy",
+          "sha256": "f9fef4e34f02f595f528b1c8f1fb6de9b2afb81a6ee492190dfdcbb9c07a4dd9",
+          "bytes": 2215968
+        }
+      ],
+      "evidence": "Independent taskset CPU0 / 400M hash job saved partial guards and exited90 at its CPU limit. 69.17 measured coresec is charged; no SHA mismatch observed in completed files.",
+      "passed_math": "Nine fixed packet rows across five HAR views independently reconstructed from existing source tensors; first/last and missing-future-target packet retained. Counts 136597 valid / 138490 allocated checked.",
+      "not_performed": [
+        "remaining full HAR-IDX and labels fresh hash",
+        "planned raw-day value spot checks and full independent scalar label/AR replay (not reached by bounded full-hash job)"
+      ],
+      "required_change": "Preserve successful bound checks. After I1 repair, complete only pending new-feature guards and decisive label/source spot checks in an explicitly remaining-resource-bounded diff acceptance. No repeat source300, market361, or already hashed multi-GB outputs. This is a review budget stop, not feature corruption or scientific refutation."
+    }
+  ],
+  "accepted_implementation_semantics": [
+    "Inspected full feature/model/account/evaluation code and author synthetic tests; models use train-only transformations, fixed chronological 80/20 validation, annual linear and five-year HGB refits; common All target contrasts remain separate from Cts description.",
+    "HAR IDX/SUM/INV and stale views are explicitly current-vintage/conditional-clock method inputs; they do not become original leg-level 15-minute replication or PIT data.",
+    "Funded accounts retain whole shares, affordability skip, pending order timing, delayed nominal opening no-fill/expiry, and missing 2019-08-12 closing-window no-fill with separate bound daily NAV.",
+    "BIL odd-share reverse-split CIL unknown invalidates the affected physical book and dependent excess metrics; even/no-hold books stay meaningful. No post-hoc even-lot selection or replacement by adjusted benchmark.",
+    "Independent four-thousand-dollar sleeve and each-host first-common-close initialization preserve capital and clock semantics.",
+    "25 author synthetic JUnit tests report zero failures/errors; receipts and test code were reviewed, not counted as new reviewer market fits."
+  ],
+  "native_hash_addendum": {
+    "verdict": "accept_same_semantics_diff",
+    "old_reader": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/native-market-component-before-stream-hash.py",
+      "sha256": "a6ff431e685b71765cdaab0a97cf880ee2613e07846add68fd1d827bcd05ad73",
+      "bytes": 8707
+    },
+    "new_reader": {
+      "path": "open_composer/research/market_component.py",
+      "sha256": "5453e938bf2ba0e0bf5e5f07b1c2df2f8c6988f7e5aeb88d9e088de865cca0fc",
+      "bytes": 8973
+    },
+    "exact_inverse_reconstruction": true,
+    "replaced_hash_sites": 2,
+    "stream_chunk_bytes": 1048576,
+    "guard_strength": "Containment, symlink, existence, hash equality, JSON and independent approval checks unchanged by exact inverse reconstruction.",
+    "tests": "Two bound author synthetic cross-chunk / valid JSON / bad SHA tests passed; independent static inverse verified.",
+    "next_binding": "Preserve M0; include new native reader and addendum in the revised manifest before native validation."
+  },
+  "resource": {
+    "pool": "HF new input/source preparation 2000 only",
+    "review_cap_coresec": 80,
+    "hash_job_cpu": 69.17,
+    "hash_job_exit": 90,
+    "small_check_cpu_including_exit": 1.78,
+    "small_check_exit": 0,
+    "small_reads_setup_seal_conservative_cpu": 5.0,
+    "review_total_charge_coresec": 75.95,
+    "review_peak_RSS_KiB": 167080,
+    "actual_jobs_affinity": [
+      0
+    ],
+    "actual_jobs_memory_MiB": 400,
+    "fresh_run_capped_admission": true,
+    "author_base_including_native_fix": 1886.18992391,
+    "cumulative_conservative_coresec": 1962.13992391,
+    "remaining_2000_coresec": 37.86007609,
+    "unknowns_and_failures_retained": true,
+    "old500_and_economic7006_69_unchanged": true,
+    "no_source_market_fit_cloud_orders": true
+  },
+  "next_action": "Original owner repairs I1 and binds native addendum, then returns one relevant diff with remaining input verification/resource evidence; no new eleven-item economic table and no intermediate Root notification. Economic/native/resource gates remain false until actual acceptance.",
+  "input_ready": false,
+  "economic_execution_admitted": false,
+  "research_pass": false,
+  "paper_ready_pass": false
+}

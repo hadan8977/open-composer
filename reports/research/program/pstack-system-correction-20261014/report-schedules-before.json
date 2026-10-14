@@ -1,0 +1,85 @@
+[
+  {
+    "id": "e2572f80",
+    "name": "oc-codex-owner-daily-writer",
+    "prompt": "你是Open Composer的Sol报告角色，本次kind=writer。先读reports/research/control/owner-compute-hold.json并核对最新机主对报告范围的明确授权；当前报告仍暂停，缺失可核验的报告恢复授权时立即退出，不生成/投递报告、不派工、不刷新研究索引。机主以后可单独恢复只读报告而不恢复研究/训练；只有明确恢复对应报告范围后，读取config/research-agent-roles.json和prompts/owner-daily-weekly-writer.zh.md完成本次报告。保持codex/gpt-6.1-sol/full-access/xhigh，启动一次设置并回读实际模式/思考强度；不调用Astra改写报告，不运行研究或更改暂停。遵守原有时区/频率/去重/单一路由；机主已搁置DS，不探测。",
+    "cadence": {
+      "type": "cron",
+      "expression": "5 0 * * *",
+      "timezone": "UTC"
+    },
+    "target": {
+      "type": "new-agent",
+      "config": {
+        "provider": "codex",
+        "cwd": "/root/codex-test/open-composer",
+        "modeId": "full-access",
+        "model": "gpt-6.1-sol"
+      }
+    },
+    "status": "active",
+    "createdAt": "2026-10-09T14:13:33.159Z",
+    "updatedAt": "2026-10-14T00:06:07.452Z",
+    "nextRunAt": "2026-10-15T00:05:00.000Z",
+    "lastRunAt": "2026-10-14T00:06:07.452Z",
+    "pausedAt": null,
+    "expiresAt": null,
+    "maxRuns": null
+  },
+  {
+    "id": "b211abe7",
+    "name": "oc-owner-round-report",
+    "prompt": "你是Open Composer的Sol报告角色，本次kind=round。先读reports/research/control/owner-compute-hold.json并核对最新机主对报告范围的明确授权；当前报告仍暂停，缺失可核验的报告恢复授权时立即退出，不生成/投递报告、不派工、不刷新研究索引。机主以后可单独恢复只读报告而不恢复研究/训练；只有明确恢复对应报告范围后，读取config/research-agent-roles.json和prompts/owner-report-dispatch.zh.md完成本次报告。保持codex/gpt-6.1-sol/full-access/xhigh，启动一次设置并回读实际模式/思考强度；不调用Astra改写报告，不运行研究或更改暂停。遵守原有时区/频率/去重/单一路由；机主已搁置DS，不探测。",
+    "cadence": {
+      "type": "cron",
+      "expression": "5 */2 * * *",
+      "timezone": "UTC"
+    },
+    "target": {
+      "type": "new-agent",
+      "config": {
+        "provider": "codex",
+        "cwd": "/root/codex-test/open-composer",
+        "modeId": "full-access",
+        "model": "gpt-6.1-sol",
+        "thinkingOptionId": "xhigh"
+      }
+    },
+    "status": "active",
+    "createdAt": "2026-10-11T12:09:14.281Z",
+    "updatedAt": "2026-10-14T16:05:42.256Z",
+    "nextRunAt": "2026-10-14T18:05:00.000Z",
+    "lastRunAt": "2026-10-14T16:05:42.256Z",
+    "pausedAt": null,
+    "expiresAt": null,
+    "maxRuns": null
+  },
+  {
+    "id": "8a81c331",
+    "name": "oc-owner-daily-weekly-chat",
+    "prompt": "你是Open Composer的Sol报告角色，本次kind=daily_or_sunday_weekly。先读reports/research/control/owner-compute-hold.json并核对最新机主对报告范围的明确授权；当前报告仍暂停，缺失可核验的报告恢复授权时立即退出，不生成/投递报告、不派工、不刷新研究索引。机主以后可单独恢复只读报告而不恢复研究/训练；只有明确恢复对应报告范围后，读取config/research-agent-roles.json和prompts/owner-report-dispatch.zh.md完成本次报告。保持codex/gpt-6.1-sol/full-access/xhigh，启动一次设置并回读实际模式/思考强度；不调用Astra改写报告，不运行研究或更改暂停。遵守原有时区/频率/去重/单一路由；机主已搁置DS，不探测。",
+    "cadence": {
+      "type": "cron",
+      "expression": "0 1 * * *",
+      "timezone": "UTC"
+    },
+    "target": {
+      "type": "new-agent",
+      "config": {
+        "provider": "codex",
+        "cwd": "/root/codex-test/open-composer",
+        "modeId": "full-access",
+        "model": "gpt-6.1-sol",
+        "thinkingOptionId": "xhigh"
+      }
+    },
+    "status": "active",
+    "createdAt": "2026-10-11T12:09:18.816Z",
+    "updatedAt": "2026-10-14T01:01:01.473Z",
+    "nextRunAt": "2026-10-15T01:00:00.000Z",
+    "lastRunAt": "2026-10-14T01:01:01.473Z",
+    "pausedAt": null,
+    "expiresAt": null,
+    "maxRuns": null
+  }
+]

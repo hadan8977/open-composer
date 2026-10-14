@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from typer.testing import CliRunner
@@ -77,3 +78,49 @@ def test_cost_grid_cli_command(sample_workspace: Path, monkeypatch) -> None:
     )
     assert len(payload["results"]) == 1
     assert payload["results"][0]["impact_model"] == "linear"
+
+
+def test_registered_cost_grid_preserves_native_diagnostics_and_preflights_before_data(
+    sample_workspace: Path, monkeypatch
+) -> None:
+    from open_composer.research.iteration_dossier import require_iteration_execution_gate
+    from tests.test_iteration_dossier import (
+        test_lightweight_exemption_reaches_ok_through_the_real_execution_gate,
+    )
+
+    test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(sample_workspace)
+    path = sample_workspace / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    calls = []
+    monkeypatch.setattr(
+        "open_composer.research.cost_sensitivity.load_ohlcv_for_spec",
+        lambda *args: calls.append("data") or object(),
+    )
+
+    def no_calculation(spec, frame, *, root, native_control, **kwargs):
+        result = require_iteration_execution_gate(spec, root, native_control=native_control)
+        assert result.info["native_execution_control"]["promotion_eligible"] is False
+        calls.append(native_control.purpose)
+        return SimpleNamespace(
+            run=SimpleNamespace(total_return_pct=0.0, sharpe_ratio=0.0, signals=0, trades=0)
+        )
+
+    monkeypatch.setattr("open_composer.research.cost_sensitivity.backtest_frame", no_calculation)
+    report = run_cost_grid(
+        path,
+        commission_grid=[0.02],
+        slippage_grid=[7.5],
+        impact_models=["sqrt", "almgren_chriss"],
+        root=sample_workspace,
+    )
+    assert calls == ["data", "cost_grid", "cost_grid"]
+    assert report.selectable_candidate is False and report.promotion_eligible is False
+    calls.clear()
+    with pytest.raises(ValueError):
+        run_cost_grid(
+            path,
+            commission_grid=[0.02],
+            slippage_grid=[7.5],
+            impact_models=["linear", "invalid_model"],
+            root=sample_workspace,
+        )
+    assert calls == []

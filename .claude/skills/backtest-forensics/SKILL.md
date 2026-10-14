@@ -33,8 +33,9 @@ description: >
 
 ### Overfit / multiple testing
 - [ ] Document `N` = total parameter sets trialed (from trial ledger or estimate).
-- [ ] If N > 20, flag multiple-testing risk. PBO proxy: 1 − (success_rate_of_N_alternatives).
-- [ ] DSR proxy: expected max Sharpe = μ + σ·√(2·ln N). Flag if selected Sharpe > 2× expected max.
+- [ ] Assess multiplicity for every searched family. Distinguish selectable configurations, cost/accounting views, null replications and bootstrap draws; document any effective independent-trial estimate.
+- [ ] PBO requires an actual CSCV selection/ranking calculation on the declared common-calendar candidate return matrix. Record partitions, ties and the selected in-sample winner's complementary-sample rank. `1 - success_rate` is not PBO. Insufficient inputs mean `N/A`, not zero. Low PBO alone does not establish profitability.
+- [ ] DSR requires the probabilistic-Sharpe calculation against a trial-adjusted expected-maximum benchmark, with sample length, skewness, kurtosis and trial-count/dispersion assumptions. Keep return frequency consistent and disclose serial dependence. `μ + σ·sqrt(2 ln N)` alone is not DSR; do not apply the former `2 × expected max` rejection rule.
 - [ ] Walk-forward or OOS degradation > 50% of in-sample Sharpe = overfit warning.
 
 ### Sample adequacy
@@ -62,6 +63,9 @@ description: >
   "multiple_testing_count": 0,
   "pbo_proxy": null,
   "dsr_proxy": null,
+  "pbo": null,
+  "dsr": null,
+  "statistical_methods": {},
   "sample_data_caveats": [],
   "trade_count": 0,
   "trading_days": 0,
@@ -71,6 +75,11 @@ description: >
   "notes": "..."
 }
 ```
+
+The two legacy `*_proxy` fields remain null. Bind actual statistics to their
+method, input matrix, trial inventory and declared validation scope. This review
+does not change frozen thresholds or turn already observed history into unseen
+data. Sample warnings alone do not refute an economic mechanism.
 
 ## Blocking rules
 
@@ -82,6 +91,6 @@ description: >
 
 - `harness/artifact_contracts.yaml` — backtest_forensics, trial_ledger schemas
 - `harness/risk_domains.yaml` — parameter_search blocking rules
-- Bailey & López de Prado: Probability of Backtest Overfitting (SSRN 2326253)
-- Deflated Sharpe Ratio (SSRN 2460551)
+- Bailey, Borwein, López de Prado & Zhu: [The Probability of Backtest Overfitting](https://escholarship.org/content/qt4w1110bb/qt4w1110bb.pdf), definition and CSCV sections.
+- Bailey & López de Prado: [The Deflated Sharpe Ratio](https://www.davidhbailey.com/dhbpapers/deflated-sharpe.pdf), equations 1–2 and their assumptions.
 - Almgren-Chriss optimal execution (capacity modeling)

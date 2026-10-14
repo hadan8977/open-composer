@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "task_id": "USIC-PUBLIC-DECISION-REPLAY",
+  "iter_id": "usic_public_decision_replay_20261014",
+  "author": "f9add224-744b-471c-b812-c43cc179fa38",
+  "reviewer": "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3",
+  "as_of_utc": "2026-10-14T00:45:55.753833+00:00",
+  "research_role": "market_component_method",
+  "claim_scope": "conditional_cohort",
+  "economic_execution_admitted": false,
+  "research_pass": false,
+  "paper_ready_pass": false,
+  "new_source_market_real_fits_PnL_orders": 0,
+  "no_Root_intermediate_message": true,
+  "verdict": "approve_implementation",
+  "bindings": {
+    "actual_review_packet": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/actual-input-implementation-review-packet.json",
+      "sha256": "575219cbcb06b27ec5b8599cf74f71a0a786e7a5ed04294fbca73729fa9235a8",
+      "bytes": 2090
+    },
+    "actual_input_manifest": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/acquisition/actual-input-manifest.json",
+      "sha256": "6743c5dcc2d6ece0cb776528bad3f3dd5926c3dd1fafbcb1d762044521b03100",
+      "bytes": 12782
+    },
+    "implementation_manifest": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/implementation-manifest.json",
+      "sha256": "a4fcccae446193d1d344644de19b3f342a2feee5bbffbd0dfc9c398aa26bb3eb",
+      "bytes": 2523
+    },
+    "verification": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/independent-input-implementation-verification.json",
+      "sha256": "0c3ff3dd80b08a52458d770b3f7b387799d81a336b86a676aaa5faddbe5fb2e3",
+      "bytes": 17668
+    },
+    "check_code": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/independent_verify_input_implementation.py",
+      "sha256": "17fbd8686c87bd45f41792162c6d3ce8545cfb7b3858dd825de0996418cfd767",
+      "bytes": 11935
+    },
+    "actual_resource": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/independent-input-implementation-resource.txt",
+      "sha256": "6a6e69ed7f471fc5f4abaf9e0559127c140766fc44e7153e94521f826e67e39d",
+      "bytes": 981
+    }
+  },
+  "required_corrections": [],
+  "implementation_ready": true,
+  "full_implementation_approval": true,
+  "scope": "Boundthree-code minimalcomponent pluscalendar;actualinputsemantics accepted above. Proposednativechange accepted separately butcurrentnativeexecution notclaimedready.",
+  "semantic_checks": [
+    "later_pending_gap_frozen_q_nextminute_protection",
+    "exact_fees_and_one_day_borrow_original_R0",
+    "inactive_and_expiry_missing_do_not_corrupt_clean_nofill",
+    "pending_gap_unknown",
+    "holding_gap_scheduled_protection_unknown",
+    "PDL_missing_range_no_daily_fallback_PREVH_independent",
+    "last_entry_and_stop_precedes_EOD",
+    "expiry_precedes_trigger",
+    "EOD_closed_once",
+    "invalid_and_nofill_all_cost_stress_cells_retained",
+    "native_sourcecount_requiredfields_and_evidence_presence_retained"
+  ],
+  "synthetic_not_realdata": true,
+  "findings": [
+    "Everypendingminute open gap usesactualopen, frozenq0/R0; entrybarstopcrossing isflagonly, protection startsnextscheduledminute.",
+    "Activepending/heldmissing becomesunknown; inactive orafterexpiry missingdoesnotinvalidateclean nofill. Pendingexpiry runsbeforebar; knownheldposition remainsheld atsameclock.",
+    "Lasteligibleentryminute/stopbeforeEOD/noreentry andoriginalR0notionalfee/mandatoryAPR1day365 expressions verifiedwithsyntheticinputs. Invalid/no_fill/missingallretain nominalcost/stresscells.",
+    "ActualPDL sourcedfromcompletepriorRTHminutes, neverextendeddaily fallback. Knownimage/datecontext limits andsubsetinputN/A donotturn into fakefills."
+  ],
+  "native_ready": false,
+  "independent_input_acceptance_path": "reports/research/program/usic-practitioner-research-20261013/public-decision-replay/acquisition/independent-input-acceptance.json",
+  "execution_conditions": [
+    "Originalowner appliesacceptednativepatch onlyfromboundoldbytes, runsfocusednativechecks, andbindsactualcurrentimplementation/native/source artifacts beforeeconomicdecision.",
+    "Native _review_binds usesliteralpathstrings: copy sciencebindings.plan.path exactlyfroma45receipt (absolute) into methoddefinition.scientific_plan, orotherwisebindanexplicitapprovedequivalent. Do notweakenanothergenericguard; currentnewimplementationreceipt usesrepository-relativemanifestbinding.",
+    "Beforea realreplay, reviewer issuesexplicitboundedresourcegrant withcompletebindings;currentnativevalidation andfreshsingleCPU/memory admission stillrequired. Meterouterlauncher+nativechild+replay+seal once, notonlyinnerprocess timing; retainfailedlaunch cost."
+  ],
+  "workload": {
+    "effective_price_trajectories": 16,
+    "cost_cells": 48,
+    "mandatory_borrow_cells": 96
+  },
+  "resource": {
+    "pool": "OriginalUSICcomparison1000",
+    "job_id": "public-decision-input-implementation-review-01",
+    "prior_used_CPU": 291.5,
+    "inclusive_actual_CPU": 16.89,
+    "smallreads_patchanalysis_seal_handoff_unknown_CPU": 8,
+    "total_charge_CPU": 24.89,
+    "cumulative_CPU": 316.39,
+    "remaining_CPU": 683.61,
+    "fresh_memory_MiB": 512,
+    "CPU_affinity": [
+      0
+    ],
+    "max_RSS_KiB": 185448,
+    "exit": 0,
+    "inner16_002269_notaddedtwice": true,
+    "single_charge_shared_by_all_three_receipts": true,
+    "failed_jobs": 0,
+    "author_prep515_08_unchanged": true,
+    "HF_pool_not_used": true
+  }
+}

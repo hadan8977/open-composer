@@ -1,0 +1,423 @@
+{
+  "schema_version": 1,
+  "artifact_type": "weekly_route_selection_decision_packet",
+  "task_id": "DAY3-WEEKLY-ROUTE-SELECTION",
+  "owner": "/root:weekly-route-selection",
+  "as_of_utc": "2026-10-13T05:19:54.180250+00:00",
+  "recipient": "Astra周计划作者；Root拥有周目标与mission",
+  "status": "comparison_complete_owner_week_plan_review_pending",
+  "scope": {
+    "authorized": "仅来源、已有结果与现有输入可行性比较；不启动经济实验",
+    "candidates_compared": 3,
+    "public_source_access_attempts": 6,
+    "public_source_access_successes": 5,
+    "new_market_api_calls": 0,
+    "model_load_or_training": 0,
+    "array_or_return_calculation": 0,
+    "price_rows_read": 0,
+    "parquet_decoded": 0,
+    "subagents_spawned": 0,
+    "device_or_cloud_calls": 0,
+    "new_spending": 0,
+    "orders_submitted": 0,
+    "production_or_global_changes": false,
+    "alpha_credit": 0,
+    "note": "只解析小型JSON/文本和原文；路径存在与metadata不视为真实输入验收。没有生成新策略合同、启动配置或新研究准入。"
+  },
+  "startup_check": {
+    "checked_once": true,
+    "hold": "reports/research/control/owner-compute-hold.json",
+    "hold_status": "task_owned_research_conditionally_resumed",
+    "research_paused": false,
+    "day_goal": "reports/research/control/day-goal.json",
+    "method": "docs/task-owned-research.zh.md",
+    "roles": "config/research-agent-roles.json",
+    "scope_precedence": "任务入口文档保留历史暂停措辞，按权威hold最新恢复字段与本次更窄授权执行；不恢复旧cron。",
+    "actual_runtime": "当前工具未暴露本会话provider/effectiveThinkingOptionId或原生session id；不把其他worker的startup-receipt当成本会话核验，不为验证新建agent。逻辑owner仅用于此目录。"
+  },
+  "owner_intent": {
+    "week": "2026-10-12..2026-10-18；不是重新起算七天",
+    "targets": [
+      "争取至少2条深入验证后的成本后正贡献，各自收益做深，组合独立性下阶段",
+      "至少1条10/16美股交易时段真实paper运行；10/18验收",
+      "至少1个完整另类数据或模型增量任务；DLSA匿名扰动仅作配套，不计主收益",
+      "近期净收益优先；净值持续回撤1–2月明显降级；不扩大云费用",
+      "Chinco原任务继续；重大方向变更先解释，让机主纠正"
+    ],
+    "ownership": "本包不改周目标、mission、旧science、授权或生产。"
+  },
+  "recommendation": {
+    "first_choice": "dir:composite_momentum_quality_v1 的动态风险/明确非线性重开；先研究price-only事前均值/方差overlay，再有界检验已有质量特征的非线性增量。",
+    "backup": "dir:industry_relative_momentum_and_peer_earnings_spillover，只选同行财报信息溢出子机制；历史SIC/事件PIT补不齐则退出本周主交付承诺。",
+    "risk_companion_only": "dir:jump_model_regime；不作为第二条主要收益独立计数，不通过给旧ETF同簇换模型凑数。",
+    "rationale": "动量重开与已有失败的真实差异最清楚，已有日频价格特征可支持最低成本的收益/回撤匹配检验，日频多头20k现金部署比长短论文更近。同行事件交易有不同的收益假说及已有SEC事件，但论文和PIT缺口更大。JM来源完整、旧合同更成熟，却主要是S3风险管理，现独立审查未批准。",
+    "third_candidate_honesty": "第三条比JM更适合作补充主收益假说，也比继续线性质量混合更有机制区别；现有证据不能证明它比首选更可信或更快paper。没有找到可以诚实称为两者都更优且本周ready的第三条，不用低风险/平台可用性充当高收益证据。",
+    "paper_ready_candidates_now": 0,
+    "can_claim_any_supplement_is_paper_ready_this_week": false,
+    "friday_commitment": "首选只有条件paper路径，没有本周必成保证；备选和JM均不能承担10/16的可靠上线承诺。Chinco继续原owner任务，本包没有评定其ready。若10/15仍无真实数据、独立深计划批准和成本后门通过，Root应向机主明确Friday目标风险，不为凑数把shadow、配置或旧paper冒充新路线运行。",
+    "major_direction_change_for_owner_review": "建议用股票层动态动量收益/风险适配承担补充主线，JM降为配套，同行财报事件保留备选。理由是主收益用途、已有失败差异和20k部署匹配；这是供Astra/机主review的建议，不是本包已授权实施。",
+    "performance_now": "N/A；本包没有新经济评估。准备工作不计Alpha，两条正贡献目标尚未由本包满足。"
+  },
+  "candidates": [
+    {
+      "direction_id": "dir:composite_momentum_quality_v1",
+      "rank_for_supplemental_main_return": 1,
+      "decision": "conditional_reopen_recommended_not_ready",
+      "role": "股票动量收益线的模型/风险增量；若只降低暴露则只算风险组件",
+      "source_and_replication": {
+        "primary": "Daniel–Moskowitz 2016 JFE最终PDF；WML的事前均值与方差条件化，恐慌后反弹风险尤以short-loser驱动。作者报告改善静态动量；不是本地long-only净收益。",
+        "original_inputs": "CRSP永久证券身份、退市/公司行动与历史long-short动量组合；本地SIP不是同源完整复现。",
+        "independent": "本次未核实到相同方法、近期美国流动股票、成本后且20k限制的独立复现。Cederburg et al. 2020对103个股票策略的实时vol-management研究是不稳定/OOS反证，非DM完全复现；应作为简单VT对照与实时校准要求。",
+        "licensing": "JFE文章CC BY 4.0；原论文数据/CRSP访问权未由此取得。本地市场数据只沿用已有研究授权，不推定可再分发或有新数据权限。"
+      },
+      "existing_failure_and_true_difference": {
+        "evidence": [
+          "reports/research/signal-cards/composites-v1-manifest.json",
+          "reports/research/signal-cards/composites-v1-summary.md",
+          "reports/research/harvest/directions.jsonl#dir:composite_momentum_quality_v1"
+        ],
+        "failure": "旧等权质量/insider复合没有按原参考规则战胜mom_12_1；质量IC提高未转成收益，insider加入无改善。C3的signal-card admit仅取得继续研究资格，不是完整策略pass。",
+        "reopen_condition": "只接受有支持的非线性multi-source ranker或动量动态risk overlay，证明同风险/同资金成本后更好的收益—回撤曲线；不再测试等权质量混合，不靠调topN/lookback重跑封存分支。",
+        "difference": "mu_hat/sigma_hat^2事前仓位规则区别于无条件线性分数；质量特征只作状态交互/条件排序输入，须相对price-only overlay独立证明净增量。"
+      },
+      "real_inputs": {
+        "present_paths": [
+          "data/features/daily_broad",
+          "data/features/universe_broad",
+          "data/features/insider_broad",
+          "data/sip/daily"
+        ],
+        "minimum_executable_input": "先用已有price-only动量、MAX、idio-vol、52周高点距离和市场价格构造事前risk/return条件；不引入IV/Dolt、news模型或新API。",
+        "not_accepted_yet": [
+          "永久身份/退市回报、拆股与坏价处理逐日期绑定",
+          "历史可见流动性宇宙及公司行动时间；当前列表不能替代PIT",
+          "特征严格close cutoff、next-session信号生效、原源数据许可/行情订阅范围",
+          "insider必须按SEC接受/可见时刻而非交易日期；缺合格时间字段则该模态skip并保留missing fallback",
+          "现有文件最近样本与生产实时计算一致性未通过数据验收"
+        ],
+        "price_hygiene": "日价矩阵进入后必须按sanitize_price_matrices默认处理，并剔除触发日split-like信号；本次不读取/计算矩阵。"
+      },
+      "seen_oos": "旧library/composite的2017–2026和2024+结果已看，相关股票momentum失败也属已有曝光；不能改名字重新称OOS。须复用有效历史分区/台账，若无未见且已许可的评价分区则仅development诊断和真实paper观察，不能promote。禁止从相邻日期/新目录推断未见。",
+      "review_gaps_this_week": {
+        "prior_status": "该重开没有新的approve_deep_plan；不能借用JM或options-composite审查。",
+        "solvable_without_new_vendor": [
+          "冻结原论文/本地适配差异、mu/variance训练时钟、label purge/embargo",
+          "真实候选manifest、累计已有曝光、简单基线和model provenance",
+          "20k现金/整股成本合同、固定深度库存和同核心信号部署映射"
+        ],
+        "hard_gaps": [
+          "PIT永久身份/退市回报是否已可核验未知",
+          "准确CRSP同源复现没有许可/输入证明",
+          "足够功效及未见OOS是否存在未知"
+        ],
+        "verdict": "price-only适配的定义和review本周可争取完成；严谨完整源复现及paper gate未保证。若缺历史身份不可用当前top500兜底。"
+      },
+      "complete_three_layer_depth": [
+        {
+          "layer": 1,
+          "economic_question": "恐慌/反弹中的均值预测是否为可实现增量，还是事后beta/vol去风险？",
+          "design": "先按DM原规则冻结事前条件均值、方差、估计窗口和延迟；原long-short可在合格已有数据上作非可晋级诊断，缺原数据标adaptation/unavailable。与静态WML、简单可实现vol-scaled WML和不可交易ex-post attribution明确区分。"
+        },
+        {
+          "layer": 2,
+          "economic_question": "将机制适配真实long-only股票book后，是否保留更多成本后收益且缩短回撤？",
+          "design": "用同PIT宇宙/同资金/同持仓规则比较unmanaged mom、常数降暴露、因果VT、DM型动态overlay；预注册低/中/满现金风险预算三个曲线点，逐点匹配平均暴露与实现波动，不靠提高杠杆赢收益。覆盖恐慌、反弹、连续亏损和近期正常市场。"
+        },
+        {
+          "layer": 3,
+          "economic_question": "质量/insider条件信息的非线性作用是否超过price-only动态overlay？",
+          "design": "确定性动量基线有信号后，冻结一个简单非线性模型家族及少量经济交互，不作大搜索；比较price-only、quality-only、combined、missing-input和横截面/时间placebo，另保留旧等权复合。按同fold/同seed/同label/同换手约束比较costed收益，不以IC或训练误差计model贡献。"
+        }
+      ],
+      "matched_baselines_and_costs": "同股票/同PIT宇宙buy-and-hold、等权宇宙、SPY、可用行业/主题proxy、BIL与ex-post best symbol（只归因）；主比较为同风险/暴露的动量及VT。保留旧20bp定义，新的交易按每边spread/impact/fees拆开，报告1x/2x、整股残差现金、卖出款结算与未成交机会成本；不把20bp改成实测嘉信费率，不双扣已在bid/ask内的spread。无short默认不发生borrow；原long-short诊断需ETB/PIT borrow和融资，否则不promotable。",
+      "capital_and_deployment": "拟定20k、0–1 gross、整股美股多头、无借款且日频/多日持有；30只股票的取整现金与集中度必须实际核对，不能据名义可买证明可行。Alpaca quant1独立sleeve拟用现有signal-id/journal/order链路，StrategySpec固定close输入与同样执行时刻/limit规则；生产修改只在独立worktree，由交互review。嘉信迁移保持同一signal/权重/整股/settled-cash逻辑；API/token/order parity尚未验，不能拿手动裁量替代核心模型。",
+      "earliest_empirical_milestone": "建议10/14：准入通过后完成原机制/本地适配的同成本静态动量与实时VT对比，输出可审计净收益和回撤曲线；10/15完成非线性角色ablation与固定一次未见评价（仅确有合法未见分区）；10/16仅在全部gate通过后真实paper。日期是条件排期，不是完成记录。",
+      "can_bear_primary_return": "条件可以；必须同时显示绝对成本后收益与相对匹配动量净增量。仅降DD、改善Sharpe或现金收益不能算主要高收益已证。",
+      "paper_ready_pass": false
+    },
+    {
+      "direction_id": "dir:industry_relative_momentum_and_peer_earnings_spillover",
+      "rank_for_supplemental_main_return": 2,
+      "selected_submechanism": "同业公告公司信息对非公告公司后续收益的溢出；不另跑ETF行业topN轮动",
+      "decision": "backup_input_and_source_blocked",
+      "role": "潜在新事件收益/另类信息增量；当前不是已证Alpha",
+      "source_and_replication": {
+        "primary": "现有T-20260930-02来源研究列Hou 2007行业信息扩散及Baker et al. 2019 competitive earnings news；前者本地只读摘要，后者本次publisher访问失败，原规则全文还未取得。",
+        "independent": "Sumon 2023原论文提供相邻独立信息spillover证据，研究对象是同国跨上市公司及同步事件CAR，不能称同行交易策略的独立复现。没有核验到2024+此机制成本后执行复现或官方可运行策略代码。",
+        "counterevidence": "同行CAR同步反应可能在次日开盘前已定价；正信息可转为竞争者负效应。当地经典SUE/8-K tone失败提示不能将旧价格冲击/公告日期当新Alpha，行业动量被factor momentum解释也不支持改装旧ETF动量。",
+        "licensing": "公开SEC材料与代码/市场数据的现有使用范围需分别绑定；论文可访问不等于其CRSP/I-B-E-S等源数据已许可。历史分析师surprise并未证实存在，不用XBRL值冒充同定义预期差。"
+      },
+      "existing_failure_and_true_difference": {
+        "evidence": [
+          "reports/research/intel/gap-search-2026-09-30-01.md",
+          "reports/research/harvest/directions.jsonl#dir:industry_relative_momentum_and_peer_earnings_spillover"
+        ],
+        "status": "登记最新仍queued；本次定向检索未发现该机制完整iteration/结果，未作整仓遍历。",
+        "difference": "交易对象是非公告同行，信息源为其他公司的已可见财报；区别于公告公司自己的classic SUE、8-K tone下一日及ETF行业轮动。若只是同一SUE改名或相同12-1行业打分，不能重开。"
+      },
+      "real_inputs": {
+        "existing": [
+          "data/features/earnings_events（原来源登记2024+，此轮不核读行）",
+          "data/features/sec_fundamentals_daily",
+          "data/features/sic_map/sic_map.parquet",
+          "data/features/daily_broad",
+          "data/features/universe_broad"
+        ],
+        "actual_changed_input": "2026-09-30来源文档说无SIC，2026-10-01 coverage显示SIC已建；不能复述旧无表阻塞。",
+        "binding_gap": "coverage.json明确sic_is_point_in_time=false；P1000日期链接覆盖0.9326不等于历史行业PIT。build_sec_sic_map.py使用CURRENT SIC，并有current company_tickers无界fallback；历史链接日期也可能与重命名股价ticker不一致。",
+        "capability": "reference.sec_sic_industry: trial，strict_behavior=research_only；不因覆盖高就paper-ready。",
+        "must_not_substitute": "当前SIC、当前成分、同日最终事件表和后修订companyfacts均不能充当then-visible历史输入。需已存原始filing acceptance/行业身份/永久证券id/非公告peer排除及delisting绑定；不能新抓全市场来保证周内完成。"
+      },
+      "seen_oos": "原peer事件机制是否有合法未见分区未确认；既有SUE/tone/其它股票窗口已曝光。2024+短事件覆盖只能支持适配诊断，不能把共享已见价格窗口当新未见OOS。",
+      "review_gaps_this_week": {
+        "prior_status": "无本子机制完整深计划批准；登记queued不构成准入。",
+        "solvable": [
+          "全文/作者规则与可交易延迟定义可补，但本次6次外部上限已用完",
+          "使用已存事件的visible_at与source/input_hash字段审计",
+          "同业vs非同业、非公告peer与market/industry暴露匹配合同"
+        ],
+        "hard": [
+          "历史SIC明确非PIT，是否有已存可复原filing未知",
+          "2024+较短8-K范围、真正surprise与信息可得时钟",
+          "平台输入能力trial，需要真实数据readiness而非配置变更"
+        ],
+        "verdict": "本周可做来源/输入决定；没有足够证据承诺完整源复现、统计功效和Friday部署。PIT修复依赖新外部历史则本周backup失败。"
+      },
+      "complete_three_layer_depth": [
+        {
+          "layer": 1,
+          "economic_question": "事件可见以后还有可交易的同行反应吗？",
+          "design": "原公告surprise定义与时钟复现；分解公告同步窗、首个可执行next-session窗和之后1/5/20-session反应。同步CAR不计可交易收益；同股票重定日期placebo。"
+        },
+        {
+          "layer": 2,
+          "economic_question": "信息传递还是普通行业/市场共同涨跌？",
+          "design": "真实PIT行业peer、同流动性异业peer、同业随机公告日期配对，区分原文规定的leader/follower、同质信息与竞争反应，冻结符号不依结果翻转；三个经济关系点决定何种信息有增量。"
+        },
+        {
+          "layer": 3,
+          "economic_question": "可观测事件信息是否改善真实20k股票book？",
+          "design": "事件信息-only、price/momentum-only、固定combined与missing-event fallback；加入已可见SEC surprise或文本特征仅在真实许可/时间绑定后，不新调用模型。比较事件后持有强度/容量三点及净收益，保留行业中性基线、跨industry/时间placebo和重叠事件聚类功效。"
+        }
+      ],
+      "matched_baselines_and_costs": "同业等权、同流动性非公告peer、price-only动量、SPY/BIL及可用完整benchmark family；同日期同gross/行业暴露，净成本1x/2x，事件高spread、next-open未成交、20k取整、结算现金和机会成本。不能从事件CAR年化成策略收益。",
+      "capital_and_deployment": "可行版本拟为20k现金、非公告液体美股多头、隔夜/多日持有。若原收益主要在负surprise short/微盘，则这一部署不忠实，不能用无借券多头替代；ETB及borrow成本/账户权限未验。历史与实时均须同一行业身份与公告可见时刻，Alpaca与嘉信保持同核心信号；当前SIC snapshot仅可用于明示研究用途的观察，不声称成熟paper evidence。",
+      "earliest_empirical_milestone": "若10/14能从已有原始文件核验历史行业PIT和事件时钟，可在批准后做延迟反应—同步反应分解；否则10/14明确dependency_skipped，不排一个无输入的经济任务。Friday部署概率无法量化且不承诺。",
+      "can_bear_primary_return": "机制有资格作为备选主收益研究；无独立近期净收益及PIT，当前不能承担主收益指标。",
+      "paper_ready_pass": false
+    },
+    {
+      "direction_id": "dir:jump_model_regime",
+      "rank_for_supplemental_main_return": 3,
+      "decision": "retain_risk_component_complete_review_before_compute",
+      "role": "现有S3/ETF风险状态和仓位乘数；不是新独立主收益线",
+      "source_and_replication": {
+        "primary": "Shu–Yu–Mulvey 2024，作者jumpmodels代码；收益特征的持久性惩罚二状态模型、半年refit、3000日历史、online推断。",
+        "independent": "CBS 2025因子rotation应用是方向性支持但统计不显著；Praxis/SPY复现是未核验实现的自报，0.922及所谓论文1.43不可作为已核实paper数字。作者README只证明接口。",
+        "negative": "早期登记已有降DD但不提高绝对收益的外部自报；实时VT/OOS不稳定反证来自Cederburg2020。旧单SMA/credit熊市gate失败，必须超越同暴露VT而非重复低风险。",
+        "licensing": "本地官方README记jumpmodels Apache-2.0；库许可不覆盖GFD/CRSP/French/FRED市场输入。French公开下载也不自动证明实时长期源能力/发布时间许可。"
+      },
+      "existing_failure_and_true_difference": {
+        "original_iteration": "t20261006_p2_s2_regime_layer",
+        "original_candidates": 9,
+        "failure": "旧方向parked，重开后无index_results/results/multiplier证据（10/10独立review所核）；workflow_pass不是收益pass。",
+        "true_difference": "论文持续性惩罚、长历史拟合、online状态与同暴露VT对照区别于旧lagging SMA/credit gate；不得修改旧九候选、cash fallback、延迟或原a–f/r门。",
+        "current_review": "reports/research/program/regime-depth-review-2026-10-10/plan-review.json: revise_plan；没有拟合/backtest/resource批准。"
+      },
+      "real_inputs": {
+        "existing": "French Mkt-RF/RF代理、SIP SPY/S3腿、作者代码/来源快照、benchmark metadata。",
+        "pit_and_fidelity_gaps": [
+          "GFD/S&P原数据与CRSP/French市场proxy不是同源论文数值复现",
+          "论文每日trailing3000 DP与旧从refit起点streamingDP不等价；HMM输入/refit/解码/state排序另有差异",
+          "VIX/BAA10Y缺then-visible/vintage，BAA原fetch有timeout；存在CSV不能证明PIT",
+          "SIP SPY长期训练窗不足3000session的旧判断需按现有元数据验，不新API补；French重拟合输入尚无registered long-history实时paper证据"
+        ],
+        "capability_action": "F3 price-only可独立推进合格历史诊断；F4/F6缺PIT则逐项dependency_skipped，不用当前FRED历史覆盖。"
+      },
+      "seen_oos": "旧合同明确不读2026-09-18起数据，本次没有读取。旧九项及a–f/r保持；新fidelity child全部non-promotable，不能由旧PASS_SHADOW直接晋级。后续新selectable候选只用其合法未见分区和现行新冻结门，不把历史seen窗口重新封一次。",
+      "review_gaps_this_week": {
+        "R1": "新v3 nonselectable child真实spec/data/cost/benchmark/source/scout绑定；不改legacy。",
+        "R2": "trailing3000、streamingDP与HMM fidelity及诊断库存固定。",
+        "R3": "因果252日VT校准、CV/fit/placebo累计账本、有效trial和MDE政策。",
+        "R4": "候选级PIT与carry-state/m=1/BIL语义分开、模型ablation与provenance。",
+        "R5": "同日期真实benchmark列/成本/资金合同；本周可先证S3净增量，账户独立性后阶段，不能悄悄删除旧审查要求。",
+        "R6": "完整三点工作量、预算关系和续跑命令；不假定设备ready。",
+        "verdict": "R1/R2/R3/R6与F3定义缺口本周可修；F4/F6 vintage和实时长历史input不保证。不能为了Friday砍成一个浅probe或跳review。"
+      },
+      "complete_three_layer_depth": [
+        {
+          "layer": 1,
+          "economic_question": "是否忠实online复现，持久性与迟到识别怎样权衡？",
+          "design": "保留L15/L50/L150三点以及CV身份；同时输出trailing3000 vs legacy、识别延迟/切换/错过反弹与换手；同成本静态指数、原HMM/GMM（差异披露）对照。"
+        },
+        {
+          "layer": 2,
+          "economic_question": "S3净改善是否超过同风险/平均暴露的VT？",
+          "design": "原S3固定逻辑，gated/ungated、常数暴露、因果VT、时间shift placebo；近期与压力都报告净收益、DD持续期、反弹捕获，不用整窗校准证明实时可行。"
+        },
+        {
+          "layer": 3,
+          "economic_question": "模型持续性和额外信息是否真有增量且缺失时可靠？",
+          "design": "price-only F3、PIT合格F4/F6、model vs trend、missing modality与exact cash fallback；逐模态归因同折/同成本/相同交易时刻，缺vintage时信息深度未完成，不以更多lambda点替代。"
+        }
+      ],
+      "matched_baselines_and_costs": "旧10/20bp、原close→d+2和cash换手时钟不改；新增归因按原review绑定因果VT。benchmark与账户边际只在共同日/成本/资金确实可用时；本周各线收益优先但原审批缺口不能自动豁免。真实spread/impact/fees、cash ETF交易、整股与leveraged ETF损耗/TCA另列；风险缩减不算新Alpha。",
+      "capital_and_deployment": "20k现有长ETF sleeve乘数技术上较近，无新增short。Alpaca/嘉信必须保持同close信息、refit cutoff、online DP、固定延迟和cash fallback；S3已有部署不是本JM同逻辑paper。未来仅在独立worktree改live runner，当前不改。",
+      "earliest_empirical_milestone": "建议10/14补完整F3深计划复审后，当天完成trailing3000和三lambda成本/延迟曲线及matched VT对照；这只是risk组件历史决定，paper/readiness和F4/F6完整模型增量另验。",
+      "can_bear_primary_return": "当前不适合；除非实际同资金/同风险净绝对收益增量足够且通过原门，仍应计风险组件而非第二独立主收益。",
+      "paper_ready_pass": false
+    }
+  ],
+  "shared_acceptance_for_astra": {
+    "research_gate": "本包不是独立经济计划approve。经济任务启动前按原科学/合同边界完成适用campaign pre-discovery、v3 direction-check、iteration gate、完整独立深计划review；有模型/新信息则按原要求knowledge assess。旧caps、失败、历史seen OOS及effective trials不重置。",
+    "new_frozen_candidate_gate": "新冻结selectable候选按现行20bp daily continuous terminal-free OOS Sharpe-excess-BIL严格>1.0；不追溯修改legacy冻结a–f/r/G1等标准。source surrogate适配、统计增量与paper readiness分别验。",
+    "weekly_model_or_alt_task": "首选第三层完整price-only/quality-only/combined/missing/placebo成本后结果可承担模型增量任务，但未测/无增量必须如实失败；同行事件数据任务只有完成净增量角色检验才可计，不以SIC修表计。DLSA不计。",
+    "friday_actual_paper_definition": "历史深计划和paper safety/执行/data gates通过后，真实broker paper runtime按冻结StrategySpec与signal id运行；明确首次运行、信号、订单接受、成交和资金账本各自状态。没有交易信号不捏造订单/成交；启动脚本或shadow不算真实paper订单证据。无新实盘/支付授权。",
+    "schwab_20k_parity": "选择现金日频/多日路线是降低融资和高频结算迁移依赖，不是收益证明。settled cash、整股、T+1、账户级资金竞争和fee/TCA同口径；未来Schwab API/order权限与纸盘模型匹配未验证。不依据旧PDT规则臆称20k能无限日内，也不把paper buying power当真实资金。",
+    "drawdown_degradation_proposal": "供机主周计划review：按真实成本后连续净值记录，每21session回撤未修复/滚动净收益为负先明显降风险和研究优先级；42session仍持续亏损则停止新增仓位并复核。仅用截至当日输入，动作/资金上限在对应paper spec与授权里冻结，不修改旧science/生产；短期降级不是科学反证。",
+    "combination_independence": "本周不为独立性重新调组合；先做每线自身净收益/损失持续期与资金可部署性。共享市场/行业暴露如实标注，不能把主线和其overlay计两条独立利润。",
+    "checkpoints": [
+      "10/14：首选真实输入和完整准入能否通过；首个matched economics仅在通过后执行",
+      "10/15：若无合法未见评价/成本后正贡献和paper路径，Root提出Friday目标风险及调整理由给机主",
+      "10/16美股交易时段：只运行真正过gate且同核心逻辑的paper路线；不为日期制造ready",
+      "10/18：验收每线完整深度/净成本/模型增量/失败和真实paper日志；正贡献数量与准备件分别报"
+    ],
+    "budget": "不增云费用、不新API/模型/DS/Hadan；后续实际经济任务必须沿用有效原预算并扣累计消耗，不因本包排期取得新预算。"
+  },
+  "source_cards": [
+    {
+      "claim_id": "dm_dynamic_momentum",
+      "claim": "原文以事前条件均值与方差调整WML仓位，报告相对静态动量的改善；主要崩溃机制涉及空头输家在反弹中的高beta。不是已验证的本地long-only净收益。",
+      "source_url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2019/09/Mom_crashes_JFE_final.pdf",
+      "source_type": "paper",
+      "accessed_at": "2026-10-13",
+      "verification": "实际打开JFE最终PDF，p1–2摘要与机制；CC BY 4.0只覆盖文章，不授权CRSP数据",
+      "limitations": "没有独立同定义、近期、小资金成本后复现；原论文表现不能移植到本地股票多头。"
+    },
+    {
+      "claim_id": "shu_online_jm",
+      "claim": "原JM研究关注下行风险；本地原brief记载标普1990–2023 Sharpe 0.48→0.68、MDD -55.2%→-26.6%，10bp及延迟；部署语义须按原文固定。",
+      "source_url": "https://arxiv.org/html/2402.05272v2",
+      "source_type": "paper",
+      "accessed_at": "2026-10-13",
+      "verification": "实际打开v2；复用已核验本地快照及独立review，不重算收益",
+      "limitations": "不是S3、20k账户或近期可部署收益；旧笔记存在一日/两日延迟表述差异，实施前必须统一时钟。"
+    },
+    {
+      "claim_id": "schwab_cash_settlement",
+      "claim": "嘉信现金账户购买须有资金覆盖，美股通常T+1结算；未结算卖出款买入后在结算前卖出可构成good-faith violation。",
+      "source_url": "https://www.schwab.com/learn/story/avoid-these-violations-when-trading-cash",
+      "source_type": "broker_official_docs",
+      "accessed_at": "2026-10-13",
+      "verification": "实际打开官方页面规则段",
+      "limitations": "不证明本账户权限、API订单路径、现行margin日内限额或paper仿真规则；不采用旧25k假设。"
+    },
+    {
+      "claim_id": "peer_earnings_primary_access",
+      "claim": "Competitive earnings news and post-earnings announcement drift的现有harvest记录支持信息传递问题；本次publisher原文未成功打开。",
+      "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S1057521917300212",
+      "source_type": "paper",
+      "accessed_at": "2026-10-13",
+      "verification": "本次访问Internal Error；历史harvest为摘要/页面记录，当前验证未通过",
+      "limitations": "不能声明全文忠实复现、经济规模、近期净收益或代码可用。"
+    },
+    {
+      "claim_id": "cbs_independent_application",
+      "claim": "CBS 2025 Regime-Based Factor Rotation Leveraging Sparse Jump Models是独立应用；原review记录方向一致但统计不显著。",
+      "source_url": "https://research.cbs.dk/en/studentProjects/regime-based-factor-rotation-leveraging-sparse-jump-models/",
+      "source_type": "paper",
+      "accessed_at": "2026-10-13",
+      "verification": "实际打开研究门户；全文结论沿用本地已读摘要边界",
+      "limitations": "摘要层应用证据，不是Shu同数据、同实现的独立经济复现。"
+    },
+    {
+      "claim_id": "spillover_adjacent_independent",
+      "claim": "Sumon 2023大学论文用1993–2021美股跨国上市公司事件研究，发现同国非公告公司CAR与公告公司CAR相关，市场状态影响强度。",
+      "source_url": "https://opus.uleth.ca/server/api/core/bitstreams/0b65d4f0-e521-464f-807c-2315bab57926/content",
+      "source_type": "paper",
+      "accessed_at": "2026-10-13",
+      "verification": "实际打开大学原PDF，p4摘要、p11引言与方法目录",
+      "limitations": "跨国上市/同国关系不同于美国同SIC同行；同步CAR与三日事件窗不证明可在获知事件后的下一开盘获利；非准确独立复现。"
+    }
+  ],
+  "reused_counterevidence": [
+    {
+      "source": "Cederburg et al. 2020, On the performance of volatility-managed portfolios",
+      "path": "reports/research/intel/sources/regime-depth-review-2026-10-10/cederburg-2020.pdf",
+      "verification": "本次pdftotext读取p1–2原文abstract；103 strategies与实时OOS不稳定",
+      "limitation": "反证vol-management普遍必优的推断，不等于否定DM或JM全部机制。"
+    }
+  ],
+  "pass_states": {
+    "workflow_pass": true,
+    "workflow_scope": "本决定包结构与范围验收；不是策略执行通过",
+    "research_pass": false,
+    "llm_contribution_pass": "not_evaluated",
+    "ml_contribution_pass": "not_evaluated",
+    "paper_ready_pass": false
+  },
+  "validation": {
+    "json_parse": "pass",
+    "scope": "只验证本目录两份JSON、关键引证path与diff；不跑全仓测试或任何经济计算",
+    "evidence_paths_exist": true,
+    "prices_or_arrays_loaded": false
+  },
+  "evidence_bindings": [
+    {
+      "path": "reports/research/control/owner-compute-hold.json",
+      "sha256": "31032d80c00176b86d0427a0fb602eb7ade1562e701e77a6f7916666cadc42f4"
+    },
+    {
+      "path": "reports/research/control/day-goal.json",
+      "sha256": "84fa184f348d578492e653ddf1ee6d1fcbe2e67c45d10cba61a9de6e3a030b29"
+    },
+    {
+      "path": "config/research-agent-roles.json",
+      "sha256": "52247f69a5e1a0d0d9b02fa551ebc684dba103aba6cf9bd69e848645fd4ed210"
+    },
+    {
+      "path": "docs/task-owned-research.zh.md",
+      "sha256": "26c5d42436719e92ca80eb756c6471545c051150c05d140f6d8693500070687b"
+    },
+    {
+      "path": "reports/research/program/regime-depth-review-2026-10-10/plan-review.json",
+      "sha256": "3ee6a237022b2c332c57848ff61167bea7c161dc9e988c12107bb6e458199363"
+    },
+    {
+      "path": "reports/research/iterations/t20261006_p2_s2_regime_layer/hypotheses.md",
+      "sha256": "041c50b913f6d5daf6efe4c5c0c0b45cd3dec46d1c64834d600c9a574ff72c05"
+    },
+    {
+      "path": "reports/research/signal-cards/composites-v1-summary.md",
+      "sha256": "7b5d999f73d2b68033e0b0234f59facbc562b5c4048f19dfe9b00fb4b0e9a42d"
+    },
+    {
+      "path": "reports/research/signal-cards/composites-v1-manifest.json",
+      "sha256": "edfcc7e38a78ae0733fe044a772c52867b164dc86a5e0866bb8540f3acd1d9f1"
+    },
+    {
+      "path": "reports/research/intel/gap-search-2026-09-30-01.md",
+      "sha256": "34515e9b462c8145d2d78867280eee9c430e675a11f49a16a5975680721e99b7"
+    },
+    {
+      "path": "data/features/sic_map/coverage.json",
+      "sha256": "264c83c767788e21133120716a6174ef1c1c938f4eda4333d68d3b8099d2db03"
+    },
+    {
+      "path": "scripts/build_sec_sic_map.py",
+      "sha256": "8dc230b9ac419032cf16400d26fd6ec6cc555a508084ffd9df048dfb10396a89"
+    },
+    {
+      "path": "capabilities/registry.yaml",
+      "sha256": "6466c186ba36563586219bd256690ddad838b06a658d52ca31ec5b2d27a0897c"
+    },
+    {
+      "path": "reports/research/intel/sources/regime-depth-review-2026-10-10/jumpmodels-readme.md",
+      "sha256": "53f5e0bf43fb92e60b99a13bbf55c5a139bf8fd3c1000d4f6b47738e44023a0a"
+    },
+    {
+      "path": "reports/research/intel/sources/regime-depth-review-2026-10-10/cederburg-2020.pdf",
+      "sha256": "5f82689700a360bed1fd371637d4a62090c6715d0cc9bd85c36fc78bc6129919"
+    }
+  ]
+}

@@ -1,0 +1,647 @@
+{
+  "S0_actual": {
+    "branch": "branch_2_plus_3",
+    "cash_return_metrics": "N/A",
+    "decision": "not_ready_for_bulk_R",
+    "numeric_loss_fraction_sample": 0.6852788337460328,
+    "path": "s0/S0-result.json",
+    "sha256": "d23248064fdbc1dcb3c478c4ca40a58c8ffe224e33da17f00af3689714822b8f",
+    "verified_original_html": 43
+  },
+  "as_of_utc": "2026-10-13T07:21:56.413434+00:00",
+  "author_session": "01a133c7-0ade-7f92-8797-72f732fa11da",
+  "brief_binding": {
+    "path": "reports/research/program/day-goal-20261013/news-embedding-task.md",
+    "sha256": "6e2772ac969c513b86a531e45c6e445822cb48af8cedac725fd257c27448b99b",
+    "size_bytes": 5785
+  },
+  "cost_and_portfolio": {
+    "actual_friction_alternative": "If actual quote halfspread+impact+exchange/commission are later measured, replace the0.002 execution term with their joint estimate on actual fills; do not add both. Borrow/funding charge on actual exposure/duration only. Report covariance/stress and uncertainty if quote/ETB absent; research sensitivity is not paper readiness.",
+    "benchmark_family": [
+      "same-security buy-hold",
+      "PIT eligible equalweight",
+      "SPY",
+      "QQQ",
+      "BIL/cash",
+      "sector/theme PIT proxy if available",
+      "ex-post best security report-only"
+    ],
+    "common_eligibility": "All Q2/C1/C2 use same dated security/PIT membership/ADV/ETB and body availability; missing ETB means short side cash or dependency skipped, never free short. No 20k margin or Schwab availability presumed.",
+    "deferred_combination": "Cross-strategy mixing after individual net contribution; not used to rescue this component.",
+    "opportunity_loss": "Actual cash path already reflects foregone planned trade returns. Separately attribute implementation shortfall/opportunity loss relative to theoretical target, never subtract same amount from actual PnL again.",
+    "order_and_capital": "At order decision size using then-known quote/last price; use limit/collared open style only after order capability check. Reserve ex-ante cash/gap buffer and cap gross<=1, name<=10%, each leg<=0.5; recompute at entry executable price and shrink/reject overshoots deterministically. Whole shares, short collateral segregated, short proceeds not free cash, BIL/cash accrues only truly deployable idle cash. Missing or unfilled positions stay cash.",
+    "primary_account_increment": "On continuous common US regular-session dates including no-event/cash/late/unfilled days, report mean/CI of daily Δ=C2−Q2 and C2−C1 after all costs, plus standalone account Sharpe differences and covariance; difference-stream Sharpe is not account Sharpe. Report absolute $20k net profit, annualized scale, occupancy/turnover, recovery/underwater 1–2mo, DD and common stress co-loss.",
+    "primary_friction": "Per-day net account return = gross marked-to-market return −0.002×Σ|actual net executed orders|/start equity −actual borrow carry −actual margin financing −nontrading fees/inference not already included. 20bps is a single one-way execution envelope for spread+impact+trade fees; entry and exit charged only if actual order executes, adjacent same-security position changes netted. 0/5/40bps are diagnostic replacement envelopes, never additive to20bps.",
+    "research_book": "Proposed 0.5 long/0.5 short gross1 top/bottom20% event forecast, >=5 names each leg else cash; one canonical common-share ID per issuer, aggregate multiple same-day events before ranking. S0 metadata 16056 item2.02 rows is not 25 daily tradable names. Source gross2 EW/VW is fidelity diagnostic only, separate from20k.",
+    "risk_matching": "Compute common scalar from only preceding20 complete session Q2 host daily returns: s_t=min(1,0.10/(sqrt(252)*sample_sd20(Q2))); <20 usable prior dates or zero/undefined volatility => s_t=0. Apply same s_t to Q2/C1/C2 before current returns, then cap gross1. Report unscaled and matched; 10% target frozen as reporting device, not tuned on test."
+  },
+  "cumulative_budgets": {
+    "Modal": "noallocationheld;2026-10-13observedbilled13.5261/25staleafterotherjobs;mustfreshbudget.pycheck+Rootresourceadmissionandactualreservations;neverclaim11.4739available",
+    "actual_this_task": {
+      "S0_SEC_request_attempts": 44,
+      "S0_all_response_bytes": 16777216,
+      "S0_existing_text_bytes": 419438859,
+      "S0_existing_text_overrun_bytes": 8459,
+      "S0_full_HTML_audits": 43,
+      "S0_metadata_charged_bytes": 4697786,
+      "S0_partial_html": 1,
+      "fit_count": 0,
+      "market_API_requests": 0,
+      "market_matrix_read": 0,
+      "model_inference_rows": 0,
+      "new_fits": 0,
+      "new_labels": 0,
+      "new_market_API_calls": 0,
+      "news_rows_newly_fetched": 0,
+      "optimizer_updates": 0,
+      "paid_spend": 0,
+      "source_document_fetches": "document-onlyreceiptsin sources; counts/sizesfromreceipts"
+    },
+    "checkpoint": "immutableinput/feature/label/codehashes;perdocumentembedding.completed-shard,perfoldfit/predictions+ledger;recoveryreusesonlycompletedhashboundshards,failures/time/trialsaccumulated;notnewplatform",
+    "compute_priority": "Hadanonlyfreshready+usage_ok+total<50GiB C:\\paseo; cannotconsumeChincolane/reservation; unavailable->alreadyadmittedserver/Modalfreepathonly",
+    "inherited_API_exposure": "1451LLMre-rankcalls+4attempts;2210earningsscores; oldsource/methodfits remainseparatehistoricaltrialrecords,not erased",
+    "inherited_FNSPID_new_acquisition_remaining": 0,
+    "inherited_source_bytes": 402661376,
+    "paid_new_cap": 0,
+    "requested_full_economic_cap": {
+      "CPU_core_hours_max": 6,
+      "GPU_hours_max": 4,
+      "batch_size_max": 4,
+      "core_fits_max": 392,
+      "economic_real_streams": 16,
+      "elapsed_hours_max_excluding_remote_unavailability": 8,
+      "fit_accounting": "两种执行时钟各自标签/特征，7learnedmodels×7folds×(3alpha校准+1最终fit)×2clock=392；24placebo×2models×7folds×2clock=672；不同标签不能静默共用fit。",
+      "interpretation": "Max ceilings only. Do not run 392/672/1064 for quota completion; current admitted fits=0 and remaining budget is not reserved. First valid info/coverage, fit profile and native review determine any release.",
+      "local_memory_MiB_max": 1500,
+      "local_output_GiB_max": 1,
+      "note": "Budgetceilings,notmeasuredruntime; profile128docs/eachfit andderiveprojectedsecondsbeforeadmittingfullwork; ifdoesnotfitcap returnmeaningfulreallocationquestion withoutshorteningdepth/renaming quotas.",
+      "outer_folds": 7,
+      "placebo_fits_max": 672,
+      "placebo_streams": 96,
+      "primary_placebo_in_ceiling": "At most665 fits for 95 unique complete-fold C2+D2 null draws if identifiable; secondary nulls require separate allocation inside residual cap, else N/A.",
+      "remote_RAM_GiB_max": 8,
+      "remote_VRAM_GiB_max": 6,
+      "remote_task_usage_GiB_max": 4,
+      "robustness": "cost/missing/risk/whole-share transformsseparatetrialrows,notuncountedselection",
+      "total_fit_attempts_max": 1064
+    },
+    "requested_stage_S0_input_acceptance": {
+      "actual_status": "completed_partial_with_8459_byte_local_text_overrun",
+      "do_not_reset_on_model_switch": true,
+      "further_S0_fetch_permitted": false,
+      "local_text_remaining_bytes": 0,
+      "max_local_raw_text_source_MiB": 400,
+      "max_new_exhibit_payload_MiB": 16,
+      "max_small_metadata_MiB": 8,
+      "max_source_exhibit_requests": 64,
+      "max_wall_min": 30,
+      "memory_MiB": 384,
+      "network_remaining_attempts_within_S0": 20,
+      "network_remaining_body_bytes": 0,
+      "note": "Rootadmit后只做输入资格/原text哈希/时钟与最多64原网页删表敏感性sourceaudit，无标签/模型；64样本不证明全部contentvintage或还原完整corpus。"
+    },
+    "requested_stage_S1_prepare_after_all_gates": {
+      "LLM_optimizer_updates": 0,
+      "download_cap_bytes": 2147483648,
+      "max_eligible_docs": 16089,
+      "max_input_tokens_across_2models": 16475136,
+      "max_models": 2,
+      "max_price_context_span": "2023-10-01–2026-09-18 boundedeligibleIDs+benchmarks; knownhygiene,notwholeSIParchive",
+      "max_total_input_body_MiB": 400,
+      "max_weights_request_attempts_per_file": 2,
+      "pilot_action": "measureactualCPU/GPU/RSSandtokens onlywhenadmitted; logpartialevenfail; fixedinputcapnotgrowbecausepilotfast",
+      "pilot_docs": 128,
+      "pilot_wall_min": 15,
+      "tokenizer_config_extra_cap_MiB": 8,
+      "tokens_cap_per_document": 512,
+      "weight_bytes_total_expected": 1920518533
+    }
+  },
+  "daily_empirical_milestones": [
+    {
+      "actual": "S0 source/input audit: 43 original exhibits, table/numeric/prose loss and full cache reproduction; 44th partial at16MiB, 8459-byte old-text overrun recorded. Complete revised decision packet; economic not_ready.",
+      "at_utc": "2026-10-13T07:21:56.413434+00:00"
+    },
+    {
+      "next_only_if_new_input_scope_admitted": "Table-preserving corpus, period/unit numeric controls, vintage/CIK-security continuity and current forward capture feasibility on exact bound sample; day-by-day evidence, no arbitrary calendar wait."
+    },
+    {
+      "next_only_if_economic_review_and_gates_pass": "Matched Q2/C1/C2 pilot and fit/resource profile; then deeper economic power/cost/control work to a decision, not 1064 quota."
+    }
+  ],
+  "economic_acceptance": {
+    "capital_materiality": "annualnetexcess/CAGR,drawdown,timebelowpeakand20k-dollarprofit reportedwithoutpromisingminimum;1–2monthsunderwater materiallydowngradespriority; notretroactivelyhardstop",
+    "component_pass": "Currently N/A. Conditional only after accepted full input/identity/version/unseen cohort and common continuous account matrix show credible C2 vs Q2/C1 positive net paired contribution, power and valid controls. R-only correlations cannot establish paper or weekly contribution.",
+    "family_stats": "Exact actual candidate/fold/fit-attempt and failed/skipped exposure inventory. Preregister only valid streams; 392 core and672 placebo are upper ceilings, not completion targets. Effective trial count includes variant search/after-the-fact checks. DSR/PBO/SPA N/A if native evidence/power absent, not pass.",
+    "power": "Paired date-block and issuer/event cluster uncertainty, n_eff/MDE and 1–2mo recovery. 100 dates is only a screening floor, not 80% power. Three depth axes require actual identification, not 3 cost scenarios.",
+    "promotion": "noneadmittedbythisRstudy; anyselectablecandidate laterrequiresprimary20bpsdailycontinuous terminal-freeOOS Sharpe-excess-BIL strictly>1.0 andallappropriatefrozen gates; singleOOS unchanged",
+    "stop": "Current stop=dependency_block/not_ready for bulk R due S0 numeric/table loss and missing deployable vintage/identity/ETB path. Can resume after accepted full source and prior-period controls, independent review and native gates. Original commercial-news mechanism unrefuted.",
+    "workflow_vs_returns": "separate workflow_pass/research_pass/ml_contribution_pass/llm_contribution_pass/paper_ready_pass; ROC/ICalone nevereconomicpass"
+  },
+  "economic_role": "returnsinformation/modelcomponent; primaryeconomicvalue isC2−matchedQ2 andC2−C1,not accuracy/LLMfluency; standalonebookonlymeasurementhost",
+  "execution_contracts": [
+    {
+      "calendar": "US regular calendar America/New_York DST, holidays and early closes pinned before price work; after-hours availability enters next qualifying session.",
+      "clock": "SEC accepted_at plus 60min processing latency, subject to true publication/first-seen not earlier; for 09:30 ET entry same session, accepted must be <=08:30 ET and any later verified availability must also permit 09:30. Later texts wait until first following regular open >=available+60min.",
+      "decision": "Order decision after document is available and before eligible entry open; use then-known prior regular close/market history, no opening gap or entry auction result. 09:00 newspaper cutoff in original CKX is not claimed here; original defers 09:00–09:30 news to next day.",
+      "entry": "First eligible regular open >=available+60min, with fixed operational order cutoff and cash fallback on miss.",
+      "exit": "Next regular open; one session open-to-open.",
+      "id": "D1",
+      "selection": "secondary only, no best-delay choice",
+      "status": "conditional_secondary_source_open"
+    },
+    {
+      "calendar": "US exchange sessions with actual DST, holiday, early-close; late text/timeout -> Q2 or cash according to common fallback.",
+      "clock": "Let s be first US regular session whose open >=verified available+60min; this may be one session later than first price reaction.",
+      "decision": "Close(s)+30min after verified close and price packet availability; known reaction gap/close features end at close(s). On early close use actual close(s)+30min.",
+      "entry": "Open(s+1) after order cutoff; no entry price/auction information in features.",
+      "exit": "Open(s+2), one open-to-open session.",
+      "id": "D2",
+      "source_limit": "Figure5 news Day1 to Day2 drop/Day3 absorption makes residual uncertain; SEC D2 is operational delayed comparison, not source-proven profit.",
+      "status": "conditional_fixed_primary"
+    }
+  ],
+  "input_contract": {
+    "S0_actual_qualification": {
+      "after_cutoff": 33,
+      "cache_hash_verified": 13677,
+      "canonical_cik_accession_duplicates": 98,
+      "identity_status": "historical permanent security/common-equity/PIT membership unknown; no joins or trading eligibility inferred",
+      "item202_rows_before_cutoff": 16056,
+      "kind_distribution_in_verified": {
+        "earnings": 10925,
+        "guidance": 3,
+        "mixed": 2595,
+        "unknown": 154
+      },
+      "metadata_rows": 16089,
+      "multiple_ticker_strings_per_accession": 76,
+      "no_ex99": 965,
+      "noncanonical_url": 3,
+      "text_cap_unread": 1313,
+      "ticker_strings_not_permanent_ids": 1290,
+      "unique_CIK_in_verified": 1282,
+      "unique_acceptance_dates_in_verified": 626,
+      "unique_event_inventory_rows": 15958,
+      "verified_by_year": {
+        "2024": 4804,
+        "2025": 4961,
+        "2026": 3912
+      }
+    },
+    "S0_inventory": "s0/inventory.jsonl.gz",
+    "S0_sample_manifest": "s0/sample-manifest.json",
+    "actual_data_hash": null,
+    "actual_label_hash": null,
+    "actual_membership_hash": null,
+    "actual_partition_hash": null,
+    "audit": {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/input-audit.json",
+      "sha256": "f42ad73aa982028b7e2146f393efc98d15fba35262c83f4a67c4406d4e6a28c5",
+      "size_bytes": 13264
+    },
+    "available_text_count": 13677,
+    "clock": "Feature available_at=max(issuer-publication verified if known, SEC accepted_at, live first_seen/fetch_at where actually captured, correction effective time)+bounded processing latency. For historical cache first_seen unknown; 20/20 accepted audit is not body vintage proof. Unknown past publication/version marks R-only or quarantine, not promotion.",
+    "content_and_baseline_acceptance": "All C2/Q2/C1 event rows must share same accepted original body and N0/Q2 field availability. For each number store field, current period, prior comparable period, unit/scale, body cell/span, raw hash, first-known clock and missing reason. If paired prior period or published expectation is absent, mark missing; do not call raw disclosed change SUE or surprise.",
+    "current_CIK_selection": "currentmap+historicliquidity; therefore R-onlynonpromotableuntilpermanenthistoricalidentityaccepted",
+    "dedupe": "onecanonical earliestacceptedEX99perissuer/sourceeventday; exactnormalizedbodyhashduplicates acrossissuers sameevent cluster; amend/PACversionnotmerged backwards;crossfoldcluster purged; metadata-body-only selection,neverreturns.",
+    "eligible_event_dates": null,
+    "existing_metadata_bindings": [
+      {
+        "bytes": 819747,
+        "path": "data/features/earnings_events/2024.parquet",
+        "rows_metadata": 5662,
+        "sha256": "af15853fce3ef5a2cdcacf1dcfd0471d607dc9792c70e3bbd6f95d821012775b"
+      },
+      {
+        "bytes": 845145,
+        "path": "data/features/earnings_events/2025.parquet",
+        "rows_metadata": 5826,
+        "sha256": "58649973e642dd58084548d45c6475e250df6a1a934ce893542285f5d9646cc1"
+      },
+      {
+        "bytes": 684001,
+        "path": "data/features/earnings_events/2026.parquet",
+        "rows_metadata": 4601,
+        "sha256": "534ed2fea50757cfc5a014ce946c17a6f122481ca9b2adc68b706be1fe412130"
+      }
+    ],
+    "full_body_ready": false,
+    "identity": "CIK and ticker strings are issuer hints, not permanent security IDs. Need dated common-share identity, delist/corporate actions, contemporaneous membership/liquidity and multi-class choice before price labels. 76 accession rows have multiple ticker strings in S0 metadata; no retroactive single-ticker guess.",
+    "max_documents": null,
+    "primary_input_is_narrative_only": false,
+    "required_packet": [
+      "accession",
+      "issuer_cik",
+      "permanent_security_id",
+      "ex99_original_url",
+      "publication_or_acceptance_at",
+      "first_verified_available_at",
+      "raw_fetched_at",
+      "raw_input_hash",
+      "normalized_input_hash",
+      "document_version_or_correction_status",
+      "extraction_version",
+      "model_and_tokenizer_revision",
+      "model_weight_hash",
+      "feature_or_prompt_hash",
+      "label_start",
+      "label_end",
+      "label_visible_at"
+    ],
+    "sample_selection": "allqualifiedexistingevents upto16089,canonical accessionorder; no choosehighreturnstocks. NeedexacteligibleinventoryandSHA beforeprice/features/model.",
+    "scope": "Conditional 2024-01-01–2026-09-17 Item2.02 8-K original EX99 HTML with complete tables, non-amended canonical accession, versioned issuer CIK/security mapping; current stripped cache is S0 diagnostic only. Performance-update vs production-delivery/guidance kinds remain separately counted.",
+    "source_capability": "events.sec_filings approved,actualpacketreviewpending;news.alpaca trialforward_onlyfailclosed cannotbackfillhistoricalAlpha",
+    "source_processing_admission": false,
+    "text": "Proposed primary is table-preserving SEC exhibit with raw hash and extractor version. Existing 13677 stripped texts verified under S0 remain R-only loss diagnostic; 1313 additional texts unread after 400 MiB cap, not presumed valid. 43 newly fetched current raw exhibits do not restore corpus or establish historical first seen."
+  },
+  "iter_id_proposed": "t20261013_news_embedding",
+  "label_contract": {
+    "actual_labels_created": 0,
+    "costs_in_labels": "returnpredictionlabelgrossSPYexcess; economicreportfullnetcosts, no pretendinggrosslabelisnetprofit",
+    "maturity": "For event e and chosen clock, feature_visible<=decision; entry=open(t), exit=open(t+1); label_visible conservatively open(t+2) after completed price ingest. Every alpha/validation/refit sample requires label_visible<=its fit cutoff, and fit completion<=target decision. Purge five exchange sessions plus shared event/document clusters, not a substitute for those inequalities.",
+    "price_end": "Freeze admitted price span before processing. If D1/D2 exit or label_visible exceeds it, mark terminal immature and preserve coverage; never silently drop a failed order or extend span after observing return.",
+    "price_hygiene": "sanitize_price_matrices defaults;excludeonlysplit-like trigger-session usingthen-knownbars;neverfilterholdwindowoutcome",
+    "purge": "5trading sessions aroundtrain/validation/forecastboundaries andallcross-boundaryduplicateeventclusters; no futureshare-pricehygienefilter",
+    "target": "For either D1/D2, asset regular-open entry-to-next-open total return minus SPY same interval; gross prediction target only. Use adjusted event-appropriate prices/corporate actions available then, and preserve delisting/failed labels separately."
+  },
+  "model_role_matrix": {
+    "factor_generation": "frozencontextvectors; notLLMproposedfactorsearch",
+    "fallback": "ifbodymissing/latencymiss/modelinvalid C2->Q2;E1/E2/B1->cash;deterministicQ2invalid->cash",
+    "missing_modality": "naturalmissingcoverage andseeded10/30%validtextwithholding,testC2revertsQ2; no labeldependentmissing",
+    "regime_meta_gate": "notapplied; no state-specific optimization",
+    "return_ranking": "primary; simpletrainedridge",
+    "risk_prediction": "notapplied; trailingmarketvolsameforallsizing,notnewmodel",
+    "sizing": "fixedtransparentgross1 and20kwhole-sharetranslation;noLLMsizing",
+    "uncertainty": "date+issuer/eventclusterbootstrap;notself-reportconfidence"
+  },
+  "models": [
+    {
+      "actual_inference_rows": 0,
+      "actual_model_loaded": false,
+      "actual_weights_downloaded": false,
+      "dimensions": 768,
+      "layers": 12,
+      "license": "MIT",
+      "local_weight_sha256": null,
+      "metadata_binding": {
+        "path": "reports/research/program/day-goal-20261013/news-embedding/sources/roberta-base-config.snapshot",
+        "sha256": "ef0185e2aae6e06c5f105a285006952c340e20c7dbf43c86ec82601b13fc45e9",
+        "size_bytes": 481
+      },
+      "model_id": "FacebookAI/roberta-base",
+      "parameters_approx": 125000000,
+      "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b",
+      "source_faithfulness": "capacity ablation, not paper1024-d model",
+      "weight_commit": "ff46155979338ff8063cdad90908b498ab91b181",
+      "weight_upload_date": "2022-09-29",
+      "weights_bytes_expected": 498818054,
+      "weights_filename": "model.safetensors",
+      "weights_sha256_expected_from_public_pointer": "5bde1d28afb363d0103324efeb5afc8b2b397fe5e04beabb9b1ef355255ade81"
+    },
+    {
+      "actual_inference_rows": 0,
+      "actual_model_loaded": false,
+      "actual_weights_downloaded": false,
+      "dimensions": 1024,
+      "layers": 24,
+      "license": "MIT",
+      "local_weight_sha256": null,
+      "metadata_binding": {
+        "path": "reports/research/program/day-goal-20261013/news-embedding/sources/roberta-large-config.snapshot",
+        "sha256": "82ba49810e6441735e696033ac2512ee09da555507b2917ac3865b202d592cc3",
+        "size_bytes": 482
+      },
+      "model_id": "FacebookAI/roberta-large",
+      "parameters_approx": 355000000,
+      "revision": "722cf37b1afa9454edce342e7895e588b6ff1d59",
+      "source_faithfulness": "matches paperRoBERTa-large architecture; data/window/execution remain adaptation",
+      "weight_commit": "5069d8a2a32a7df4c69ef9b56348be04152a2341",
+      "weight_upload_date": "2022-09-29",
+      "weights_bytes_expected": 1421700479,
+      "weights_filename": "model.safetensors",
+      "weights_sha256_expected_from_public_pointer": "047c85f0b96269cd62e6f732644f067004eebd95af5b5d35965ae2528f13bf38"
+    }
+  ],
+  "native_entry": {
+    "campaign_applicability": "Independent reviewer found this new SEC disclosure mechanism/model/timing research applicable to strict new-campaign pre-discovery. No campaign/spec/economic candidate generation before actual input and contract validation.",
+    "campaign_entry": "No campaign generated/admitted while route/PITinput/allowedpartitionSHAunknown; missingactualdatahashesneverreplacedwithrecipehash. Planblueprintsarepreregisterproposalsonly.",
+    "direction_review_path": "reports/research/program/day-goal-20261013/news-embedding/direction-review.json",
+    "directory_rule": "allcurrenttaskartifacts here;no olditeration modified/globalgoals/newagent",
+    "gates_passed": [],
+    "knowledge": "scopedpre-iterationbaselinecaptured;globalindex/scout/knowledgeassessrequired beforemodel/data round afterrouteacceptance; notrunfull-reposcoutininitialsmall-source scope",
+    "new_iteration_registration": "proposedt20261013_news_embedding;canonicalinitonlyafterRootadmitsrouteandscientificdefinition;notpretendingtask-localplanisnativepassediteration",
+    "sequence": [
+      "Root assesses S0 loss and accepts or declines a separately bounded full-exhibit plus version/identity input recovery scope",
+      "Independent scientific review accepts one revised economic packet and exact feasible common-input definition",
+      "Actual corpus, security, price-span, partition and source-purpose hashes accepted; historical R remains seen",
+      "Build canonical v3 direction, iteration, knowledge scout/assess, capability and campaign pre-discovery contract; validate all applicable gates before any candidate/feature/label/training/backtest",
+      "Fresh shared memory/resource and model weight admissions, with previous source overrun and all historical exposures retained",
+      "Owner executes bounded matched economic study only to informative evidence, then reports net/account results or explicit dependency/not_at_depth"
+    ]
+  },
+  "negative_experiments": {
+    "binding": {
+      "path": "reports/research/program/day-goal-20261013/research-frontier/old-results.json",
+      "sha256": "fc204db78f6be799d12703738f27eb049c9e332200fd85ee4b2ef853c8d2a085",
+      "size_bytes": 51867
+    },
+    "preserve": "1451calls,2210earnings/old48screens/SUE/newsreactionresults/consumedcaps;nooldreranking/tonehypothesisrenamed",
+    "scope": {
+      "attribution": {
+        "contamination_correction": "旧LLM报告把pre-cutoff称为“look-ahead只能帮助L”不具有逻辑保证：模型记忆影响可双向。其14次污染窗只能作受污染负参考，不应当作第二个干净样本或普遍决定性否定。",
+        "host_horizon": "周频动量门会将发布后短时信息稀释。财报语义应在真实公开时刻定位事件方向/新旧指引变化/相对预期，而不是用30日聚合情绪重排动量赢家；d0与d5不同号要求先识别时段与持有期。",
+        "main": "原注意力统计衡量有人在写，没测写了什么；大盘动量新闻高覆盖但粗信息已被价格反应吸收。后续generic sentiment/re-rank仍可能重复已定价方向。"
+      },
+      "clock_correction": {
+        "finding": "Old tone and SUE downstream datasets were not rebuilt after discovery of 4–5h accepted-time shift; corrected source metadata 20/20 audited does not retroactively fix those negative economics. Keep old returns intact as implementation-specific negative references, not proof current D1/D2 or all semantics fail. Older LLM rerank 1451 calls and five CLEAN formations remain real negative exposure; memory contamination is bidirectional.",
+        "source": "reports/research/program/earnings-events-timing-fix-2026-10-04/report.md and checks.json"
+      },
+      "counterevidence": {
+        "strong": [
+          "原count/novelty门的同尺寸shuffle及0/48 BH压低同宿主同粗特征解释。",
+          "news_hf反应三候选亦已有负结果：raw5d IC约−0.005；5日累加约−0.003/t−2.5（反向）；p90事件20448个，5d约−0.29%/t−1.9。不能把“加入价格反应”当全新未测新闻延续。",
+          "一般标题情绪动量重排和经典SUE时间提前已被本地负证据压低；不能再换模型或名称免除这些反证。"
+        ],
+        "weak_or_missing": [
+          "原注意力139周，细分小状态功效更弱；但对已经失败的同粗门无需加深网格。",
+          "2199财报事件不是2199独立交易日，tone只有39日；d5的t0.9625不能升格。",
+          "h20260928_16_8k_sentiment_accel只找到pending decision，无results；属于既有规划，不计实测、不另名重复。"
+        ]
+      },
+      "data_seen_budget_source_gaps": {
+        "budget": "原门3个可选变体；48+9筛选、两套5种子控组另记。LLM重排实际1451调用、4次attempt约5.5h已耗；earnings已评分2210事件。累计API失败/训练/exposure unknown，不以新任务从0开始；DS仍parked，本包无新API。",
+        "data": "单源Benzinga，distinct_sources是常数；免费EX-99.1新闻稿不能冒充电话会议Q&A。结构化意外需要当时预期，文本PIT包及模型cutoff/匿名处理可核验。",
+        "seen": "2024..2026注意力/news-reaction，2024-01..2025-01财报文本及新闻重排5次CLEAN窗都已分析；这些只能作为发展/诊断。当前forward是否保持未见需核实。",
+        "source_gap": "Anic本地30日/20标题、等权，与原文1日/价值权重不忠实；源发表后的可部署记录、成本、数据许可仍需在未来计划复核。既有语义负证据降低prior，不能声称原文已严格被否定。"
+      },
+      "did_not_prove": [
+        "没有证明全部LLM语义无金融信息；5次CLEAN形成、39事件日及模型记忆污染不足以严谨否定整类方向。",
+        "也不能宣称“只差换LLM/早点8-K”就会有收益。SUE8K01时点修复实际1032事件，20d t1.064、20bp超额−0.14%/年，redated placebo+3.88%..17.76%；经典SUE时点修复已失败。",
+        "未证明语义5日正方向可成交、独立于gap/price或能提供宿主增量。"
+      ],
+      "different_explanation": "有来源约束的事件级结构变化/意外方向是否预测较慢漂移或风险，与一般tone、attention或news-reaction continuation不同；保留的是可验证结构化信息，不是“LLM更聪明”解释。",
+      "evidence": [
+        {
+          "locator": "no LLM; precheck;48 tests; stage2",
+          "path": "reports/research/lessons/L-20260916-02.md"
+        },
+        {
+          "locator": "llm_used; screen; variants",
+          "path": "reports/research/iterations/h20260916_02_news_attention/report.json"
+        },
+        {
+          "locator": "stop_continue_rule",
+          "path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/results.json"
+        },
+        {
+          "locator": "1451 calls; cutoff; fidelity deviations",
+          "path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/report.md"
+        },
+        {
+          "locator": "scored_events; date_span; results[signal=tone]",
+          "path": "reports/research/iterations/h20260922_01_earnings_text/summary.json"
+        },
+        {
+          "locator": "primary_horizon_20d; join_stats",
+          "path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/results.json"
+        },
+        {
+          "locator": "pending only",
+          "path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/decision-record.md"
+        },
+        {
+          "locator": "all3 rejected",
+          "path": "reports/research/signal-cards/news-hf-v1-summary.md"
+        },
+        {
+          "locator": "coverage; car",
+          "path": "reports/research/signal-cards/news_hf_reaction_event_p90.json"
+        }
+      ],
+      "id": "news_attention_semantics_and_horizon",
+      "next_decisive_experiment": {
+        "contrast": "先复用旧精确事件与定量基线，对一个来源清楚的事件族提取发布当时可知的方向/变化/预期差，比较price或simple-surprise-only、text-only、combined；同事件、风险、entry时点、horizon、成本，matched event-type shuffle与文本缺失fallback控制。",
+        "depth": "三个信息深度点：忠实复现原事件定义及精确可见时点；从简单词典/数值差到有根据的结构化语义；足够独立事件日/市场状态与未污染验证。最小决定性对照后只对有实际效应的角色加深，不堆模型。",
+        "identify": "发布后短时反应与较慢持有期必须事前固定、分开估计（例如源研究指定的即期与延迟期，不按旧d5正号选最优）。若combined不能超过matched quantitative基线，或shuffle/缺失同效，就没有LLM增量；语义提取准确性另验，不能以解释流畅替代收益。",
+        "stop": "没有事件原文/当时预期或模型训练截止证明，依赖DS/付费源、只剩generic tone或与已规划acceleration同义时暂缓；没有验证分区/独立事件日则not_at_depth，不追加调用刷数。"
+      },
+      "old_experiment_proved": [
+        "H-20260916-02没有LLM调用；新闻计数、标题去重、固定词典覆盖动量97.4%，48个筛选0过BH、三个归一化门均更差，支持停这套注意力门。",
+        "原负结果不能裁决事件方向/意外程度/受影响对象语义；但后续LLM新闻动量重排确有1451次已完成调用，CLEAN仅5次月末形成、L-B Sharpe−0.238531，随机P/R优于L。此局部重排不值得按新名字再做。",
+        "后续文本也有不同持有期的直接证据：earnings_text summary中2199可交易事件，tone按日聚合仅39有效日；d0 Q5净−83.4000bp(t−1.6700)、d1−33.3912bp(t−0.5536)，d5+88.2239bp(t0.9625)，均为10bp口径。5日正方向是低功效线索，不是显著收益。"
+      ],
+      "priority": "Top2：可满足完整另类数据/模型任务的真实研究对象，且可与动量独立选题；只接受不同事件信息与匹配用途。来源/预期/干净验证缺失则降级，避免“LLM语义尚未测试”旧叙述浪费调用。",
+      "subject": "count/novelty并未测LLM语义，但后续语义也不能说从未测"
+    }
+  },
+  "objective": "Frozennews/eventcontextembedding+supervisedmapping能否在可见、可成交后超过同价格/简单事件/BoW的同风险扣全成本收益？原商业新闻复现与SECdocument适配分开。",
+  "owner": "2df73225-951f-4539-9d8d-506a3b8a73fe",
+  "paper_transition": {
+    "current": "not_ready, no paper or broker activity",
+    "not_licensed_by_S0": "No current source or model/price work admitted; historical R cohort cannot be resealed as unseen. New input or strategy redesign is a new material review, not implementation detail.",
+    "required_real_path": [
+      "Full accepted current table-preserving SEC text plus live first-seen and correction capture for every forward decision, with permission/rights checked",
+      "Dated CIK-to-permanent security/common share and delisting/corporate-action join, and PIT liquidity universe",
+      "Then-date ETB/short availability or approved long-only redesign with matched controls; Schwab account/order-window/quote and market open fill evidence for ~$20k",
+      "Explicit current forward/unseen cohort fixed before observation, price/label maturity, cost and 20k paper sleeve controls/gates"
+    ]
+  },
+  "placebo_and_missing": {
+    "causal_primary_null": "Conditional same-session issuer peer permutation for fixed C2+D2 only, among documents with publication/first-seen<=recipient decision; same event kind, accepted-availability bin, Q2 numeric coverage/missing pattern, predecision ADV/size bin. Freeze bins and merge precedence before returns; prohibit self/duplicate cluster. Use only within allowed train/forecast partition and mature labels at fit cutoff. If fewer than 3 exchangeable peers or insufficient distinct permutations, not_identifiable.",
+    "memory": "Frozen model weights pre2024 pointer but local SHA/first-use not yet admitted; mask names/dates as predeclared stress only, no prompt tuning or GRPO.",
+    "missing_modality": "Naturally missing/late full body included as Q2 fallback with same source eligibility; fixed 10% and30% masking are descriptive fixed controls if informative, using no label-dependent dropout. All common dates/cash remain in comparison.",
+    "replication_budget": "Primary C2+D2 may use up to95 unique complete-fold permutations ×7 folds=665 fit attempts within original672 placebo ceiling; exact enumeration if fewer unique feasible. Minimum Monte Carlo p=1/96 if95 distinct; eight seeds alone min p=1/9 and cannot claim 5% significance. Allocate only after valid donor inventory and residual economic signal; unrun family N/A, no forced quota consumption.",
+    "secondary_nulls": "Within-issuer prior-document donor allowed only when donor available before recipient decision and event kind/period/clock match; no later same-year quarter. Time-shift only strictly backward without wrap and with recomputed decision/maturity; do not reuse labels or silently drop boundaries. These are separate mechanisms/descriptive unless adequately powered, never pool p values."
+  },
+  "proposed_model_blueprints_not_admitted_candidates": [
+    {
+      "estimator": "Frozen standardized signed numeric-change/range rule with train-only median centering; categorical missing indicators. No unavailable->0 score. Must report field-by-field paired coverage and conflict audit. Conditional until input accepted.",
+      "features": "From the SAME table-preserving accepted exhibit: disclosed EPS/revenue/profit current and comparable prior period with exact unit/scale; issuer guidance current/range and previously visible guidance when available. Separate paired prior period vs no prior; no analyst consensus or ex-post fact.",
+      "id": "N0",
+      "role": "simple_disclosed_numeric_event"
+    },
+    {
+      "estimator": "ridge",
+      "features": "past1/5/21/126returns,21dvol,20dADV,priorcloseprice,knownfirstreactiongap/closeonlyunderD2",
+      "id": "Q1",
+      "role": "price_only"
+    },
+    {
+      "estimator": "ridge",
+      "features": "Q1 plus N0 verified paired fields, event kind, simple lexical sign/count from the same full body; all models receive identical missing/availability flags, provenance and event eligibility. No analyst surprise unless a separate PIT expectation source is admitted.",
+      "id": "Q2",
+      "role": "price_plus_simple_event"
+    },
+    {
+      "estimator": "ridge_sparse_lsqr",
+      "features": "TF-IDF unigrams first512 tokens of same accepted original body; vocabulary train-only <=16384/min_df5, source SESTM not replicated.",
+      "id": "B1",
+      "role": "BoW_only"
+    },
+    {
+      "estimator": "ridge",
+      "features": "mean lastencoderhiddennonpaddingtokens,prefix512,768d",
+      "id": "E1",
+      "model_index": 0,
+      "role": "embedding_base_only"
+    },
+    {
+      "estimator": "ridge",
+      "features": "mean lastencoderhiddennonpaddingtokens,prefix512,1024d",
+      "id": "E2",
+      "model_index": 1,
+      "role": "embedding_large_only"
+    },
+    {
+      "estimator": "ridge",
+      "features": "Q2+B1;sameinput/maturelabel",
+      "id": "C1",
+      "role": "quant_plus_BoW"
+    },
+    {
+      "estimator": "ridge",
+      "features": "Q2 plus frozen large RoBERTa representation of the exact same accepted body and clock; Q2 fallback on missing/late body.",
+      "id": "C2",
+      "model_index": 1,
+      "role": "quant_plus_large_embedding"
+    }
+  ],
+  "representation_contract": {
+    "alpha_grid": [
+      0.0001,
+      0.001,
+      0.01
+    ],
+    "capacity_control": "base768d pinnedpre2024weight;nooptbecausepurpose/licensepath",
+    "entity_mask": "issuername/tickerandexplicitpublicationdate replaced deterministically; retainfinancialamounts/quarter references; raw+maskedhash,coverageaudited. Modelseesnooutcomes orcurrentfacts.",
+    "information_parity": "Use exactly same accepted full exhibit, 512-token prefix, availability clock and security/event rows for B1/E2/Q2/C2; report token truncation locations and numeric fields beyond prefix. Q2 still sees independently parsed full-body numeric fields, so a C2 win cannot arise from deleting tables only from Q2.",
+    "masking": "Deterministic issuer/ticker/date mask is a separate report-only stress, not winner selection. Frozen pre-2024 model artifact SHA must be locally verified only after separate model admission.",
+    "normalization": "featuremean/std fitonlymaturetraining; targetSPYexcessone-session notthree-daypublicationlabel; TFIDFvocabfitonlytrain",
+    "pooling_limit": "Paper does not resolve special-token inclusion; implementation must declare mean of final nonpadding tokens including special tokens and log mask; this remains a fidelity difference.",
+    "primary_contrast": "C2+D2 is preregistered but inference/labels requireapplicablereview/gates; 512tokenprefixmatches method,not source-datacompleteness.",
+    "ridge_objective": "Minimize (1/n)Σ(y−Xβ)^2 + λ||β||², intercept unpenalized. If using sklearn Ridge sum-squared-error alpha=n_train*λ. Freeze train-only feature scaling with block norm normalization (numeric, BoW, embedding); log effective df/shrinkage on training folds. Do not inspect outer returns to retune λ.",
+    "seed": 20261013,
+    "source_primary": "RoBERTa-large1024d,mean finalhiddenofnonpadtokens,prefix512,evaluationmode; actualsource specialtokenpoolingunreported,implementationincludesnonpad<s>/</s> consistently",
+    "training": "noLLMfinetune/GRPO/generation/optimizer;only superviseddownstreamridge aftergates"
+  },
+  "requested_decision_to_Root": "Review this v2 economic design and S0 not_ready result. Decide whether separate bounded full-exhibit/vintage/identity recovery has sufficient expected value, or defer SEC adaptation in favor of other frontier mechanism. No model, market, additional source or paper permission is implied.",
+  "revision": {
+    "E1_E7_integrated": true,
+    "S0_result_path": "s0/S0-result.json",
+    "S0_result_sha256": "d23248064fdbc1dcb3c478c4ca40a58c8ffe224e33da17f00af3689714822b8f",
+    "all_economic_execution_admitted": false,
+    "definition_change_requires_independent_review": true,
+    "independent_review_path": "independent-plan-review.json",
+    "independent_review_sha256": "a494361f032b7712eb6c048e5885cb8c683a49faaa9b8eb7271571de8e43fb51",
+    "root_S0_authorization": "root-S0-authorization.json",
+    "v1_path": "v1-preserved/plan.json",
+    "v1_sha256": "dabe741b79fb8d35605914eab51e8efd0bc9b1cdce6945bde26831e5a186f9db",
+    "version": "v2-after-S0"
+  },
+  "route_decision": {
+    "S0_branch": "review branch 2 plus 3: current cache loses major numbers and some operating prose; no fair full-disclosure N0 or deployable historical first-seen/security/ETB path",
+    "continuation_if_input_accepted": "Use accession-bound original table-preserving EX99, deterministic field/period/units and then-visible previous filing, with raw/current/first-seen/version evidence; pair all comparison streams on identical documents and clocks. SEC is narrower than Refinitiv news and cannot replicate original reported profits.",
+    "current": "defer_bulk_R_SEC_stripped_cache",
+    "full_source_scale": "S0 43 raw HTML payloads 16.27MB vs their stripped text cache 0.84MB, 19.38x within this selected 2024/25 slice; cannot extrapolate exact full corpus size or assume prior 400MiB text cap covers it. A staged newly admitted source acquisition needs byte/time upper bound and sample power calculation before wide fetch.",
+    "if_path_fails": "Do not allocate 1064 fits to permanently biased R-only stripped corpus. Send Root the input gap and return attention to an independently sourced frontier candidate; original commercial news mechanism not refuted.",
+    "minimum_real_path": "Already proven sample of original SEC Archive URLs is fetchable at no paid spend (43 complete/44 attempts); 43 current raw files are held under s0/original-html. A larger bounded acquisition with full response accounting, retained corrections and live first-seen capture would need separate source/purpose admission. Prior-period/consensus data and historical permanent CIK-security mapping are not presently accepted.",
+    "no_auto_renewal": "No further SEC retrieval, market label, weight, model or fit is admitted by S0.",
+    "why_study_remains_potentially_worthwhile": "CKX frozen representation plus return mapping asks a genuinely different conditional-information question than prior zero-shot tone/rerank. SEC guidance/management explanations may carry residual information, but Figure5 delay erosion and actual table loss materially reduce expectation. This is an untested hypothesis, not claimed alpha."
+  },
+  "schema_version": 3,
+  "self_acceptance_for_review": {
+    "actualinput_admitted": false,
+    "declared_data_gaps": "sourceclock/version/table-loss/currentidentity known;emptycorpusSHAleftNone; reviewcanassessdesignbutcannotreleaseeconomicwork",
+    "external_localprior_art": true,
+    "independent_review": false,
+    "native_gates_passed": false,
+    "no_fake_source_fetched": true,
+    "resource_admitted": false,
+    "samehost_marginal_notcrossstrategycombination": true,
+    "source_faithful_vsadapted": true,
+    "three_information_depths": true
+  },
+  "source_evidence": {
+    "actual_S0": {
+      "path": "s0/S0-result.json",
+      "reading_boundary": "43 complete original SEC HTML 2024/25, one truncated 2025, zero original 2026 HTML; 13677 locally verified stripped texts, 1313 not read under old text cap. Not full 16k corpus or original Refinitiv.",
+      "sha256": "d23248064fdbc1dcb3c478c4ca40a58c8ffe224e33da17f00af3689714822b8f"
+    },
+    "fidelity": {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/source-fidelity.json",
+      "sha256": "64b9bfc7cd4b6ecf25b6104e4b5b462374fa1da3f06bec057272c23f3b57786a",
+      "size_bytes": 5856
+    },
+    "independent_profit_replication": "noneverified;weaknew2026headlineexcluded",
+    "paper_method_correction": {
+      "2024_essec_pdf": "§2.2.4 final hidden token mean/prefix512 and RoBERTa-large 1024d; §3.7/Table12 direct next-period return ridge is closer to proposed supervised ranking than sentiment Table6",
+      "2026_abstract": "2026-02-24 78-page revision full text not obtained; latest net table and independent costed replication unknown",
+      "Figure5": "Day1 to Day2 one-session open-to-open return falls markedly; by start Day3 sentiment broadly assimilated. Figure6 is international breadth, not delay evidence. D2 residual expectation therefore low/unknown; no net projection from gross headline.",
+      "original_BOW": "SESTM, not local TF-IDF ridge; latter only a simple control, not faithful SESTM replication",
+      "source_sample": "1996–2019 Refinitiv news with 6y train+2y validation/next-year test versus 2024–26 SEC exhibits and short expanding folds; historical data/permissions differ"
+    },
+    "pre_iteration_baseline": {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/pre-iteration-knowledge-baseline.json",
+      "sha256": "e6312dc6eb90f983146d184a9e7abaa1b9dfe3d7b88fd4111100f30f688baaf4",
+      "size_bytes": 54125
+    },
+    "query_manifest": {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/query-manifest.json",
+      "sha256": "735ebad003a2c329503e3bf55abd2053ca024daab157c4308800648b75710f6f",
+      "size_bytes": 984
+    },
+    "raw_primary_PDF": {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/sources/ckx-essec-2024.pdf",
+      "sha256": "6212ce720ef999bf30024aaa76fe5220b8339260202cf7eb07532a34d3e492d6",
+      "size_bytes": 3598182
+    },
+    "source_cards": {
+      "path": "reports/research/program/day-goal-20261013/news-embedding/source-cards.jsonl",
+      "sha256": "c8019f56445c2a6b750175904b7490b66a431460dc9aa64a73d2375fb7257f73",
+      "size_bytes": 6390
+    }
+  },
+  "status": "revised_after_actual_S0__economic_not_ready__independent_review_pending",
+  "task_id": "DAY3-NEWS-EMBEDDING",
+  "three_economic_depth_points": [
+    {
+      "economic_endpoint": "Only after complete input: stratified content coverage and predeclared common event cohort, not signal profit.",
+      "point": "1 information content and fidelity",
+      "required_contrast": "Accepted complete EX99 vs stripped-cache loss by event kind, operating explanation, financial tables, guidance and comparable prior values; original Refinitiv/SESTM/clock differences and version proof explicit. S0 is input screening, not an economic depth result."
+    },
+    {
+      "economic_endpoint": "Paired C2−Q2 and C2−C1 forecast and net return difference with adequate date/issuer power plus valid placebo; no complexity credit if BoW or missing fallback matches.",
+      "point": "2 matched conditional representation",
+      "required_contrast": "On same full body/security/clock/label, N0 simple disclosed changes, Q1 price, Q2 quantitative+simple event, B1 TF-IDF, frozen base and large embeddings, C1/C2 combined. Vary information layer and representation capacity while common eligibility stays fixed; audit truncation and effective df."
+    },
+    {
+      "economic_endpoint": "Positive costed host incremental dollars, uncertainty, drawdown/recovery and actual capital path on a genuinely eligible forward/unseen cohort; 2024–26 R cannot be resealed. If execution data absent, only conditional sensitivity and not_at_depth.",
+      "point": "3 executable recent net contribution",
+      "required_contrast": "Predetermined D1 secondary vs D2 primary under Figure5 decay, continuous common calendar, 20k integer shares, quotes/open fill, then-date ETB, financing and operational latency."
+    }
+  ],
+  "validation": {
+    "calendar_recipe": {
+      "initial_train": "2024-01-01–2024-12-31 only mature labels at each fit cutoff",
+      "inner_validation": "Two full calendar months immediately before outer quarter with five exchange-session purge at training/validation boundary; training earlier accepted/mature events only. Freeze exact date boundaries, fit cutoff, vocabulary/scaler/alpha and eligible hash per fold before price read. Choose λ on validation MSE, refit only prior mature labels; no current test result.",
+      "no_label_leak": "Every row in train, validation, and final refit must have label_visible<=specific fit cutoff; predictions require fit_finished<=decision. Shared issuer document revisions/clusters stay within split or are purged.",
+      "outer_forecast_quarters": [
+        "2025Q1",
+        "2025Q2",
+        "2025Q3",
+        "2025Q4",
+        "2026Q1",
+        "2026Q2",
+        "2026Q3 through 2026-09-17 source cutoff"
+      ]
+    },
+    "failure": "ifinitialmaturetrain<1000uniqueevents or<100eventdates,or eval<100independententrydates thenreportunderpowered/not_at_depth;cannotfillwithpre2024contaminatedorchangehorizon. Exactcountsunknownuntiladmittedmetadataacceptance.",
+    "frozen_future_OOS": "nonecreated; anynewfuturedatecohortmustseparateAstra-approvedpre-observationcontract,oldseenOOSneverresealed; currentproposalnotpromotioneligible",
+    "issuer_generalization": "20% issuer-hash subset is trained-in subgroup stress only, not held-out issuer generalization. A genuine issuer-exclusion fit needs separate preregistration and admission.",
+    "learned_vs_unseen": "modelout-of-fit foldreturns ≠researcher-unseenwindow;oldnews/tone/reactioncoverage remainsseen",
+    "partition_class": "2024–2026 repeatedly seen research history R only. Chronological out-of-fit predictions are not researcher-unseen OOS; no selectable promotion and no newly sealed OOS.",
+    "power": "Only after accepted complete event/entry inventory: report independent entry dates, issuer/event-cluster overlap, autocorrelation-adjusted n_eff and paired-net MDE at 80% power/two-sided5%. S0 626 acceptance dates are not 626 independent trading dates or proof of power. Underpowered => N/A/not_at_depth.",
+    "selection": "C2large+D2fixedprimary;alphaonlychronologicalvalidationMSE,notstrategySharpe. Basevslarge/D1/D2arefixedcontrasts notchoosebestwinner. NoinvestmentcandidatepromotionfromR."
+  }
+}

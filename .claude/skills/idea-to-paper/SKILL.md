@@ -1,120 +1,47 @@
 ---
 name: idea-to-paper
 description: >
-  Use whenever the owner states an idea, direction, doubt, complaint or new
-  requirement (for example "为什么不做高频", "一个账户只测一个策略没意义",
-  "另类数据还能挖什么"), and whenever a new research direction is opened.
-  Turns one sentence into the work a professional quant shop would do: owner
-  intent, how institutions, mature individuals and good open projects solve
-  it, a judgment first, a family of variants run to minimum effective depth,
-  paper trading within 14 days, iteration, and a plain-language report.
+  Develop an investment or strategy-research idea, challenge, or requirement
+  into source-led research and a decision about its economic contribution.
+  Covers strategies, factors, data, models, timing and execution; paper
+  deployment applies only when relevant and authorized. Unrelated product,
+  documentation and agent-method maintenance do not use this research workflow.
 ---
 
-# 想法到模拟盘
+# 从研究想法到有效决策
 
-机主 2026-10-06 要求：每次输入一个想法，都要主动想专业量化机构、成熟个人和优质项目怎么落地，站在巨人的肩膀上；先给判断，再构造、深入研究、优化、迭代。本流程把这件事固定下来。规则来源：`docs/plan-v3-2026-10-06.zh.md`、`docs/research-mission.zh.md`、`docs/owner-rules-register.zh.md`。
+依据 `docs/research-mission.zh.md` 和 `docs/task-owned-research.zh.md` 判断当前目标，依据 `reports/research/control/owner-compute-hold.json` 判断动作授权。2026-10-13方法更新前瞻适用；旧冻结合同、已见窗口、累计预算、纸盘授权与停止规则保留。
 
-**分大小**：
-- 机主提出新方向、新要求，或要开新研究方向：走全流程，写一份想法记录 `reports/research/ideas/<日期>-<主题>.md`，小节对应下面第 1–11 节，主审轮抽查。
-- 一句质疑或小问题：至少做第 1 节（意图）和第 3 节（判断），不必走完 11 步，免得额度被流程吃掉。
+先理解想法要改善的决策及现有组合/研究中的用途。研究对象可以是因子、数据、模型、择时、风险或执行组件，不默认生成独立策略、账户或sleeve。简短质疑可直接用证据回答；以下内容按问题选用，不是每次必填的流程。
 
-## 1. 意图
+## 选择值得投入的问题
 
-- 写一句"机主想要的是……"，分清他说的和他想的。例如他问"为什么只测两个策略"，真正要的是"模拟盘容量要变成研究吞吐量和高夏普"。
-- 对照 `docs/owner-rules-register.zh.md` 和使命文件，查有没有冲突；有冲突先解决再动手。
+复用现有方向、原始结果、模型记忆和新鲜来源。新方向或关键设计先查原论文/实现、公开结果、独立复现、发表后变化与反证；保存实际读过的来源，搜索摘要不等于原文。不设固定来源类别或年份配额。
 
-## 2. 业界怎么做
+比较收益用途、证据强度、复现差距、成本/容量与投入，给出自己的判断；不因数据现成、模型新或熟悉旧任务而决定方向。已知失败只约束它实际检验的主张，错误摘要可依据原结果注明更正；重开需要可指认的新信息或差异，原失败和曝光不清零。
 
-至少看三类来源：
-- 机构：论文、白皮书、量化基金公开分享；
-- 学术：原始论文，以及发表后的复现和反面证据，包括发表后的衰减；
-- 成熟个人和项目：GitHub 实现、QuantConnect 社区、带实盘记录的策略，重点看 2024 年以后的。
+## 让实验回答关键问题
 
-要求：
-- 搜索摘要不算读过：打开原文，快照存到 `reports/research/intel/sources/<主题>/`。
-- 先查本地：方向登记簿 `reports/research/harvest/directions.jsonl`（每个 id 看最后一行）、旧实验、策略库 `reports/research/strategy-library/catalog.json`。
-- 已否定的方向，只有新增可指认的信息、数据或机制时才重开，并写明差异。
+区分忠实复现与本地适配，保留原定义、真实输入、PIT可见时间和允许分区。按主张选择足够样本、信息、模型容量或执行尺度；三点规模曲线是可用方法，不是通用数量要求。邻近参数和成本档不能冒充机制覆盖。
 
-## 3. 先给判断
+基线、安慰剂、功效、多重检验、借券/融资/费用、滑点/延迟、永久证券身份和价格卫生按实际风险使用。注意小账户整股/容量限制、IEX实时与SIP历史的差异，以及纸盘成交不能证明真实可成交。组件成果按当前研究阶段验收；IC、数据就绪或流程通过不能冒充净收益。
 
-写出判断，每一项都要有依据，不编数字：
-- 值不值得做，为什么；
-- 预期夏普和容量的量级；
-- 主要风险；
-- 和现有子策略的相关性；
-- 用哪个账户。
+可调参数与多模型研究按现有准入范围登记候选、选择规则和累计试验；不设统一30变体、最高三点中位或每轮只改一两个变量。新定义按允许范围形成新版本，已冻结窗口与成功门不回改。模型角色、匹配增量、缺模态和fallback按用途设计，不为每个任务凑全模型角色。
 
-多个候选按期望价值排序，并说明不做的理由。
+## 自主执行与适用审查
 
-## 4. 一族变体，不是一个想法
+完整owner对准备、实现、下一实验、修复、解释和接续负责。批准探索空间内、不改变冻结科学定义的连续实验与普通代码实现/恢复，复用原完整包和累计上限；不因写代码、换目录或方法维护重新触发经济审查。
 
-- 写出参数、方法、因子、股票池、频率等变体，每个轴至少三个深度点。
-- 同时写同暴露的简单基线和安慰剂。
-- 模型按经济问题选，并和简单基线比增量。
+新经济假设、关键科学定义变化或真正超范围工作，使用 `research-plan-reviewer` 对受影响部分独立审查；作者不冒充独立reviewer。策略经济执行前使用真实适用的 `oc research direction-check`、`oc research iteration validate`、knowledge/campaign等原生门；来源和同语义修复可继续解除缺口，门未过不启动依赖它的经济计算。
 
-## 5. 补上机主没提的问题
+组织agent的prompt/工具/分工可在授权范围内改进；用于生成特征、标签或信号的prompt/模型变化则核对科学影响。角色、effort与fallback从 `config/research-agent-roles.json` 读取，实际槽位和内存准入见 `config/memory-budget.json`；重任务用现有 `scripts/run_capped.sh`，不沿用旧固定时间窗。使用Modal仍先过现有预算检查，Hadan按worker合同，不新增付费。
 
-每次都过一遍：
-- 功效：能检出的最小夏普，最短样本；
-- 多重检验：有效试验数、DSR；
-- 成本：价差（开盘和收盘时段）、借券、手续费；
-- 执行：模拟盘成交偏乐观；实时行情是 IEX，回测是 SIP；
-- 资金：整股取整、小资金、容量；
-- 组合：子策略之间的相关性；
-- 状态：适用的市场状态、失效信号、退出规则；
-- 数据：时点正确，不偷看；
-- 授权：到期日；
-- 评价标准是否适用：安慰剂、调仓偏移、崩溃否决对这类策略怎么做，日内和择时见 `docs/evaluation-standard.zh.md` 第 5b 节；
-- 账户隔离和实验室容量：同一账户的子策略会不会互相平仓，账户还放得下几个子策略；
-- 资源：本机重命令走 `scripts/heavy_run.sh`，每天 18:00–00:45 UTC 不跑重任务；Modal 本月余额。
+## 深度、停投和交付
 
-## 6. 最快拿到样本
+预算是上限，不是必须用完的目标。浅层无效不足以否定整个机制；对具体主张的否定需要相称的忠实性、功效、机制覆盖和反证。证据不足可标 `not_at_depth`，同时依据机会成本、输入限制或反证选择继续、暂缓或停止投入，写清尚未证明什么。硬资源/设备/授权边界始终优先；not_at_depth不自动获得追加投入。
 
-- 先想怎么用历史数据一次检验很多事件、很多品种，不等前向数据慢慢攒。
-- "攒够 60 个发布日再测"这种设计不允许。
-- 确实只能前向的，先上模拟盘，边跑边攒。
+可信深挖可跨日，用实际新增证据与下一行动维持连续性；不为日/周数量削深，也不无限研究直到赚钱。尽快取得经济或依赖解除成果，因子/数据/模型组件不强制两周独立上盘。适用shadow/paper工作按既有授权、账户容量、到期、仓位上限和停止规则推进；不新增账户或自动续签，不因本技能扩大实盘权限。
 
-## 7. 预注册和执行
+按既有任务状态和报告路线交付：实际问题与结论、原始证据、限制、累计投入和下一动作。区分 workflow_pass、research_pass、ml_contribution_pass、llm_contribution_pass、paper_ready_pass，缺有效评估则收益N/A。保留有用经验和失败，不新建报告/恢复/技能管理平台。
 
-- 档案：`uv run oc research iteration init`；写 `direction-review.json`；`uv run oc research direction-check <档案>`；`uv run oc research iteration validate <档案> --stage pre-backtest`。
-- 派独立 Paseo 代理：`provider: "claude/claude-sonnet-5-5"`，high（机主 2026-10-07：用 Sonnet 5.5，不用 Sonnet 5），派之前在队列里标为运行中。
-  - 后台代理（定时轮加独立代理）全机同时最多 3 个（`config/memory-budget.json`）。派之前跑 `python3 scripts/memory_budget.py admit --kind agent`，退出码非 0 就先归档一个做完的代理；做完的代理立即归档。
-- 任务说明照 `reports/research/control/briefs/T-20261006-21.md` 的结构写：任务代码、目标、业界做法、预注册网格、数据、成本、交付、禁止、汇报、上限。
-- 主网格不超过约 30 个交易变体，大部分轴按文献固定；其余版本只作稳健性，单独计数；选规格取最高三个点的中位规格。
-- 合同冻结时，写进全局试验台账。
-- 重任务用 `scripts/heavy_run.sh --mem 0.8G -- …`；上 Modal 先过 `scripts/modal_budget.py check`。
-
-## 8. 两周时钟
-
-- 立项起 14 天内，要么到评价标准的 P0 以上并上模拟盘，要么按五条深度规则否定。五条是：复现原文、忠实实现、至少三个深度点的规模曲线、用完预算、功效足够。
-- 大模型模块可以延长研究时间，但简单版照样两周上模拟盘。
-- "未到深度"不是停放状态。必须写缺哪几条、下一个实验、截止日、预算，然后继续做。
-
-## 9. 上模拟盘
-
-- 子策略规格：信号接口、仓位上限、每日亏损上限、停止条件。
-- 授权文件引用机主 10-06 晚的原话："只要你觉得可行的，直接全部上模拟盘去测"；写明到期日（每个子策略最多 60 个交易日，不自动续）、仓位上限、每日亏损上限、账户级上限、停止条件；只有交互会话写授权文件。
-- 实时用 IEX 行情的，上模拟盘前用 IEX 历史 K 线对照信号。
-- 单独记账；每天和回测同口径对照；前向评价用模型成本重算。
-- 账户：quant1 放日频和多日子策略，quant2 放日内，主账户放 ETF 和期权。实盘另需机主授权。
-
-## 10. 迭代
-
-- 前向结果和成交质量回到研究：好的加仓，不好的按停止条件停。
-- 每周看三样：实际成本 / 模型成本和跟踪误差；容量，即成交额占日均成交额的比例；衰减，即滚动的每笔毛利和信号排名相关。几周模拟盘确认不了赚不赚钱，只能核对执行。
-- 停掉的写清死因，登记进方向登记簿。
-
-## 11. 汇报
-
-- 用业务语言，先写结论；分证据、计划、结论三段。
-- 给机主的文字跑 `uv run python scripts/owner_report.py lint <文件>`，错误必须为 0。
-
-## 以前犯过的错，不要再犯
-
-- 一个 100 万账户只测一个夏普约 1 的组合；
-- 只做机主举例的几个方向；
-- "攒够 60 个事件再测"这种等待式设计；
-- 把"未到深度"当停放；
-- 把高频当边缘方向；
-- 只回答机主的问题，不提出自己的判断和计划；
-- 方案出自自己的脑子，没先查别人怎么做。
+部署或前向监测时，按需查 `docs/plan-v3-2026-10-06.zh.md` 的既有sleeve/授权合同、`docs/evaluation-standard.zh.md` 的适用评价，以及 `docs/owner-reporting.zh.md` 的报告路线；这些入口中的旧通用步序/两周要求按现行方法解释，已有60交易日有效期、交互授权、IEX信号对照和停止/监测约定不由技能精简取消。

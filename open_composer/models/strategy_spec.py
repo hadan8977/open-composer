@@ -475,6 +475,7 @@ class PortfolioConfig(BaseModel):
         "etf_structural_family",
         "model_ranking_portfolio",
         "event_driven_capacity_book",
+        "source_method_policy",
         "insider_buy_portfolio",
         "etf_rotation_portfolio",
     ] = "single_symbol"

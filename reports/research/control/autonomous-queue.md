@@ -1,6 +1,375 @@
+### T-20261011-ECONOMIC-LINKS-INPUT-ACCEPTANCE
+- status: completed_data_diagnostic_accepted_inputs_not_ready; owner released, originalT03extractor unchanged
+- evidence: reports/research/program/economic-links-acceptance-20261011/parent-acceptance.json
+- actual: recent2022–2026 indexed15065unique/fetched0/parsed0;50semantic rows all2021, root independently10; author31pass/17fail/2unverifiable retained with root field corrections; historical tradability unverified50/50
+- resources:2/2attempts,189.799/240seconds,512MiB/swap0; first timeout preserved, same snapshot recovery succeeded; no new market/model calls/training/orders; economicperformanceN/A
+- next: one bounded source-restoration/PIT-identity/denominator input package under independent scoped admission; do not repeat this audit or merely wait for extractor. Existing frozen gates and budgets unchanged.
+
+> **2026-10-11T06:56:53.785950+00:00 Root验收闭环**：三包和独立审查已完成，具体owner已释放；后续以 `reports/research/program/parallel-research-20261011/root-acceptance.json` 与 next-actions 当前状态为准。没有新的经济执行准入。原06:37协调交接已履行，勿再等Root或重复派三包。后台调度保持；Hadan仅在线且fresh ready，训练仍暂停。
+
+### T-20261011-EXECUTION-COORDINATION-0637
+- status: coordination_complete_managed_handoff_acknowledged; Root fc66ee6a explicitly retains three-package completion/review/acceptance
+- owner: 25a64194-3228-4d9a-9949-b9960a8b004f; Sol/full-access/max verified
+- result: reports/research/control/execution-coordinator-state.json
+- actual: specific owner deduplication and frozen blocker verification only; no new agent/source/diagnostic/backtest/training/order; performance N/A
+- next: Root manages author windows to about06:55 UTC and independent review/acceptance; only approve_deep_plan plus actual input/iteration/resource gates and exact path/hash/balance/command can admit execution; no new agents/review requests, Hadan retry or budget reset
+
+> **2026-10-11 新授权**：已保留LLM机制长期记忆；更多独立代理按资源和运行槽位派工。Hadan Codex仅在线且ready时可做非训练研究，当前连接超时未派远端。所有训练仍暂停。下方旧“Hadan全面暂停”仅作历史，当前范围以owner-compute-hold.json为准。
+
+### T-20261011-INDEPENDENT-ALPHA-ENTRY
+- status: preparation_accepted; economic_reopening_not_ready
+- owner: none; author 9c71e288-0278-4103-83bc-f96d98d8c4cc completed, active ownership released
+- result: reports/research/program/parallel-research-20261011/alpha-entry/handoff.json
+- independent review: reports/research/program/parallel-research-20261011/reviews/alpha-entry.json
+- root acceptance: reports/research/program/parallel-research-20261011/root-acceptance.json
+- next: Future-exit entry filter confirmed; original paper also tests15:55. Five actual input/authority classes not bound. Current reopening closed; only real new evidence can reopen; no oldOOS/grid repeat.
+- actual: preparation only; no new market computation/model/Hadan execution, performance N/A, old budgets unchanged
+
+### T-20261011-QQQ-DUAL-INPUT-ENTRY
+- status: preparation_accepted; proposed_standalone_legacy_audit_stopped
+- owner: none; author 72a2e438-283a-4775-90b1-2233e2bf2c55 completed, active ownership released
+- result: reports/research/program/parallel-research-20261011/qqq-entry/handoff.json
+- independent review: reports/research/program/parallel-research-20261011/reviews/qqq-entry.json
+- root acceptance: reports/research/program/parallel-research-20261011/root-acceptance.json
+- next: Legacy quantity route identified; adjustment/PIT missing. Do not allocate the proposed13,800-second no-returns audit or fetch raw first. Require lineage or a complete distinct economic package. Reading deviations retained.
+- actual: preparation only; no new market computation/model/Hadan execution, performance N/A, old budgets unchanged
+
+### T-20261011-NEWS-GRPO-PREPARATION
+- status: preparation_accepted; data_model_execution_not_ready
+- owner: none; author 74d8ae20-5a10-4acc-8047-dee6dddbec8b completed, active ownership released
+- result: reports/research/program/parallel-research-20261011/news-preparation/handoff.json
+- independent review: reports/research/program/parallel-research-20261011/reviews/news-preparation.json
+- root acceptance: reports/research/program/parallel-research-20261011/root-acceptance.json
+- next: Fixed-revision terms bound; actual-purpose/identity/data/N1 still pending. No repeated schema/license review without new evidence. Training/model hold remains.
+- actual: preparation only; no new market computation/model/Hadan execution, performance N/A, old budgets unchanged
+
+### T-20261011-QQQ-DIRECT-RAW-REFERENCE-PLAN
+- status: completed_integrated_preparation; execution blocked/not_ready/not_at_depth
+- owner: lead6a59acb8 completed; independent1a906773 accepted, ownership released
+- brief: reports/research/program/qqq-direct-reference-20261011-0530/brief.md
+- result: reports/research/program/qqq-direct-reference-20261011-0530/lead-decision.json
+- finding: raw frame also feeds current plugin volatility; provenance flag cannot preserve original adjusted sizing. Exact dual-input/interface gap, three clocks, original76/98% matching and quote/hash sources reviewed; static required changes applied, implementation/resource gaps retained.
+- resources: Astra/Sol xhigh and both full-access verified; source/replay extra attempts0, two capped direction checks blocked; old3/3GET and two diagnostics preserved; no Hadan/training/production/orders/new spending.
+- next: quantity evidence-level feasibility and effective total ledger first, then one complete three-input/quarantine/isolated-adapter/full76 acceptance scope. No repeat old metadata/D1/paired diagnostics. Full economic revise_plan, performance/account increment N/A.
+
+> **2026-10-11 机主连续性要求生效**：新交互请求不暂停自动研究。按 `docs/research-continuity.zh.md` 在既有轮次预算内衔接审核与执行，旧“交互持有”仅限实际活动的具体任务。Root已释放完成的QQQ/Kappa阶段后续协调权；下列历史owner行不构成永久排他权。Hadan/训练hold不变。
+
+### T-20261011-CONTINUOUS-LEAD-HANDOFF
+- status: done_scoped_construction_and_metadata_execution; economics blocked/not_at_depth
+- owner: lead 94c449e9 completed 2026-10-11T05:29Z; no active ownership reservation after closure; preserve old attempts and budgets
+- brief: reports/research/control/briefs/T-20261011-CONTINUOUS-LEAD-HANDOFF.md
+- result: reports/research/program/continuous-lead-20261011-0501/lead-decision.json
+- actual: independent 3db4cb7f accepted five-file source and exact one-shot metadata command; author fc095eb8; one run exit2/incomplete, 77 missing schema fields, 0 invalid, no referenced data reads. Timeout60s/RLIMIT_AS256MiB; allowance1/1 consumed, no retry. Source accepted only; input/economics not_ready.
+- parallel recovery: original account/Kappa metadata recovered, 25/25 hashes match; file cap25/25 exhausted. Dry-run1m, separate QQQ100k, analysis15k and inactive300k example do not establish common-account allocation/actual seed. Historical borrow and original tracking95 definition remain unbound. Initial whole-plan display deviation recorded; no numerical market evaluation.
+- resources: lead Astra/xhigh, children Sol/xhigh; both full-access fields verified. Hadan/GRPO hold byte-for-byte unchanged; no network/model/order/spending/schedule changes; original300min economics ceiling unchanged, economics0 this round; prior family exposure unknown, not reset.
+- next: use actual missing-field diagnostic to bind original same-basis predecessor/action-vintage + full frozen inventory/warmup, or prepare an exact bounded quarantine-source proposal for independent review. Obtain original deployed allocation/seed/tracking95 receipts under prospectively scoped follow-up; do not extend exhausted recovery cap or regenerate the original interval. No repeated metadata/calendar/B1/RF/QQQ D1/Kappa fixtures; no market, model or economic admission from these results.
+- passes: workflow only accepted preparation/metadata diagnostic; research/ML/LLM/paper false; performance and account DeltaSharpe N/A; simulation/broker/forward clock not started.
+
+### T-20261011-REGIME-SIP-ACCOUNT-PLAN-0437
+- status: completed_metadata_diagnostic_inputs_blocked; one-shot diagnostic exhausted; economics not_ready
+- owner: none; completed preparation and independent acceptance; evidence reports/research/program/continuous-lead-20261011-0501/lead-decision.json
+- brief: reports/research/program/regime-sip-account-plan-20261011-0437/brief.md
+- scope: actual adjusted SIP2016/warmup and fixed-capital account input review request; no economics or repeated calendar/RF; owned tasks preserved
+- resources: memory agent admit ok, headroom1359MB; one bounded author <=12min/20 small files
+- result: reports/research/program/regime-sip-account-plan-20261011-0437/lead-decision.json;44 named shard paths; missing same-basis predecessor/full runner/account inputs; economics N/A and research/ML/paper false
+- next: independent concrete input-construction review; no repeat calendar/B1/RF or owned-task takeover
+
+### T-20261011-REGIME-DATE-RECONCILIATION-0317
+- status: done_date_compatibility (14287 prefix dates exact; 12 suffix dates absent; economics not_ready)
+- owner: lead 6a9a2602; independent bfe09abe codex/gpt-6.1-sol/xhigh/full-access verified
+- scope: integrated pinned dependency preparation and single offline date reconciliation; economics closed; QQQ/GRPO/kappa ownership preserved
+- brief: reports/research/program/regime-date-reconciliation-20261011-0317/plan.md
+- resources: first prep failed on inactive extras, independently admitted continuation complete; total7GET/4269152bytes/16.555s; unique offline date run exit0/4.690s/VmHWM92644KiB; Hadan/all-provider GRPO hold retained
+- result: reports/research/program/regime-date-reconciliation-20261011-0317/lead-decision.json; no new economic evaluations, research/ML/paper false, performance N/A
+- next: adjusted SIP2016 splice/warmup + full runner + fixed-capital common-day account input packet; no calendar/B1/RF repeat absent changed evidence
+
+### T-20261011-REGIME-DATE-PLAN-0237
+- status: done_preparation (dependency_blocked; independent admission pending; no empirical admission)
+- owner: execution 3c184e06; author 8fc9926c codex/gpt-6.1-sol/xhigh; both full-access modes verified
+- scope: latest pinned-calendar handoff to exact dates-only plan-review request; no schedule generation, package execution/install, network, market values, fitting/backtest, Hadan/GRPO or owned QQQ/kappa tasks
+- artifacts: reports/research/program/regime-date-plan-20261011-0237/
+- resources: agent admission ok1140MB; <=12min, <=20 relevant small files
+- result: pinned complete calendar package absent in inspected runtime; lock/entrypoint/date-token unbound. Request/evidence/lead-decision delivered; no economics, performance N/A, research/ML/paper false.
+- next: independent review of finite dependency-preparation packet; command remains null until real bindings; no repeated B1/RF/source intake.
+
+### T-20261011-REGIME-CALENDAR-SOURCE-0117
+- status: done_source_dependency (calendar oracle/economics not_ready)
+- owner: lead 03625fc0; independent reviewer 63b7e72f codex/gpt-6.1-sol/xhigh, both full-access fields verified
+- scope: existing regime calendar provenance only; QQQ/GRPO/kappa fc66ee6a untouched
+- brief: reports/research/program/regime-calendar-source-20261011-0117/plan.md
+- resources: agent admission ok, headroom1414MB; Hadan/GRPO hold preserved
+- result: independent source_only_admission; 7GET/6HTTP200/1HTTP404, 336978bytes, 3.755s, VmHWM23936KiB; pinned upstream commit and CRSP DateTrade semantics. No calendar generation or market read.
+- artifact: reports/research/program/regime-calendar-source-20261011-0117/lead-decision.json
+- next: exact version-bound dates-only reconciliation handoff; no repeat B1/RF/source-only review absent changed evidence.
+
+### T-20261010-REGIME-TERMINAL-RF-2317
+- status: done_conditional_terminal_RF_diagnostic (full_B2/economics not_ready)
+- owner: lead fc5034e8; independent e258909b codex/gpt-6.1-sol/xhigh; currentModeId/runtimeInfo.modeId full-access verified
+- scope: existing regime input dependency, scheduled-August RF conditional diagnostic proposal; full B2/economics blocked; no QQQ/GRPO/kappa takeover
+- brief: reports/research/program/regime-terminal-rf-20261010-2317/plan.md
+- result: independent plan/R1 script admitted; unique attempt exit0, August21 scheduled dates exact, conditional daily RF=1/10000 (1bp); no full-calendar/PIT/Alpha credit; research/ML/LLM/paper false, performance N/A.
+- artifact: reports/research/program/regime-terminal-rf-20261010-2317/lead-decision.json
+- next: pinned historical-calendar provenance/provider-date comparison and actual adjusted SIP/account inputs; do not repeat B1 or terminal RF.
+- resources: agent admission ok1372MB; no research compute allocated before independent scoped approval; Hadan/training hold retained
+
 # 自动研究轮任务队列
 
+> 机主 2026-10-10 最新暂停：Hadan 留给机主，不得启动任何远端研究、下载或探针；GRPO 在所有平台只做准备，不训练或更新参数，直到机主明确恢复。先读 `reports/research/control/owner-compute-hold.json`。Linux 其他已批准研究及本队列中的 QQQ 审计继续；不得把等待恢复当作全部研究停止。
+
+> 机主后续明确仅恢复服务器研究，Hadan/训练 hold 不变；已要求删除 ultracode-reviewer，过时会话目录不得继续调用或恢复此技能。QQQ 原 76 日审计已闭环，后续任务见下，不重复旧重放。
+
+> Root 16:16提速决定：优先把已存在收益/执行证据转成可执行实验；无新增真实输入不得重复同一补审。低换手交接与QQQ参考恢复仍由交互root持有；自动轮选择独立且真实ready的任务，不更改冻结阈值，不增加频率/付费预算。详见progress-review-20261010-1612/assessment.json。
+
+### T-20261010-REGIME-CALENDAR-RF-2237
+- status: done_preparation (calendar coverage blocker verified; economic not_ready; no empirical admission)
+- owner: execution a1247cf1; child35378e88 codex/gpt-6.1-sol/xhigh; currentModeId and runtimeInfo.modeId full-access verified
+- scope: concrete calendar/RF B2 admission request from existing evidence; no repeat B1, market decoding, RF mean, fit/backtest, Hadan or GRPO. QQQ/kappa/GRPO remain fc66ee6a-owned.
+- artifacts: reports/research/program/regime-calendar-rf-preparation-20261010-2237/
+- resources: agent admission ok1332MB; one independent task <=12min; no economic compute allocation.
+- result: evidence.json and plan-review-request.md delivered in 6m03s. Existing calendar misses historical exceptional closures; full1970+ acceptance blocked. RF units/denominator and one future B2 scope specified, not approved or run. B1 unchanged; performance N/A; workflow preparation-only, research/ML/LLM/paper false.
+- next: independent review of real bindings; economic depth plan still blocked on inputs and gates. No special report/email.
+
+### T-20261010-REGIME-VALUE-2117
+- status: done_required_value_audit (calendar/full input/economics not_ready)
+- owner: lead 83293ea3; independent reviewer 49c483f6 codex/gpt-6.1-sol/xhigh/full-access verified
+- scope: retained French required-field numerical audit only; no RF mean/extension or calendar/full-input acceptance, no economic allocation. Continues completed NUMERIC-2037 preparation.
+- brief: reports/research/program/regime-value-audit-20261010-2117/plan.md
+- result: B1 independently admitted; one run,14287/14287 required-value rows valid,zero field/date/layout errors. One metadata continuation flagged and classified separately; immutable combined parser result retained as failed. No retry or RF extension.
+- artifact: reports/research/program/regime-value-audit-20261010-2117/lead-decision.json
+- next: exact calendar/session binding and frozen RF B2; no repeated B1/source intake.
+- resources: agent admission ok1311MB; one independent direction; one proposed stdlib attempt <=120s/256MiB address space.
+- reservation: QQQ/GRPO/kappa remain fc66ee6a; Hadan and all GRPO training paused.
+
+### T-20261010-REGIME-NUMERIC-2037
+- status: done_static_plan_review (economic not_ready; no numerical acceptance admitted)
+- owner: execution a38e6b86; independent reviewer 770027b6, codex/gpt-6.1-sol/xhigh/full-access explicitly created
+- brief: reports/research/program/regime-numeric-plan-20261010-2037/plan-review-request.md
+- scope: retained French input acceptance specification; missing sentinels and frozen RF coverage/visibility. No repeat fetch, numerical CSV decode, SIP read, fit/backtest, Hadan or GRPO. QQQ/kappa remain interactive-owned.
+- resources: python3 scripts/memory_budget.py admit --kind agent returned ok, headroom1269MB; one independent task, no research compute allocated.
+- result: independent eleven-check revise_plan; static scope admitted only. Header/sentinel/unused-factor/RF diagnostic-versus-PIT rules specified. lead-decision.json records calendar/parser/SIP/account blockers; performance N/A, workflow static-only, research/ML/LLM/paper false.
+- next: bind existing calendar and parser then independently request concrete retained-source numerical acceptance; no refetch or economic allocation.
+
+### T-20261010-REGIME-FRENCH-1917
+- status: done_source_intake (numeric/economic not_ready)
+- owner: main reviewer aeb81b1b; independent reviewer7b6ef0aa codex/gpt-6.1-sol/xhigh/full-access verified and archived
+- scope: approved source_only_admission; full economic verdict remains revise_plan. No Hadan/GRPO/QQQ/kappa, numeric market decoding, fit or backtest.
+- brief: reports/research/program/regime-french-source-20261010-1917/plan.md
+- result: three official GET HTTP200,440923bytes,4.264sec; unique14287dates19700102..20260831. Archive does not reach frozen20260917. Missing codes-99.99/-999 officially confirmed; static parser requires numerical acceptance work. Latest vintage not original PIT.
+- artifact: reports/research/program/regime-french-source-20261010-1917/lead-decision.json
+- next: exact retained-source numeric-input admission and frozen RF-policy coverage determination; no repeat intake, window shortening or filled returns. SIP/account/oracle blockers remain. workflow pass only source closure; research/ML/LLM/paper false, performance N/A.
+
+### T-20261010-REGIME-STATIC-1717
+- status: done_static_preparation (runtime/data/economic not_ready)
+- owner: main reviewer ae70a94c; child519adca0 codex/gpt-6.1-sol/xhigh/full-access verified
+- scope: execute explicitly admitted static cutoff/provenance preparation only; no data/market/fit/backtest/Hadan/GRPO/orders. Parent recovers actual source-cap provenance, no invented exhaustion.
+- brief: reports/research/program/regime-preparation-20261010-1717/brief.md
+- prerequisite: regime-construction-review-20261010-1650/independent-review.json admission.static_cutoff_adapter_provenance; economic verdict remains revise_plan/not_ready.
+- resources: agent admit ok1040MB; one direction, no research resource allocation; static checkpoint<=60min.
+
+- result: six child static files inspected;16code/contract/manifest bindings match. Date-first French and bounded SIP SQL text present, no runtime. French finite missing-value handling remains a concrete input blocker. Source cap exhaustion unsubstantiated in examined receipts, not proven unlimited.
+- artifact: reports/research/program/regime-preparation-20261010-1717/lead-decision.json
+- next: French-only schema/source/cutoff preparation review with this real package; preserve SIP adjustment/account marginal blockers and frozen economic gates. No repeated closed deep-design review.
+
+### T-20261010-REGIME-CONSTRUCTION-REVIEW-1650
+- status: done_review (revise_plan; static preparation admissible, economic not_ready)
+- owner: execution session994046da; independent reviewer506bf69e codex/gpt-6.1-sol/xhigh, both full-access modes verified
+- brief: reports/research/program/regime-input-recovery-20261010-1637/construction-review-request.md
+- scope: new input construction request review only; no market reads/build/fetch/fit/inference/backtest/Hadan/training/orders; interactive tasks untouched.
+- resources: agent admission ok1171MB; one codex/gpt-6.1-sol/xhigh/full-access child; 12min/at most12 relevant small files.
+- artifact: reports/research/program/regime-construction-review-20261010-1650/
+- next: concrete static-code versus data-preparation admission and blockers, without reopening closed design or claiming Alpha.
+
+- result: independent-review.json/handoff.md and lead-decision.json delivered;8pass/1revise/2blocked. No market reads/compute, Hadan, training or orders. Source exhaustion unverified; recover actual cap consumption rather than infer new permission requirement. Next bounded static package; no repeated design review.
+
+### T-20261010-REGIME-INPUT-RECOVERY-1637
+- status: done_preparation (actual input evidence delivered; empirical not_ready)
+- owner: execution session86de224c
+- brief: reports/research/program/regime-input-recovery-20261010-1637/plan-review-request.md
+- scope: existing bounded metadata/code input recovery only; no construction/fit/inference/returns/download/Hadan/GRPO/orders; QQQ/kappa not reclaimed.
+- resources: one codex/gpt-6.1-sol/xhigh full-access child, memory agent admit ok1111MB; max12min/20 small files.
+- artifact: reports/research/program/regime-input-recovery-20261010-1637/
+- result: 20 small source bindings verified; French daily and child input/implementation locks missing; SIP loader starts2022, not required2016; fixed source-tree downloader/execution script names recovered; fixed common-account weights unbound. No economic compute.
+- next: independent concrete construction review from construction-review-request.md; full regime execution remains not_ready. No repeated source review without changed inputs.
+
+### T-20261010-QQQ-REFERENCE-RECOVERY
+- status: source_investigation_complete (clock and formula reports delivered; no replay admission)
+- owner: interactive session fc66ee6a; ab61 clock/version provenance (12 min); 95e3a9f2 source/formula (15 min). Both codex/gpt-6.1-sol/xhigh, currentModeId/runtimeInfo.modeId=full-access verified; no pending permissions.
+- scope: 从当前已绑定代码与来源核实因果价格尺度能否恢复，区分原审计硬编码 invalid_reference 与真实数据缺口；另行核实 15:58/15:59 的版本和授权来源。只读代码、现有小元数据及公开文档，保留全部冻结审计。
+- artifact: reports/research/program/qqq-reference-recovery-20261010/
+- resources: Separate agent memory admissions passed at 1419/1415 MB headroom; Linux lightweight source/code analysis only; no prices/returns/model execution, no Hadan or training. Independent research-plan review is required before any new empirical replay.
+- done_when: 给出可证实的尺度方案或精确缺失输入、平仓差异的版本归因与最小下一步；不把计划或错误审计写成 Alpha。
+- result: clock provenance distinguishes paper16:00 / runner15:58 / frozen audit15:59; this alone does not establish a production bug. Conditional raw/open reference is mathematically possible, actual paired inputs and historical version remain unproved. Original76-day audit unchanged; do not rerun placeholder reference.
+
+### T-20261010-QQQ-PAIRED-SOURCE-DIAGNOSTIC
+- status: done_source_diagnostics (strict four-point price reconstruction not compatible; precision/version inconclusive, no economic verdict)
+- owner: interactive root fc66ee6a; independent652 plan/implementation and launcher amendment complete; automatic rounds do not rerun this completed test
+- brief: reports/research/program/qqq-reference-recovery-20261010/paired-source-diagnostic/plan.json
+- artifact: reports/research/program/qqq-reference-recovery-20261010/paired-source-diagnostic/root-closure.json
+- result: 16价格检查仅开盘anchor1项通过（该anchor是定义），15项超过原严容差，最大USD0.0083887854；4个volume相同（首anchor是定义）。daily open比minute open低USD0.01，daily close比19:59minute close高USD0.05，delta=1.00006732284。只描述served source，precision/revision原因未证；不否定QQQ/Alpha。
+- execution: 第一launcher因operator.py遮蔽stdlib在import退出，保留现场并计attempt1/1秒；独立批准唯一attempt2后rename，实际0.479251秒（内部0.476496），保守计1秒；累计2/120秒、实际512MiB/swap0、peakRSS18944KiB、scope停止。无第三次、无新增HTTP，原raw/hash/科学阈值不变。
+- next: 下一份raw reference/replay计划直接用raw分钟，补16 prior sessions、15 closes、14同槽历史和明确时钟/current-vintage身份；旧D1不重跑，不放宽失败容差。先绑定真实输入和独立深度/iteration门，不提前signal/收益/生产/Hadan/训练。
+
+### T-20261010-QQQ-RAW-SOURCE-ACQUISITION
+- status: done_source_acquisition (3/3 HTTP200, one attempt; no compatibility/return/PIT admission)
+- owner: interactive root fc66ee6a; reviewer652 and driver author0b05 completed, no automatic reclaim
+- brief: reports/research/program/qqq-reference-recovery-20261010/raw-source-acquisition-plan.json
+- artifact: reports/research/program/qqq-reference-recovery-20261010/raw-source-acquisition/root-source-closure.json
+- result: 实际17:47:29–17:47:36 UTC，all-phase6.269秒/180；3请求零重试/分页/跳转，83,232bytes。分钟raw/all各391条（interest390+inclusive boundary1）；日线3条（interest2+boundary1）；全部原bytes/SHA保留，HTTPX/entity完整性与关闭验收通过。
+- resources: memory admit ok1360MiB headroom；实际512MiB/swap0、采样cgroup peak98,271,232bytes；scope停止，client/response关闭；source bindings未漂移。
+- boundary: 仅当前served quarantine，不证明original vintage/PIT/paired-price compatibility/信号/收益；旧D1不动。Hadan、训练hold不变，无broker/付费；本3请求额度已用完，不再取数。
+- next: 对既有三份小快照提交独立限定配对尺度与daily/minute端点诊断，不重复旧placeholder reference。
+
+### T-20261010-KAPPA-RESUME-DECISION
+- status: done_preparation_review (resume_preparation_with_explicit_causal_amendment; no replay/production admission)
+- owner: interactive session fc66ee6a; independent reviewer652, codex/gpt-6.1-sol/xhigh/full-access
+- scope: 处理10-08已提交却未结算的三处研究/生产口径冲突，给出最小可执行恢复方案；保留原阈值、原结果及生产行为。Hadan/训练继续暂停。
+- brief: reports/research/program/progress-review-20261010-1612/kappa-resume-review-request.json
+- resources: Linux小文件/源码；12分钟；派前agent memory admit ok1240MB。无市场计算、测试、合并或下单。
+- result: A/C接受，B须严格分离D因果输入/虚拟意图/整数计划/实际成交。F1资金与种子/PIT/历史借券/95%跟踪recipe仍缺。Root已核当前主线未合并T07，10-07/08保留记录为F1/$1M，不能当完整资本历史。
+
+### T-20261010-KAPPA-CAUSAL-PREPARATION
+- status: done_preparation_only (R1 independently accepted and35/35 real bounded synthetic checks passed; market/production not admitted)
+- owner: interactive root fc66ee6a implementation; independent ab61 preparation reviewer completed approve_R0_R1_preparation_only
+- brief: reports/research/program/kappa-causal-preparation-20261010/causal-preparation-plan.json
+- evidence: input-recovery.json binds16 sources and3 selected existing-record metadata receipts. Current main/isolated branch/T07 distinction explicit; no price/position values decoded.
+- scope: pure-M0/causal-clock/four state layers and a thin continuous-kernel preparation wrapper with bounded synthetic fixtures. All market capsule inputs/commands remain null/false; old thresholds and production code unchanged. Hadan/训练hold不变。
+- approved_limits: author30min from2026-10-10T16:44:20Z; single synthetic fixture<=120s/512MiB with fresh memory admission, no retry. Writes only oc-t20 reports preparation-20261010; bytecode/cache/logs/results contained there; main/base production untouched.
+- result: root implementation completed16:53:36Z, scopedRuff/syntax passed; sole fixture actualMemoryMax512MiB/swap0, elapsed0.808s including gates/launch, peakRSS34380KiB, scope stopped/collected. All16 prior source bindings unchanged. implementation-handoff.json contains manifest/receipt and review focus; real market and old production gates remain false.
+- revision:17:05review found checksum-consistent Intent could bypass commit packet admission. Root17:09 froze shared validator at both entries and8 targeted regression cases; original9 files archived and old runtime evidence unchanged. R1 has scopedRuff/syntax only. implementation-r1-review-request.json asks one explicit additional120s/512MiB synthetic attempt, not yet approved; no source writes after original17:14:20 author deadline without further scoped authority.
+- final:17:15独立approve_implementation/唯一追加slot批准；17:17实际35/35通过、512MiB/swap0、peakRSS34588KiB、scope停止，所有冻结绑定与原证据不变。root-preparation-closure.json结算两次及root收尾；不再重复此准备件检查。后续必须补真实输入/市场scope，不能称生产集成或收益通过。
+
+### T-20261010-RESIDUAL-LEAD-REVIEW-1517
+- status: done_review (revise_plan/not_ready; no empirical admission)
+- owner: lead 97c219b0; independent reviewer 03e84587 codex/gpt-6.1-sol xhigh full-access (both runtime modes verified)
+- scope: independent review of 14:37 residual-close readiness; existing small input evidence and execution-identification question only. No backtest, model, Hadan, orders or interactive-task reclaim.
+- artifact: reports/research/program/residual-lead-review-20261010-1517/
+- resources: memory agent admit passed with 1184 MB headroom; single reviewer.
+- result: independent11 checks:3pass/4revise/4blocked; matched-clock/funding identification and old cost denominators resolved; actual inputs still missing. No repeat review without new evidence. lead-decision.json contains acceptance.
+
+### T-20261010-RESIDUAL-CLOSE-READINESS-1437
+- status: done_preparation (ready=false; independent lead supplemental review requested; no empirical admission)
+- owner: execution session 07251f7a; author 35fd18fc codex/gpt-6.1-sol xhigh full-access
+- brief: reports/research/program/continuous-alpha-2026-10-10/residual-close-execution-brief.md
+- scope: T-22 close execution pivot source/input metadata feasibility and plan-review request; no old24-cell rerun or contaminated OOS substitution. Hadan/GRPO hold preserved; interactive QQQ/GRPO/kappa not reclaimed.
+- resources: memory agent admit ok1068MB; one child; actual currentModeId/runtimeInfo.modeId both full-access verified.
+- artifact: reports/research/program/residual-close-readiness-20261010-1437/
+- result: D1 cost snapshot timing mismatch09:35–09:45 vs open; localT22 metadata ends09-17; D2/D3 execution, permanent identity, dailyETB and sealedOOS proof missing. Parent verified3metadata hashes; performanceN/A, allpassesfalse.
+- next: independent lead review and existing small input proofs before empirical work; no repeated24-cell or contaminatedOOS.
+
+### T-20261010-OPT-LEAD-REVIEW-1317
+- status: done_review (R1/R2 revise_plan; empirical not_ready)
+- owner: lead e87cae09; independent reviewer 334d3266 codex/gpt-6.1-sol xhigh full-access
+- scope: review preceding OPT replication preparation; isolate executable input/semantics closure from blocked portfolio-return experiment. No backtests, training, market-panel processing, Hadan or orders.
+- artifact: reports/research/program/opt-lead-review-20261010-1317/
+- resources: agent admission passed (691 MB headroom); one independent codex/gpt-6.1-sol xhigh full-access reviewer.
+
+- result: reports/research/program/opt-lead-review-20261010-1317/lead-decision.json; new/old source versions incompatible. A0 descriptive replay independent of A1 final-table and B PIT/F1 gates; remaining authentic inputs/resources/inference blocked. No Alpha evaluation, Hadan, training or orders. No repeated paper review without new input.
+
+### T-20261010-OPT-REPLICATION-PLAN-1237
+- status: done_preparation (independent review requested; execution not_ready)
+- owner: execution session e066f0a0; plan-author 6fdd95e9 codex/gpt-6.1-sol/xhigh/full-access
+- brief: reports/research/program/opt-feasibility-20261010-1117/replication-handoff.md
+- scope: existing source/code only; prepare exact original-table three-depth replication plan-review request, no fetch/data generation/returns/training/resource allocation. Composite account marginal remains blocked until authentic inputs.
+- artifact: reports/research/program/opt-replication-plan-20261010-1237/
+- resources: memory admit ok, 929 MB headroom; one codex/gpt-6.1-sol/xhigh/full-access child, visible concurrency below6.
+- next: R1/R2 independent review completed in opt-lead-review-20261010-1317; execution remains not_ready. Resume only on recorded A0/A1/A2/B new-input triggers; do not reclaim interactive GRPO/QQQ.
+
+- result: exact original-table three-layer definitions and source-bound input contract delivered; JSON/governance hashes checked; no financial compute. lead-handoff.json records unresolved genuine panel/HAC/fee semantics/current F1 mapping.
+
+### T-20261010-OPT-FEASIBILITY-1117
+- status: done (independent source audit accepted; execution remains not_ready)
+- owner: lead session 081e39ca; independent source auditor 82df311e codex/gpt-6.1-sol/xhigh/full-access completed
+- goal: resolve whether existing option-composite depth axes have authentic historical data support; no repeated IC or standalone search.
+- scope: review completed opt-composite-bind evidence, inspect bounded metadata and original public provider schema; identify concrete input blockers and executable scope for a future reviewed plan.
+- resources: memory admit ok, 637 MB headroom; at most one child, total visible running <=6.
+- artifact: reports/research/program/opt-feasibility-20261010-1117/
+- result: multi-expiry call/put nodes confirmed; full PIT coverage/IV semantics still unverified. Author Mendeley v2 README/Stata/ZIP inventory retrieved, genuine old aggregate borrow-fee replication entry identified; pseudo and overlapping-return misuse excluded. lead-decision.json accepts independent-audit.json. No IC/backtest/train/remote/orders.
+- next: complete original-table replication and local input contracts before independent deep-plan approval; no further standalone IC or weight search.
+- prohibition: no backtest, model training, market panel scan, remote compute, production edits, orders, credentials or touching interactive GRPO/QQQ tasks.
+
+
+### T-20261010-DLSA-INPUT-RECOVERY
+- status: done (input recovery artifacts delivered; supplemental lead review requested; execution data gate remains blocked)
+- owner: execution session 69b17a81; one codex/gpt-6.1-sol/xhigh/full-access child
+- brief: reports/research/program/dlsa-input-recovery-20261010-1040/plan-review-request.md
+- goal: unblock approved eight-cell DLSA depth through authentic PIT/corporate-action/delisting input recovery; no candidate changes.
+- result: real local OHLC paths found; permanent ID/delisting economics absent; PCA/IPCA/hygiene repairs and full workload concretely identified. No fit/backtest/remote/order. Artifacts: reports/research/program/dlsa-input-recovery-20261010-1040/input-recovery.json and construction-plan.md.
+- next: lead session 330b8707 independent supplement review; authentic extract and real data gates before any training/backtest/allocation.
+
+
+### T-20261010-REGIME-CHILD-R1 状态层非可晋级 child 合同修订
+- status: done (design review closed; full execution not_ready, no market compute)
+- owner: lead session 282496a8; author 64548b09 completed; independent reviewer cfdf2805 completed (codex/gpt-6.1-sol/xhigh/full-access)
+- goal: 判明状态持久性 L15/L50/L150 是否带来同风险、扣成本 S3 增量；不做 ETF 同簇调权。
+- scope: 按 09:06 独立 review 的 R1–R6 建立真实绑定的 v3 child；保留旧九候选、成本、窗口和选择；全部 non-promotable。复审 approve 及 direction/iteration/knowledge gates 前禁止拟合/回测/资源分配。
+- brief: reports/research/program/plan-review-request-20261010-regime-depth.md
+- resources: one codex/gpt-6.1-sol/xhigh/full-access author; memory admit passed 638 MB headroom; GRPO/QQQ remain owned by interactive fc66ee6a.
+- result: R2 revise_plan (9 pass/2 revise); C1/C2 corrected and independently accepted as approve_deep_plan for design/not_ready closure only. direction/knowledge ok; iteration blocked on actual data feasibility/authorization. No construction, fit, backtest, allocation or orders.
+- artifact: reports/research/program/regime-source-feasibility-20261010-0917/lead-final-decision.json
+- next: retain mechanism, no refutation or shallow probe. Build/input/throughput readiness remains internal work; do not claim Hadan/French outage or restart interactive execution-GRPO.
+
+
+### T-20261010-REGIME-DEEP-REVIEW 冻结状态层独立深度补审
+- status: done (independent plan review: revise_plan; no execution)
+- owner: execution session cc7b1f2; independent reviewer bcd646ab-6961-4027-a0a3-9394e4567aab
+- goal: 核对 T-20261006-03/04 九候选能否给 S3/账户增加同风险扣成本收益。
+- scope: 独立计划审查；来源定义、实时对照、v3与真实绑定；不拟合、不回测。
+- resources: codex/gpt-6.1-sol/xhigh/full-access, memory admission required; no research compute before approve_deep_plan and gates
+- brief: reports/research/program/plan-review-request-20261010-regime-depth.md
+- result: 11 checks = 5 pass / 5 revise / 1 blocked; 29 bound inputs verified; six required revision groups R1–R6.
+- artifact: reports/research/program/regime-depth-review-2026-10-10/plan-review.json
+- next: lead reviewer builds non-promotable v3 child with real bindings, exact fidelity/VT/trial/portfolio/budget contracts; independent re-review before compute.
+
+
+### T-20261010-OPT-SOURCE-BIND 期权 composite 原始来源与数据能力补证
+- status: done (source evidence only; not_at_depth, no Alpha/paper conclusion)
+- owner: execution session cc7b1f2; source researcher c6c8ce4d-fa80-4e1d-a9c2-99d123c95ee7
+- goal: 支持已有 OPT-COMP-R1 的组合边际假设，补原始证据与真实数据可用边界。
+- scope: 轻量公开来源和现有 artifacts；不算IC/收益，不扩网格，不重开 standalone。
+- resources: codex/gpt-6.1-sol/xhigh/full-access, memory admission required; no research compute before approve_deep_plan and gates
+- brief: reports/research/program/plan-review-request-20261010-options-composite.md
+
+
 格式和使用规则见 `docs/runbook-autonomous-round.zh.md` 第 4、9 节。自动轮按文件顺序取 `ready` 且 `not_before` 已到的任务，最多两个互不依赖的并行做；`running` 且注明"交互会话"的不要碰。机主和交互会话可以随时增删改。
+
+## 2026-10-09 持续 Alpha 研究指令
+- result: 2026-10-10 09:03 UTC evidence.json; 14 claims/5 reused cards; scalar IV cannot faithfully reproduce call/put/tenor methods, D2/D3 dependency_skipped; no IC/fit/backtest.
+- next: bind authentic historical visibility, IV construction and PIT stock identity/costs before independent full-plan re-review; do not keep expanding standalone IC.
+- artifact: reports/research/program/opt-composite-bind-2026-10-10/evidence.json
+
+
+### T-20261010-GRPO-HADAN 机主要求恢复新闻/事件论文的 GRPO 复现
+- status: preparation_reviewed_execution_held（代码R1–R3与数据分层设计已独立接受；source-purpose/governance准备已完成；正文/标签/runtime仍未准入；训练暂停；Hadan非训练研究仅online/fresh ready/usage_ok/<50GiB时准入）
+- owner: none; prior interactive session fc66ee6a completed; A implementation delivered; 597a delivered A data plan and R1-R3 fixes; root verified18 current bindings,8 archive files,16data bindings; reviewer652 completed code/data reviews; root accepted and completed bounded source-purpose/governance preparation; Hadan conditional nontraining availability under owner-compute-hold.json; no model/data execution
+- goal: 还原此前新闻/事件/财报信息驱动的 GRPO 论文，在忠实基准上研究更好的成本后收益与组合增量。不得换成 QQQ 执行优化或以人工算术探针代替。
+- scope: 核实原论文、数据/输入、模型、奖励、训练深度和原结果；明确严格复现与新模型/量化/改进实验的差别，再独立审查修订计划。
+- resources: Linux lightweight preparation only while owner hold active; Hadan nontraining research requires fresh remote ready/usage_ok/<50GiB under C:\paseo; no GRPO training on any provider; at least4bit/no paid expansion remain future requirements.
+- note: 机主10:01明确否定当前执行优化GRPO路线。下载子进程22576已停止，未部署runner/launcher/input-admission，无load/update。旧plan/implementation技术批准不再构成训练入口；B-I撤回、旧14B不恢复。自动轮不得接续旧训练命令或重复领新方向。详见 grpo-hadan-2026-10-10/owner-direction-correction.json。
+
+### T-20261010-QQQ-PLAN-REVIEW QQQ 执行子迭代独立审查
+- status: done
+- owner: interactive session fc66ee6a; independent reviewer subagent
+- goal: 对 t20261010_qqq_execution_shadow 做独立计划审查，明确当前可执行的历史 parity 与前向报价采集，不等待 GRPO 或 DLSA。
+- scope: 只审查，不计算收益，不改冻结信号、生产路径或授权；输出 approve_deep_plan/revise_plan/stop_or_pivot 与最小具体修订。
+- note: 自动轮勿重复领取；与 GRPO 来源/训练计划相互独立。
+- result: 2026-10-10 独立 verdict=revise_plan；D1 只需先修真实规格/hash、完整76日与强制平仓/fallback语义，不必被未来NBBO/40/60日阻塞。详见 reports/research/program/qqq-plan-review-2026-10-10.md。
+
+### T-20261010-QQQ-D1-REVISION QQQ 历史执行审计修订
+- status: done_audit_only（root验收76/76和11原产物；primary parity仍N/A，不是Alpha或paper通过）
+- owner: interactive session fc66ee6a; ab61 execution finished; root independently verified76results/228raw/11outputs and stopped process; no replay remains
+- goal: 按独立审查先完成限定 D1 的真实规格、输入、退出/fallback和完整76日审计计划，修订后再独立审查，获批才执行。
+- scope: 仅新子迭代合同和隔离配置/脚本计划；不改父冻结规则、生产路径、授权，不算新Alpha；不被缺NBBO挡住可独立验收D1。
+- handoff: 09:46独立implementation通过，root签final lock、09:51标准CLI gates与900MiB admission通过。真实启动被production control/parent cache read refused拦截；没有完成历史会话/收益。runtime-r1修订已独立approve；原失败树按hash核实后归档，root签新lock，10:15标准CLI与900MiB admission通过，按原fresh命令恢复全76审计。仍不算收益，raw-scale参考缺口保留N/A。
+- result: 106 runner events,0 valid independent reference events；76日配置15:58与冻结规格15:59不同。Root含收尾累计13,380秒/13,800秒；旧失败与全部账本前缀保留。无收益/生产修复/订单/模型/Hadan。
+- final_receipt: reports/research/iterations/t20261010_qqq_execution_shadow/runtime-budget-r3/root-final-acceptance.json
+- next: 独立核实then-known raw价格尺度与修复计划，不重复原审计；生产修改只在隔离worktree审阅后合并。D2/NBBO/组合仍dependency_skipped。
+
+- 总计划：`docs/plan-continuous-alpha-research-2026-10-09.zh.md`；特别报告：`reports/owner/special/2026-10-09-project-review.zh.md`。
+- 本周期只把资源投向三个引擎：日内宽度和执行、低换手股票多空、经济关系等独立信息源。每个任务必须说明对账户 after-cost Sharpe/IC 和低相关性的边际贡献。
+- 日内优先级：QQQ 先修 runner parity 至 `>=98%`；G3 ETF15 只做精确 1 分钟 IEX/SIP 和 runner shadow。G3 当前 `paper_gate=false`，没有精确 IEX 之前不得增加模拟盘仓位；G1 个股噪声带成本占毛利约 `61.8%`，本周期不扩展。
+- 低换手股票多空：T-20261007-20 只有设计文件，未完成 replay/shadow/parity；不得把研究 Sharpe 增量写成生产通过，不得直接合并生产路径。
+- 另类数据：经济关系先完成 2022–2026 PIT 覆盖、50 条人工审计和证券映射，再新建收益合同；期权隐含信号只允许预注册 composite 增量，不再单独扩 IC 网格。内部人、新闻、13D 等已有 refuted 路线不重开。
+- 自动轮不得把全仓格式、历史文档整理或泛化门禁当作研究进展；只在候选要晋级时修决定性证据。每轮报告必须区分 `workflow_pass`、`research_pass`、`ml/llm_contribution_pass` 和 `paper_ready_pass`。
 
 ### T-20260927-01 三条模拟盘策略合并成一个账户，是否比单独 S3 更好
 - status: done
@@ -355,13 +724,14 @@
   - 2026-09-28 结果：0/19。管理期货 ETF 和 S3 几乎不相关，但自身夏普低；资产配置规则对标窗最高 0.96（GEM）。
 
 ### T-20260927-03 新规则下第一次月度调仓核对
-- status: ready
+- status: completed_local_receipt_acceptance; original_input_research_parity blocked/N/A; owner released
 - priority: 1
 - not_before: 2026-10-02 01:00 UTC
 - goal: 09-30 收盘后 S2、S3 按新规则第一次月度调仓，10-01 开盘成交。核对模拟盘和研究引擎是否一致、成交质量如何，这是以后实盘的前置证据。
 - plan: 读 `reports/execution/us_etf_levered_rotation_63_top2_monthly-target-weights.json` 和 S2 的同名文件（09-30 生成的目标），用 `uv run python scripts/check_rotation_overlay_parity.py` 复算 09-30 的研究引擎决定；读三条 sleeve 的 `reports/paper/rehearsal/<name>-fills.jsonl` 里 2026-10-01 的成交，看 `slippage_vs_open_bps`、是否全部成交；读 `reports/paper/alerts.md`。
 - done_when: `docs/current-view.zh.md` 顶部 5 行以内的结论（一致 / 不一致及原因、滑点、有无撤单）；不一致或有撤单时在队列加修复任务。
 - notes:
+  - 2026-10-11T07:29:21.515827+00:00 主审f5abf160独立验收Sol 5c875302；28输入hash一致，S2/S3共6笔原记录按COID/数量/目标/下一周期本地持仓匹配。日线开盘金额权重滑点S2 2.3105bp/$0.94、S3 8.4080bp/$12.35，合计7.0854bp/$13.29。S1明确2项skip_below_tolerance，滑点N/A。原09-30 target/data绑定缺失，最新10-09 target不能替代；不重复六笔审计，待真实原始版本才评估后续parity入口。仅workflow通过，无新回放/训练/券商调用/订单或收益评估；代理已验收归档。当前入口 reports/research/program/monthly-execution-acceptance-20261011/parent-acceptance.json。
 
 ### T-20260927-04 修看板里的额度百分比读数
 - status: done
@@ -2378,7 +2748,7 @@
   - 2026-10-06 07:38 UTC 07:07 主审轮（Opus）：T-44 审核后写修正案 A2（F3 自相关按决策宇宙计，门槛不变，独立复核 approve）。简报第 0 步改为 gate_pass=true 或 A2 生效；results.json 写 data_gate = passed_under_amendment_A2，报告开头照抄 A2 第 4 节的说明；按实际每日名数（中位约 574）报 SE 和 MDE。第二个前置（T-20261005-01 已 done）不变。
 
 ### T-20261006-03 P2 阶段 2a：跳跃模型状态层的复现（标普 1990–2023 的相对结论）和指数层九个规格
-- status: ready（定时执行轮可取；合同 10-06 07:34 冻结）
+- status: blocked（2026-10-10 独立深度补审 revise_plan；R1–R6 修订及复审通过前不拟合/回测）
 - priority: 2
 - not_before: 无（本机重步骤不在 21:30–00:30 UTC 跑；不和其他超过 1 GB 的任务并行；排在 priority 1 的任务之后）
 - goal: 第二版计划 P2 阶段 2（10-08 至 10-13）的深度锚点。先在免费 CRSP 数据上复现 Shu–Yu–Mulvey 2024（JAM）的跳跃模型 0/1 策略：标普 1990–2023 夏普 0.48 → 0.68，回撤减半。再按输入数（3、4、6）、持续性（λ 15、50、150 和交叉验证）、模型类（JM、HMM、GMM、现有 200 日线 × VIX）扫九个规格，在指数层和同敞口波动率目标比。回答登记簿"只是回撤控制"对不对，并为阶段 2b 冻结日度乘数。
@@ -2387,9 +2757,11 @@
 - brief: reports/research/control/briefs/T-20261006-03.md
 - notes:
   - 2026-10-06 07:38 UTC 07:07 主审轮（Opus，P2 轮换）登记。先验：复现约 65%；J3_CV 在指数层比同敞口波动率目标高 ≥ 0.05 约 45%。新证据：论文已在 JAM 25(5):493–507 发表；CBS 2025 硕士论文在因子 ETF 上方向一致但不显著。I-20261004-06 里"稀疏跳跃模型"的快照抓错了文章（arXiv 2106.09535 是物理论文），合同不引用。
+- review_evidence: reports/research/program/regime-depth-review-2026-10-10/plan-review.json；旧冻结合同和成功门未改。
+
 
 ### T-20261006-04 P2 阶段 2b：状态乘数加到 S1–S3、C2（S3 判定，对照同敞口波动率目标和循环平移安慰剂）
-- status: ready（定时执行轮可取；前置是 T-20261006-03 已 done、乘数缓存的 sha256 一致，简报第 0 步核对）
+- status: blocked（2026-10-10 独立深度补审 revise_plan；R1–R6 修订及复审通过前不拟合/回测）
 - priority: 2
 - not_before: 无（排在 T-20261006-03 之后；本机重步骤不在 21:30–00:30 UTC 跑）
 - goal: 机主 10-04 说压力期夏普低；S3 占试点风险约 90%，压力期夏普约 0.59。本任务回答：带持续性的在线状态层，能否在压力窗把 S3 的同敞口夏普提高 ≥ 0.10，同时近期窗代价不超过 0.10。过了就进 8–12 周只记日志的影子；不过就写"未见增量，功效不足以否定"，P2 转阶段 3。
@@ -2399,6 +2771,8 @@
 - notes:
   - 2026-10-06 07:38 UTC 07:07 主审轮（Opus，P2 轮换）登记。先验：S3 至少一个规格 PASS_SHADOW 约 20%，所有深度点都未见增量约 45%。压力窗 5.9 年，配对夏普差的标准误约 0.13–0.23，+0.10 是政策门槛，不是显著性检验。
 
+
+- review_evidence: reports/research/program/regime-depth-review-2026-10-10/plan-review.json；旧冻结合同和成功门未改。
 
 
 ### T-20261006-05 P6 阶段 0 关口：期权快照满 20 个交易日的完整性核对和 DoltHub 同日对照
@@ -2669,7 +3043,7 @@
   - 2026-10-07 05:40 UTC 交互会话（Opus）审核并提交：约 1,260 个事件（Kalshi 宏观公布 139 个，交易约 60 个；Polymarket 赔率跳变 1,125 段、179 个市场）。两部分都不成立：公布型选出规格（TLT）净夏普 −0.75、净安慰剂分位 0.38、DSR 约 0，毛收益约 0 而往返成本约 7.4 个基点；跳变型（5 个百分点、240 分钟、延续）净 −0.97、分位 0.58。功效足够。原因：反应已被市场提前定价，公布后 30 分钟 TLT 有 +18 个基点的反应（t 4.35），赔率跳变前一小时对应 ETF 已经先动 +6.3 个基点（t 6.1），小时级赔率落后于股市。只记录不作规则的线索：关税缓和方向的跳变后同向延续（毛约 +6 个基点、151 笔、净 t 0.85），需要前向影子记录。Modal 0 美元。代理用 run_capped 跑了几个轻任务，没走闸门，已提醒。
 
 ### T-20261007-03 大模型抽取经济关联：10-K 大客户披露，检验客户收益领先供应商
-- status: running（后台抽取在跑，约 10-11 14:00 UTC 做完；代理暂停，10-09 20:30 UTC 定时恢复）
+- status: text_extraction_shelved_until_owner_new_token_no_retry; source2187/15065complete; isolated_entity_denominator_verified_evidence_retained_partial_review_budget_failed; economic_inputs_not_ready (current entry reports/research/program/entity-denominator-repair-20261011/current-state.json)
 - priority: 2
 - not_before: 无
 - brief: reports/research/control/briefs/T-20261007-03.md
@@ -2717,7 +3091,7 @@
   - 2026-10-07 15:52 UTC 交互会话（Opus）登记。来源：日内调研 I-20261006-01 的 C、D 卡（T-15 的 C、D 组是另外两件事：多股票开盘区间突破、Reversal Trend），加上 QQQ 噪声带成立的机制向个股推广。升级到 20 倍订阅后多出的代理位用在这里。
 
 ### T-20261007-20 v1.2 执行层改动：慢分数每天只向目标走一部分（部分调仓 κ），工作树实现、平价测试、影子对照换手
-- status: running（2026-10-08 04:16 UTC 起，独立代理在工作树分支 wip/t20261007-20-kappa 上做，交互会话审核合并；定时轮不要取）
+- status: blocked_handoff（2026-10-10核实：10-08已提交三处口径冲突，工作树仅design和引擎拷贝，无kappa生产实现/replay；旧running状态失真。交互root通过T-20261010-KAPPA-RESUME-DECISION接续；定时轮不重复领取）
 - priority: 1
 - not_before: 无
 - goal: 三次预注册实验（v1.3 N50 不交易区间、P1 阶段 0、T-20261007-01 的 S0_I3）都显示，v1.2 的慢分数改成每天向目标走一部分后，成本从每年 221 bp 降到 80–120 bp，扣成本夏普近期 1.485→1.61、压力期 0.598→0.65–0.67、全期 0.911→1.00，毛夏普不降。配对检验功效不够（t 0.86），但机制是确定的成本节省（Gârleanu–Pedersen 2013）。这是“先改进、后否定”里的改执行方式，直接提高 v1.2 的净夏普。
@@ -2751,3 +3125,36 @@
 - notes:
   - 2026-10-08 02:38 UTC 交互会话（Opus 99e00fc9）登记。
   - 2026-10-08 04:41 UTC 交互会话：代理 04:0x 交付第 0–5 步（第 0 步 5a4ae22；账户 P 09-01 至 10-07 +3.08%，最大回撤 −0.39%）。冲突的决定：账户 P 按试点规格只用账户线和 z 值；S3 规格的 25% 子策略退出是模拟盘授权规则，任务书误带进来，改成敏感性账户 P-sleeve-exit。这个决定是在看到回放之后做的，依据是 10-07 已定稿的试点规格。只用账户线时，近期 2024-01-08 至 10-07 为 +188.2%（月末单一调仓日，年化 47.2%，夏普 1.78，最大回撤 −14.6%）；带子策略退出为 +27.4%（2024-08-05 触发后一直空仓）；四段回放里账户线都没触发。追加：开户规则、S1/S2/C2 一致率、README 措辞，期限 10-08 12:00。机主 10-08 取消实盘试点，本任务是模拟，照做，改作将来上实盘前的前向记录。
+
+### T-20261011-EXECUTION-COORDINATION-0837
+- status: closed_no_admitted_work_in_short_index
+- owner: none; coordinator 956950c1-bdc4-45c1-9768-a583e546819d completed
+- state: reports/research/control/execution-coordinator-state.json
+- result: zero new trials/models/orders; performance N/A; existing completed checks and exhausted allowances retained
+- next: actual new input/authority or independently approved complete package; no repeat document-only review or standalone legacy audit; original schedules unchanged
+
+- T-20261011-RECENT-SOURCE-CONTINUATION — completed, parent accepted; GET200/200 sealed, 199complete +1too_large, 392snippets, nativeexit0/68.101s/peak181.48MiB/swap0/OOM0; recent complete sources9→208/15065. Sole current entry `reports/research/program/autonomy-repair-20261011/source-continuation-state.json`; parent evidence `reports/research/program/source-continuation-20261011/parent-acceptance.json`. All owners released, no rerun. Next: distinct bounded original-Step1 continuation with preserved ledger or another truly ready package; text extraction quota/economic gates remain blocked; economic/trial/model increments0, portfolio SharpeN/A.
+
+### T-20261011-AUTONOMY-REPAIR-ACCEPTED
+- status: closed_operational_repairs_verified; research_goal_not_achieved
+- owner: none; Root accepted429/source/prompt changes
+- evidence: reports/research/program/autonomy-repair-20261011/root-closure.json
+- result: real source9docs; zero new economictrial/model; providerquota remainsblocked
+- next: T-20261011-RECENT-SOURCE-CONTINUATION belongs to064b4069 coordinator/c1f77260 author; independent reviewer0f62807a. Do not duplicate source scope, old10repair allowance closed.
+
+- T-20261011-RECENT-SOURCE-SCALE-2000 — completed parent accepted 2026-10-11T11:38:21.924000+00:00;1979complete+21too_large/2000GET,1120hitdocs/2794snippets,native0/805.109s/cgrouppeak190.375MiB/swap0/OOM0. Recent complete2187/15065; scoped requests2210 cumulative, this package remaining0. Owner/coordinator released; current entry `reports/research/program/source-continuation-scale-20261011/current-state.json`, parent `reports/research/program/source-continuation-scale-20261011/parent-acceptance.json`.3multi-CIK index cases preserve original rows and require downstream identity evidence. No economic/trial/model/relation/order increments; portfolio SharpeN/A. Next: scoped entity/security/denominator repair or another truly ready independent package; no blind quota/source rerun.
+
+### T-20261011-ENTITY-DENOMINATOR-REPAIR
+- status: closed_partial_review_budget_failed_verified_input_evidence_retained; no fullworkflow/economic admission
+- owner: none; last coordinatorac046a7d, authors27cdc657/58f69ee4, reviewdc39746c completed
+- current-state: reports/research/program/entity-denominator-repair-20261011/current-state.json
+- result:3multi-CIK cases/6original occurrences/3exact source rows;23documents/42paragraphs,11finite basis repair/34quarantine/3overlap; no legal/PIT certification or newsource/model/economictrial
+- resources: author cappedjobs3/6.164s total,512MiB/swap0/OOM0,peak136.324MiB; both author15min limitsmet; independent review486.288s>360s, partial preserved, workflowfalse; originalpathfailure andold2210source charges preserved
+- next: Use verified isolated provenance and denominator counterexamples as partial input evidence; preserve all legal/security/PIT and full-source completeness quarantine. Prioritize the separately selected 24h executable economic package. Do not repeat this finite audit, reopen exhausted source requests, rerun reviewer or attempt DS. Future entity repair needs real filing registrant/cover and dated security/corporate-action evidence under a distinct bounded input scope; this scope is sealed.
+
+### T-20261011-CONTROL-AUTHORITY-1717
+
+- status: completed current-control wording reconciliation; owner 4f90738a-dea2-4f96-8acd-37b2204727b3 released.
+- evidence: reports/research/program/day-goal-20261011/control-reconciliation-1717/acceptance.json
+- result: Removed obsolete global training-hold wording from two current control fields; suitable-resource training authority remains conditional on current task/input/budget. DS stays parked; Hadan unknown means no dispatch. No economic, trial, model, input-readiness or broker increment; performance N/A.
+- next: Daily goal remains with fc66ee6a-2b84-493a-8aaa-3c78973405c8 for DLSA official-input inventory, source-led synthesis and actual day settlement. No duplicate goal or negative-packet rerun. Zero children: independent economic work is actively owned and this short reconciliation was completed directly.

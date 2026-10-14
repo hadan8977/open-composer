@@ -1,0 +1,28 @@
+import json,hashlib,re
+from pathlib import Path
+from datetime import datetime,timezone
+P=Path(__file__).resolve().parent;ROOT=Path.cwd()
+def bind(p):
+ p=Path(p);raw=p.read_bytes();return dict(path=str(p.relative_to(ROOT)),sha256=hashlib.sha256(raw).hexdigest())
+m=json.loads((P/'request-manifest.json').read_text());v=json.loads((P/'independent-entry-verification.json').read_text());assert v['status']=='revise_entry'
+assert v['entry_blocker']['reason']=='literal_absolute_relative_scientific_plan_path_mismatch'
+t=(P/'independent-entry-resource.txt').read_text();actual=round(sum(float(re.search(k+r' time \(seconds\): ([\d.]+)',t)[1]) for k in ['User','System']),2);assert actual==2.14
+charge=round(actual+3,2);used=round(283.01+charge,2)
+receipt=dict(schema_version=1,author=m['author'],reviewer='ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3',as_of_utc=datetime.now(timezone.utc).isoformat(),verdict='revise_input_entry',accepted_for_execution=False,scope_and_request_allocation_accepted=True,request_manifest=bind(P/'request-manifest.json'),entry_bindings=m['entry_bindings'],allocation=dict(requests=19,entity_bytes=39845888),allocation_status='reserved_only_pending_same_semantics_entry_fix',reservation_id='USIC-PUBLIC-DECISION-REPLAY-exact-case-input-01',economic_execution_admitted=False,
+ authority=bind(P.parent/'root-scope-decision.json'),independent_scientific_review=m['independent_scientific_review'],
+ scope_judgment='Exact7objects and4 frozen sourcecases are necessary and proportionate for approvedconditionalPDL/PREVH study. Accept19maximumcalls/39845888entitybytes fromexistingremaining33/90152183 asone reservation; do not allocateagain when thissameentryfix is accepted. NoHTTP permitted by thisreceipt untilaccepted_for_execution=true onthefixedboundentry.',
+ accepted_checks={
+ 'bindings':'11entrybindings and3priorledgers verified; requestmanifestSHA3738f9aca26bdad4f497ff193615d1d6d173465cc43f11bcfd0d0902d543743f recorded. Prioractual63requests/44065545B reconciled.',
+ 'dates_clocks':v['case_clocks_verified'],
+ 'cases':'CHPT/SBE2021-02-22, SENS2022-01-20, TSLA2025-02-20, SMCI2025-03-26 fixedbeforefetch. Eachhas37priorsessions; DSTend andearlycloseprefix dates checked against boundcalendar. CHPT/SBElineagecandidates remainseparate.',
+ 'reuse':'SelectedSMCIrawdaily/actions inoriginal13objects andTSLArawdaily/actionrecords inold47bridge are present/targeted. No newTSLA/SMCIdaily orCA request. Paginateddailyraw botholdpages remainbound; fullentity doesnotmeanunpaginatedobject.',
+ 'bounded_transport':'Originalacceptedcollect/bounded_get reused with2MiB/page,max1daily/CApage and4pages/minuteobject. Inertnormal7call,fullpagination19call,403stopafter1 andincompleteentitystopafter1 retainreservedbytes; no realHTTP/client/credentialsinitialized.',
+ 'science_not_reopened':'Approveda45/1aae science and sixteen trajectories retained. PDLactualRTHrange andother4implementationwatchpoints remainforinput/implementationacceptance.'},
+ required_corrections=[dict(id='E1',scope='same_semantics_binding_only',finding='check_entry comparesreviewedplan.path absolute string againstmanifestscientific_plan.path relative string; actualfile andSHAare identical butpositiveguard asserts beforeHTTP.',evidence=v['entry_blocker'],required='Preserveoldcode/manifest/thisreceipt. Normalizeboth paths underrepository andcompare resolvedcontainedfileidentity plus exactSHA, retaining author/reviewer,signaturehash,all11entrybindings andnative guards; alternatively useoneconsistentpathrepresentation inmanifestwithoutchangingplanbytes. Freeze updatedcode/entrymanifest andreturnonlythisdiff foracceptance. Demonstratepositiveguard plusbadplan/badallocation/consumedledger rejection with inertinputs; no realcredentialsorHTTP beforeacceptedreceipt.',not_required='No science/source/date/candidate/budget changes ornewRoot decision; do notoverwritea45scientificreview tofixliteralpath representation.')],
+ allocation_accounting=dict(original_request_cap=96,original_entity_cap=134217728,actual_used_requests=63,actual_used_entity_bytes=44065545,new_reserved_requests=19,new_reserved_entity_bytes=39845888,worstcase_total_requests=82,worstcase_total_entity_bytes=83911433,unreserved_requests=14,unreserved_entity_bytes=50306295,actual_new_requests=0,actual_new_bytes=0,oldconsumption_notreset=True,same_reservation_not_counted_twice_on_repair=True,unusedslots_not_reassigned_toothercases=True),
+ continuation='Originalowner correctsE1 andreturnscompleteordinaryentrydiff directly. Onceaccepted, executeexactcaseintakecontinuouslyunderfreshsingleCPU/cap, retainpartialtokens/errors/unknownbytes, thenactualinputacceptance/minimalimplementation/native/economicadmission. Thisisnotready-onlyterminalnorRootmaterialblocker.',
+ input_ready=False,implementation_ready=False,native_ready=False,new_economic_CPU_allocated=0,research_pass=False,paper_ready_pass=False,
+ resource=dict(pool='Originalcomparison1000',prior_used_CPU=283.01,inclusive_actual_CPU=actual,smallread_setup_seal_handoff_unknown_CPU=3,total_charge_CPU=charge,cumulative_CPU=used,remaining_CPU=round(1000-used,2),fresh_memory_MiB=400,CPU_affinity=[0],RSS_KiB=35792,exit=0,inner1_36862_notaddedtwice=True,initialwrong_path_smallread_coveredbyunknown=True,author_HFpools_notused=True),
+ verification=bind(P/'independent-entry-verification.json'),verification_code=bind(P/'independent_verify_case_entry.py'),resource_receipt=bind(P/'independent-entry-resource.txt'),no_Root_intermediate_message=True)
+out=P/'independent-entry-acceptance.json';assert not out.exists();out.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n')
+print(json.dumps(dict(receipt=bind(out),charge_CPU=charge,comparison_cumulative=used,comparison_remaining=round(1000-used,2))))

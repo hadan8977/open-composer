@@ -72,12 +72,16 @@ def optimize_strategy_horizons(
     rejections: list[HorizonRejection] = []
     selected_paths: list[Path] = []
     selected_feed = feed or data_feed()
+    admitted_candidates = {}
+    for symbol in universe:
+        variants = _horizon_candidate_specs(source, symbol, universe, data_source, selected_feed)
+        for candidate in variants:
+            require_iteration_execution_gate(candidate, base, enforce_unbound_design=True)
+        admitted_candidates[symbol] = variants
 
     for symbol in universe:
         scored: list[HorizonSelection] = []
-        for candidate in _horizon_candidate_specs(
-            source, symbol, universe, data_source, selected_feed
-        ):
+        for candidate in admitted_candidates[symbol]:
             frame = fetch_ohlcv(
                 root=base,
                 symbol=symbol,

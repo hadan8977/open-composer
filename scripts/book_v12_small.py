@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import resource
 import sys
 import time
 from pathlib import Path
@@ -414,6 +415,36 @@ class SmallSim(acc.AccountSim):
 # ---------------------------------------------------------------------------
 # config table
 # ---------------------------------------------------------------------------
+REF_PREFIXES = ("FULL_", "ORIG_", "I2_", "I2b_")
+
+
+def hedge_weight(df: pd.DataFrame, capital: float) -> pd.Series:
+    """SPY hedge weight = held SPY value / capital, from spy_pnl = qty_spy * spy_now * spy_ret."""
+    ret = df["spy_ret"].astype(float)
+    return (df["spy_pnl"].astype(float) / ret.where(ret != 0.0)) / capital
+
+
+def i2b_diagnostic(data: dict[str, pd.DataFrame]) -> dict:
+    """A2.1: I2b (R1, K=None, 1e6, whole shares, direct rehedge) against I1 (ORIG); reported only."""
+    out: dict = {}
+    for f in ("F1", "F2"):
+        a, b = data[f"ORIG_{f}"], data[f"I2b_{f}"]
+        if not a.index.equals(b.index):
+            out[f] = {"error": "index mismatch"}
+            continue
+        ra, rb = a["net_pnl"] / bv.EQUITY, b["net_pnl"] / bv.EQUITY
+        wa, wb = hedge_weight(a, bv.EQUITY), hedge_weight(b, bv.EQUITY)
+        dw = (wa - wb).abs().dropna()
+        out[f] = {
+            "max_abs_daily_return_diff": float((ra - rb).abs().max()),
+            "mean_abs_hedge_weight_diff": float(dw.mean()) if len(dw) else float("nan"),
+            "max_abs_hedge_weight_diff": float(dw.max()) if len(dw) else float("nan"),
+            "n_rows": int(len(a)),
+            "gate": False,
+        }
+    return out
+
+
 def config_table() -> dict[str, dict]:
     cfg: dict[str, dict] = {}
     for f in ("F1", "F2"):
@@ -429,6 +460,17 @@ def config_table() -> dict[str, dict]:
             long_fractional=False,
             min_notional_whole=100.0,
             rehedge=False,
+            group="G_REF",
+        )
+        # A2 diagnostic I2b: as I2 but with the direct-form rehedge (reported, never a gate)
+        cfg[f"I2b_{f}"] = dict(
+            form=f,
+            method="R1",
+            k=None,
+            capital=1e6,
+            long_fractional=False,
+            min_notional_whole=100.0,
+            rehedge=True,
             group="G_REF",
         )
     for f in ("F1", "F2"):
@@ -546,7 +588,7 @@ def run_pass(
         n_done += 1
         if timing or n_done % 100 == 0:
             print(
-                f"session {n_done} p={p} decision_inputs {t_di / n_done:.2f}s/sess sims {t_sim / n_done:.2f}s/sess total {(time.time() - t0) / n_done:.2f}s/sess configs={len(sims)}",
+                f"session {n_done} p={p} maxrss_mb={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024} decision_inputs {t_di / n_done:.2f}s/sess sims {t_sim / n_done:.2f}s/sess total {(time.time() - t0) / n_done:.2f}s/sess configs={len(sims)}",
                 flush=True,
             )
     frames = {c: sim.frame() for c, sim in sims.items()}
@@ -902,7 +944,7 @@ def evaluate_partial(table: dict[str, dict]) -> None:
     for c in have:
         spec = table[c]
         f = spec["form"]
-        is_ref = c.startswith(("FULL_", "ORIG_", "I2_"))
+        is_ref = c.startswith(REF_PREFIXES)
         full = None if is_ref or f"FULL_{f}" not in data else data[f"FULL_{f}"]
         m = config_metrics(data[c], f, bv.EQUITY if is_ref else spec["capital"], full)
         m["spec"] = {k: v for k, v in spec.items() if k != "parent"}
@@ -932,6 +974,9 @@ def evaluate(partial: bool = False) -> None:
         and all(v <= IDENTITY_TOL for v in full_ident["I2"].values())
     )
     full_ident["pass"] = bool(id_ok)
+    i2b = i2b_diagnostic(data)
+    ident["I2b"] = i2b
+    (OUT_REPORT / "identity.json").write_text(json.dumps(ident, indent=1, default=float))
     (OUT_REPORT / "identity-full.json").write_text(
         json.dumps({"quick": ident["pass"], **full_ident}, indent=1, default=float)
     )
@@ -953,13 +998,13 @@ def evaluate(partial: bool = False) -> None:
             "sharpe_full_a1": window_stats(a1d, f, bv.EQUITY, "full")["sharpe_excess"],
         }
     res: dict = {
-        "identity": {"quick": ident, "full": full_ident},
+        "identity": {"quick": ident, "full": full_ident, "I2b": i2b},
         "full_vs_a1_drift": drift,
         "configs": {},
     }
     for c, spec in table.items():
         f = spec["form"]
-        if c.startswith(("FULL_", "ORIG_", "I2_")):
+        if c.startswith(REF_PREFIXES):
             cap = bv.EQUITY
         else:
             cap = spec["capital"]
@@ -967,7 +1012,7 @@ def evaluate(partial: bool = False) -> None:
             data[c],
             f,
             cap,
-            data[f"FULL_{f}"] if not c.startswith(("FULL_", "ORIG_", "I2_")) else None,
+            data[f"FULL_{f}"] if not c.startswith(REF_PREFIXES) else None,
         )
         m["spec"] = {k: v for k, v in spec.items() if k not in ("parent",)}
         res["configs"][c] = m

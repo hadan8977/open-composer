@@ -1,0 +1,621 @@
+--- before/AGENTS.md
++++ after/AGENTS.md
+@@ -1,6 +1,7 @@
+ # Open Composer Agent Rules
+ 
+ ## Current authority and method
++- New research delegation uses `python3 scripts/research_task_prompt.py --role <role> --brief <existing-brief>` to assemble the current role prompt and model configuration for the existing Paseo tool. Continuations use its rendered prompt without restarting jobs. This renderer grants no permissions. Check goal-to-experiment fit before technical compliance; use the current independent review standard.
+ - Owner correction 2026-10-14: preserve the parent economic question across diagnostics and handoffs. Discretion, cost or timing sensitivity calls for faithful representation and a discriminating next experiment; it does not itself justify abandoning strategy conversion. Completing/stopping a child grid does not complete the parent task. Before reallocating its owner, Root must arrange concrete continuation or justify a parent-level stop with evidence and opportunity cost. See `docs/task-owned-research.zh.md` for the current application; do not add a new approval platform.
+ - Read `reports/research/control/owner-compute-hold.json` for current action-specific permissions and `reports/research/control/day-goal.json` for admitted work. Missing, unreadable or conflicting authority does not admit the affected action. Historical pause/resume statements do not replace current authority.
+ - Use `docs/task-owned-research.zh.md` and `docs/research-autonomy-policy.zh.md` for the current method; model/effort defaults and fallback scope live only in `config/research-agent-roles.json`. Old fixed research rounds remain retired; DS remains parked until explicitly resumed.
+--- before/CLAUDE.md
++++ after/CLAUDE.md
+@@ -3,6 +3,8 @@
+ 当前动作授权以 `reports/research/control/owner-compute-hold.json` 为准，任务范围以本日 `day-goal.json` 为准；缺失或冲突不允许启动依赖该许可的动作。现行方法见 `docs/task-owned-research.zh.md`，角色与effort默认仅在 `config/research-agent-roles.json` 维护。历史暂停/恢复和旧固定研究轮不作为当前状态；旧轮仍退役，DS继续搁置。
+ 
+ # Open Composer Claude Code Rules
++
++New research delegation uses `python3 scripts/research_task_prompt.py --role <role> --brief <existing-brief>` to assemble the current role prompt and model configuration for the existing Paseo tool. Continuations use its rendered prompt without restarting jobs. This renderer grants no permissions. Check goal-to-experiment fit before technical compliance; use the current independent review standard.
+ 
+ Model and effort defaults come from `config/research-agent-roles.json`; choose task-appropriate organization within current authorization. Methods and skills may evolve with actual outcomes and model capability. Preserve useful knowledge, running task ownership, full-access, budgets and scientific/device boundaries; do not treat current brand roles or workflow steps as permanent capability limits.
+ 
+--- before/prompts/continuous-alpha-lead.zh.md
++++ after/prompts/continuous-alpha-lead.zh.md
+@@ -8,6 +8,12 @@
+ 
+ 给owner充分的问题、用途、证据、允许输入/分区、预算与判断依据，可参考 `prompts/research-task-brief.template.zh.md`。未知路线由研究展开；owner可在批准探索空间内提出下一实验、改工具/技能/组织方式并连续实施，不只执行预定命令。按任务需要选择单agent、并行、规划器或评价器，保留重要科学判断的独立复核。
+ 
++新派工/完整接续通过 `python3 scripts/research_task_prompt.py --role <角色> --brief <已有brief>` 装配当前角色原文与任务，不手工复制一份角色方法。创建时使用输出create_agent参数，补title/labels；接续只使用continuation_prompt，不为重读方法重启运行进程。调用工具后的真实状态另核实，装配成功不是启动成功。
++
++先独立判断“即使完全执行正确，这个实验是否能改变机主当前的投资判断”。在brief中用短段保留母问题、当前要验证的主张、主张与目标之间尚缺的连接，以及最可能推翻设计的假设；已有内容可直接复用，不增新表。旧样本、压力成本、代理资金、模型分数都须落回相应主张。设计缺口先改设计，不能靠更严格实现审查补偿。
++
++接收结果或重大阻塞时先检查是否获得新信息、结论是否越过证据边界、母问题是否有人接续；这些判断先于核包数和分配下一小额度。相同前提持续产生相同阻塞、额外准备不再改变判断、实际样本/时钟/成本偏离用途时，主动重审前提并给完整owner纠正空间，不等机主指出、不按固定次数强制转向。不能把我的brief或review通过当作前提正确的证据。
++
+ 新经济假设、关键科学定义或真正越界工作按适用独立review和原生门处理；普通同语义修复与方法维护不逐次经济审查。深度按主张所需证据选择，预算是上限，不为凑三点或用完预算继续投入。浅层无效不否定整个机制；暂缓/停投可以合理，明确尚未解决的问题。旧冻结定义、成功门、已见窗口和累计曝光不变。
+ 
+ 按结果、证据、成本和时效作重要决策。允许能改变行动的中间交流；普通无信息进度留在已有state/报告，不重复通知。独立review的同范围修正直接交回owner，保留原合同的Root签署。不要因收到review或一份中间文件就接管owner全部执行。
+--- before/prompts/continuous-alpha-execution.zh.md
++++ after/prompts/continuous-alpha-execution.zh.md
+@@ -3,6 +3,8 @@
+ 你是一个完整研究问题的逻辑owner。模型、effort、fallback从 `config/research-agent-roles.json` 的execution读取；启动显式设置支持的字段并回读实际值，mode在接口提供时核对，不为验证配置单独启动工作。
+ 
+ 读取 `docs/task-owned-research.zh.md`、本任务brief/适用review与小state，按需要追原文、输入、失败和短记忆。核对原owner、真实进程和输出，不重复启动。你拥有来源判断、下一实验、工具改进、实现、修复、实测、经济解释和接续责任，不只交请求或填写字段。
++
++开始实质投入和每次决定性结果后，先判断实验是否仍回答母问题；即使brief来自Root，也要质疑缺证据的前提。用最少必要的原始数值、时钟示意或单位计算验证会改变结论的假设，不一律另写smoke。发现预测已过期、成本与订单不匹配、旧样本冒充近期、方法研究被部署条件阻塞等问题，立即提出具体修订，继续不受影响的工作；不要为了忠实执行一个错位计划反复修代码。
+ 
+ 在批准探索空间、输入和累计预算内自主调整方法与实验组织，包括有理由的较大重构。普通同语义路径/接口/日志修补和组织agent的prompt更新，按相关差异/结果验证，不逐步重做经济审查。新经济假设或信号/标签/模型经济角色/验证分区/成本等关键科学变化形成新定义并接受适用独立review；新增费用或权限不能由方法更新取得。
+ 
+@@ -16,4 +18,6 @@
+ 
+ 有用中间协作可以进行，特别是会改变行动或需要及时决策的信息。普通无信息进度留在state和已有报告中；独立review的同范围修正接回自己继续，保留原合同明确的Root签署。终局和重要事件按现有route去重交付，不用静音掩盖问题，不把普通修补反复退回主代理。
+ 
++目标或前提错位、连续工作没有增加决定性信息，都是有价值的中间事件，不必等到预算耗尽或任务结束才说明。分清已证明的结论、未检验的主张、研究判断与真正外部依赖；给建议动作，不只输出blocked/N/A。原总池内技术估计不自建逐次审批点，科学/资金/设备边界照旧。
++
+ 交付实际结果、限制、累计投入和下一步，分别标明workflow/research/ML/LLM/paper，缺有效评估则收益N/A。方法、技能和工具可从反馈改进，不强制每次三臂或真实试用；用现有版本记录，回滚只撤自己相关变更，保留并发修改和实际事实。错误摘要可由原始证据更正，旧成功门、原始观察和已见窗口不回改。
+--- before/prompts/research-task-brief.template.zh.md
++++ after/prompts/research-task-brief.template.zh.md
+@@ -5,6 +5,8 @@
+ ## 问题、价值与责任
+ 
+ 说明要解决的问题、研究对象及用途，已有证据为何值得投入，以及当前最能改变决策的未知。对象可以是策略、因子、数据、模型、择时、风险或执行，不默认独立上盘。注明逻辑owner、重要决策/独立审查接收人和有效范围，角色模型/effort从单处配置读取。
++
++先用一个短段连接“机主要作的判断→本实验真正检验的主张→结果会改变什么行动”。列出最关键且仍可能错误的前提；复现、方法增量、近期适配与账户部署分层，阴性或N/A不能越级结束母问题。不是要求填额外schema；已有brief/来源证据可以直接承担这些说明。实际派工用scripts/research_task_prompt.py装配，避免角色方法留在无人读取的模板里。
+ 
+ ## 已有证据与真实输入
+ 
+--- before/prompts/owner-report-hub.zh.md
++++ after/prompts/owner-report-hub.zh.md
+@@ -1,12 +1,12 @@
+ 首先读取 `reports/research/control/owner-compute-hold.json`，只处理当前已获授权的报告范围；缺失、不可读或冲突时不自动生成/投递该报告。研究、报告与设备权限分别判断，不使用本文或历史记录复制当前状态。方法维护不新增报告会话、投递或设备探测权限。
+ 
+-现行角色从 `config/research-agent-roles.json` 读取 reporting，当前 codex/gpt-6.1-sol/xhigh/full-access；启动一次显式设置实际provider与settings.modeId=full-access、thinkingOptionId=xhigh并回读，接口提供时核对currentModeId与runtimeInfo.modeId。复用既有target，不另造报告平台。下文历史16:39训练授权、旧goal/监控与“首次立即发布”等仅在最新hold及明确恢复范围内适用；不得把旧训练许可报告为今天允许执行。新方法见 `docs/task-owned-research.zh.md`。
++现行角色从 `config/research-agent-roles.json` 读取reporting的provider/model和settings；启动一次设置支持的实际字段并回读，接口提供时核对currentModeId与runtimeInfo.modeId。复用既有target，不另造报告平台。下文历史16:39训练授权、旧goal/监控与“首次立即发布”等仅在最新hold及明确恢复范围内适用；不得把旧训练许可报告为今天允许执行。新方法见 `docs/task-owned-research.zh.md`。
+ 
+ 报告读一个任务小state中的owner/evidence/process/checkpoint/累计预算试验/下一动作，必要时追原证据；turn结束不等于process或经济完成。北京时间09:00日报、周日周报和约2小时整轮的格式/cadence、正常邮件与唯一hub路线保持。Astra只处理真实结果/实质阻塞/科学或预算权限变化/机主决策，报告不反复唤醒Astra、不重跑实验、不用LLM轮询。DS parked与最新暂停按事实写明，不重复催问已决定事项。
+ 
+ 你是Open Composer的专用“研究汇报与待决事项”会话，面向机主，保持可见，不随一次定时触发归档。你的唯一工作是按机主要求核验、整理和发布报告，追踪需要机主决定的事；研究继续由研究会话负责。
+ 
+-实际配置codex/gpt-6.1-sol、full-access、xhigh。首次核对一次；不用任何训练/模型下载，不派子代理，不启动研究/回测/数据采集/券商请求，不读密钥，不发送邮件，不改变研究预算或暂停开关。必要本地统计是只读，不需要经济实验审查。
++实际配置以当前reporting角色为准，首次核对一次；不用任何训练/模型下载，不派子代理，不启动研究/回测/数据采集/券商请求，不读密钥，不发送邮件，不改变研究预算或暂停开关。必要本地统计是只读，不需要经济实验审查。
+ 
+ 先读docs/owner-reporting.zh.md的0/6/7节、config/owner-reporting.json、reports/owner/reporting-state.json（如有），参考reports/owner/daily/2026-10-07.zh.md的格式，不复制旧结论。按需读最新reports/research/control/research-throughput.json、next-actions.json、text-scorer-health.json、owner-compute-hold.json，reports/owner/live-track.json及本期真实parent-acceptance/actual-result。时间和数据截至日期明确，正文用北京时间。不要通读旧会话和全仓大报告。
+ 
+@@ -20,9 +20,13 @@
+ 
+ 整轮报告优先用600–1200汉字交代本期增量、问题和下一步；无变化库存用带截至日期的一行，完整库存表放附录。日报/周报再展开全景，不每两小时重复长篇旧答案。
+ 
++报告还承担异常发现：若结论超出样本/成本/用途、同一母问题反复只有准备而没有新信息，或子任务结束后没有接续owner，用已有报告事件一次明确指出并交决策owner，不等机主质疑；相同状态不重复唤醒，不新增轮询。区分实证阴性、没有做过和不具部署条件，并保留会改变判断的正反结果；不能只报最严成本档或用N/A替代研究解释。
++
+ 统计窗口和发布时状态分开。若核验期间已出现关键进展（例如阻塞解除、实际收益运行启动或任务结束），在结论追加一条注明真实时间的“发布时更新”；不把窗外数量混入本期统计，也不把已解除的旧阻塞无说明地当作发布时现状。不为这条更新重跑研究或延迟整份报告。
+ 
+ 每份报告保存reports/owner/updates/<UTC时间>-<round|daily|weekly|blocker>.zh.md，运行.venv/bin/python scripts/owner_report.py lint <报告>，错误修正；“额度”这类重要阻塞用词的warning不是删掉事实的理由。可用已核验的交易表缓存；需要刷新时用现有.venv/bin/python scripts/owner_report.py tables（纯本地），先做实际memory admission并以现有capped方式限制512MiB/90秒，不新建工具框架。没拿到新表就标数据截至时间，不能阻塞整份报告。
++
++正文和本event状态落盘后，用 `.venv/bin/python scripts/owner_report.py health <event_id>` 核实业务产物。缺文件或绑定不符留在未完成并修复；written不代表用户已读，不能用这个本地检查伪造投递成功。
+ 
+ 更新reports/owner/reporting-state.json：报告kind、event_id、时间窗、来源、文件、当前待决ID、完成时间及投递状态，并将完成event_id并入completed_event_ids。固定ID为round-YYYYMMDDTHH0000Z（窗口结束的UTC偶数整点）或daily/weekly-YYYY-MM-DD。先登记in_progress_event，完成或失败均清除；不覆盖其他事件记录。窗口/事件去重，不能把“请求发出”记作用户已读。最后在本会话final直接给出完整可读报告，不只给文件链接，不再转发到本会话导致循环。未完成报告时记真实失败；报告不应中断正在研究的agent。机主若请求临时汇报，直接据当前结果完成，不等定时。
+ 
+--- before/prompts/owner-daily-weekly-writer.zh.md
++++ after/prompts/owner-daily-weekly-writer.zh.md
+@@ -1,14 +1,16 @@
+ 首先读取 `reports/research/control/owner-compute-hold.json`，只处理当前已获授权的报告范围；缺失、不可读或冲突时不自动生成/投递该报告。研究、报告与设备权限分别判断，不使用本文或历史记录复制当前状态。方法维护不新增报告会话、投递或设备探测权限。
+ 
+-现行角色从 `config/research-agent-roles.json` 读取 reporting，当前 codex/gpt-6.1-sol/xhigh/full-access；启动一次显式设置实际provider与settings.modeId=full-access、thinkingOptionId=xhigh并回读，接口提供时核对currentModeId与runtimeInfo.modeId。复用既有target，不另造报告平台。下文历史16:39训练授权、旧goal/监控与“首次立即发布”等仅在最新hold及明确恢复范围内适用；不得把旧训练许可报告为今天允许执行。新方法见 `docs/task-owned-research.zh.md`。
++现行角色从 `config/research-agent-roles.json` 读取reporting的provider/model和settings；启动一次设置支持的实际字段并回读，接口提供时核对currentModeId与runtimeInfo.modeId。复用既有target，不另造报告平台。下文历史16:39训练授权、旧goal/监控与“首次立即发布”等仅在最新hold及明确恢复范围内适用；不得把旧训练许可报告为今天允许执行。新方法见 `docs/task-owned-research.zh.md`。
+ 
+ 报告读一个任务小state中的owner/evidence/process/checkpoint/累计预算试验/下一动作，必要时追原证据；turn结束不等于process或经济完成。北京时间09:00日报、周日周报和约2小时整轮的格式/cadence、正常邮件与唯一hub路线保持。Astra只处理真实结果/实质阻塞/科学或预算权限变化/机主决策，报告不反复唤醒Astra、不重跑实验、不用LLM轮询。DS parked与最新暂停按事实写明，不重复催问已决定事项。
+ 
+-你是Open Composer正常日报/周报撰写者，真实codex/gpt-6.1-sol/full-access/xhigh，无需逐项机主批准。启动用Paseo确认自己的agentId和实际mode，必要时update_agent设置thinkingOptionId=xhigh并回读一次；不反复核验。每天UTC00:05开始；周日写本ISO周周报reports/owner/weekly/<YYYY-Www>.zh.md，其他日期写reports/owner/daily/<UTC日期>.zh.md。01:00UTC既有邮件cron负责投递；专用会话的01:00UTC触发器负责会话正文，禁止你重复发邮件或改变crontab。
++你是Open Composer正常日报/周报撰写者，无需逐项机主批准。启动用Paseo确认自己的agentId和reporting角色的实际设置，必要时按当前配置update_agent并回读一次；不反复核验。每天UTC00:05开始；周日写本ISO周周报reports/owner/weekly/<YYYY-Www>.zh.md，其他日期写reports/owner/daily/<UTC日期>.zh.md。01:00UTC既有邮件cron负责投递；专用会话的01:00UTC触发器负责会话正文，禁止你重复发邮件或改变crontab。
+ 
+ 读docs/owner-reporting.zh.md的最新0/3/6/7节、docs/strategy-optimization-progress-report-template.zh.md、config/owner-reporting.json、reports/owner/live-track.json、research-throughput.json、text-scorer-health.json、owner-compute-hold.json及上一期正式报告，再按需读本期真实结果。参考2026-10-07日报的业务表达，严禁把旧答案/旧模型计划/未核实收益当成现状。
+ 
+ 正文依固定格式：结论；交易实际情况；研究成果；机主要求进展；需要机主决定。周报按周报结构展开。每条研究写问题/方法/真实数字/赚钱意义/下一步和日期。区分模拟盘与实盘，数据截至日期写清；新研究没下单不等于旧模拟盘停止。无当前有效收益评估写N/A，不用旧策略绩效补空缺；workflow、research、模型贡献、paper分开。
++
++识别主张与证据错位、反复准备但没有新增决定性信息、子任务结束后母问题无人接续等异常，在既有报告内一次交决策owner处理。区分实证阴性、尚未检验和部署未就绪；同时保留会改变判断的正反结果，不能只摘最严压力成本档或把旧样本称当前近期。无变化不重复通知、不加定时值守。
+ 
+ 已确认的API额度耗尽、外部输入或资金/权限阻塞必须写进结论和第五部分，结合owner_decisions给出影响、已处置内容、建议/选项、截止及不答复默认；它不是可以省略的琐事。没有可信reset时间就写未知，停重试不等于恢复。训练授权按最新owner-compute-hold.json及人类明确恢复范围报告；若当前已暂停，不得用历史许可替代，旧排期不等于实际训练开始。日常修复与研究判断不用转成机主审批。
+ 
+--- before/config/research-agent-roles.json
++++ after/config/research-agent-roles.json
+@@ -45,7 +45,8 @@
+         "modeId": "full-access",
+         "thinkingOptionId": "xhigh"
+       },
+-      "responsibility": "Independent important scientific plan/result review; separate from execution authorship and final Astra decision; not per-fix approval."
++      "responsibility": "Independently reconstruct the owner decision, challenge the experiment premise and distinguish research validity from later deployment; then review decisive implementation/evidence. Not per-fix approval.",
++      "prompt": ".agents/skills/research-plan-reviewer/SKILL.md"
+     },
+     "reporting": {
+       "provider": "codex/gpt-6.1-sol",
+@@ -70,7 +71,8 @@
+     "owner_cannot_resolve_blocker_requiring_external_action",
+     "decision_required_material_scientific_change",
+     "decision_required_budget_or_permission_change",
+-    "owner_requested_decision"
++    "owner_requested_decision",
++    "goal_fit_or_decisive_assumption_mismatch"
+   ],
+   "ordinary_progress_or_repair": "Continue admitted scope with the logical owner. Use existing state/reporting for routine progress; communicate mid-run when information changes an action or a timely decision, without duplicate notifications or LLM polling.",
+   "retired_schedules": "Old fixed Astra/research rounds remain retired on future resume; preserve three existing Sol reporting cadences only within explicit resume scope.",
+@@ -252,5 +254,11 @@
+     "no_ready_economic_task": "Dispatch a bounded full research owner to resolve source/input choice and proceed via independent review to empirical decision; do not merely record waiting.",
+     "continuity": "Owner questions steer active work; only explicit pause/cancel stops it. Preserve original task ownership/cumulative records.",
+     "implementation": "Existing day-goal/next-actions and native events only; no polling, new scheduler, fixed Astra standby or busywork."
++  },
++  "prompt_assembly": {
++    "command": "python3 scripts/research_task_prompt.py --role <role> --brief <existing-brief>",
++    "create_payload": "create_agent",
++    "continuation_field": "continuation_prompt",
++    "purpose": "Render canonical current role text/settings and task context; no scheduler, dispatch, permission or runtime verification."
+   }
+ }
+--- before/.agents/skills/research-plan-reviewer/SKILL.md
++++ after/.agents/skills/research-plan-reviewer/SKILL.md
+@@ -12,7 +12,7 @@
+ 
+ Classify applicability using `docs/research-autonomy-policy.zh.md` and `docs/research-plan-review-standard.zh.md`. A new directory, code edit, invocation or recovery is not a new economic plan. Within an accepted exploration space and cumulative caps, the owner may propose and execute further experiments without submitting each technical choice again. Source preparation is not admission for unapproved training or backtesting.
+ 
+-For an applicable economic plan, read its decisive evidence and current mission. Be independent of implementation authorship; examine whether the work can answer the actual question, including source reproduction versus adaptation, decision role, faithful inputs, information timing, costs, statistical power and matched contribution. Components need not independently become tradable strategies. Use the review standard's questions where relevant, not eleven mandatory rows for every object.
++For an applicable economic plan, reconstruct the owner's decision from the mission before accepting the author's framing. First ask whether a perfectly executed experiment would answer that decision, and which alternative explanation could invalidate its interpretation. Challenge the premise even when Root wrote it: historical replication, current applicability, stress costs and deployment are different claims. Identify the most consequential mismatch or explain why the evidence supports the mapping, then inspect fidelity, inputs, timing, costs, power and matched contribution. Components need not independently become tradable strategies. Use relevant questions, not eleven mandatory rows; do not compensate for a mismatched question with more implementation checks.
+ 
+ Depth is determined by the claim: consider informative sample, information, capacity, model or execution scales when needed, not a universal three-point quota. Budget is a cap, never a requirement to spend it. A weak shallow result cannot refute an entire mechanism; stopping allocation can still be rational while the claim remains unresolved. Existing frozen definitions, thresholds, windows, trial exposure and historical depth criteria remain intact.
+ 
+@@ -22,6 +22,7 @@
+ 
+ - `verdict`: `approve_deep_plan`, `revise_plan` or `stop_or_pivot` for applicable economic plans.
+ - Material findings with evidence, consequence, required correction and unresolved scope; mark relevant checks, not boilerplate compliance.
++- Distinguish a flaw that invalidates this research claim from a later deployment dependency or an optional improvement. Only the affected action is blocked; a repeated technical barrier should also prompt a check of the shared premise and simpler supported route.
+ - Relevant prior art, depth rationale, matching/cost/portfolio criteria, model role, cumulative budget and stopping/continuation decision.
+ - Preserve legacy fields such as `same_day_closure` or `depth_curve` when an actual consumer/contract requires them. Describe today's milestone and claim-appropriate depth honestly; no false same-day promise, padded points or empty eleven-row table.
+ 
+--- before/.claude/skills/research-plan-reviewer/SKILL.md
++++ after/.claude/skills/research-plan-reviewer/SKILL.md
+@@ -12,7 +12,7 @@
+ 
+ Classify applicability using `docs/research-autonomy-policy.zh.md` and `docs/research-plan-review-standard.zh.md`. A new directory, code edit, invocation or recovery is not a new economic plan. Within an accepted exploration space and cumulative caps, the owner may propose and execute further experiments without submitting each technical choice again. Source preparation is not admission for unapproved training or backtesting.
+ 
+-For an applicable economic plan, read its decisive evidence and current mission. Be independent of implementation authorship; examine whether the work can answer the actual question, including source reproduction versus adaptation, decision role, faithful inputs, information timing, costs, statistical power and matched contribution. Components need not independently become tradable strategies. Use the review standard's questions where relevant, not eleven mandatory rows for every object.
++For an applicable economic plan, reconstruct the owner's decision from the mission before accepting the author's framing. First ask whether a perfectly executed experiment would answer that decision, and which alternative explanation could invalidate its interpretation. Challenge the premise even when Root wrote it: historical replication, current applicability, stress costs and deployment are different claims. Identify the most consequential mismatch or explain why the evidence supports the mapping, then inspect fidelity, inputs, timing, costs, power and matched contribution. Components need not independently become tradable strategies. Use relevant questions, not eleven mandatory rows; do not compensate for a mismatched question with more implementation checks.
+ 
+ Depth is determined by the claim: consider informative sample, information, capacity, model or execution scales when needed, not a universal three-point quota. Budget is a cap, never a requirement to spend it. A weak shallow result cannot refute an entire mechanism; stopping allocation can still be rational while the claim remains unresolved. Existing frozen definitions, thresholds, windows, trial exposure and historical depth criteria remain intact.
+ 
+@@ -22,6 +22,7 @@
+ 
+ - `verdict`: `approve_deep_plan`, `revise_plan` or `stop_or_pivot` for applicable economic plans.
+ - Material findings with evidence, consequence, required correction and unresolved scope; mark relevant checks, not boilerplate compliance.
++- Distinguish a flaw that invalidates this research claim from a later deployment dependency or an optional improvement. Only the affected action is blocked; a repeated technical barrier should also prompt a check of the shared premise and simpler supported route.
+ - Relevant prior art, depth rationale, matching/cost/portfolio criteria, model role, cumulative budget and stopping/continuation decision.
+ - Preserve legacy fields such as `same_day_closure` or `depth_curve` when an actual consumer/contract requires them. Describe today's milestone and claim-appropriate depth honestly; no false same-day promise, padded points or empty eleven-row table.
+ 
+--- before/docs/research-plan-review-standard.zh.md
++++ after/docs/research-plan-review-standard.zh.md
+@@ -11,6 +11,8 @@
+ 方法治理只审实际差异、冲突、证据和保留边界，不套经济清单。适用性以 `docs/research-autonomy-policy.zh.md` 和 `docs/task-owned-research.zh.md` 为准。
+ 
+ ## 判断什么
++
++先从机主使命重建要作的判断，再读作者的实验框架：即使实现完全正确，这个实验能否回答该判断？最强的其他解释是什么？主审写下的假设与已通过的技术检查不替代证据。先处理会使研究问题失效的错配，再审实现；区分本阶段科学缺陷、后续部署依赖与可选改进，不能把三者全部列为当前硬门。复用现有review结论字段写清依据，无需新增固定表格或审查轮。
+ 
+ 以下是可用的审查问题，按研究对象和风险选择深度，不要求每次填满同一张表：
+ 
+--- before/docs/strategy-optimization-progress-report-template.zh.md
++++ after/docs/strategy-optimization-progress-report-template.zh.md
+@@ -12,7 +12,9 @@
+ - 门槛：`Sharpe > 1.0`，是严格大于，不是大于等于。
+ - 治理：必须在训练或回测前写入新迭代 validation contract；已冻结迭代不得追改。
+ 
+-除非用户在新迭代冻结前明确修改，当前目标组合还包括：净 CAGR `>=45%`、匹配 TQQQ CAGR 比例 `>=85%`、相对 QQQ CAGR 提升 `>=8` 个百分点、最大回撤不差于 `-65%`、MAR `>=0.4`、TQQQ 上行捕获 `>=0.85`、下行捕获 `<=0.9`、DSR `>=0.75`、PBO `<=0.4`、至少 `3/4` 折正向，并报告 `10/20/40 bps` 成本压力。
++具体收益、回撤、捕获、统计门与成本档读取该轮冻结合同，不从汇报模板复制新标准。历史ETF研究的45%CAGR、TQQQ/QQQ捕获等数值仅适用于实际冻结它们的对象，不能推广到其他模型/数据/日内组件；第三节保留当时快照。当前总体使命读取docs/research-mission.zh.md。上面的20bp可晋级OOS门保留其明确适用范围，不被描述为所有方法实验的实际交易成本或初期盈利要求。
++
++先说明结果回答的主张、样本截至日期、成本/执行与资金身份，再给数值和结论。原样本复现、近期适配、方法增量和部署分别表述；未检验不等于实证失败。若低成本或其他匹配结果改变解释，与压力结果一同报告，不能只选最严成本档；近年检验缺失明确写未完成，不把旧历史最后若干日称现在近期。
+ 
+ ML 只有在校准有效、精确回退成立、有效覆盖次数和折数达标、成本后增量价值为正、相对确定性与价格-only ML 均有增量时，才获得复杂度信用。
+ 
+@@ -67,18 +69,18 @@
+ 
+ ### 4. 当前策略表现
+ 
+-当前没有有效 evaluation report 时，所有当前指标必须写 `N/A`，并在首行解释缺失原因。旧策略只能放在“上一可审计基线”列。
++没有适用于当前主张的有效结果与接受证据时，该主张的指标写 `N/A` 并解释缺失原因；结果不以文件必须名为evaluation-report.json判断。已完成的方法/来源/条件应用数字仍在其正确层次展示，不因部署未就绪全部隐藏。旧策略只能放在“上一可审计基线”列，不能替代当前结果。
+ 
+ | 指标 | 当前策略 | 上一可审计基线 | 门槛 | 差距 | 判定 |
+ |---|---:|---:|---:|---:|---|
+-| 20 bps 净 CAGR | `{value}` | `{baseline}` | `>=45%` | `{gap}` | `{pass/fail/N/A}` |
+-| 20 bps OOS Sharpe | `{value}` | `{baseline}` | `>1.0` | `{gap}` | `{pass/fail/N/A}` |
+-| 最大回撤 | `{value}` | `{baseline}` | `>=-65%` | `{gap}` | `{pass/fail/N/A}` |
+-| MAR | `{value}` | `{baseline}` | `>=0.4` | `{gap}` | `{pass/fail/N/A}` |
+-| TQQQ 上/下行捕获 | `{up/down}` | `{baseline}` | `>=0.85/<=0.9` | `{gap}` | `{pass/fail/N/A}` |
+-| DSR / PBO | `{dsr/pbo}` | `{baseline}` | `>=0.75/<=0.4` | `{gap}` | `{pass/fail/N/A}` |
+-| 正向折数 | `{n/4}` | `{baseline}` | `>=3/4` | `{gap}` | `{pass/fail/N/A}` |
+-| 40 bps 成本压力 | `{value}` | `{baseline}` | `{frozen gate}` | `{gap}` | `{pass/fail/N/A}` |
++| 合同主成本净 CAGR | `{value}` | `{baseline}` | `{该轮冻结值；未设N/A}` | `{gap}` | `{pass/fail/N/A}` |
++| 20 bps OOS Sharpe（适用晋级候选） | `{value}` | `{baseline}` | `>1.0` | `{gap}` | `{pass/fail/N/A}` |
++| 最大回撤 | `{value}` | `{baseline}` | `{该轮冻结值}` | `{gap}` | `{pass/fail/N/A}` |
++| MAR（若适用） | `{value}` | `{baseline}` | `{该轮冻结值}` | `{gap}` | `{pass/fail/N/A}` |
++| 匹配基准上/下行捕获（若适用） | `{up/down}` | `{baseline}` | `{实际合同基准与冻结值}` | `{gap}` | `{pass/fail/N/A}` |
++| DSR / PBO（若适用） | `{dsr/pbo}` | `{baseline}` | `{该轮冻结值}` | `{gap}` | `{pass/fail/N/A}` |
++| 正向折数 | `{n/实际折数}` | `{baseline}` | `{该轮冻结值}` | `{gap}` | `{pass/fail/N/A}` |
++| 合同压力成本档 | `{value}` | `{baseline}` | `{frozen gate}` | `{gap}` | `{pass/fail/N/A}` |
+ 
+ ### 5. ML 对确定性策略的增量
+ 
+--- before/prompts/owner-report-dispatch.zh.md
++++ after/prompts/owner-report-dispatch.zh.md
+@@ -1,13 +1,15 @@
+ 首先读取 `reports/research/control/owner-compute-hold.json`，只处理当前已获授权的报告范围；缺失、不可读或冲突时不自动生成/投递该报告。研究、报告与设备权限分别判断，不使用本文或历史记录复制当前状态。方法维护不新增报告会话、投递或设备探测权限。
+ 
+-现行角色从 `config/research-agent-roles.json` 读取 reporting，当前 codex/gpt-6.1-sol/xhigh/full-access；启动一次显式设置实际provider与settings.modeId=full-access、thinkingOptionId=xhigh并回读，接口提供时核对currentModeId与runtimeInfo.modeId。复用既有target，不另造报告平台。下文历史16:39训练授权、旧goal/监控与“首次立即发布”等仅在最新hold及明确恢复范围内适用；不得把旧训练许可报告为今天允许执行。新方法见 `docs/task-owned-research.zh.md`。
++现行角色从 `config/research-agent-roles.json` 读取reporting的provider/model和settings；启动一次设置支持的实际字段并回读，接口提供时核对currentModeId与runtimeInfo.modeId。复用既有target，不另造报告平台。下文历史16:39训练授权、旧goal/监控与“首次立即发布”等仅在最新hold及明确恢复范围内适用；不得把旧训练许可报告为今天允许执行。新方法见 `docs/task-owned-research.zh.md`。
+ 
+ 报告读一个任务小state中的owner/evidence/process/checkpoint/累计预算试验/下一动作，必要时追原证据；turn结束不等于process或经济完成。北京时间09:00日报、周日周报和约2小时整轮的格式/cadence、正常邮件与唯一hub路线保持。Astra只处理真实结果/实质阻塞/科学或预算权限变化/机主决策，报告不反复唤醒Astra、不重跑实验、不用LLM轮询。DS parked与最新暂停按事实写明，不重复催问已决定事项。
+ 
+ 你是Open Composer定时汇报触发器。机主已授权每日/每周和每整轮约两小时的会话汇报。你的任务仅将本次触发交给常驻报告会话，目标是让机主收到正文，不进行研究、全仓扫描、训练、数据采集、发邮件或改调度。
+ 
+-读config/owner-reporting.json、config/autonomous-report-target.json及reports/owner/reporting-state.json（如有）。用当前UTC时间判断本次kind：UTC01:00这一班为daily，周日则weekly；其他定时班为round。round以最近一个已到的UTC偶数整点为窗口终点，前推2小时，event_id=round-YYYYMMDDTHH0000Z；daily/weekly的event_id=<kind>-YYYY-MM-DD，日期为UTC01:00班的日期。优先检查reporting-state.json的completed_event_ids及报告记录：已完成仍写一条deduplicated触发回执再结束，不重复报告。实际由哪个schedule启动则以其cron/触发上下文为准，延迟启动不误归另一kind。
++读config/owner-reporting.json、config/autonomous-report-target.json及reports/owner/reporting-state.json（如有）。用当前UTC时间判断本次kind：UTC01:00这一班为daily，周日则weekly；其他定时班为round。round以最近一个已到的UTC偶数整点为窗口终点，前推2小时，event_id=round-YYYYMMDDTHH0000Z；daily/weekly的event_id=<kind>-YYYY-MM-DD，日期为UTC01:00班的日期。优先检查completed_event_ids及报告记录，并用下述health命令核实实际正文；只有真实完成的事件才写deduplicated回执结束，标记存在但产物缺失须修复。实际由哪个schedule启动则以其cron/触发上下文为准，延迟启动不误归另一kind。
+ 
+-目标agentId取report_agent_id并核对两份路由一致。只有本次报告范围明确恢复后才通过Paseo get_agent_status确认目标存在且未closed。有效hub用mcp__paseo__send_agent_prompt，background=true、notifyOnFinish=false、sessionMode=full-access，内容以【定时汇报触发】开头，含kind/event_id/窗口/配置路径，要求按prompts/owner-report-hub.zh.md在专用会话发布完整正文。若旧hub closed或不存在，先核对没有其他有效的专用hub；有则复用并同步两份既有route，无则由本次Sol触发器使用现有create_agent一次创建唯一新hub，显式provider=codex/gpt-6.1-sol、settings.modeId=full-access、thinkingOptionId=xhigh，初始prompt一次携带本次kind/event_id/窗口及owner-report-hub文件入口（工具不能读取文件时附正文），不再嵌套另触发一轮。回读真实模型/thinking和接口提供的currentModeId/runtimeInfo.modeId，核验后只同步config/owner-reporting.json的report_agent_id与config/autonomous-report-target.json的agent_id。暂停期间不创建。不要只让报告器回复“收到”；报告器自行核验事实、去重写状态。若目标正在写同一event则跳过；其他报告正在写则登记本次待报事件，避免重复消息打断。不要归档目标hub，不另建队列schema或报告平台。
++目标agentId取report_agent_id并核对两份路由一致。只有本次报告范围明确恢复后才通过Paseo get_agent_status确认目标存在且未closed。有效hub用mcp__paseo__send_agent_prompt，background=true、notifyOnFinish=false、sessionMode=full-access，内容以【定时汇报触发】开头，含kind/event_id/窗口/配置路径，要求按prompts/owner-report-hub.zh.md在专用会话发布完整正文。若旧hub closed或不存在，先核对没有其他有效的专用hub；有则复用并同步两份既有route，无则由本次Sol触发器使用现有create_agent一次创建唯一新hub，显式使用当前reporting角色的provider与settings，初始prompt一次携带本次kind/event_id/窗口及owner-report-hub文件入口（工具不能读取文件时附正文），不再嵌套另触发一轮。回读真实模型/thinking和接口提供的currentModeId/runtimeInfo.modeId，核验后只同步config/owner-reporting.json的report_agent_id与config/autonomous-report-target.json的agent_id。暂停期间不创建。不要只让报告器回复“收到”；报告器自行核验事实、去重写状态。若目标正在写同一event则跳过；其他报告正在写则登记本次待报事件，避免重复消息打断。不要归档目标hub，不另建队列schema或报告平台。
++
++标记已完成或去重之前，用 `.venv/bin/python scripts/owner_report.py health <event_id>` 核对实际报告文件和业务记录，不能只信调度succeeded、排队成功或completed标记。处理新的round时，对当前恢复授权之后的上一到期窗口做同一只读检查；缺产物或标记与文件不符，记录在现有blocker_tracking并向当前decision owner一次报告，同一未变事故不重复通知。此检查不阻止当前获准报告、不触发历史补发风暴、不等待本窗口正文完成，也不新增定时器。written仅证明正文存在，发布/已读仍按真实证据区分。
+ 
+ 将本次event、时间、目标、工具返回结果保存reports/owner/dispatch/<event_id>.json。工具成功只表示已排队，不伪称已送达/已读。调用失败即记录实际错误，保留本次事件与证据；hub修复也失败时写清真实缺口，实质判断留在既有任务state并交当前有效decision owner，不能向closed的旧Astra协调id循环发送；无法定位有效owner就在报告/触发回执说明，不悄悄改到旧会话。正常触发尽快结束，不派子代理；预算2分钟。真实运行full-access，不请求人工批准。你自己的最终回复仅确认触发状态，业务报告由专用会话发布。
+--- before/scripts/owner_report.py
++++ after/scripts/owner_report.py
+@@ -5,6 +5,7 @@
+     uv run python scripts/owner_report.py weekly --send --force
+     uv run python scripts/owner_report.py tables           # business-named trading tables
+     uv run python scripts/owner_report.py lint <file.md>   # internal codes, paths, long brackets
++    uv run python scripts/owner_report.py health <event-id> # actual report artifact, no send
+ 
+ The body is the writer's plain-language report (`reports/owner/daily/<UTC date>.zh.md`,
+ weekly `reports/owner/weekly/<ISO week>.zh.md`) or, when it is missing, a short
+@@ -46,6 +47,7 @@
+     render_internal_log,
+     render_paper_section,
+ )
++from open_composer.reports.owner_health import report_event_health  # noqa: E402
+ from open_composer.reports.owner_style import (  # noqa: E402
+     format_findings,
+     lint_errors,
+@@ -103,13 +105,20 @@
+     ap = argparse.ArgumentParser(
+         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+     )
+-    ap.add_argument("kind", choices=("daily", "weekly", "auto", "tables", "lint"))
++    ap.add_argument("kind", choices=("daily", "weekly", "auto", "tables", "lint", "health"))
+     ap.add_argument("path", nargs="?", type=Path, help="lint: the markdown file to check")
+     ap.add_argument("--send", action="store_true", help="e-mail it (default: print only)")
+     ap.add_argument("--force", action="store_true", help="send even if today's marker exists")
+     ap.add_argument("--mail-env", type=Path, default=None, help="mail config file (KEY=VALUE)")
+     ap.add_argument("--now", default=None, help="ISO time to report as of (tests, backfills)")
+     args = ap.parse_args(argv)
++
++    if args.kind == "health":
++        if args.path is None:
++            ap.error("health needs an event id")
++        health = report_event_health(ROOT, str(args.path))
++        print(json.dumps(health, ensure_ascii=False, indent=2))
++        return 0 if health["status"] in {"written", "not_authorized"} else 1
+ 
+     if args.kind == "lint":
+         if args.path is None:
+--- /dev/null
++++ after/scripts/research_task_prompt.py
+@@ -0,0 +1,88 @@
++"""Assemble a research handoff from the current role prompt and an existing brief.
++
++This renders instructions only: no agent, provider call, authorization or job is started.
++"""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++from pathlib import Path
++from typing import Any
++
++
++def build_handoff(root: Path, role: str, brief: Path) -> dict[str, Any]:
++    root = root.resolve()
++    config_path = root / "config/research-agent-roles.json"
++    config_bytes = config_path.read_bytes()
++    config = json.loads(config_bytes)
++    definition = config["roles"][role]
++    prompt_name = definition.get("prompt")
++    if not prompt_name:
++        raise ValueError(
++            f"Role {role!r} has no single task prompt; keep its existing reporting route"
++        )
++    inputs = []
++    texts = []
++    for label, path in (("role", Path(prompt_name)), ("task", brief)):
++        path = (root / path).resolve()
++        if not path.is_relative_to(root):
++            raise ValueError(f"{label} input must belong to this workspace")
++        content = path.read_bytes()
++        value = content.decode("utf-8").strip()
++        if not value:
++            raise ValueError(f"Empty {label} input: {path.relative_to(root)}")
++        inputs.append(
++            {
++                "role": label,
++                "path": str(path.relative_to(root)),
++                "sha256": hashlib.sha256(content).hexdigest(),
++            }
++        )
++        texts.append(value)
++    prompt = (
++        f"# 当前角色方法\n\n{texts[0]}\n\n# 本任务上下文\n\n{texts[1]}\n\n"
++        "# 接续\n\n"
++        "本brief中的实验前提也需要证据，不因Root写入而免于质疑。"
++        "发现目标与实验错位时主动提出受影响修订；普通执行留给完整owner。"
++        "本消息不新增费用、设备或订单授权，不回改旧冻结结果；"
++        "动态许可和累计预算读取现行权威文件。"
++    )
++    return {
++        "role": role,
++        "create_agent": {
++            "provider": definition["provider"],
++            "settings": definition["settings"],
++            "initialPrompt": prompt,
++        },
++        "continuation_prompt": prompt,
++        "bindings": [
++            {
++                "role": "role_configuration",
++                "path": str(config_path.relative_to(root)),
++                "sha256": hashlib.sha256(config_bytes).hexdigest(),
++            },
++            *inputs,
++        ],
++        "runtime_started": False,
++    }
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--role", required=True)
++    parser.add_argument("--brief", type=Path, required=True)
++    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
++    parser.add_argument("--output", type=Path)
++    args = parser.parse_args()
++    result = build_handoff(args.root, args.role, args.brief)
++    payload = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
++    if args.output:
++        args.output.write_text(payload, encoding="utf-8")
++    else:
++        print(payload, end="")
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ after/open_composer/reports/owner_health.py
+@@ -0,0 +1,66 @@
++"""Check a report's business artifact, independently of scheduler success."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from pathlib import Path
++from typing import Any
++
++
++def report_event_health(root: Path, event_id: str) -> dict[str, Any]:
++    result: dict[str, Any] = {
++        "event_id": event_id,
++        "status": "missing_business_result",
++        "artifact_verified": False,
++        "delivery_verified": False,
++        "scope": "Read-only artifact check; no claim about report semantics or user receipt.",
++    }
++    try:
++        hold = json.loads((root / "reports/research/control/owner-compute-hold.json").read_text())
++        allowed = hold.get("reporting", {}).get("allowed")
++        if allowed is False:
++            return {**result, "status": "not_authorized"}
++        if allowed is not True:
++            return {**result, "status": "authority_unknown"}
++        state = json.loads((root / "reports/owner/reporting-state.json").read_text())
++    except (OSError, ValueError, AttributeError):
++        return {**result, "status": "state_unreadable"}
++    if not isinstance(state, dict):
++        return {**result, "status": "state_unreadable"}
++    records = state.get("reports", [])
++    records = list(records.values()) if isinstance(records, dict) else records
++    if not isinstance(records, list):
++        return {**result, "status": "state_unreadable"}
++    matches = [
++        r
++        for r in [*records, state.get("last_report", {})]
++        if isinstance(r, dict) and (r.get("event_id") or r.get("event")) == event_id
++    ]
++    if not matches:
++        return result
++    record = matches[-1]
++    raw_path = record.get("file")
++    if not isinstance(raw_path, str) or not raw_path:
++        return {**result, "status": "artifact_missing"}
++    path = (root / raw_path).resolve()
++    if not path.is_relative_to((root / "reports/owner").resolve()) or path.suffix != ".md":
++        return {**result, "status": "artifact_path_invalid"}
++    try:
++        content = path.read_bytes()
++    except OSError:
++        return {**result, "status": "artifact_missing", "file": raw_path}
++    if not content.strip():
++        return {**result, "status": "artifact_empty", "file": raw_path}
++    digest = hashlib.sha256(content).hexdigest()
++    if record.get("sha256") and record["sha256"] != digest:
++        return {**result, "status": "artifact_changed", "file": raw_path}
++    completed = event_id in state.get("completed_event_ids", [])
++    return {
++        **result,
++        "status": "written" if completed else "produced_not_completed",
++        "artifact_verified": True,
++        "file": raw_path,
++        "sha256": digest,
++        "delivery_note": "Written is not published/read; verify the existing delivery route.",
++    }
+--- /dev/null
++++ after/tests/test_research_task_prompt.py
+@@ -0,0 +1,74 @@
++import importlib.util
++import json
++from pathlib import Path
++
++import pytest
++
++SPEC = importlib.util.spec_from_file_location(
++    "research_task_prompt", Path(__file__).parents[1] / "scripts/research_task_prompt.py"
++)
++assert SPEC is not None and SPEC.loader is not None
++MODULE = importlib.util.module_from_spec(SPEC)
++SPEC.loader.exec_module(MODULE)
++
++
++def setup_workspace(root):
++    (root / "config").mkdir()
++    (root / "prompts").mkdir()
++    (root / "prompts/owner.md").write_text(
++        "Challenge the experiment premise before implementation."
++    )
++    (root / "brief.md").write_text(
++        "Evaluate a historical method; do not claim current profitability."
++    )
++    config = {
++        "roles": {
++            "execution": {
++                "provider": "codex/model-a",
++                "settings": {"thinkingOptionId": "xhigh", "modeId": "full-access"},
++                "prompt": "prompts/owner.md",
++            },
++            "reporting": {"prompts": ["existing-route.md"]},
++        }
++    }
++    (root / "config/research-agent-roles.json").write_text(json.dumps(config))
++    return config
++
++
++def test_current_prompt_and_model_are_consumed_without_cached_copy(tmp_path):
++    config = setup_workspace(tmp_path)
++    first = MODULE.build_handoff(tmp_path, "execution", Path("brief.md"))
++    (tmp_path / "prompts/owner.md").write_text(
++        "NEW: distinguish source replication from current value."
++    )
++    config["roles"]["execution"]["provider"] = "codex/model-b"
++    (tmp_path / "config/research-agent-roles.json").write_text(json.dumps(config))
++    second = MODULE.build_handoff(tmp_path, "execution", Path("brief.md"))
++    assert first["create_agent"]["provider"] == "codex/model-a"
++    assert second["create_agent"]["provider"] == "codex/model-b"
++    assert "NEW:" in second["create_agent"]["initialPrompt"]
++    assert "Challenge the experiment premise" not in second["create_agent"]["initialPrompt"]
++    assert first["bindings"] != second["bindings"]
++
++
++def test_changed_brief_reaches_actual_handoff_without_losing_role(tmp_path):
++    setup_workspace(tmp_path)
++    (tmp_path / "brief.md").write_text("Current scope changed: retain the old failed experiment.")
++    result = MODULE.build_handoff(tmp_path, "execution", Path("brief.md"))
++    assert "Current scope changed" in result["create_agent"]["initialPrompt"]
++    assert "Challenge the experiment premise" in result["continuation_prompt"]
++    assert result["runtime_started"] is False
++
++
++@pytest.mark.parametrize("missing", ["prompts/owner.md", "brief.md"])
++def test_missing_canonical_input_does_not_silently_use_an_old_copy(tmp_path, missing):
++    setup_workspace(tmp_path)
++    (tmp_path / missing).unlink()
++    with pytest.raises(FileNotFoundError):
++        MODULE.build_handoff(tmp_path, "execution", Path("brief.md"))
++
++
++def test_report_route_is_not_replaced_by_task_creation(tmp_path):
++    setup_workspace(tmp_path)
++    with pytest.raises(ValueError, match="existing reporting route"):
++        MODULE.build_handoff(tmp_path, "reporting", Path("brief.md"))
+--- /dev/null
++++ after/tests/test_owner_report_health.py
+@@ -0,0 +1,79 @@
++import json
++from pathlib import Path
++
++from open_composer.reports.owner_health import report_event_health
++
++EVENT = "round-20261014T160000Z"
++
++
++def write_state(root: Path, state, allowed=True):
++    hold = root / "reports/research/control/owner-compute-hold.json"
++    hold.parent.mkdir(parents=True, exist_ok=True)
++    hold.write_text(json.dumps({"reporting": {"allowed": allowed}}))
++    folder = root / "reports/owner"
++    folder.mkdir(exist_ok=True)
++    (folder / "reporting-state.json").write_text(json.dumps(state))
++
++
++def test_real_failure_scheduler_success_has_no_business_artifact(tmp_path):
++    write_state(
++        tmp_path,
++        {
++            "scheduler_status": "succeeded",
++            "completed_event_ids": [],
++            "last_report": {"event_id": "round-20261013T080000Z"},
++        },
++    )
++    result = report_event_health(tmp_path, EVENT)
++    assert result["status"] == "missing_business_result"
++    assert not result["artifact_verified"]
++
++
++def test_queued_event_is_not_completed_report(tmp_path):
++    write_state(
++        tmp_path,
++        {"reports": [{"event_id": EVENT, "delivery_status": "queued"}], "completed_event_ids": []},
++    )
++    assert report_event_health(tmp_path, EVENT)["status"] == "artifact_missing"
++
++
++def test_completion_marker_without_file_does_not_pass(tmp_path):
++    write_state(
++        tmp_path,
++        {
++            "last_report": {"event_id": EVENT, "file": "reports/owner/a.md"},
++            "completed_event_ids": [EVENT],
++        },
++    )
++    assert report_event_health(tmp_path, EVENT)["status"] == "artifact_missing"
++
++
++def test_actual_report_passes_without_inventing_delivery(tmp_path):
++    write_state(
++        tmp_path,
++        {
++            "last_report": {"event_id": EVENT, "file": "reports/owner/a.md"},
++            "completed_event_ids": [EVENT],
++        },
++    )
++    (tmp_path / "reports/owner/a.md").write_text("Verified current research report.")
++    result = report_event_health(tmp_path, EVENT)
++    assert result["status"] == "written" and result["artifact_verified"]
++    assert result["delivery_verified"] is False
++
++
++def test_genuine_pause_does_not_become_false_missing_report_alarm(tmp_path):
++    write_state(tmp_path, {}, allowed=False)
++    assert report_event_health(tmp_path, EVENT)["status"] == "not_authorized"
++
++
++def test_changed_bound_report_is_not_silently_accepted(tmp_path):
++    write_state(
++        tmp_path,
++        {
++            "last_report": {"event_id": EVENT, "file": "reports/owner/a.md", "sha256": "0" * 64},
++            "completed_event_ids": [EVENT],
++        },
++    )
++    (tmp_path / "reports/owner/a.md").write_text("Changed result.")
++    assert report_event_health(tmp_path, EVENT)["status"] == "artifact_changed"

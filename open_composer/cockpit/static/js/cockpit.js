@@ -4,7 +4,7 @@
 //   2. keyboard: ⌘1-7 screens, ⌘F filter, ↑/↓ select, Space/Enter open, Esc close;
 //   3. the phone tab bar minimises while scrolling down;
 //   4. the agent timeline tail (EventSource) appends rows with textContent;
-//   5. the seven screens are prefetched and switched in place (see "screens");
+//   5. the seven screens are warmed one at a time and switched in place (see "screens");
 //   6. chart marks show their data-tip on hover or tap, and tiles catch a
 //      pointer-following light (desktop pointers only).
 // Every string that reaches the DOM is either server-rendered HTML from our own
@@ -320,20 +320,19 @@
     };
   }
 
-  // ---- screens: instant switching ----
-  // The seven screens are fetched in parallel right after first paint and kept
-  // in memory, so tapping the rail or the tab bar swaps the content block in
-  // place instead of reloading the whole page through the tunnel. A copy older
-  // than FRESH_MS is refetched before it is shown (a thin progress line says
-  // so); the rest are refreshed in the background after every switch. Tapping
-  // the screen you are already on refetches it. Everything else -- detail
-  // pages, /v2/, a session the edge has expired -- stays a normal navigation.
+  // ---- screens: cached, non-blocking switching ----
+  // Pages are warmed one at a time during idle time. The old implementation
+  // fetched every screen in parallel after first paint, which made synchronous
+  // data scans compete with the screen the owner was actually opening.
 
   var FRESH_MS = 120000;
   var screens = [];
   var pages = {};
   var inflight = {};
   var progress = null;
+  var prefetchQueue = [];
+  var prefetchActive = false;
+  var prefetchScheduled = false;
 
   (function () {
     var links = document.querySelectorAll("[data-screen]");
@@ -370,12 +369,35 @@
   }
 
   function prefetchOthers(except) {
+    prefetchQueue = [];
     for (var i = 0; i < screens.length; i++) {
       var path = screens[i];
       var have = pages[path];
       if (path === except || (have && Date.now() - have.at < FRESH_MS)) continue;
-      fetchPage(path).catch(function () {});
+      prefetchQueue.push(path);
     }
+    schedulePrefetch();
+  }
+
+  function schedulePrefetch() {
+    if (prefetchScheduled || prefetchActive || !prefetchQueue.length) return;
+    prefetchScheduled = true;
+    var run = function () {
+      prefetchScheduled = false;
+      if (prefetchActive || !prefetchQueue.length) return;
+      var path = prefetchQueue.shift();
+      var have = path && pages[path];
+      if (!path || (have && Date.now() - have.at < FRESH_MS)) return schedulePrefetch();
+      prefetchActive = true;
+      fetchPage(path)
+        .catch(function () {})
+        .then(function () {
+          prefetchActive = false;
+          schedulePrefetch();
+        });
+    };
+    if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 1200 });
+    else setTimeout(run, 180);
   }
 
   function showProgress() {
@@ -466,9 +488,8 @@
         };
         if (document.startViewTransition) document.startViewTransition(run);
         else run();
-        setTimeout(function () {
-          prefetchOthers(path);
-        }, 600);
+        // Continue warming in the background without competing with this view.
+        setTimeout(function () { prefetchOthers(path); }, 300);
       })
       .catch(function () {
         hideProgress();
@@ -620,13 +641,9 @@
 
   if (isScreen(location.pathname)) {
     pages[location.pathname] = { doc: null, at: Date.now() };
-    setTimeout(function () {
-      prefetchOthers(location.pathname);
-    }, 300);
+    setTimeout(function () { prefetchOthers(location.pathname); }, 500);
   } else {
-    setTimeout(function () {
-      prefetchOthers(null);
-    }, 1200);
+    setTimeout(function () { prefetchOthers(null); }, 1200);
   }
 
   wide.addEventListener("change", function () {

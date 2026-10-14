@@ -1,5 +1,40 @@
 version: 1
 capabilities:
+  - id: events.fed_scheduled_statement_dates
+    kind: event
+    status: trial
+    provider: federal_reserve_official_archives
+    use_for: [conditional_market_component_research]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/day-goal-20261013/primary-return-breadth/calendar-events.jsonl
+    min_score: 0.95
+    caveats:
+      - historical archives establish dates and statement links, not every original publication timestamp or advance calendar vintage
+      - actual fetched_at and first_seen_at are current acquisition receipts; fixture visible_at does not certify historical replay availability
+      - conditional replay uses declared next-session-close activation while phase remains anchored to actual scheduled meeting date
+      - no calendar or fixture pass permits promotion, paper execution, or causal Fed policy claims
+
+  - id: market.dm_author_deciles
+    kind: market
+    status: trial
+    provider: daniel_moskowitz_author_archive
+    use_for: [published_portfolio_method_research]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [daily, monthly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/day-goal-20261013/equity-role/sources/dm-published-portfolios-201402.tar.gz
+    min_score: 0.95
+    caveats:
+      - published all-firm decile returns are gross historical portfolio series, not tradable stock bars
+      - daily-to-monthly reconstruction differs from the separately published monthly returns
+      - no historical stock identity, holdings, borrow, costs, or paper execution readiness
+
   - id: market.sample_ohlcv
     kind: market
     status: approved

@@ -5,8 +5,12 @@ from pathlib import Path
 import pandas as pd
 
 from open_composer.adapters.data.sample import normalize_ohlcv
+from open_composer.config import data_feed
 from open_composer.models.strategy_spec import StrategySpec
-from open_composer.research.horizon_optimizer import optimize_strategy_horizons
+from open_composer.research.horizon_optimizer import (
+    _horizon_candidate_specs,
+    optimize_strategy_horizons,
+)
 
 
 def test_strategy_spec_accepts_5m_timeframe(repo_root: Path) -> None:
@@ -53,7 +57,13 @@ def test_horizon_optimizer_compares_frequency_and_hold_profiles(
 
     monkeypatch.setattr("open_composer.research.horizon_optimizer.fetch_ohlcv", fake_fetch_ohlcv)
     spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
-    preregister_iteration_dossier(spec_path, candidate_count=7)
+    preregister_iteration_dossier(
+        spec_path,
+        candidate_count=7,
+        candidate_factory=lambda source: _horizon_candidate_specs(
+            source, "AAA", ["AAA"], "alpaca", data_feed()
+        ),
+    )
     result = optimize_strategy_horizons(
         spec_path,
         sample_workspace,

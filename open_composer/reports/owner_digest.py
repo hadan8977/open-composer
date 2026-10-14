@@ -920,8 +920,8 @@ def render_etf_table(data: DigestData) -> list[str]:
 
 def render_book_business(data: DigestData) -> list[str]:
     lines = [
-        "| 账户 | 做法 | 净值 | 最近一天盈亏 | 订单：成交 / 未成交 |",
-        "|---|---|---|---|---|",
+        "| 账户 | 账本日期 | 做法 | 净值 | 该日盈亏 | 订单：成交 / 未成交 |",
+        "|---|---|---|---|---|---|",
     ]
     start = BOOK_ACTIONS_START.isoformat()
     for acct in data.book:
@@ -933,7 +933,8 @@ def render_book_business(data: DigestData) -> list[str]:
         if trading and acct.net_pnl is not None:
             pnl = f"{money(acct.net_pnl)}（{pct(acct.net_return)}）"
         lines.append(
-            f"| {account_name(acct.account)} | {ACCOUNT_RULES.get(acct.account, '—')} | "
+            f"| {account_name(acct.account)} | {acct.latest_daily or '尚无账本'} | "
+            f"{ACCOUNT_RULES.get(acct.account, '—')} | "
             f"{money(acct.equity)} | {pnl} | {orders} |"
         )
     actions = [a for a in data.book_actions]
@@ -1033,7 +1034,7 @@ def render_paper_section(data: DigestData) -> list[str]:
     lines = [f"实盘：{names or '没有'}。", ""]
     lines.extend(["### ETF 轮动策略（主模拟账户，每个 1.5 万美元）", ""])
     lines.extend(render_etf_table(data))
-    lines.extend(["", "### 股票多空组合（两个模拟账户，各 100 万美元）", ""])
+    lines.extend(["", "### 股票多空组合（按各账户实际账本日期）", ""])
     lines.extend(render_book_business(data))
     return lines
 

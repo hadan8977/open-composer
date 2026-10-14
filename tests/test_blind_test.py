@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import yaml
 from typer.testing import CliRunner
@@ -9,6 +10,53 @@ from typer.testing import CliRunner
 from open_composer.cli import app
 from open_composer.research.blind_test import run_blind_test
 from open_composer.research.promotion import build_promotion_report
+
+
+def test_registered_blind_test_keeps_fixed_modes_and_control_role_before_data(
+    sample_workspace: Path, monkeypatch
+) -> None:
+    from open_composer.research.blind_test import BlindTestResult
+    from open_composer.research.iteration_dossier import require_iteration_execution_gate
+    from tests.test_iteration_dossier import (
+        test_lightweight_exemption_reaches_ok_through_the_real_execution_gate,
+    )
+
+    test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(sample_workspace)
+    path = sample_workspace / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    calls = []
+    monkeypatch.setattr(
+        "open_composer.research.blind_test.load_ohlcv_for_spec",
+        lambda *args: calls.append("data") or object(),
+    )
+
+    def no_calculation(spec, frame, *, root, native_control, **kwargs):
+        result = require_iteration_execution_gate(spec, root, native_control=native_control)
+        assert result.info["native_execution_control"]["selectable_candidate"] is False
+        calls.append(dict(native_control.parameters))
+        return SimpleNamespace()
+
+    monkeypatch.setattr("open_composer.research.blind_test.backtest_frame", no_calculation)
+    monkeypatch.setattr(
+        "open_composer.research.blind_test._build_result",
+        lambda mode, mapping, artifacts: BlindTestResult(
+            mode=mode,
+            ticker_mapping_hash="fixture",
+            return_pct=0.0,
+            sharpe=0.0,
+            signal_count=0,
+            signal_digest="fixture",
+        ),
+    )
+    report = run_blind_test(path, sample_workspace, seed=17)
+    assert calls[0] == "data"
+    assert [row["mode"] for row in calls[1:]] == [
+        "real",
+        "anonymous",
+        "random_remap",
+        "sector_preserved",
+    ]
+    assert all(row["seed"] == 17 for row in calls[1:])
+    assert report.selectable_candidate is False and report.promotion_eligible is False
 
 
 def test_blind_test_writes_four_mode_report(sample_workspace: Path) -> None:

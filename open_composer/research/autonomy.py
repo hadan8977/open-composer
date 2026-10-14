@@ -254,7 +254,22 @@ def task_command(task: dict[str, Any], root: Path, config: dict[str, Any]) -> li
         raise ValueError("registered command iteration mismatch")
     if registration.get("broker_writes") is not False:
         raise ValueError("research task requires no-broker registration")
-    return [str(root / "scripts/run_capped.sh"), "--mem", "1.8G", "--", *argv]
+    return [str(root / "scripts/run_capped.sh"), "--mem", research_job_mem(root), "--", *argv]
+
+
+def research_job_mem(root: Path) -> str:
+    """Memory cap for a local research job: the project budget's job maximum.
+
+    Owner 2026-10-07: the project must always leave the owner ~500 MB free, so a local
+    research job may take at most ``job_max_mb`` (2.4 GB since the owner doubled it on
+    2026-10-08); run_capped refuses more for the research class, so a cap hard-coded here
+    goes stale (config/memory-budget.json, docs/runbook-memory.zh.md).
+    """
+    try:
+        budget = json.loads((root / "config" / "memory-budget.json").read_text(encoding="utf-8"))
+        return f"{int(budget['job_max_mb'])}M"
+    except (OSError, ValueError, KeyError, TypeError):
+        return "2.4G"
 
 
 def _run_worker(

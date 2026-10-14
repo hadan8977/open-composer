@@ -1,0 +1,173 @@
+{
+  "schema_version": 3,
+  "recorded_at_utc": "2026-10-14T17:09:34.355962+00:00",
+  "source": "Latest owner instruction 2026-10-14: 全部暂停，然后上传GitHub。",
+  "owner_quotes": [
+    "先不训练了做好准备",
+    "继续做其他的，我要用自己电脑了（hadan）",
+    "那么就永久记住吧，继续研究，我认为可以开放更多subagent，提升效率，也可以交给hadan的codex来承担一些研究任务（仅限开机时），在paseo文件夹里做也可以",
+    "仅限开机且状态是ready的情况下",
+    "关于我的电脑hadan，你可以定时监控，或者设定开启和关闭的信息会发给你；暂定中国工作日白天一般可用，以实际开机情况为准",
+    "我没有说全平台训练暂停，是保持的，所以是可以恢复的。如果有足够好的训练资源的话，现在就是恢复的，因为已经连上我的本机了。只要你检测到我的 hadan 是开启的，你就可以使用。没有说现在是暂停的呀",
+    "Hadan可随时pause或关机，工作日白天只是大概率可用；训练下次能从checkpoint继续最好，不能则重新训练也OK，千万别做复杂恢复系统。"
+  ],
+  "hadan": {
+    "research_allowed": false,
+    "authorization_mode": "paused_by_owner",
+    "reason": "Owner paused research at quota 83%; retain checkpoints, no new remote job",
+    "required_conditions": [
+      "current successful Paseo connection to endpoint hadan; online is operational evidence of power, not a wake command",
+      "fresh remote preflight ok=true",
+      "worker.status=ready",
+      "worker.usage_ok=true and actual C:\\paseo usage strictly below 50GiB",
+      "workspace and all task inputs/outputs/temp under C:\\paseo",
+      "manifest-bound approved scope, applicable research gates and existing resource budgets"
+    ],
+    "allowed": [
+      "Manifest-bound existing approved research when fresh preflight ready, usage_ok and total usage below50GiB under C:\\paseo."
+    ],
+    "forbidden": [
+      "wake-on-LAN or powering on the owner computer",
+      "automatic resume/hard-on or bypassing paused/hard_off",
+      "broker credentials/orders/production",
+      "unmanifested transfers or paths outside C:\\paseo",
+      "treating cancelled experiment admission manifests as valid without current-scope input/resource acceptance"
+    ],
+    "unavailable_action": "No remote work while offline/paused/hard_off/unknown; use an independently admitted existing server/cloud route without new spending.",
+    "availability_monitoring": {
+      "authorized": false,
+      "owner_date": "2026-10-11",
+      "preferred_check_window": "Chinese working-day daytime; provisional Mon-Fri09:00–19:00 Asia/Shanghai",
+      "availability_source": "successful live worker readiness, never calendar alone",
+      "does_not_release_training_hold": false,
+      "permission_basis": "Owner correction explicitly authorizes suitable-resource training; monitoring alone grants no new permission."
+    },
+    "interruption_policy": {
+      "availability": "Owner may pause or power off at any time; calendar daytime is only a probability, not readiness.",
+      "state": "Use native framework checkpoints and completed shards with fixed experiment configuration, seed and model/data versions.",
+      "retention": "Keep the latest complete checkpoint and completed shards under total C:\\paseo/50GiB; retain the only valid checkpoint during a recoverable interruption.",
+      "resume": "After online and fresh ready, inspect the old job/process/output. Use native resume if supported, otherwise same-definition rerun or continue completed shards.",
+      "accounting": "Retain cumulative time, cost, model fits/optimizer updates and trial exposure; no quota reset by renaming or rerunning.",
+      "cleanup": "Only after verified return/completion or explicit abandonment; do not mechanically remove the only unreturned checkpoint.",
+      "limits": [
+        "No complex recovery system or new daemon",
+        "No device wake/resume/hard-on",
+        "Disconnection does not prove checkpoint or stop succeeded"
+      ]
+    }
+  },
+  "grpo": {
+    "mode": "paused_by_owner",
+    "training_allowed": false,
+    "optimizer_updates_allowed": false,
+    "all_compute_providers": true,
+    "model_download_or_load_admitted": false,
+    "release_condition": "Explicit owner resume required",
+    "historical_withdrawn_experiments_reactivated": false,
+    "model_download_or_load_conditions": "Only model/version/files bound to a valid current admission manifest under the existing usage/spending caps; do not reuse withdrawn B-T execution definitions."
+  },
+  "continue": [],
+  "not_automatically_authorized": [
+    "new source acquisition beyond exhausted caps",
+    "labels or training datasets without scoped data-preparation admission",
+    "new spending",
+    "orders"
+  ],
+  "automatic_schedules_keep_running": false,
+  "remote_pause_receipt": {
+    "path": "reports/research/program/hadan-training-runtime-2026-10-10/owner-use-pause-20261010.json",
+    "worker_status": "paused",
+    "at_utc": "2026-10-10T12:27:34.5142228Z",
+    "owned_grpo_processes_found": 0,
+    "scope": "known GRPO job paths, not a claim about unrelated applications",
+    "historical_only": true
+  },
+  "autonomous_schedule_hold_verified": [
+    {
+      "id": "0fef96a6",
+      "mode": "full-access",
+      "cadence": "17 1-23/2 * * *"
+    },
+    {
+      "id": "b80044de",
+      "mode": "full-access",
+      "cadence": "37 2-23/2 * * *"
+    },
+    {
+      "id": "e2572f80",
+      "mode": "full-access",
+      "cadence": "5 0 * * 1-6"
+    }
+  ],
+  "supersedes": {
+    "path": "reports/research/program/compute-authorization-correction-20261011/before/reports/research/control/owner-compute-hold.json",
+    "sha256": "cde5ea935a7b5e2940a3717d2298efc2642cabc6a8f84736df987899e0a326b3",
+    "scope": "Continuing global training/optimizer/preparation-only hold is superseded by latest owner resource-conditional training authorization. Historical withdrawals, results, caps and device controls remain auditable."
+  },
+  "status": "paused_by_owner_quota_83_percent",
+  "training": {
+    "mode": "paused_by_owner",
+    "training_allowed": false,
+    "optimizer_updates_allowed": false,
+    "all_compute_providers": true,
+    "scope": "Research training on suitable resources already admitted by the owner; no new provider spending.",
+    "required_conditions": [
+      "Current resource suitability and project memory/usage caps",
+      "Valid existing research plan, accepted inputs and applicable gates; routine recovery reuses approvals",
+      "Current cumulative compute/time/cost/trial budgets, no resets",
+      "Hadan additionally requires online, fresh remote preflight ready, usage_ok=true, actual usage<50GiB, all paths C:\\paseo, and owner device switches respected"
+    ],
+    "does_not_authorize": [
+      "New spending or a new paid provider",
+      "Automatic device wake, resume, hard-on or bypassing local pause/hard_off",
+      "Resurrection of withdrawn experiment definitions or cancelled admission manifests",
+      "Broker writes, production or changes to frozen criteria"
+    ],
+    "model_download_or_load_admitted": false,
+    "release_condition": "Explicit owner resume required"
+  },
+  "latest_interruption_update_at_utc": "2026-10-11T16:53:12.807369+00:00",
+  "as_of_utc": "2026-10-14T17:09:34.355962+00:00",
+  "research_paused": true,
+  "pause_reason": "Owner requests all research paused at 83% quota; no quick credible weekly-goal completion selected.",
+  "release_condition": "Explicit owner resumption; no automatic resume on capacity or device events.",
+  "owner_resume": {
+    "at_utc": "2026-10-13T03:37:23.959157+00:00",
+    "quotes": [
+      "很好，继续开始研究吧，先汇报一下新一天的目标",
+      "以及是不是要新开一个session用6.1sol给我做汇报"
+    ],
+    "research_allowed": true,
+    "reporting_allowed": true,
+    "old_research_cron_retired": true,
+    "new_paid_spending": false,
+    "DS": "parked",
+    "scientific_or_consumption_reset": false
+  },
+  "reporting": {
+    "allowed": false,
+    "authorization_at_utc": "2026-10-13T03:37:23.959157+00:00",
+    "role": "codex/gpt-6.1-sol/xhigh",
+    "cadence": "existing round/daily/weekly only",
+    "does_not_restart_legacy_research_schedules": true,
+    "pause_at_utc": "2026-10-14T17:09:34.355962+00:00",
+    "pause_reason": "Owner quota pause; no scheduled LLM report generation until explicit resume"
+  },
+  "owner_pause": {
+    "at_utc": "2026-10-14T17:09:34.355962+00:00",
+    "quote": "因为额度已经用到 83% 了，现在先全部暂停吧，然后上传一下 GitHub。",
+    "scope": [
+      "research agents",
+      "new research/native compute",
+      "training",
+      "LLM reports and scheduled agent starts",
+      "research device monitoring/dispatch"
+    ],
+    "permitted_closeout": [
+      "save existing checkpoints/state",
+      "stop owned research processes",
+      "review and publish project snapshot to existing GitHub fork"
+    ],
+    "existing_paper_operations": "Preserve existing authorized non-LLM paper timers and risk/reconciliation, consistent with owner requirement for uninterrupted paper operation; no new strategy or broker command from this closeout."
+  }
+}

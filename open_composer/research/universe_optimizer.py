@@ -52,10 +52,17 @@ def optimize_strategy_universe(
     universe = [item.upper() for item in (symbols or source_spec.universe)]
     selected: list[UniverseSelection] = []
     output_paths: list[Path] = []
+    admitted_candidates = {}
     for symbol in universe:
         candidate_base = _symbol_spec(
             source_spec, symbol, universe, data_source, feed or data_feed()
         )
+        variants = _candidate_specs(candidate_base)
+        for candidate in variants:
+            require_iteration_execution_gate(candidate, base, enforce_unbound_design=True)
+        admitted_candidates[symbol] = (candidate_base, variants)
+    for symbol in universe:
+        candidate_base, variants = admitted_candidates[symbol]
         frame = fetch_ohlcv(
             root=base,
             symbol=symbol,
@@ -67,7 +74,7 @@ def optimize_strategy_universe(
             use_cache=not refresh_data,
         )
         scored: list[UniverseSelection] = []
-        for candidate in _candidate_specs(candidate_base):
+        for candidate in variants:
             artifacts = backtest_frame(
                 candidate,
                 frame,

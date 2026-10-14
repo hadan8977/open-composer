@@ -1,0 +1,103 @@
+{
+  "schema_version": 3,
+  "iter_id": "t20261014_hf_execution_value",
+  "author": "66ebc2b7-c533-4992-82fe-cece4f3e2b12",
+  "parent_task": "DAY3-HF-FACTOR-RETURN",
+  "continuation_task": "HF-EXECUTION-VALUE-CONTINUATION-20261014",
+  "status": "ready_for_independent_deep_plan_review",
+  "economic_execution_admitted": false,
+  "parent_question_complete": false,
+  "full_definition": {
+    "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/scientific-plan-v1.md",
+    "sha256": "25e62c25d357e02bead96356c1fbcb6dab2541b3c5c7a06ce45570e6ff81ccdc",
+    "bytes": 22760
+  },
+  "candidate_manifest": {
+    "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/candidate-manifest-proposed.json",
+    "sha256": "29b9919560fe911c4025374a7c7b998504408c39c7cb99116ff4299434378c0b",
+    "bytes": 41073
+  },
+  "direction_evidence": {
+    "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/direction-review.json",
+    "sha256": "bc3b8dd162666236cd1bdcc09c0d0d9debeaaa8a23348225c784cfa2acd6ae0f",
+    "bytes": 13804
+  },
+  "authority_resource_reconciliation": {
+    "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/authority-and-resource-reconciliation.json",
+    "sha256": "d302caf5d48a8e6ccf048bf666fee4bd6e129253b92f88a9c931e2166a276299",
+    "bytes": 1211
+  },
+  "policies": [
+    {
+      "policy_id": "CONT_H1_SLOW",
+      "horizon": 1,
+      "rho": 0.8408964152537145
+    },
+    {
+      "policy_id": "DP_H16_FAST",
+      "horizon": 16,
+      "rho": 0.5
+    },
+    {
+      "policy_id": "DP_H16_SLOW",
+      "horizon": 16,
+      "rho": 0.8408964152537145
+    }
+  ],
+  "information_streams": [
+    "PLS_IDX_CTS",
+    "PLS_IDX_MKT",
+    "PLS_IDX_STALE",
+    "PLS_INV_CTS",
+    "HGB_IDX_CTS",
+    "AR26_CTS",
+    "ZERO",
+    "NEG_PLS"
+  ],
+  "capital_anchors": [
+    0,
+    1
+  ],
+  "role_matrix": {
+    "factor_generation": "not applicable; reuse frozen current-vintage factors/negative evidence",
+    "return_forecasting": "already completed HF predictions; no refits, optimizer or new inference",
+    "return_ranking": "not applicable to single asset",
+    "risk_prediction": "no model; causal fixed prior-price second moment",
+    "regime_or_meta_gating": "no trained gate or result-selected regime",
+    "sizing": "fixed finite-state linear-cost policy with integer physical execution",
+    "uncertainty": "day/block paired uncertainty and MDE, no fitted uncertainty model",
+    "fallback": "fixed mature/missing/strict-cash execution policy",
+    "new_modalities": "none; no news, events, LLM or DS contribution"
+  },
+  "validation": {
+    "physical_window": [
+      "2016-01-04",
+      "2020-12-31"
+    ],
+    "all_windows_seen": true,
+    "untouched_OOS": false,
+    "primary_comparison_family_size": 12,
+    "comparison": "3 policies x 2 anchors x {wide-market,wide-zero}",
+    "HAC_lag_sessions": 20,
+    "block_sessions": 5,
+    "bootstrap_replicates": 1999,
+    "seed": 20261014,
+    "family_inference": "joint maxT 95pct intervals; 80pct MDE",
+    "source_label_or_current_vintage_readiness_does_not_establish_paper_readiness": true,
+    "PBO_SPA_promotion_evidence": null,
+    "inherited_effective_exposure": 4453
+  },
+  "native_gates": {
+    "direction": "current preparation check; not economic admission",
+    "independent_plan": "pending Root capacity after P0",
+    "Root_economic_allocation": "pending",
+    "independent_implementation": "pending actual code and synthetic checks",
+    "knowledge_build_scout_assess": "not run for proposed iteration",
+    "iteration_validate": "not run for proposed iteration",
+    "fresh_memory": "required immediately before every actual computation"
+  },
+  "proposed_same_pool_package_limit_CPU": 5000,
+  "current_source_or_funding_permission_expanded": false,
+  "review_route": "Independent review after Root P0; bind this JSON and full_definition MD, then return to same owner for complete execution",
+  "native_finish_notification_only": true
+}

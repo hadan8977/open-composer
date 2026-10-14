@@ -384,6 +384,36 @@ def test_assessment_requires_scout_and_reports_reuse_novelty(tmp_path: Path) -> 
     assert passed.payload["external_brief_sha256"]
 
 
+def test_assessment_binds_actual_scout_reuse_and_role_bytes(tmp_path: Path) -> None:
+    iteration = tmp_path / "reports/research/iterations/round_bound_receipt"
+    iteration.mkdir(parents=True)
+    (iteration / "external-brief.json").write_text(
+        json.dumps({"sources": [_brief_source(f"https://example.com/new-{i}") for i in range(8)]})
+    )
+    _write_valid_scout(iteration, iteration.name, new_candidate_count=1)
+    matrix = iteration / "modality-role-matrix.json"
+    matrix.write_text(
+        json.dumps({"schema_version": 1, "iter_id": iteration.name, "roles": [{"role": "sizing"}]})
+    )
+
+    assessment = assess_iteration_knowledge(iteration.name, tmp_path)
+
+    assert assessment.payload["status"] == "ok"
+    bindings = assessment.payload["artifact_bindings"]
+    for field, filename in (
+        ("scout_path", "knowledge-scout.json"),
+        ("model_reuse_decision_path", "model-reuse-decision.json"),
+        ("modality_role_matrix_path", "modality-role-matrix.json"),
+    ):
+        path = iteration / filename
+        assert bindings[field]["path"] == path.relative_to(tmp_path).as_posix()
+        assert bindings[field]["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+    old_hash = bindings["modality_role_matrix_path"]["sha256"]
+    matrix.write_text(json.dumps({"schema_version": 1, "iter_id": iteration.name, "roles": []}))
+    assert old_hash != hashlib.sha256(matrix.read_bytes()).hexdigest()
+    assert json.loads(assessment.report_path.read_text())["artifact_bindings"] == bindings
+
+
 def test_assessment_rejects_scout_with_stale_manifest_hash(tmp_path: Path) -> None:
     iteration = tmp_path / "reports/research/iterations/round_tampered"
     iteration.mkdir(parents=True)

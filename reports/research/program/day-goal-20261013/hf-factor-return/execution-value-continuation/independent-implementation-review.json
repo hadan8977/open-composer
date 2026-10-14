@@ -1,0 +1,557 @@
+{
+  "schema_version": 3,
+  "task_id": "HF-EXECUTION-VALUE-IMPLEMENTATION-REVIEW",
+  "reviewed_task_id": "HF-EXECUTION-VALUE-CONTINUATION-20261014",
+  "parent_task_id": "DAY3-HF-FACTOR-RETURN",
+  "iter_id": "t20261014_hf_execution_value",
+  "reviewed_at_utc": "2026-10-14T14:56:14.711Z",
+  "author": "66ebc2b7-c533-4992-82fe-cece4f3e2b12",
+  "reviewer": "93af0483-230a-4632-8b48-c63cd53a01f7",
+  "reviewer_independent_of_author": true,
+  "verdict": "revise_implementation",
+  "summary": "I1–I3、部分股数/费用/现金算术及DP核心有真实代码和33项合成证据支持；I4仍有会改变决策的迟到参考处理缺口，实际checkpoint频率和resume身份也不满足已批准合同。保留完整父问题及原科学批准，先由原作者作同语义修订。",
+  "scope": "独立实施差异审查及native适用性判断；非重开经济计划，非经济准入，非生产/订单审查批准。",
+  "method": {
+    "skill": ".agents/skills/research-plan-reviewer/SKILL.md",
+    "applicability": "按自主政策作实施差异/结果接受；Root approve_deep_plan保持，仅检验I1–I4兑现。",
+    "session_start_authority_read": [
+      "docs/research-mission.zh.md",
+      "docs/research-autonomy-policy.zh.md",
+      "docs/task-owned-research.zh.md",
+      "reports/research/control/owner-compute-hold.json",
+      "reports/research/control/day-goal.json"
+    ],
+    "retained_memory_read": "reports/research/knowledge/llm-internals-20261011/memory.json#decisions_to_retain,operational_lessons"
+  },
+  "runtime_readback": {
+    "agent_id": "93af0483-230a-4632-8b48-c63cd53a01f7",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "effectiveThinkingOptionId": "xhigh",
+    "currentModeId": "full-access",
+    "runtime_modeId": "full-access",
+    "actual_turn": "codex-turn-0",
+    "snapshot_updated_at_utc": "2026-10-14T14:41:04.164Z",
+    "readback_calls": 1,
+    "actual_Sol_xhigh_full_access_verified": true
+  },
+  "bindings": [
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/implementation-review-handoff.json",
+      "sha256": "aee8ff1cd03c5aca34c05d63cdee2596f4367db291be83d220b0c6503e9b1390",
+      "bytes": 4353
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/implementation-manifest.json",
+      "sha256": "b53791ce6b26956cea7894a95050816ac7e21fcb3a56abc6d8a6bcece2b5b062",
+      "bytes": 8021
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-plan-review-root-v1.json",
+      "sha256": "3fe25ebb707269271760a18d5606539d6f20d2826578e69d9974359406e017c8",
+      "bytes": 9526
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/implementation-contract-v1.md",
+      "sha256": "a2a125543f8fbfa5060c02126f2cfe8f16681d3fb09cf710dcc71127d51fde78",
+      "bytes": 4877
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/scientific-plan.json",
+      "sha256": "1884fca70e7862aec9ec73cc330276860d08ec133caa404d184f3d9514abe298",
+      "bytes": 4078
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/scientific-plan-v1.md",
+      "sha256": "25e62c25d357e02bead96356c1fbcb6dab2541b3c5c7a06ce45570e6ff81ccdc",
+      "bytes": 22760
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/candidate-manifest-proposed.json",
+      "sha256": "29b9919560fe911c4025374a7c7b998504408c39c7cb99116ff4299434378c0b",
+      "bytes": 41073
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/implementation-tests-03.xml",
+      "sha256": "5ea41499ea1f5b8c3debdccc0ddb5171e0416266c6f3c3597c7c02e127f2db64",
+      "bytes": 7597
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/execution-input-manifest.json",
+      "sha256": "56b44d31945cb78c5511cfba224009711ddec00fc9a84fefe3551f421073b59f",
+      "bytes": 9743
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/execution-input-QA.json",
+      "sha256": "7ebe50bbaabce8aa4acee2387186de570281f137a3cd35ff381b67aea26190be",
+      "bytes": 6305
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/first-book-launch-manifest.json",
+      "sha256": "837667cf1f27c7f5ea7a3d004661762a97193d6aea30f28bc5506c717bbf0a4a",
+      "bytes": 1121
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/full-run-launch-manifest.json",
+      "sha256": "6ab346ed64474357b5f02cfe8e219c735515c22c23ba1307ffde8e1f12cac5d7",
+      "bytes": 35851
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/native-blocker-attribution.json",
+      "sha256": "81f8fc824d8fe3e104807a2607e3803e2dbf7b534ac746945ff7a5693111bdb1",
+      "bytes": 1266
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/native-preparation-receipt.json",
+      "sha256": "dba848690005b9b76e00bb759566beabba8e3e2c5fa4c0ff8bdd13cd32c43951",
+      "bytes": 3994
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/cumulative-resource-ledger.json",
+      "sha256": "612afb6e92baa9c2346fd31e9fe6be3256b46a4c55a6020a18a43831d048c885",
+      "bytes": 51812
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/root-plan-allocation-v1.json",
+      "sha256": "99a41dcf9cdc2794d2e7e7ac99680f3f780cee4a89457dde9ff2d9bbc4cd1b1c",
+      "bytes": 1413
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation.py",
+      "sha256": "52846b27adea3cedf625b66a8b14bec7ea5ed71c89129e8c60c3c3b22247784a",
+      "bytes": 13375
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation.json",
+      "sha256": "6771a4fdb7db139cf938eb07b57d1a06dada99c4e28fb92d4018579514667753",
+      "bytes": 8359
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation-resource.txt",
+      "sha256": "01a3f03035e3be98e44e0822a01568cfc87ead69c54c093107ea218042a10379",
+      "bytes": 1017
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation-resource-02.txt",
+      "sha256": "866bcb0c4836690bbc14086aa21012bd2a277cdfc9c8522cddd83b910b9ba824",
+      "bytes": 1011
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/hf_execution_policy.py",
+      "sha256": "b48041510c0f5b75ad5e1258317e0a2640d8e8132a625110409baf2538ff17e7",
+      "bytes": 20650
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/run_execution_accounts.py",
+      "sha256": "70bc788801cd01d78f24307278b3886fc68c7dddf2c2b3ac887f3ba43b590788",
+      "bytes": 9310
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/prepare_execution_inputs.py",
+      "sha256": "742f8d5b5560a5ccb81c20465ee5a6da1ad637a47aa0108c8ee83508614e61ee",
+      "bytes": 9514
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/test_hf_execution_policy.py",
+      "sha256": "65a7966f6cc1001e3eedfcb909c456a6534d0f0c457fe5a43865db26656d4c73",
+      "bytes": 11578
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/build_execution_dossier.py",
+      "sha256": "d42873f0d673b537e3f582abf4dbd9dac68f51efadbd3040687610de97cfba6f",
+      "bytes": 21161
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/run_native_preparation.py",
+      "sha256": "bfbe9c0a955d83d96cfe1be71316b2169b55c05c1cd51762924f0b38fda2d746",
+      "bytes": 3441
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/hf_accounts.py",
+      "sha256": "65b45c7cf1e8c7bfe785aaa20a4ecf4b74b27f08fa4068a05b96a4beb1988f23",
+      "bytes": 10927
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/hf_native_policy_batch.py",
+      "sha256": "b22020cc5ed3d41a5dd202b965b9c3de4559d5c6750fa3c542114fd938bd36b4",
+      "bytes": 2848
+    }
+  ],
+  "native_consumer_bindings": [
+    {
+      "path": "open_composer/research/iteration_dossier.py",
+      "sha256": "a5883ad05a437f3a08894d47852c07c6f7a0341775b041a952e07dcb81be8a97",
+      "bytes": 175455
+    },
+    {
+      "path": "open_composer/research/market_component.py",
+      "sha256": "5453e938bf2ba0e0bf5e5f07b1c2df2f8c6988f7e5aeb88d9e088de865cca0fc",
+      "bytes": 8973
+    },
+    {
+      "path": "open_composer/research/knowledge_memory.py",
+      "sha256": "6260347d99028c7bf323634c62c78bbd1ddb951ec7df9465f0bba816c3d56946",
+      "bytes": 55169
+    },
+    {
+      "path": "open_composer/research/campaign.py",
+      "sha256": "bf3cb5275c7abade6dcd40d73137fe819f052ed3f24570b492c75f35030e8a77",
+      "bytes": 102426
+    },
+    {
+      "path": "reports/research/iterations/t20261014_hf_execution_value/search-space.json",
+      "sha256": "d9f34f30f4a539fd602a1583e68944485769626d8d4cd5462096b275a468561f",
+      "bytes": 7148
+    },
+    {
+      "path": "reports/research/iterations/t20261014_hf_execution_value/method-definition.json",
+      "sha256": "35dcc72a6e7e35752934bd2ba8dc52986658fef4ba4a416c060282d704394913",
+      "bytes": 3851
+    },
+    {
+      "path": "reports/research/iterations/t20261014_hf_execution_value/candidate-manifest.json",
+      "sha256": "d9537b8432d0304e9cd7bf1960bda7a00d33a5bdf0e1737ce6555c547b0bdd5b",
+      "bytes": 102540
+    }
+  ],
+  "verification": {
+    "artifact_bindings_checked": 23,
+    "artifact_mismatches": [],
+    "actual_33_test_receipt_reused": {
+      "tests": 33,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "DP_exhaustive_cases": 12,
+      "ZERO_cases": 6,
+      "rerun": false
+    },
+    "fresh_pytest_runs": 0,
+    "decisive_synthetic_evidence": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation.json",
+      "sha256": "6771a4fdb7db139cf938eb07b57d1a06dada99c4e28fb92d4018579514667753"
+    },
+    "new_tests_are_not_candidate_trials": true,
+    "input_QA_reuse": {
+      "small_manifest_consistency": true,
+      "financial_read_input_bindings": 16,
+      "actual_input_hash_QA_reused": true,
+      "new_original_input_hashes": 0,
+      "market_rows_decoded": 0,
+      "physical_packet_rows_in_reused_QA": 27446,
+      "legal_decision_rows_in_reused_QA": 26197,
+      "current_vintage_PIT_certified": false,
+      "late_first_references_in_reused_QA": 4
+    },
+    "large_original_archives_newly_verified": false,
+    "old100plus5_account_or_attribution_reruns": 0,
+    "new_training": 0,
+    "new_model_inference": 0,
+    "new_market_or_public_source_requests": 0,
+    "full_native_gate_reruns": 0,
+    "actual_campaign_requirement_function_called": true,
+    "verification_limit": "未读全量300月源档、原预测矩阵/原标签、原100+5账户数值；复用已绑定实际QA的输入hash，核小manifest和code。元数据绑定不等于经济正确或paper readiness。"
+  },
+  "accepted_implementation_findings": [
+    {
+      "id": "I1",
+      "status": "accepted_for_bound_scope",
+      "evidence": [
+        "hf_features.py aggregate_day、labels[k+1]及minute=k",
+        "hf_execution_policy.py Clock、run_policy_book:443",
+        "prepare_execution_inputs.py:79",
+        "test_label_expired_at_L1_execution_and_close_truncation",
+        "test_label_mask_does_not_enter_signal_eligibility"
+      ],
+      "finding": "源窗[m−15,m]、原label[m,m+15]、L1参考执行m+15和首个延迟后区间[m+15,m+30]一致；同日H按收盘截断，普通/短日最后不可交易窗无新单。实际known mark来自已完成前窗close，整股先冻结后唯一attempt；当前包不由未来label mask筛选。时钟为条件研究假设，不证明生产到达/成交。",
+      "counting_limit": "QA的26197合法行含初始化日21行；账户j=0只存初始化NAV，不构成新增预测或收益。未运行实际账户来验证覆盖数字。"
+    },
+    {
+      "id": "I2",
+      "status": "accepted_except_R1_affects_derived_exposure",
+      "finding": "买/卖target_quantity实现对应方向的post-fee整数公式；NAV包括到账现金、销售/股息应收和实际股数。仅实际到账现金可支付buy；先已知资金不足或未来跳空不足均整冻结lot拒绝，不用fill重缩数量、不花receivable。partial sale按净收入入延迟应收，实际fee减少NAV。",
+      "evidence": [
+        "hf_execution_policy.py:183",
+        "hf_execution_policy.py:206",
+        "hf_execution_policy.py:247",
+        "implementation-tests-03.xml partial buy/sell/cash/gap cases"
+      ],
+      "passive_ZERO": "passive的b_t为实际Q*P/NAV，非理想常数1；同资本初始化/费用/actions。六个ZERO测试覆盖3政策×2anchor，b0保持现金，b1逐字段对比旧run_funded买持；不是仅新代码复制对比。"
+    },
+    {
+      "id": "I3",
+      "status": "accepted_for_bound_scope",
+      "finding": "结构首小时不计outage；1–3成熟缺包持有，第四起仅freeze_weight(...,reduction_only=True)。若b1回归需要买入或不减实际Q则hold并记无允许减风险事件；valid score重置。没有未来label参数进入此状态机。",
+      "evidence": [
+        "hf_execution_policy.py:326",
+        "hf_execution_policy.py:453",
+        "hf_execution_policy.py:473",
+        "test_missing_packets_never_buy_back_to_long_anchor"
+      ]
+    },
+    {
+      "id": "I4_DP_cash_actions",
+      "status": "accepted_for_bound_scope",
+      "finding": "DP状态含五网格和actual held，线性转移费、fixed risk及terminal −c|w−b|只进入规划utility；数学no-trade界在held==anchor下成立。12个小H穷举例包含非网格held、mixed signs、不同anchor；terminal fee不写现金或末期强平。继承旧cash/dividend/split事件，fractional CIL持续unknown，queued inventory变动拒绝不resize。",
+      "evidence": [
+        "hf_execution_policy.py:94",
+        "hf_execution_policy.py:101",
+        "hf_execution_policy.py:130",
+        "hf_accounts.py:43",
+        "implementation-tests-03.xml DP/terminal/CIL cases"
+      ]
+    },
+    {
+      "id": "I4_native_state_contents",
+      "status": "accepted_contents_only",
+      "finding": "native快照确实包含book/passive、pending、cash、sale/dividend queues、fees、events/orders、missing、daily/signals、risk/exposure历史及next index。新增纯合成恢复例在非空销售应收、股息应收和20次成熟缺包下，序列化后resume完整结果与不中断路径逐对象相等；落盘频率和identity另见R2/R3。",
+      "evidence": {
+        "entire_result_equal": true,
+        "checkpoint_keys": [
+          "book",
+          "daily",
+          "exposure",
+          "missing",
+          "next_day_index",
+          "passive",
+          "return_history",
+          "signals"
+        ],
+        "unsettled_receivables_nonempty": true,
+        "dividend_receivables_nonempty": true,
+        "outage_count_at_checkpoint": 20,
+        "historical_risk_rows": 2,
+        "serialized_bytes": 10992
+      }
+    }
+  ],
+  "required_revisions": [
+    {
+      "id": "R1",
+      "severity": "blocking_before_first_book",
+      "contract_refs": [
+        "I4 prior complete regular open/close risk observations",
+        "I4 regular-interval-start exposure and incomplete session unknown",
+        "scientific-plan-v1.md section4 迟到/缺失价格不给sigma伪造条目"
+      ],
+      "code": [
+        {
+          "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/hf_execution_policy.py",
+          "line": 434
+        },
+        {
+          "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/hf_execution_policy.py",
+          "line": 490
+        }
+      ],
+      "finding": "attempt正确拒绝first_price_age!=0，但interval-start exposure及raw_returns只检查数值有限/正值，不检查参考时钟。迟到open仍被标成名义start，含该区间的日仍进入完整risk history及exposure控制。实际绑定QA已有4个迟到first reference，故不是完全不可达输入；其真实经济影响本审查没有估计。",
+      "synthetic_counterexample": {
+        "counterexample_confirmed": true,
+        "late_reference_session_admitted_to_risk": true,
+        "actual_variance": 0.00031017369727047146,
+        "complete_sessions_only_variance": 0,
+        "actual_first_action": 0.25,
+        "complete_sessions_only_first_action": 1,
+        "fixed_mu": 0.005,
+        "late_interval_session_exposure_recorded_as": 0,
+        "incomplete_session_exposure_required": null
+      },
+      "matched_frozen_policy_counterexample": {
+        "policy_id": "DP_H16_SLOW",
+        "source_log_score": 0.001,
+        "horizon": 16,
+        "cost_each_side": 0.002,
+        "late_session_included_variance": 0.00031017369727047146,
+        "complete_sessions_only_variance": 0,
+        "actual_first_action": 0,
+        "complete_sessions_only_first_action": 1,
+        "synthetic_only": true,
+        "new_model_inference": false
+      },
+      "consequence": "相同合成预测、费用和frozen政策，错误参考完整性可改变下一决策；63会话风险/曝光对照失去已批准的区间定义。不是原机制经济null，也不能声称本审查发现了已实现绩效偏差。",
+      "correction": "按已批准原参考语义核每个scheduled open/close端点可用性；迟到/缺失start令该会话interval-start exposure未知，不能填0；不完整open/close会话不进入complete risk history。保留原始bar、缺失与已批准fallback，不换数据/时钟/风险模型。最小回归保留此反例并覆盖正确fallback后首action。",
+      "rerun_scope": "只重验受影响完整性/风险/曝光合成例和修改文件；更新implementation/input派生绑定。无经济运行、训练或原账户归因。"
+    },
+    {
+      "id": "R2",
+      "severity": "blocking_before_first_book",
+      "contract_refs": [
+        "scientific-plan-v1.md section7 C 每天event检查点",
+        "implementation-contract-v1.md native checkpoint preservation"
+      ],
+      "code": [
+        {
+          "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/run_execution_accounts.py",
+          "line": 154
+        }
+      ],
+      "finding": "真实producer callback只在next_day_index%64==0或final day写盘，未按批准方案每日保存。native run_policy_book每日callback不等于实际daily durable checkpoint。",
+      "synthetic_evidence": {
+        "actual_day2_written": false,
+        "actual_day64_written": true,
+        "daily_checkpoint_contract_met": false,
+        "resume_identity_keys": [
+          "candidate",
+          "cost_bps",
+          "inputs_sha256",
+          "code_sha256"
+        ],
+        "inherited_cash_action_code_bound_in_resume_identity": false,
+        "neutral_exposure_input_bound_in_resume_identity": false
+      },
+      "consequence": "第2个完成索引没有落盘，直到64才有，首段中断可丢失最多63个完成日；33项测试只验证传入的capture/resume，未覆盖真实写盘callback。",
+      "correction": "复用现有atomic temp.replace每日写完native状态；保留中断点、完成结果不重启、核验完成后才清理。没有必要建设新恢复平台或重开经济计划。",
+      "minimum_acceptance": "真实callback合成day2就产生可读完整快照，rich resume结果相等；不要用人工capture冒称producer daily persistence。"
+    },
+    {
+      "id": "R3",
+      "severity": "blocking_for_complete_resume_contract",
+      "contract_refs": [
+        "implementation-contract-v1.md Same input/config/code hashes required for resume"
+      ],
+      "code": [
+        {
+          "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/run_execution_accounts.py",
+          "line": 139
+        },
+        {
+          "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/run_execution_accounts.py",
+          "line": 135
+        }
+      ],
+      "finding": "resume identity仅candidate/cost/input-manifest hash和hf_execution_policy.py hash。继承现金/action执行的hf_accounts.py、producer代码未进入identity；neutral history来自另一实际result文件，也未hash绑定。当前启动的manifest.verify保证当前版本有效，并不能证明checkpoint由相同完整代码/控制输入生成。",
+      "consequence": "hf_accounts或matched neutral result已变但policy/input-manifest不变时，旧状态仍会通过same-definition assertion。rich native状态保存完整并不能弥补identity漏绑定。",
+      "correction": "在现有identity绑定完整执行代码依赖的immutable digest、明确capital/config和neutral匹配结果/曝光输入digest（无neutral时明确null）；继续核当前inputs，不借review JSON自身循环hash。代码或匹配控制输入变动时拒绝该旧checkpoint，普通same-definition恢复仍累计原消耗。",
+      "minimum_acceptance": "最小metadata/纯合成变更探针证明cash/action代码或neutral输入变化拒绝resume，完全相同identity继续；当前尚未声称这个拒绝行为已实现。"
+    }
+  ],
+  "statistics_and_full_execution_coverage": {
+    "inventory_verified": {
+      "identities": 60,
+      "kinds": {
+        "fixed_policy_information_configuration": 48,
+        "causal_prior63session_exposure_control": 12
+      },
+      "policies": {
+        "CONT_H1_SLOW": 20,
+        "DP_H16_FAST": 20,
+        "DP_H16_SLOW": 20
+      },
+      "twenty_k_views": 120,
+      "conditional_four_k_views": 36,
+      "all_nonpromotable": true,
+      "manifest_inventory_exact": true
+    },
+    "primary_comparison_family_size": 12,
+    "frozen_statistical_definition": "3政策×2anchor×{wide-market,wide-ZERO}，HAC20、长度5 block、seed20261014、1999 joint maxT draws、95%CI及80%MDE；20bp主、40bp压力不替代主。",
+    "implemented_today": "policy/account kernel、first-book guard/producer、完整state和fixed launch inventory。",
+    "not_implemented_or_not_validated": "full120 scheduling、source-label与delay后1/2/4/8/16同日寿命统计、12比较joint maxT/HAC/MDE、完整日内/隔夜/资金/拒单归因，以及conditional36独立4k和72host视图。",
+    "applicability": "已批准handoff明确这些whole-batch/statistical wrappers在first-book实际资源校准后由同owner完成。其缺失不必另造经济计划或先为测试数量跑统计，但本review不能宣称完整实证管线或统计已通过。R1–R3须先修；后续full batch前应绑定实际新增runner/statistics代码与相称纯合成验证，保留12项联合家族和全部controls。",
+    "conditional4k": "仅stageD冻结条件满足后全36实物袖套；不满足则明确dependency_skipped，不按20k÷5推断收益。",
+    "performance": null,
+    "research_pass": false,
+    "ml_contribution_pass": false,
+    "llm_contribution_pass": false,
+    "paper_ready_pass": false
+  },
+  "native_applicability": {
+    "verdict": "component_campaign_applicability_is_overbroad_for_this_fixed_seen_nonselecting_continuation",
+    "current_native_status": "blocked",
+    "current_gate_is_not_overridden": true,
+    "facts": {
+      "identities": 60,
+      "information_anchor_configurations": 48,
+      "causal_controls": 12,
+      "policy_paths": 3,
+      "lightweight_limit": 24,
+      "all_windows_seen": true,
+      "all_nonpromotable": true,
+      "new_model_fits": 0,
+      "new_inference": 0,
+      "selection_or_pruning": "none; exact preregistered comparisons and fixed policies all reported",
+      "first_book_runs": 0
+    },
+    "campaign_consumer": {
+      "evidence": "iteration_dossier.py:1254 _campaign_requirement_blockers / :1297 _lightweight_single_mechanism_exempt",
+      "actual_function_result": [
+        "campaign_contract_required_for_new_iteration"
+      ],
+      "finding": "判定以new iter非legacy、未bindcampaign、单path且<=24的形状为准，不检查经过独立审查的market component是否属于family discovery/optimization；created_at只验格式，不能通过回填日期解除。60和3 path真实不满足lightweight，当前门阻塞准确反映现代码。",
+      "scientific_applicability": "本包比较已批准既有HF信息在三种冻结成本政策下的增量，沿原family和原pool；8流×2anchor及12controls是识别设计，非新增60独立经济机制/模型搜索。没有QD winner/pruning/近邻mutation、新OOS或promotion cohort。仅因全新目录/identity数量要求完整breadth campaign，在此超出当前mission和accepted component对象适用范围。",
+      "why_full_campaign_not_the_default_fix": "ResearchCampaignContract强制QD质量/确定性tie-break、development及protected分区和candidate promotion policy；它可用于真实新发现/优化，但本研究没有可用未见分区和选择任务。只为过门编造保护窗、QD冠军或回溯pre-discovery合同会改变科学范围/历史。若Root认定确是新campaign，必须诚实建立完整prospective合同且保留原已生成/已见暴露，不能说旧发现已被事前注册。"
+    },
+    "source_fallback_consumer": {
+      "evidence": [
+        "market_component.py:70/178/212",
+        "iteration_dossier.py:302/304/915",
+        "knowledge_memory.py:519/520"
+      ],
+      "finding": "market_component_role_applies依赖有效独立plan及implementation批准/binding；缺implementation acceptance使role false，external和knowledge同时使用普通8source，当前4source因而失败。campaign要求是独立结构门，补implementation review本身不会解除。",
+      "this_review_effect": "本次verdict为revise，作者不可绑定它为approve或拿2source豁免；完成必要修订并获实际独立接受后，重建真实binding链，组件2source门才可能适用。现阻塞不证明额外4来源能解决经济识别问题。",
+      "no_fabricated_native_pass": true
+    },
+    "recommended_root_path": "优先原owner同语义修R1–R3；随后Root依据本证据选窄native适用性修订，使实际独立approved/bound、原family/完整暴露、固定seen/nonpromotable/no-selection组件接续不被一概当breadth campaign。保留真实需要campaign的发现/优化和注册child门。此review不写CLI/validator，也不自动给出native通过。",
+    "conditions_for_any_narrow_applicability_path": [
+      "保留全部60身份、3policy、12controls、120主/压力视图和有条件36袖套；不得拆身份或降budget到24伪装lightweight。",
+      "继续实际direction/knowledge/iteration和input/runtime检查；独立plan/implementation真实性及精确binding不可弱化。",
+      "保留旧family及3513唯一模型配置、3610旧trial、800旧diagnostics、385持久文件、历史effective4453分口径；这些数字复用批准plan，不冒称新全量重计。",
+      "新账启动/失败/完成/跳过与原试验暴露累计；已见2016–2020及旧failed OOS不重标unseen。",
+      "若出现新候选选择、QD/pruning、近邻优化、新模型或promotion，需要其实际适用campaign/科学门；本component判断不普遍豁免market components。"
+    ]
+  },
+  "resources": {
+    "authorization": "此次≤250CPU仅来自同完整5000CPU包；非新池或新增付费。",
+    "review_CPU_limit": 250,
+    "pool_cap_CPU": 36000,
+    "package_cap_CPU": 5000,
+    "cumulative_charged_before_CPU": 12619.26,
+    "old_source_held_CPU": 30,
+    "package_future_reserved_before_CPU": 4825.21,
+    "measured_capped_validation_CPU_including_launchers": 8.47,
+    "additional_matched_policy_probe_process_CPU": 0.298167,
+    "actual_capped_peak_RSS_KiB": 48240,
+    "memory_limit_MiB": 384,
+    "swap_limit_MiB": 0,
+    "core_count": 1,
+    "fresh_memory_admission": "每次synthetic运行经run_capped --mem384M --wait-min0实际启动，preserve500MiB reserve；未由历史ready代替。",
+    "charge_CPU": 25,
+    "charge_method": "固定25CPU保守记本review总消耗，包含两次受限验证8.47、追加matched-policy合成探针0.298167、所有未逐命令计量静态读取/元数据检查/格式及交付。第二次仅修正本review统计读取时点并加入同一缺口的曝光记录，不新增策略trial；两次消耗均保留。",
+    "Root10_recharged_CPU": 0,
+    "charge_id": "hf-independent-implementation-review-93af0483-v1",
+    "author_or_global_ledgers_modified": false,
+    "accounting_instruction": "Root/原owner将本receipt的25CPU按charge_id去重追加原cumulative ledger；未直接改作者ledger。以下为纳入本receipt后的算术，不冒称共享ledger已写入。",
+    "cumulative_charged_after_including_this_receipt_CPU": 12644.26,
+    "package_already_charged_after_CPU": 199.79,
+    "package_future_reserved_after_CPU": 4800.21,
+    "family_unallocated_after_CPU": 18525.53,
+    "new_paid_spending": 0,
+    "resource_receipts": [
+      {
+        "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation-resource.txt",
+        "sha256": "01a3f03035e3be98e44e0822a01568cfc87ead69c54c093107ea218042a10379",
+        "bytes": 1017
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/hf-factor-return/execution-value-continuation/independent-validation-resource-02.txt",
+        "sha256": "866bcb0c4836690bbc14086aa21012bd2a277cdfc9c8522cddd83b910b9ba824",
+        "bytes": 1011
+      }
+    ]
+  },
+  "preserved_boundaries": {
+    "economic_execution_admitted": false,
+    "first_book_launch_admitted": false,
+    "new_economic_runs": 0,
+    "training_or_optimizer_updates": 0,
+    "new_strategy_model_inference": 0,
+    "broker_or_production_writes": 0,
+    "validator_or_shared_CLI_changes": 0,
+    "author_files_modified": 0,
+    "global_control_files_modified": 0,
+    "subagents_spawned": 0,
+    "logical_owner_retained": "66ebc2b7-c533-4992-82fe-cece4f3e2b12",
+    "parent_question_complete": false,
+    "old_scientific_plan_and_failed_results_preserved": true
+  },
+  "next_action": "返回原owner修R1–R3并绑定改动/最小合成证据；Root选择native最小正确适用性路径。再次受影响实施接受、实际native/input/resource门及Root经济准入均真实满足后，原owner才能进行固定first-book和完整接续；本产物不授予启动、资源扩额或订单许可。"
+}

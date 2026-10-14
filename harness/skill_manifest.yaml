@@ -13,14 +13,12 @@ skills:
 
   strategy-research-orchestrator:
     description: >
-      Orchestrates the full research workflow: spec → harness plan → capabilities
-      → source research → search space → trials → benchmark family → forensics →
-      execution reality → promotion → paper readiness.
+      Coordinates strategy research, optimization and lifecycle decisions using
+      applicable native gates; adapts methods to the research object and stage.
+      Component or agent-method work does not require an unrelated strategy.
     triggers:
-      - user requests strategy creation, optimization, or evaluation
-      - user gives a natural-language trading idea
-      - user requests paper ready or paper automation
-      - user requests professional research or full review
+      - user requests strategy research, optimization, or evaluation
+      - user requests strategy promotion or paper readiness
     primary_outputs:
       - reports/harness/plans/{strategy}.json
       - reports/research/{strategy}-research-brief.json
@@ -29,14 +27,12 @@ skills:
 
   idea-to-paper:
     description: >
-      Owner 2026-10-06: turns every owner idea, doubt or new requirement into
-      professional work -- intent, how institutions / mature individuals / good
-      projects solve it, judgment first, a family of variants run to minimum
-      effective depth, paper within 14 days, iteration, plain-language report.
+      Turns an investment or research idea into a source-led economic decision,
+      including factors, data, models, timing and execution. Unrelated product,
+      documentation and agent-method maintenance do not use this workflow.
     triggers:
-      - owner states an idea, direction, doubt, complaint or new requirement
-      - a new research direction is opened
-      - owner asks why something is not being done
+      - owner states an investment or strategy-research idea or challenge
+      - a new economic research direction is opened
     primary_outputs:
       - reports/research/control/briefs/{task}.md
       - reports/research/iterations/{iteration}/direction-review.json
@@ -213,16 +209,29 @@ skills:
       - user requests weekly summary
     skill_path: .agents/skills/weekly-reviewer/SKILL.md
 
-  ultracode-reviewer:
+  research-plan-reviewer:
     description: >
-      Meta-review workflow for Open Composer codebase, architecture, project
-      optimization, broad bug/risk assessment, and professional implementation
-      planning before edits.
+      Independently reviews new economic hypotheses, material scientific
+      definition changes or work beyond approved scope. Routine authorized
+      execution and same-semantics repair use relevant diff/result acceptance.
     triggers:
-      - user asks to review, audit, evaluate, optimize, harden, or improve Open Composer
-      - user asks for broad bug, architecture, research workflow, or project assessment
-      - user asks for an implementation plan before coding
-    skill_path: .agents/skills/ultracode-reviewer/SKILL.md
+      - a new economic hypothesis requires independent review
+      - a material scientific definition or approved research scope changes
+    skill_path: .agents/skills/research-plan-reviewer/SKILL.md
+
+  windows-paseo-worker:
+    description: >
+      Routes memory-heavy research work to the owner's Windows computer through
+      Paseo, with the fixed C:\\paseo root, 50 GiB cap, preflight, manifest,
+      hash verification, pause controls, and cleanup requirements.
+    triggers:
+      - a research task needs the Windows compute worker
+      - a session asks how to connect to or pause the Windows worker
+      - a remote research task needs transfer or cleanup rules
+    primary_outputs:
+      - config/windows-paseo-worker.json
+      - reports/research/control/autonomous-log.md
+    skill_path: .agents/skills/windows-paseo-worker/SKILL.md
 
 # ── Claude Code hook entry points ─────────────────────────────────────────────
 # Hooks run automatically in Claude Code sessions. They are lightweight scripts;

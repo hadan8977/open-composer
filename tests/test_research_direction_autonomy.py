@@ -96,6 +96,50 @@ def test_direction_requires_opened_unchanged_sources(tmp_path: Path) -> None:
     )
 
 
+def test_v3_direction_review_binds_sources_query_manifest_and_knowledge_baseline(
+    tmp_path: Path,
+) -> None:
+    now = datetime.now(UTC)
+    path = review(tmp_path, now)
+    payload = json.loads(path.read_text())
+    query_manifest = tmp_path / "query-manifest.json"
+    query_manifest.write_text(json.dumps({"queries": payload["queries"]}))
+    baseline = tmp_path / "knowledge-baseline.json"
+    baseline.write_text(json.dumps({"prior_claims": [], "negative_evidence": []}))
+    source = payload["sources"][0]
+    payload.update(
+        {
+            "schema_version": 3,
+            "source_evidence_bindings": [
+                {
+                    "claim_id": source["claim_id"],
+                    "source_card_path": source["source_card_path"],
+                    "snapshot_path": source["snapshot_path"],
+                    "snapshot_sha256": source["sha256"],
+                    "source_url": source["url"],
+                }
+            ],
+            "query_manifest": {
+                "path": query_manifest.name,
+                "sha256": hashlib.sha256(query_manifest.read_bytes()).hexdigest(),
+            },
+            "pre_iteration_knowledge_baseline": {
+                "path": baseline.name,
+                "sha256": hashlib.sha256(baseline.read_bytes()).hexdigest(),
+            },
+        }
+    )
+    write_json(path, payload)
+    assert validate_direction_review(path, tmp_path, now=now) == []
+
+    payload["source_evidence_bindings"][0]["snapshot_sha256"] = "0" * 64
+    write_json(path, payload)
+    assert any(
+        item.startswith("direction_v3_source_evidence_binding_mismatch:")
+        for item in validate_direction_review(path, tmp_path, now=now)
+    )
+
+
 def test_source_must_match_query_and_iteration(tmp_path: Path) -> None:
     path = review(tmp_path, datetime.now(UTC))
     payload = json.loads(path.read_text())

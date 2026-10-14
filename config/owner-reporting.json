@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "authorized_at_utc": "2026-10-11T12:04:39.321946+00:00",
+  "owner_instruction": "每日每周，每整轮（2小时？）；重要阻塞及时报告并提请机主决定。",
+  "timezone": "Asia/Shanghai",
+  "report_agent_id": "be42b592-1426-41b4-be3a-b4a62d5b9482",
+  "research_coordination_agent_id": "fc66ee6a-2b84-493a-8aaa-3c78973405c8",
+  "cadence": {
+    "round": {
+      "cron": "5 */2 * * *",
+      "timezone": "UTC",
+      "scope": "过去约两小时已完成及进行中的整轮研究；不是每个subagent一条回执",
+      "schedule_id": "b211abe7"
+    },
+    "daily_and_weekly_chat": {
+      "cron": "0 1 * * *",
+      "timezone": "UTC",
+      "local_time": "每日09:00；周日为周报",
+      "schedule_id": "8a81c331"
+    },
+    "writer": {
+      "schedule_id": "e2572f80",
+      "cron": "5 0 * * *",
+      "timezone": "UTC",
+      "weekly_on_utc_sunday": true
+    },
+    "important_blockers": "discovery-time event; coalesce duplicate updates for same decision unless state materially changes"
+  },
+  "report_format": "docs/owner-reporting.zh.md section0.1 plus2026-10-11 amendment",
+  "mail_delivery": "existing01:00UTC cron preserved; no new email channel or forced resend",
+  "state": "reports/owner/reporting-state.json",
+  "reports": "reports/owner/updates",
+  "financial_or_training_authority_changed": false,
+  "updated_at_utc": "2026-10-11T12:15:03.996593+00:00",
+  "previous_report_agent_id": "7a2a5682-805e-44c9-832a-2fa36ae32b97",
+  "updated_reason": "Owner2026-10-13 resumed task-owned research and requested dedicated Sol report session"
+}

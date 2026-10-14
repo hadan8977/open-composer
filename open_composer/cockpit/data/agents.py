@@ -168,7 +168,11 @@ DEFAULT_SSE_KEEPALIVE_INTERVAL_SECONDS: Final[float] = 15.0
 DEFAULT_SSE_MAX_DURATION_SECONDS: Final[float] = 600.0
 
 _SYSTEMCTL_TIMEOUT_SECONDS: Final[float] = 2.0
-_RESEARCH_CAPPED_SLICE_NAME: Final[str] = "research-capped"
+# run_capped.sh slices: research jobs inside the project memory budget since
+# 2026-10-07 (oc-research-capped), paper crons (paper-capped), and the old name.
+_CAPPED_SLICES: Final[frozenset[str]] = frozenset(
+    {"oc-research-capped.slice", "paper-capped.slice", "research-capped.slice"}
+)
 
 _STATE_RANK: Final[dict[str, int]] = {"running": 0, "error": 1, "idle": 2, "closed": 3}
 _STATE_DOT: Final[dict[str, str]] = {
@@ -1783,7 +1787,7 @@ def _unit_is_research_capped(run: RunSystemctl, unit: str) -> bool:
     output = run(["show", "-p", "Slice", "--value", unit])
     if output is None:
         return False
-    return output.strip() == f"{_RESEARCH_CAPPED_SLICE_NAME}.slice"
+    return output.strip() in _CAPPED_SLICES
 
 
 def _parse_active_enter_timestamp(value: str) -> datetime | None:

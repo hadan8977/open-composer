@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
+import os
 import re
+import sys
+import time
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from shutil import copyfile, copytree
 
 import pytest
 import yaml
 
-from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_controls import clear_paper_kill_switch
 from open_composer.research.iteration_dossier import (
     candidate_authorization_binding_sha256,
@@ -20,6 +25,9 @@ from open_composer.research.iteration_dossier import (
 from open_composer.strategy_versions import strategy_content_hash
 
 _PATH_PREFIX_PATTERN = re.compile(r"(reports|strategy_specs|signal_logs|data|\.codex|\.agents)\\")
+_PYTEST_LOCK_PATH = Path("/tmp/open-composer-pytest.lock")
+_PYTEST_LOCK_ENV = "OC_PYTEST_LOCK_HELD"
+_PYTEST_LOCK_KEY = pytest.StashKey[object]()
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -36,6 +44,50 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "slow: full-round replay/training-heavy tests, run via `make test-full` / `make verify`.",
     )
+    _hold_pytest_lock(config)
+
+
+def _hold_pytest_lock(config: pytest.Config) -> None:
+    """One pytest run at a time in this repo (memory budget, owner 2026-10-07).
+
+    A full run takes about 1 GB; on 2026-10-07 two agents' runs overlapped and, with the
+    rest of the project, left the owner under 500 MB free (docs/runbook-memory.zh.md).
+    A second run waits here, up to OC_PYTEST_LOCK_WAIT seconds (default 3600). Child
+    processes inherit OC_PYTEST_LOCK_HELD and skip the lock.
+    """
+    if os.environ.get(_PYTEST_LOCK_ENV):
+        return
+    handle = _PYTEST_LOCK_PATH.open("a+")
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        wait = float(os.environ.get("OC_PYTEST_LOCK_WAIT", "3600"))
+        handle.seek(0)
+        holder = handle.read().strip() or "unknown holder"
+        print(
+            f"pytest: another run in this repo holds {_PYTEST_LOCK_PATH} ({holder}); "
+            f"waiting up to {wait:.0f}s (memory budget, docs/runbook-memory.zh.md)",
+            file=sys.stderr,
+        )
+        deadline = time.monotonic() + wait
+        while True:
+            time.sleep(5)
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    handle.close()
+                    raise pytest.UsageError(
+                        f"another pytest run held {_PYTEST_LOCK_PATH} for over {wait:.0f}s"
+                    ) from None
+    handle.seek(0)
+    handle.truncate()
+    started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    handle.write(f"pid={os.getpid()} started={started} cwd={os.getcwd()}")
+    handle.flush()
+    os.environ[_PYTEST_LOCK_ENV] = str(os.getpid())
+    config.stash[_PYTEST_LOCK_KEY] = handle
 
 
 @pytest.fixture(autouse=True)
@@ -254,7 +306,12 @@ def sample_workspace(tmp_path: Path, repo_root: Path, fixture_specs_root: Path) 
 def preregister_iteration_dossier(
     sample_workspace: Path,
 ) -> Callable[..., str]:
-    def preregister(spec_path: Path, *, candidate_count: int) -> str:
+    def preregister(
+        spec_path: Path,
+        *,
+        candidate_count: int,
+        candidate_factory: Callable[[StrategySpec], list[StrategySpec]] | None = None,
+    ) -> str:
         iter_id = f"{spec_path.stem}_parameter_sweep"
         campaign_id = f"{iter_id}_campaign"
         iteration_root = sample_workspace / "reports/research/iterations" / iter_id
@@ -433,6 +490,26 @@ def preregister_iteration_dossier(
         campaign_path.write_text(json.dumps(campaign, sort_keys=True), encoding="utf-8")
         campaign_relpath = campaign_path.relative_to(sample_workspace).as_posix()
 
+        # Generate the test's actual fixed versions from its existing producer
+        # before writing/finalizing admission and before any algorithm execution.
+        # A quantity alone never registers whichever spec later reaches a gate.
+        spec_hashes = {source_spec_path: spec_hash}
+        candidate_spec_paths = [source_spec_path] * candidate_count
+        if candidate_factory is not None:
+            actual_candidates = candidate_factory(spec)
+            assert len(actual_candidates) == candidate_count
+            for index, candidate in enumerate(actual_candidates):
+                candidate_path = spec_path.with_name(
+                    f"{spec_path.stem}_preregistered_{candidate_ids[index]}.yaml"
+                )
+                candidate_path.write_text(
+                    yaml.safe_dump(candidate.model_dump(mode="json"), sort_keys=False),
+                    encoding="utf-8",
+                )
+                reference = candidate_path.relative_to(sample_workspace).as_posix()
+                candidate_spec_paths[index] = reference
+                spec_hashes[reference] = strategy_content_hash(load_strategy_spec(candidate_path))
+
         partition_path.write_text(
             json.dumps({"partition_id": "development", "kind": "development"}),
             encoding="utf-8",
@@ -444,7 +521,7 @@ def preregister_iteration_dossier(
                 "role": "deterministic_fixture",
                 "method": f"fixture_method_{candidate_id}",
                 "ablation": "none",
-                "spec_path": source_spec_path,
+                "spec_path": candidate_spec_paths[index],
                 "fallback": "cash_proxy",
                 "data_contract": "fixture",
                 "feature_contract": "fixture",
@@ -467,7 +544,7 @@ def preregister_iteration_dossier(
                     partition_path.read_bytes()
                 ).hexdigest(),
             }
-            for candidate_id in candidate_ids
+            for index, candidate_id in enumerate(candidate_ids)
         ]
         feasibility = {
             "schema_version": 1,
@@ -554,7 +631,7 @@ def preregister_iteration_dossier(
             "generated_before_backtest": True,
             "candidate_count": candidate_count,
             "contracts": contracts,
-            "spec_hashes": {source_spec_path: spec_hash},
+            "spec_hashes": spec_hashes,
             "candidates": candidate_rows,
         }
         manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")

@@ -109,7 +109,6 @@ REQUIRED_SKILLS = [
     "signal-parity-reviewer",
     "strategy-designer",
     "strategy-researcher",
-    "ultracode-reviewer",
     "weekly-reviewer",
 ]
 
@@ -175,6 +174,7 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _no_live_llm_backtest_check(base),
         _makefile_verify_check(base),
         _harness_policy_check(base),
+        _evaluation_standard_changelog_check(base),
     ]
     status = _overall_status(checks)
     return RepoConsistencyReport(
@@ -364,7 +364,6 @@ def _agents_rules_check(root: Path) -> RepoConsistencyCheck:
         "serialized estimator",
         "untrusted reader input",
         "Real-money broker write access is out of scope",
-        "Run `uv run ruff format .`, `uv run ruff check .`, and `uv run pytest`",
     ]
     missing = _missing_text(path, required)
     if missing:
@@ -448,20 +447,6 @@ def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
             "promotion-report",
             "llm_contribution_pass",
         ],
-        "ultracode-reviewer": [
-            "# UltraCode Reviewer V2",
-            "## 1. Objective, Boundaries, Acceptance",
-            "## 2. Dependency Graph",
-            "## 3. Critical Path and Concurrency",
-            "## 4. Role Selection",
-            "## 5. Write Ownership",
-            "## 6. Agent Contract",
-            "## 7. Adversarial Review",
-            "## 8. Conflict Resolution",
-            "## 9. Evidence and Acceptance",
-            "## 10. Stop Conditions",
-            "StrategySpec",
-        ],
         "weekly-reviewer": ["LLM contribution evidence", "paper readiness evidence"],
     }
     missing_anchors: dict[str, list[str]] = {}
@@ -507,13 +492,21 @@ def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
         "scripts/check-agent-parity.py",
     ]
     missing_paths = [path for path in required_paths if not (root / path).exists()]
+    source_skills = _agent_skill_dirs(root)
+    mirrored_skills = sorted(set(REQUIRED_SKILLS) | source_skills)
+    target_root = root / ".claude" / "skills"
+    target_skills = (
+        {path.name for path in target_root.iterdir() if path.is_dir()}
+        if target_root.is_dir()
+        else set()
+    )
     missing_skills = [
         skill
-        for skill in REQUIRED_SKILLS
+        for skill in mirrored_skills
         if not (root / ".claude" / "skills" / skill / "SKILL.md").exists()
     ]
     drifted_skills = []
-    for skill in REQUIRED_SKILLS:
+    for skill in mirrored_skills:
         source = root / ".agents" / "skills" / skill / "SKILL.md"
         target = root / ".claude" / "skills" / skill / "SKILL.md"
         if (
@@ -536,6 +529,7 @@ def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
     problems = {
         "missing_paths": missing_paths,
         "missing_skills": missing_skills,
+        "unexpected_skills": sorted(target_skills - source_skills),
         "drifted_skills": drifted_skills,
         "missing_anchors": missing_anchors,
     }
@@ -554,7 +548,7 @@ def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
         name="claude_parity",
         status="ok",
         message="Claude Code rules, commands, settings, and mirrored skills are present.",
-        details={"skill_count": len(REQUIRED_SKILLS)},
+        details={"skill_count": len(mirrored_skills)},
     )
 
 
@@ -959,3 +953,38 @@ def _render_markdown(report: RepoConsistencyReport) -> str:
                 lines.append(f"  - `{action}`")
         lines.append("")
     return "\n".join(lines)
+
+
+def _evaluation_standard_changelog_check(root: Path) -> RepoConsistencyCheck:
+    """Every state of the evaluation standard needs a signed changelog entry."""
+    from open_composer.research.gate_additions import evaluation_standard_status
+
+    status = evaluation_standard_status(root)
+    if not status.get("present"):
+        return RepoConsistencyCheck(
+            name="evaluation_standard_changelog",
+            status="ok",
+            message="No evaluation standard file in this workspace; nothing to log.",
+        )
+    if status["invalid_entries"] or not status["covered"]:
+        return RepoConsistencyCheck(
+            name="evaluation_standard_changelog",
+            status="blocked",
+            message="config/evaluation-standard-v2.json has no valid changelog entry for its "
+            "current sha256.",
+            details={
+                "sha256": status["sha256"],
+                "entries": status["entries"],
+                "invalid_entries": status["invalid_entries"],
+            },
+            suggested_actions=[
+                "Append a line to config/evaluation-standard-changelog.jsonl with the new "
+                "sha256, date, changed_by, reason and signed_by (lead-round signature)"
+            ],
+        )
+    return RepoConsistencyCheck(
+        name="evaluation_standard_changelog",
+        status="ok",
+        message="Evaluation standard hash is covered by the changelog.",
+        details={"sha256": status["sha256"], "entries": status["entries"]},
+    )

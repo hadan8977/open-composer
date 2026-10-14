@@ -469,6 +469,9 @@ def build_iteration_knowledge_context(
 
 
 def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> KnowledgeAssessmentResult:
+    from open_composer.research.iteration_dossier import public_method_role_applies
+    from open_composer.research.market_component import market_component_role_applies
+
     base = root or project_root()
     iteration_dir = base / ITERATION_ROOT / iter_id
     brief_path = iteration_dir / "external-brief.json"
@@ -512,11 +515,24 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         base,
     )
     blocked = []
-    if len(rows) < 8:
-        blocked.append("knowledge_sources_lt_8")
+    public_method = public_method_role_applies(iteration_dir, base)
+    market_component = market_component_role_applies(iteration_dir, base)
+    minimum_sources = 2 if public_method or market_component else 8
+    reviewed_scope_reuse = (
+        (public_method or market_component)
+        and len(rows) >= minimum_sources
+        and counts["reused"] == len(rows)
+        and bool(scout)
+    )
+    if len(rows) < minimum_sources:
+        blocked.append(f"knowledge_sources_lt_{minimum_sources}")
     if not all(partition in index["visibility_partitions"] for partition in VISIBILITY_PARTITIONS):
         blocked.append("knowledge_visibility_partitions_incomplete")
-    if counts["new"] + counts["refresh_required"] < 1 and repair_reuse_evidence is None:
+    if (
+        counts["new"] + counts["refresh_required"] < 1
+        and repair_reuse_evidence is None
+        and not reviewed_scope_reuse
+    ):
         blocked.append("knowledge_no_new_or_refresh_evidence")
     blocked.extend(repair_reuse_blockers)
     if not scout:
@@ -533,6 +549,18 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         },
     )
     context = build_iteration_knowledge_context(iter_id, base)
+    # Bind the receipt to the exact evidence assessed. Keeping a path alone
+    # would let the execution gate consume later substituted scout/role bytes.
+    artifact_paths = {
+        "scout_path": scout_path,
+        "model_reuse_decision_path": model_reuse_path,
+        "modality_role_matrix_path": iteration_dir / "modality-role-matrix.json",
+    }
+    artifact_bindings = {
+        key: {"path": _relpath(path, base), "sha256": _sha256_file(path)}
+        for key, path in artifact_paths.items()
+        if path.is_file()
+    }
     payload = {
         "schema_version": 1,
         "iter_id": iter_id,
@@ -541,11 +569,22 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         "external_brief_sha256": _sha256_file(brief_path),
         "status": "blocked" if blocked else "ok",
         "blocked": blocked,
+        "artifact_bindings": artifact_bindings,
         "counts": counts,
         "novelty_policy": {
             "default_requires_new_or_refresh_evidence": True,
             "pure_implementation_repair_reuse": repair_reuse_evidence,
+            "reviewed_method_fresh_source_reuse": reviewed_scope_reuse,
+            "reviewed_reuse_basis": (
+                "Hash-bound independent scientific review and applicable method definition; "
+                "all current sources reused without stale flags; versioned scout verified. "
+                "Source evidence, direction and actual execution gates remain separate."
+                if reviewed_scope_reuse
+                else None
+            ),
         },
+        "public_method_role_applicable": public_method,
+        "market_component_role_applicable": market_component,
         "source_assessment": rows,
         "scout_path": _relpath(scout_path, base) if scout else None,
         "scout_new_candidates": int(scout.get("new_candidate_count", 0)),
@@ -1109,9 +1148,18 @@ def _contains_key(value: Any, keys: set[str]) -> bool:
 
 def _collect_model_memory(root: Path) -> list[dict[str, Any]]:
     rows = []
-    for path in sorted((root / ITERATION_ROOT).glob("*/models/*.joblib")):
+    model_paths = sorted((root / ITERATION_ROOT).glob("*/models/*.joblib"))
+    paths_by_iteration: dict[Path, set[str]] = defaultdict(set)
+    for path in model_paths:
+        paths_by_iteration[path.parent.parent].add(_relpath(path, root))
+    reports_by_iteration: dict[Path, dict[str, dict[str, Any]]] = {}
+    for path in model_paths:
         iteration_dir = path.parent.parent
-        report = _find_model_report(iteration_dir, root, path)
+        if iteration_dir not in reports_by_iteration:
+            reports_by_iteration[iteration_dir] = _index_model_reports(
+                iteration_dir, paths_by_iteration[iteration_dir]
+            )
+        report = reports_by_iteration[iteration_dir].get(_relpath(path, root), {})
         rows.append(
             {
                 "model_id": _sha256_file(path),
@@ -1128,6 +1176,29 @@ def _collect_model_memory(root: Path) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def _index_model_reports(iteration_dir: Path, model_paths: set[str]) -> dict[str, dict[str, Any]]:
+    """Index first matches in the same sorted-report and LIFO order as lookup."""
+    reports: dict[str, dict[str, Any]] = {}
+    for report_path in sorted(iteration_dir.glob("*.json")):
+        try:
+            payload = json.loads(report_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        stack = [payload]
+        while stack:
+            value = stack.pop()
+            if isinstance(value, dict):
+                candidate_path = value.get("model_path")
+                if candidate_path and str(candidate_path) in model_paths:
+                    reports.setdefault(str(candidate_path), value)
+                    if len(reports) == len(model_paths):
+                        return reports
+                stack.extend(value.values())
+            elif isinstance(value, list):
+                stack.extend(value)
+    return reports
 
 
 def _find_model_report(iteration_dir: Path, root: Path, model_path: Path) -> dict[str, Any]:

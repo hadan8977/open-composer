@@ -1,0 +1,434 @@
+{
+  "task_id": "DAY3-EQUITY-ROLE",
+  "owner": "b497883a-0236-422c-929b-f9b5998fff83",
+  "created_at_utc": "2026-10-13T06:29:26Z",
+  "status": "complete_scientific_proposal_for_independent_review_with_real_input_blockers",
+  "economic_execution_admitted": false,
+  "new_paid_budget": 0,
+  "independent_review_verdict": null,
+  "decision": "不把股票动态动量锁为周主收益。保留固定MAX避差与条件均值/方差分解两个真正不同的用途问题；近期二元DM/BSC已失败，不重复。当前只建议先review有实际原作者输入的可移植性研究；股票净收益分支在永久身份/退市/公司行动准入前dependency_skipped。",
+  "net_return_question": "在相同PIT股票池、原动量买入排序、20日持有、100%最高现金风险预算及$20k账本下，固定差尾部排除是否提高成本后绝对收益，并超过同只数随机排除及同风险现金混合？另问条件均值预测是否提供inverse-variance之外的收益，且其原long-short作用能否迁移到winner-only。",
+  "source_interpretation": {
+    "dm": "原作者长期CRSP双边组合、扩展窗口mean forecast及126日variance，与旧本地二元panic/日频降暴露不是同方法。原short-loser反弹机制不直接预测long-only失效。",
+    "cederburg": "总体实时不稳定反证保留，但九个动量子项均方向改善、五项显著以及MOM实时组合正面结果保留；不以abstract概括成动量全部无效。",
+    "max": "源定义是过去一个月MAX，且原文说明MAX影响idio-vol异常解释；本包只冻结MAX一个排除位，不把相关风险代理等权堆成“多信息质量”。原全市场月频与本地21session/20日宿主分别记复现与适配。",
+    "source_limits": "源双边gross、公开组合收益并不含本地股票成交/成本/永久身份；不声称原文已经严格复现，也不以源Sharpe当本地净收益。BSC公开replication/errata未成功取到，不假装有原包。"
+  },
+  "existing_counterevidence": {
+    "reuse": "reports/research/program/day-goal-20261013/research-frontier/old-results.json；已接收且Form4登记更正完成，本包不再修harvest。",
+    "c1": "高IC识别差尾部而最高档不单调；费用差无法解释大幅收益损失，线性C1/C2/v2保持不可选历史参照。",
+    "old_crash_guards": {
+      "path": "reports/research/iterations/h20260924_02_momentum_crash_guard/results.json",
+      "mechanisms_already_tested": [
+        "cg_dm",
+        "cg_bsc_daily",
+        "cg_stop",
+        "cg_dm_bsc",
+        "cg_mkt_stop"
+      ],
+      "recent": "cg_dm/cg_mkt_stop为常数1无触发；BSC20bp anchor CAGR36.4445%、Sharpe0.97185、DD−27.4572%，旧shift beat fraction0.70。不能再叫新动态配置。",
+      "boundary": "此负结果不裁决扩展窗口连续条件均值；但近期同源IB没有变化，使新mean交互在近期可能不可识别。"
+    },
+    "sealed": "C1重排、Form4动量确认、原相对中位meta及旧CG各自消费/冻结/封存不改；任何新名不刷新它们。",
+    "historical_exposure": "unknown。旧已知最低可选/调用/季度记录沿旧结果包保存。mom_breadth_qd_r1旧累计合同声明prior_effective_trial_count8147，但其作用域、真实ledger及有效N未由本包重新验收，不能当新任务的已核实精确N或重开57额度。"
+  },
+  "input_evidence": {
+    "author_portfolios": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-published-portfolios-201402.tar.gz",
+      "bytes": 15849926,
+      "metadata_proof": "reports/research/program/day-goal-20261013/equity-role/sources/dm-archive-inventory.json",
+      "members": [
+        "txt/d_m_pt_tot.txt",
+        "txt/m_m_pt_tot.txt"
+      ],
+      "acquired": "原作者公开归档opaque source intake；只核对tar成员和bytes，未解码数值或市场矩阵。首个8MiB intake尝试失败、随后streaming完成，失败收据保留；不是数据不可用。",
+      "acceptance": "byte/input identity established; return schema/units/calendar/negative-99 sentinels and daily-monthly reconstruction must be verified after independent scientific and numerical-input admission."
+    },
+    "market_rf": {
+      "path": "reports/research/program/regime-french-source-20261010-1917/official-daily.zip",
+      "receipt": "reports/research/program/regime-french-source-20261010-1917/receipt.json",
+      "schema": "reports/research/program/regime-french-source-20261010-1917/schema-evidence.json",
+      "status": "existing raw bytes, numerical values not decoded here; old metadata covers1970..2026 but archive contains earlier rows. Requires actual full date/units acceptance; 2026 CRSP/CIZ vintage differs from paper-original vintage.",
+      "original_rf": "原DM使用月初可知月RF换成日频；不得拿当月实现RF或revised2026数据冒称原PIT。不能恢复原vintage时只做明确revised-data方法复现，精确Table7复制列N/A。"
+    },
+    "french_momentum": {
+      "path": "data/raw/factor_libraries/french/10_Portfolios_Prior_12_2_CSV.zip",
+      "status": "existing monthly archive bytes, no numerical decoding; only preregistered NYSE-breakpoint sensitivity, never replacement for author all-firm primary"
+    },
+    "stock_panel": {
+      "metadata": [
+        "data/research/equity_book/panel/_manifest.json",
+        "data/live/equity_book/panel/_manifest.json"
+      ],
+      "observed": "live manifest 2026-10-08,7,992 symbols/2,706 sessions；这些是旧manifest数字，不是本轮市场计算。daily_broad约3.57GB，不能以目录存在证明准入。",
+      "problems": [
+        "manifest承认ADV/beta/idio-vol/vol21在price hygiene之前计算；净化后特征需在允许分区同语义重算",
+        "mcap有ADV-fallback，不能当原value-weighted CRSP权重",
+        "持仓matrix以symbol为轴，末价退市/可选haircut不是真实退市收益",
+        "无已验收的PIT永久证券身份、公司行动和delisting returns"
+      ],
+      "hard_binding": "reports/research/iterations/mom_breadth_pit_xsmom_r1/universe-contract.json explicitly dependency_skipped; existing newer panel does not resolve its blocker by presence alone."
+    },
+    "cash_and_quotes": "股票20k fully-settled cash和整股账本未在旧摘要验收；cost_model_v1的open样本实际09:35–09:45，不能证明09:30成交价差。其full-sample/year-effects仅cost sensitivity，不能用作PIT模型选择。",
+    "data_routes": "股票选择缺PIT就skip；不使用当前ticker/CIK/SIC或预先知退市后果选择子池。source portfolio可继续方法研究但不承担本地净收益/Paper承诺；不建设长期身份平台作为本任务替身。",
+    "bindings": [
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-2016-final.txt",
+        "bytes": 213266,
+        "sha256": "ccec5bba6b85414e08b38b12f80f4f536173d9f06fc8a6253614d64daca08068"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/cederburg-2020.txt",
+        "bytes": 203291,
+        "sha256": "708ec739a56c51d74eb0e5ba5469f79f17bcb96ca9de4db5c9deb4475a116c56"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-portfolio-definition.txt",
+        "bytes": 15853,
+        "sha256": "aa65cdffe795c2eba339ac46a5ede843a241c8fe397a6f187d408de10afe72c2"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/max-2011.txt",
+        "bytes": 168426,
+        "sha256": "ec1a7f34a3e3a370e72c8171eb59e9733029686629b889931eee31ee1eafebde"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/schwab-cash-settlement.html",
+        "bytes": 817215,
+        "sha256": "572940f4c0bacc50cc7ed2e730b9ca9c8a6a8e1cc2635af2dee85bef54c4be08"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-data-index.html",
+        "bytes": 6707,
+        "sha256": "43535943b9ee914760d95170a994db8ab3d5b41380bad0489ccaa1377353c4b2"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/barroso-author-index.html",
+        "bytes": 156270,
+        "sha256": "11da7b3310539c8008e0882c8b0c4789fb9ed8a441a7c6426cdad42dec8c06f5"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-published-portfolios-201402.tar.gz",
+        "bytes": 15849926,
+        "sha256": "32139ee0ad2daba2a7e5c7c071285a6cce9dfacf6dc7b99444f8f41bfeeefd36"
+      },
+      {
+        "path": "reports/research/program/regime-french-source-20261010-1917/official-daily.zip",
+        "bytes": 178184,
+        "sha256": "2f29e22546069914890a712680a6f81f3680ebc3543b52864484d209ca13a7db"
+      },
+      {
+        "path": "data/raw/factor_libraries/french/10_Portfolios_Prior_12_2_CSV.zip",
+        "bytes": 119019,
+        "sha256": "fb968db8061acb1052e595b59118f26fccda24963bd71f490a9a51c31eead8ec"
+      },
+      {
+        "path": "data/live/equity_book/panel/_manifest.json",
+        "bytes": 1258,
+        "sha256": "30f9aedda9a7a5eaaf3e7f451a2d17b541dd9a105bdce480bc77247fdfdcaaeb"
+      },
+      {
+        "path": "data/research/equity_book/panel/_manifest.json",
+        "bytes": 1265,
+        "sha256": "02bbe8a54d08e6c8f49d2f4fbc7461f622250d7422ce0d11fcd5a04998e251cf"
+      },
+      {
+        "path": "reports/research/iterations/mom_breadth_pit_xsmom_r1/universe-contract.json",
+        "bytes": 871,
+        "sha256": "21fc2734e08b7347f91d0ec12e1c53d7d2c18044c4adf54f4301bf67be4f08c2"
+      },
+      {
+        "path": "reports/research/iterations/mom_breadth_pit_xsmom_r1/data-feasibility.json",
+        "bytes": 8723,
+        "sha256": "8506c7b9d4cf2813a3e7cfb8f8cc8b0e14e8f6b71e97775bf61cbfd0ad4d0058"
+      },
+      {
+        "path": "reports/research/iterations/mom_breadth_pit_xsmom_r1/cumulative-trial-contract.json",
+        "bytes": 704,
+        "sha256": "1df0081e22b18f34e8e582561ab5e31ea67eee3a239354661b61b6722813eb91"
+      },
+      {
+        "path": "open_composer/research/equity_book/returns.py",
+        "bytes": 7537,
+        "sha256": "8295c19376f8257934f5f00c4c637394ee4c4b236b09434b2354b703603c2412"
+      },
+      {
+        "path": "open_composer/research/equity_book/cost_model_v1.json",
+        "bytes": 6170,
+        "sha256": "16aec77a848fe09a06e5f15593c11a356f44143d37d221f95b8cc72757203ed7"
+      },
+      {
+        "path": "reports/research/iterations/h20260924_02_momentum_crash_guard/results.json",
+        "bytes": 16896,
+        "sha256": "cb5405ca9feb16c82523208562b2159a3163aa4f1214cc6f0bf07e640b134556"
+      },
+      {
+        "path": "scripts/run_h20260924_02_momentum_crash_guard.py",
+        "bytes": 24857,
+        "sha256": "b18f6cd88385f09a01570e4f0433e2cba9b5b568dc93f757171858885c94e98a"
+      },
+      {
+        "path": "reports/research/program/day-goal-20261013/research-frontier/old-results.json",
+        "bytes": 51867,
+        "sha256": "fc204db78f6be799d12703738f27eb049c9e332200fd85ee4b2ef853c8d2a085"
+      }
+    ]
+  },
+  "bounded_inventory": {
+    "draft_not_frozen": true,
+    "campaign_id_proposed": "eq_role_20261013",
+    "child_iteration_proposed": "eq_role_20261013",
+    "source_diagnostics": [
+      {
+        "id": "S0_STATIC_WML",
+        "method": "Author all-firm total-return decile 10 minus decile 1; monthly formation; original gross reference.",
+        "model": false,
+        "selectable": false
+      },
+      {
+        "id": "S1_CVOL",
+        "method": "With the same lagged 126-session sample variance v, set w = c / sqrt(v).",
+        "model": false,
+        "selectable": false
+      },
+      {
+        "id": "S2_INVVAR",
+        "method": "With the same lagged variance v, set w = c / v; this isolates inverse-variance scaling from mean prediction.",
+        "model": false,
+        "selectable": false
+      },
+      {
+        "id": "S3_DM_MEAN",
+        "method": "Expanding monthly OLS of WML returns on [1, IB * market_variance_126]; w = c * forecast_mean / WML_variance_126. Weights for month t use information through the prior month close.",
+        "model": true,
+        "selectable": false
+      },
+      {
+        "id": "S4_WINNER_STATIC",
+        "method": "Author decile 10 long return minus the risk-free return, with no short-loser exposure.",
+        "model": false,
+        "selectable": false
+      },
+      {
+        "id": "S5_WINNER_INVVAR",
+        "method": "Winner-only lagged 126-session variance and a constant positive mean; inverse-variance control.",
+        "model": false,
+        "selectable": false
+      },
+      {
+        "id": "S6_WINNER_MEAN",
+        "method": "Use the same predictor and expanding clock as S3, with winner excess return as the target. This tests transportability without selecting stocks.",
+        "model": true,
+        "selectable": false
+      }
+    ],
+    "stock_policy_templates": [
+      {
+        "id": "Q",
+        "role": "one deterministic avoid-side component",
+        "definition": "Exclude the highest MAX21 decile of the full eligible PIT universe at each formation; retain the momentum_252_21 ordering and select the top 30. Break ties by permanent security ID. No C1 averaging, insider input, or fitted model.",
+        "variants": [
+          "Q500",
+          "Q1500",
+          "Q3000"
+        ],
+        "difference": "The exclusion fraction comes from the source decile convention, not the observed C1 return curve. MAX21 is an explicit local adaptation; no threshold sweep."
+      },
+      {
+        "id": "D",
+        "role": "conditional expected net return/variance allocation",
+        "definition": "On the unfiltered shadow baseline, fit expanding monthly OLS of fully matured monthly net excess-BIL returns on [1, IB * SPY_variance_126]. IB indicates negative trailing 24-calendar-month SPY total return. Set m = clip(c * max(forecast_mean, 0) / baseline_variance_126, 0, 1). Require 60 matured months; use intercept-only estimates when the design is rank deficient.",
+        "variants": [
+          "D500",
+          "D1500",
+          "D3000"
+        ],
+        "difference": "A continuous forecast of absolute net return with monthly causal calibration; distinct from binary panic gates, relative-median tiering, and CG-BSC. No mean-information credit when IB has no variation."
+      },
+      {
+        "id": "QD",
+        "role": "preregistered conditional interaction only",
+        "definition": "Use Q picks and the D multiplier learned exclusively on the unfiltered shadow baseline; preserve the same 20-session holding period and clock. Do not refit on Q returns. Run only after Q has positive paired development increments under the declared cost and placebo tests, and D beats its inverse-variance control. Otherwise record dependency_skipped.",
+        "variants": [
+          "QD500",
+          "QD1500",
+          "QD3000"
+        ],
+        "difference": "Two fixed operators, without an additional quality ranker. Preserve the skipped definition rather than substituting a new model."
+      }
+    ],
+    "maximum_new_stock_policy_definitions": 9,
+    "current_runnable_stock_policy_definitions": 0,
+    "controls": [
+      "U500/U1500/U3000 plain momentum, sharing the same PIT input, holding period, cash and clock. They are baselines, not predetermined winners.",
+      "C1 exact historical rank formula, unselectable diagnostic. Recompute only if the new common stock input/engine is admitted; otherwise retain the historical scalar results solely as context.",
+      "For each Q, ten fixed-seed same-count random removals from the baseline positions; also ten random exclusions matching the count removed from the eligible universe before top-30 ranking. Both are nonselectable controls.",
+      "For each D, causal constant-volatility and inverse-variance controls, plus constant cash exposures 0.50/0.75/1.00. Calibrate risk scales only on matured past training data.",
+      "For each D, twenty fixed calendar-block permutations preserving the monthly multiplier distribution. Never select a candidate using these or a frozen OOS partition.",
+      "For each QD, Q-only/D-only and exact missing-input fallback; random-Q plus real-D and real-Q plus shifted-D. No extra selectable model."
+    ],
+    "trial_policy": "At most 9 new stock policy definitions, including conditional skips, and 7 source diagnostic strategies. Record controls, baselines, cost sensitivities, risk-budget controls, OLS refits, failures, and skipped definitions separately. Do not combine them into one attempt count. Source diagnostics cannot enter a promotion cohort; 9 alone is not the effective historical family trial count.",
+    "choice_rule": "No threshold or winner is selected from the full or 2024+ seen results. QD conditions use only the declared development partition and paired costed returns. If a future promotion cohort becomes eligible, select at most one candidate by the worst development-fold net increment against its matched baseline, with permanent candidate ID as the tie-break. Seal the cohort and ledger before a single unseen evaluation.",
+    "random_seed_policy": {
+      "within_date_seeds": [
+        2026101301,
+        2026101302,
+        2026101303,
+        2026101304,
+        2026101305,
+        2026101306,
+        2026101307,
+        2026101308,
+        2026101309,
+        2026101310
+      ],
+      "monthly_block_shift_seeds": [
+        2026101321,
+        2026101322,
+        2026101323,
+        2026101324,
+        2026101325,
+        2026101326,
+        2026101327,
+        2026101328,
+        2026101329,
+        2026101330,
+        2026101331,
+        2026101332,
+        2026101333,
+        2026101334,
+        2026101335,
+        2026101336,
+        2026101337,
+        2026101338,
+        2026101339,
+        2026101340
+      ],
+      "bootstrap_seed": 2026101300,
+      "bootstrap_replicates": 1000,
+      "bootstrap_block_months": 3,
+      "seed_selection_from_results": false
+    }
+  },
+  "scientific_contracts": {
+    "source_clock": "Use only the author all-firm total-return daily and monthly series as the primary source. Train from 1927:07 and reproduce the 1934:01–2013:03 comparison. This is published source history, not new local OOS. Forecasts use data through t−1. Verify units, sentinels, calendar, daily/monthly reconstruction, and WML orientation before fitting. Full-sample normalization is descriptive source replication only.",
+    "source_mean": "Use x = IB * sample_variance_126(market excess daily returns) and forecast_mean = intercept + slope * x, with no added predictors. WML is zero-investment, so do not subtract RF a second time. Subtract RF once for the winner-only target. Use a mean-only fit before the interaction is identifiable. Keep variance units consistent; any constant daily/monthly scale is absorbed in c rather than fitted to evaluation returns.",
+    "source_reference": "Table 7 gross Sharpe references are 0.682 for static WML, 1.041 for constant volatility, 1.126 for inverse variance, and 1.194 for out-of-sample DM. Compare source, window, and unit definitions first. A missing original RF vintage permits a disclosed revised-data method replication, not an exact numerical reproduction claim. Portfolio return files lack stock trading and borrow costs; source net performance remains N/A.",
+    "stock_universe": "Use historical US common-stock eligibility keyed by permanent security ID, including inactive and delisted securities. At every formation, rank then-visible ADV21 and require price >= $5; N is fixed at 500, 1500, or 3000. No current asset map substitutes for this. Identity, splits, dividends, and terminal delisting returns must be accepted and hashed first. Missing capability means dependency_skipped.",
+    "stock_features": "Apply default sanitize_price_matrices to close/open inputs. Exclude signals only when their trigger session is split-like. Recompute causal momentum_252_21 and MAX21 from accepted clean inputs inside the allowed partition. Never filter on future holding-window outcomes.",
+    "stock_timing": "Decide at session t close and preserve the old reference’s top-30 equal-weight, overlapping 20-session cohorts. Decisions take effect next session. Synthetic next-open fills are historical research assumptions, with no paper-readiness claim. Any alternative arrival style requires accepted exact timestamps and quotes. Signal generation never uses the future fill price.",
+    "stock_cash": "Start with $20,000, integer shares, gross exposure <= 1, and no margin or shorts. Compute share targets from the last observable decision price with a fixed 1% gap/fee reserve. At arrival, reject unaffordable buys using deterministic permanent-ID priority; do not resize using a future price. Sale proceeds settle T+1 and are not reused earlier. Credit dividends only when actually payable. Idle USD earns zero unless whole-share BIL purchases are explicitly modeled. Missing prices block new buys; exits require a valid corporate or terminal event, not fabricated zero or last-price proceeds.",
+    "stock_costs": "Primary cost is 20 bps per side on all stock and BIL traded notional, with 40 bps stress. Do not add spread/impact/fees again to the flat cost. Show accepted exact-arrival spread + impact + fees as a separate realism sensitivity. The existing full-sample cost fit cannot establish causal cost-based selection. Borrow and financing are zero for a cash long-only book. Rejected/partial orders remain cash; show opportunity loss separately without deducting it twice.",
+    "partitions": "All old 2017–2026 and 2024+ results are seen. Proposed diagnosis uses training through 2020, separate 2021/2022/2023 development folds, and a separately labeled 2024–2026 recent application diagnosis. Predictions use only past matured observations, but causal walk-forward fitting does not make these scientifically unseen OOS. No new unseen partition is admitted here; Root must accept an exact visibility/partition manifest before numerical decoding.",
+    "model_admission": "Allow only two-parameter conditional-mean OLS. No LightGBM, neural network, or new modality is proposed. Local D fitting requires a positive costed deterministic baseline and accepted inputs first. The target is the whole book’s absolute net excess return, never relative-median ranking. Compare matched Q-only, D-only, QD, missing-input fallback, simple price-only controls, and placebos. No model contribution credit without net increment.",
+    "power": "Use paired monthly block bootstrap with 1,000 replicates and 3-month blocks; report simultaneous family confidence over the actual fixed candidate inventory. Use applicable SPA/PBO/DSR only with accepted continuous matrices and the complete effective-trial policy. Report independent month/state counts and the 80%-power/5%-alpha minimum detectable increment. If recent IB is always zero, the mean interaction is unidentifiable regardless of daily row count.",
+    "benchmarks": "Align continuous daily terminal-free net account returns for matched momentum, initial same-security buy-and-hold basket, eligible equal-weight universe, SPY, BIL/cash, and then-visible industry/theme proxy where accepted. Ex-post best security is attribution only. Missing historical industry mapping is a benchmark dependency, not a reason to substitute current SIC. Existing cross-strategy comparisons require accepted common dates and funds; no strategy combination or independent-main-return claim is made here.",
+    "risk_scale_exact": "Local normalization is fixed at a 0.75 reference exposure, not selected from evaluation. At month t−1, let mu_bar be the expanding mean of fully matured unfiltered baseline monthly net excess returns, and v_ref be the median of the last 60 month-start lagged 126-session daily variances. Set c_D = 0.75 * v_ref / mu_bar, then m_D = clip(c_D * max(mu_hat_t, 0) / v_t, 0, 1). The mean-only inverse-variance control is m_IV = clip(0.75 * v_ref / v_t, 0, 1); the volatility control is m_VT = clip(0.75 * median(sqrt(v_j)) / sqrt(v_t), 0, 1). All reference estimates use past matured observations. If mu_bar <= 1e-6, variance is invalid, or fewer than 60 matured months exist, D fitting is skipped and its exact fallback is the passive unfiltered baseline m=1; QD falls back to Q. This is a defined adaptation, not the paper’s optimal leverage normalization.",
+    "source_scale_exact": "For source gross Sharpe comparisons use c=1 in S1/S2/S3/S5/S6 and report the resulting weight distribution without a cash deployment claim; a fixed positive common rescaling does not change their gross Sharpe. For descriptive source cumulative plots, normalize to the paper’s 19% full-period volatility only in a labeled ex-post, nonselectable column. A separate causal-scale diagnostic may use data ending 1933:12, but is not used to select a source rule or a local candidate. Source mean refits remain strictly expanding through t−1.",
+    "formation_threshold_exact": "For Q, rank MAX21 ascending among eligible names, breaking ties by permanent security ID; remove exactly ceil(0.10 * eligible_count) highest-ranked names. Rerank the remainder only on momentum_252_21 and choose top 30. If the pool is too small to supply 30, retain the eligible count without replacements from an unaccepted universe; residual capital stays cash. No threshold is tuned.",
+    "partition_start_detail": "The proposed stock source begins in 2017 after warmup. With a 60-month minimum, local D cannot fit in the 2021 fold if only 2017–2020 labels are available; its m=1 fallback and zero mean-model contribution must be recorded. D can begin after 60 labels mature, approximately 2022, subject to actual accepted dates. Do not shorten the minimum to manufacture a full 2021 model result.",
+    "source_cost_identification": "Source files provide gross decile returns, not stock targets or realized costs. Any multiplier-turnover cost applied to them would omit underlying portfolio turnover/borrow; it may be an explicitly labeled sensitivity only and never a source-net result. Local net identification requires the stock/account inputs, so source completion alone does not satisfy the economic objective.",
+    "source_daily_monthly_identity": "Verify the daily-to-monthly reconstruction separately for each author decile against its monthly return series, including the documented value-weight/rebalancing convention. Compute monthly WML from monthly D10 minus monthly D1 and daily WML from daily D10 minus daily D1. Do not require compounded daily WML to equal the difference of compounded decile returns: these are distinct cash/rebalancing constructions. Use monthly WML as the source mean label and daily WML only for the explicitly documented 126-session variance estimate."
+  },
+  "attribution": {
+    "holdings": "For Q, separate common positions and replacements. Enforce identical cash/settlement constraints. Report losses avoided and excluded winners’ gains missed. Future winner labels are attribution only and never influence formation.",
+    "risk": "For D, separate conditional-mean prediction from inverse variance, constant volatility, and constant cash controls. Primary scaling uses past training data. Ex-post equal-realized-volatility comparisons illustrate a frontier but cannot choose weights or establish a tradable control.",
+    "ledger": "Reconcile daily gross PnL + paid dividends + cash PnL − trading/carry costs with the net NAV change. Reconcile positions, settled cash, and receivables. Do not add Sharpe contributions. Report capital committed, turnover, rejects, fills, recovery duration, and missed rebounds.",
+    "interpret": "A main-return claim requires positive absolute costed profit and matched-risk profit increment. A lower-return strategy with shallower drawdown is an auxiliary risk component, not weekly main-return credit."
+  },
+  "three_layers": [
+    {
+      "layer": 1,
+      "name": "source phenomenon and transportability",
+      "test": "Seven fixed source diagnostics compare WML and winner-only, static, constant-volatility, inverse-variance, and conditional-mean roles. No source-net or stock-selection claim.",
+      "depth_reason": "The source mechanism and host are changed, rather than neighboring parameters.",
+      "proposed_resource": {
+        "local_memory_mib": 900,
+        "cpu": 1,
+        "wall_minutes_cap": 45,
+        "model_refit_attempt_cap": 2200,
+        "cloud_dollars_cap": 0
+      },
+      "milestone": "After independent review and numerical-input admission, decode/verify and produce the mechanism decision. If the incremental effect exists only through the short-loser leg or fails the inverse-variance control, do not expand local D."
+    },
+    {
+      "layer": 2,
+      "name": "fixed role, matched full-input net accounting",
+      "test": "Compare Q and matched controls at N=500/1500/3000. D runs only after source and deterministic-baseline conditions. Share all $20k gross/net, settlement, recovery, and placebo accounting.",
+      "depth_reason": "Liquidity, information coverage, and execution change with universe depth; the role contrast changes the allocation mechanism.",
+      "proposed_resource": {
+        "memory_gib": 8,
+        "cpu": 4,
+        "wall_minutes_cap": 35,
+        "cloud_free_credit_dollars_cap": 0.35
+      },
+      "milestone": "Run only after the stock input gate passes. Otherwise deliver dependency_skipped and a reallocation recommendation, without starting a long infrastructure project."
+    },
+    {
+      "layer": 3,
+      "name": "conditional incremental information under deployment constraints",
+      "test": "Run exactly QD or preserve its skip, with matched role ablations, missing-input fallback, independent state counts, all-order cash execution, and recovery/cost stresses.",
+      "depth_reason": "Interaction information and executable capital/terminal constraints differ from source replication and idealized role comparisons.",
+      "proposed_resource": {
+        "memory_gib": 8,
+        "cpu": 4,
+        "wall_minutes_cap": 25,
+        "cloud_free_credit_dollars_cap": 0.4
+      },
+      "milestone": "Complete the net economic judgment: positive increment, auxiliary risk component, not_at_depth, or pause. No paper before applicable data, execution, safety, and native gates."
+    }
+  ],
+  "budget": {
+    "currently_allocated": {
+      "market_rows": 0,
+      "backtests": 0,
+      "fits": 0,
+      "cloud_dollars": 0,
+      "paid_spending": 0
+    },
+    "requested_after_review_only": {
+      "source_local_minutes": 45,
+      "total_cloud_minutes": 60,
+      "total_cloud_free_credit_dollars_cap": 0.75,
+      "maximum_local_model_refits": 2200,
+      "maximum_stock_model_refits": 360
+    },
+    "conditions": "Nothing is allocated by this proposal. Root may reserve at most $0.75 from the existing shared free credits after review and current cap checks; the shared $25 ceiling and Chinco/DLSA reservations remain intact. Failures count within the 60-minute/$0.75 total, with no retry refill. Any Modal job must pass scripts/modal_budget.py check with cpu=4, memory_gib=8, timeout_min=60; the actual timeout must match. Local source calculations first need memory admission and the 500 MiB owner reserve. Wide panels prefer Hadan only after its owner lane is available and fresh preflight is ready, usage_ok, and below 50 GiB under C:\\paseo. This task has not probed Hadan.",
+    "native_checkpoints": "Retain completed source parsing, causal fitted parameter histories, and finished candidate shards under fixed hashes/configuration/seeds. Preserve failed work and cumulative usage. No recovery platform is proposed.",
+    "proposed_controls_upper_bound": "Before execution materialize every conditional source/baseline/control evaluation row from this fixed inventory. Source fitting <= 2200 attempts; local D <= 360 fit attempts across all N. The costs and controls are counted as exposure/evaluation rows even when not selectable. Runtime exhaustion returns partial/not_at_depth and cannot silently reduce the randomized controls or replace them with fewer seeds."
+  },
+  "decision_rules": {
+    "source": "Missing original inputs or a revised RF vintage means not_full_source_replication. If conditional-mean improvement vanishes against inverse variance or exists only through the short-loser leg, downgrade the local dynamic main-return prior. This is not a global refutation of DM.",
+    "stock_development": "Allocate further depth to Q only if its paired development mean net increment is positive against baseline at both 20 and 40 bps, and it beats the 95th percentile of the same-count random controls. D must also beat its mean-only/inverse-variance/constant-volatility controls. QD requires both. A negative cheap result stops allocation to that operator without claiming a full mechanism refutation; that needs fidelity, depth, budget exhaustion, and adequate power.",
+    "net_main_return": "Require positive absolute net profit and a matched-risk net increment, with family-aware uncertainty and acceptable capital/recovery evidence. IC, volatility reduction, drawdown reduction, and cash returns alone do not pass.",
+    "promotion": "There is no current promotion cohort. Any future eligible cohort must freeze the existing 20-bps continuous daily terminal-free OOS annualized Sharpe-excess-BIL > 1.0 gate before training/backtesting, seal the archive and ledger, and use one unseen evaluation. Source and seen-diagnostic results cannot promote. A failed frozen branch stays sealed.",
+    "pause": "Missing permanent IDs, terminal returns, corporate actions, source units/RF, identifiable states, funding/fill evidence, or remaining budget produces a concrete skip/pause. Renaming the old strategy does not resolve it.",
+    "terminate_or_reallocate": "If source transportability is negative and the quality test depends on unavailable PIT input, finish with an auxiliary-component/not_ready judgment and recommend reallocation. Do not spend the week building a security-master platform or adding a model to evade negative evidence."
+  },
+  "review_and_native_gate_path": {
+    "author_is_not_reviewer": true,
+    "independent_review_by": "Root assigns an independent Sol/xhigh reviewer. This owner does not spawn an agent or approve its own plan.",
+    "artifacts": "The complete proposal, source cards, actual input bindings, and exact proposed inventory form the review packet. No economic gate has passed. After scope/input acceptance, materialize the existing v3 direction/brief/campaign/candidate/spec contracts in the approved native path before allocation. No new schema or framework is proposed.",
+    "gates": [
+      "independent approve_deep_plan",
+      "oc research direction-check <approvedpath>",
+      "oc research iteration validate <iter_id>",
+      "oc research campaign validate <campaign_id> --stage pre-discovery and later applicable stages",
+      "model role applicable knowledge scout/baseline/oc research knowledge assess <iter_id>",
+      "capability/forensics/execution/paper readiness gates if actualscope reaches them"
+    ],
+    "deferrals": "No executable strategy implementation or economic fit is produced before independent review. After approval, the same owner implements with the existing research engine. Ordinary same-semantic repairs use affected result/diff acceptance. Live paper changes require a separate worktree and interactive Root review."
+  },
+  "ownership_and_schedule": {
+    "owner_continues": true,
+    "others_untouched": [
+      "NEWS currentparallelowner",
+      "Chinco",
+      "DLSA"
+    ],
+    "first_milestone": "Completeplan andrealinput/source/identificationdecision preparedbefore08:00UTC; no economicresultyet.",
+    "after_admission": "The same owner continuously completes source parity/transportability, then admitted stock net-role and conditional-depth work. Results are separate from the plan. Failures and spending persist; a new day or directory does not refresh quota.",
+    "root_notification": "Send one event when the complete review packet or a decisive input blocker is ready. No heartbeat, waiting poll, or repeated Form4 repair.",
+    "paper": "No simulation, order, or broker activity has started. This proposal cannot promise Friday paper; Root should keep any other viable deployment route independent."
+  }
+}

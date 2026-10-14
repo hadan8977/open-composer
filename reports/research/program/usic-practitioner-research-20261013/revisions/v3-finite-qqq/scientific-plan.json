@@ -1,0 +1,307 @@
+{
+  "schema_version": 3,
+  "task_id": "USIC-PRACTITIONER-RESEARCH",
+  "study_id": "usic_pullback_feedback_20261013_v2",
+  "version": "v3_finite_large_growth_population_adaptation",
+  "author": "f9add224-744b-471c-b812-c43cc179fa38",
+  "independent_reviewer": "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3",
+  "object": "Finite large-cap growth-stock public-rule adaptation and raw bridge",
+  "source_evidence": [
+    "reports/research/program/martin-luk-usic-20261013/research-note.json",
+    "reports/research/program/martin-luk-usic-20261013/root-record-locator.json",
+    "reports/research/program/martin-luk-usic-20261013/casebook.json",
+    "reports/research/program/martin-luk-usic-20261013/rule-versions.json",
+    "reports/research/program/usic-practitioner-research-20261013/method-comparison.json"
+  ],
+  "questions": [
+    {
+      "id": "H_ENTRY",
+      "claim": "Given the same causally formedleader pool and cash/risk budget, support-pullback timing improvescost-adjusted entry geometry or righttail capture relative to ordinarymomentum orbasebreakouts",
+      "source_fidelity": "Only qualitative support/trigger logic is sourced; exactconfirmation/leaderthresholds beloware adaptations",
+      "decisive_pairs": [
+        "C_MOM versus M_REF",
+        "C_BREAK versus M_REF"
+      ]
+    },
+    {
+      "id": "H_STOP_REENTRY",
+      "claim": "Tighter initialrisk and re-entry capture later trends enough to pay repeatedstops and trading costs",
+      "decisive_pairs": [
+        "M_WIDE versus M_REF",
+        "M_REENTRY versus M_REF"
+      ],
+      "counterevidence": "Martin explicitly reports10+losingstreaks and overtrading; oldORB entry-minute sequencing/stop-gap defects showwhy anoptimisticfill cannot establishthisclaim"
+    },
+    {
+      "id": "H_EXIT",
+      "claim": "Small partials at3R trade righttail exposure for financedrisk; accountingmust include remainingposition losses and repeatedcosts",
+      "decisive_pairs": [
+        "M_PARTIAL versus M_REENTRY"
+      ],
+      "source_fidelity": "15%at3Rlong is explicit adaptation; gueststudy15%3R was short context, original2025longswere discretionary"
+    },
+    {
+      "id": "H_FEEDBACK",
+      "claim": "Closed-trade feedback reduces prolongedloss periods without sacrificing the bulk of profitable regimecapture",
+      "decisive_pairs": [
+        "M_FEEDBACK versus M_REENTRY",
+        "F_MONTHLY versus M_FEEDBACK"
+      ],
+      "additional_practitioner": "Christian Flanders",
+      "source_fidelity": "Flandersrisk/frequency reduction is sourced; exactcontroller andmonthlyentrybudget are ours, notguaranteed5%realizedloss ceiling"
+    }
+  ],
+  "selection_and_information": {
+    "definition": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/revisions/v3-finite-qqq/state-and-ledger-contract.json",
+      "sha256": "72c435eb983bc0597aa7ae995464b8919aef15e3b9a8961b32a605e2e4b271e1"
+    },
+    "sections": [
+      "features_and_pool",
+      "opportunity_tape_and_epochs"
+    ],
+    "first_phase_public_cases": "Unchanged24 selected public decisions; not investablecohort or generalization sample.",
+    "missing_breadth": "Leader rank/NAV remainsN/A if actual dated episode pool or market/cash chain isunidentified; legalpricecomponents remainpossible.",
+    "firstvisible": "Historicalfirstseen unknown remainsnull; current-vintage hypothesis is explicitly limited.",
+    "source_limits": "Thematic discretion, shorts/parabolicstyles and privatefullledger are not reproduced; no DLSA/Attention data/budget reuse.",
+    "population_scope_delta": {
+      "source": "SEC NPORT-P QQQ holdings2023-09-30; entire actual reported issue roster",
+      "role": "Finite large-cap growth-stock public-rule adaptation and raw bridge",
+      "eligibility_scope": "Reported EC issue candidates intersect the unchanged v2 dated US common-stock eligibility evidence; unknown class/mapping retained",
+      "not_QQQ_ETF_trading": true,
+      "not_Martin_main_high_ADR_smallcap_theme_opportunity_set": true,
+      "historical_publication_claim": false,
+      "historical_first_visible": null,
+      "unknown_firstvisible_does_not_block_current_vintage_components": true,
+      "freeze": "Save full parsed issue roster and identity SHA before reading any new prices; hash-order EC issue keys before symbol resolution",
+      "diagnostic": "First25 unique EC issues by SHA256(USIC-RAW-BRIDGE-20261013|CUSIP|ISIN), no resample for unknown mapping/data/eligibility",
+      "date_scope": "Earliest40 sessions2024-01-02..2024-02-28 source only; selected25 daily raw/all to2025-12-31 for coverage/causal-source-fit only",
+      "identity": "NPORT actual ticker if provided; otherwise source-dated December2023 SEC FTD sameCUSIP symbol candidate, not a validity interval",
+      "no_current_membership_or_future_completeness_filter": true,
+      "no_price_returns_weights_PnL_for_cohort_or_diagnostic_selection": true,
+      "unknown_and_terminal_issues": "Keep roster, absentmapping and action/held rights; never zero/remove affectedassets",
+      "signal_information": "UnchangedADR/momentum/EMA/ADV thresholds; actual missing seed/episode/rawbasis prevents stronger qualification, legal conditionalcomponents retained",
+      "EMA_diagnostic": "Source-window recursion explicitly labelled; full v2 first-episode seed not certified by a limited source-start date",
+      "full_study": "2024-2025 all accepted historical cohort, 8 definitions/120cells/102pairs; diagnostic25x40 not economic population",
+      "economic_information_decision": "Reviewer judges full route/opportunity information by coverage, causal qualification and source fit; never diagnostic PnL or lowered thresholds",
+      "generalization": "Neither positive nor negative results establish/refute Martin's all-market/highADR/smallcap discretion or privatecontest return",
+      "public_cases_Flanders": "Keep independent forensic evidence; selectedwinners not universe"
+    }
+  },
+  "candidate_inventory": [
+    {
+      "id": "C_MOM",
+      "signal": "monthly_nextopen",
+      "P_ref": "prior monthend raw close",
+      "S": "P_ref*(1-0.5ADR20), fixed atsubmission",
+      "risk": "constant0.005NAV",
+      "entry_order": "scheduled market at first actual next-session09:30 open; quantity alreadyfrozen",
+      "attempts": "one per symbol/month",
+      "exit": "initialstop or close-belowEMA9 nextsessionopen",
+      "partials": false,
+      "role": "control",
+      "promotion_eligible": false
+    },
+    {
+      "id": "C_BREAK",
+      "signal": "BREAK",
+      "P_ref": "BREAK reference",
+      "S": "S_tight",
+      "risk": "constant0.005NAV",
+      "entry_order": "stop-market or stop-limit research route",
+      "attempts": "one perBREAKepoch",
+      "exit": "commonEMA9",
+      "partials": false,
+      "role": "control",
+      "promotion_eligible": false
+    },
+    {
+      "id": "M_REF",
+      "signal": "PB",
+      "P_ref": "PB reference",
+      "S": "S_tight",
+      "risk": "constant0.005NAV",
+      "entry_order": "stop-market or stop-limit",
+      "attempts": "one perPBepoch",
+      "exit": "commonEMA9",
+      "partials": false,
+      "role": "primaryadaptation",
+      "promotion_eligible": false
+    },
+    {
+      "id": "M_WIDE",
+      "signal": "samePB opportunity IDs asM_REF",
+      "P_ref": "samePBreference",
+      "S": "P_ref-max(P_ref-S_tight,0.5ADR20*P_ref), fixed beforefill",
+      "risk": "constant0.005NAV; ownintegerquantity differs",
+      "entry_order": "stop-market or stop-limit",
+      "attempts": "one perPBepoch",
+      "exit": "commonEMA9",
+      "partials": false,
+      "role": "stopcontrast",
+      "promotion_eligible": false
+    },
+    {
+      "id": "M_REENTRY",
+      "signal": "PB",
+      "P_ref": "PBreference",
+      "S": "S_tight",
+      "risk": "constant0.005NAV",
+      "entry_order": "stop-market or stop-limit",
+      "attempts": "2/session and6/epoch",
+      "exit": "commonEMA9",
+      "partials": false,
+      "role": "reentrycontrast",
+      "promotion_eligible": false
+    },
+    {
+      "id": "M_PARTIAL",
+      "signal": "samePBtape",
+      "P_ref": "PBreference",
+      "S": "S_tight",
+      "risk": "constant0.005NAV",
+      "entry_order": "stop-market or stop-limit",
+      "attempts": "2/session and6/epoch",
+      "exit": "commonEMA9 plus fixed3Rpartial",
+      "partials": "one sale of floor(0.15*current-share-equivalentinitialquantity), cappedatremainingwhole shares, at targetP_ref+3*(P_ref-S), withsplit-consistenttransforms; zero-whole-sharepartial loggednotexecuted",
+      "role": "exitcontrast",
+      "promotion_eligible": false
+    },
+    {
+      "id": "M_FEEDBACK",
+      "signal": "samePBtape",
+      "P_ref": "PBreference",
+      "S": "S_tight",
+      "risk": "ownclosed-feedback0.00125 or0.005",
+      "entry_order": "stop-market or stop-limit",
+      "attempts": "2/session and6/epoch",
+      "exit": "commonEMA9",
+      "partials": false,
+      "role": "riskcontrast",
+      "promotion_eligible": false
+    },
+    {
+      "id": "F_MONTHLY",
+      "signal": "samePBtape",
+      "P_ref": "PBreference",
+      "S": "S_tight",
+      "risk": "sameownclosed-feedback, additionallyclipped bycausalmonthlyriskroom",
+      "entry_order": "stop-market or stop-limit",
+      "attempts": "2/session and6/epoch",
+      "exit": "commonEMA9",
+      "partials": false,
+      "role": "selectedadditionalFlanderscomponent",
+      "promotion_eligible": false
+    }
+  ],
+  "portfolio_and_execution": {
+    "definition": {
+      "path": "reports/research/program/usic-practitioner-research-20261013/revisions/v3-finite-qqq/state-and-ledger-contract.json",
+      "sha256": "72c435eb983bc0597aa7ae995464b8919aef15e3b9a8961b32a605e2e4b271e1"
+    },
+    "sections": [
+      "orders_and_R1_quantity",
+      "cash_rights_and_R3_feedback",
+      "R4_path_scenarios_and_pairing"
+    ],
+    "starting_capital_USD": 20000,
+    "gross_exposure_cap": 1.0,
+    "entry_notional_cap": 0.35,
+    "costs": "10/20/40bps per actual/scenariofilledside;20primary. Everypartial/reentry charged; reservation doesnotreplaceactualcost.",
+    "quantity_frozen_before_fill": true,
+    "afterfill_risk_target_reduction_in_this_scope": false,
+    "settlement_claim": "Explicit conservativeT+2houseproxy, not exacthistorical/currentSchwab permission.",
+    "intrabar_claim": "Two declaredpath scenarios, not globalNAVbounds.",
+    "Schwab": "Currentofficial2026update statesPDTcountingremovedJune8 andintradaymarginintroducedJuly13; archiveagreement/oldhelpstillcontainoldPDTtext. Notassumeouraccounteligibility orhistorical2024rules. NoAPI/brokerwrites orcurrentpaperauthorization."
+  },
+  "validation_and_depth": {
+    "development": "2024-01-02..2025-12-31 entireacceptedcoverage, not6shortwinnerwindows; allalreadyseencontext. Publiccasefidelityseparatefromreturnvalidation.",
+    "report_only": "2026-01-02..2026-09-17 is globallyalreadyseen; no relabelasuntouchedOOS, no candidatepruningonreportperiod.",
+    "future": "Unseenforward evaluation unavailable/unadmitted now; all8nonselectable. No promotion fromthisdevelopmentstudy.",
+    "depth": "1:source/clock/actionfidelityincllosers andmisses;2:pairedentry/stop/reentry/exitcontrastswithcommoncashconstraints;3:feedbackcontrollerthroughallgood/badmonths, exposure-adjustedcounterfactual. Meaningfulscales arecost/latency/intrabarambiguity andmarketregimes, notEMAgrid.",
+    "matched_comparisons": {
+      "definition": {
+        "path": "reports/research/program/usic-practitioner-research-20261013/revisions/v3-finite-qqq/state-and-ledger-contract.json",
+        "sha256": "72c435eb983bc0597aa7ae995464b8919aef15e3b9a8961b32a605e2e4b271e1"
+      },
+      "section": "R4_path_scenarios_and_pairing.pairs",
+      "common_opportunities_not_common_fills": true
+    },
+    "benchmarks": [
+      "same_securityepisode_buy_and_hold",
+      "equal_weighteligibleuniverse",
+      "SPYmarket",
+      "QQQgrowth",
+      "datedsector_or_theme_proxy_ifavailable",
+      "cash_andBILtotalreturnproxy",
+      "expostbestsymbol_diagnosticonly"
+    ],
+    "metrics": [
+      "continuouscashconservingnetNAV",
+      "totalreturn",
+      "annualizedSharpeandexcessBILwhenfullyidentified",
+      "maxdrawdown",
+      "longestunderwaterdays",
+      "losingmonthstreak",
+      "closedtradeandepisode lossstreak",
+      "costinplannedR",
+      "same-daystops",
+      "gaplosses",
+      "righttailprofittop1/top5/top10fraction",
+      "returnswithouttopwinnerdiagnostic",
+      "theme/groupcommonlosswhereidentified",
+      "cancel/submission-cap-breach/unfinanceable/missedtradecounts"
+    ],
+    "uncertainty": "Paired21-sessionblockbootstrap usesalreadyrealizedcommon-calendaridentifieddailyreturn differences ordeclaredloss/underwaterstatistic. It doesnotshuffletradesandreplayfeedbackcashasifindependent orassertnewcausalpaths. NoNAV endpoint=> correspondingstatisticN/A; reportopportunity/coverage/orderedscenariofacts instead.",
+    "controller_decision": "PairedF_MONTHLY-M_FEEDBACK at matchedcost/path/order/extra0or1; reportreturn, underwater/loss-tail andmissedopportunities. Two pathscenarios are sensitivity, not bounds. Feedback-alone orcombinedcontrollers relativeM_REENTRY onlyextra0.",
+    "promotion_gate": "Anyfutureselectablecandidate requiresseparatevaliduntouchedterminal-freecontinuousOOS,20bpsprimarycost, annualizedSharpeexcessBIL strictly>1.0 plusfrozenfamily/benchmarkgates. Nochanges tooldORB/DLSA/Attentiongates orconsumption.",
+    "statistical_power_boundary": "Two-yearseenhistory andselectedpubliccases cannot validate969.8%replication or infercompetitionparticipantbase-rate. Failureofarbitraryadaptation is notrefutationofdiscretionarypractice."
+  },
+  "resource_and_stopping": {
+    "preparation_caps": "Martin2000CPU and40publicrequests64MiB originalcumulative; comparisons1000CPU/64publicrequests128MiB shared acrosspeople; noresets",
+    "conditional_economic_pool_coreseconds": 7200,
+    "conditional_market_pool": {
+      "requests": 96,
+      "direct_bytes": 134217728
+    },
+    "economic_allocation_proposal": {
+      "finite_source_bridge_reserved": [
+        48,
+        65011712,
+        120
+      ],
+      "economic_allocated": 0,
+      "full_pool_next_condition": "After actual full-cohort/raw-action/ordered-execution/workload evidence and applicable native gates, ee may allocate remaining original follow-on resources and up to original shared7200 economic CPU for the accepted conditional experiment. All reservations and old consumption count; this is authority to decide, not current economic admission.",
+      "full_pool_information_not_PnL_screen": true
+    },
+    "current_admission": false,
+    "source_preparation_may_continue": true,
+    "dependent_gates": [
+      "independentcompleteplanacceptance",
+      "direction/campaign/nativeiteration",
+      "actualraw/actionandepisodeinputacceptance",
+      "implementation/diffvalidation",
+      "explicitresourceallocationandfreshmemory"
+    ],
+    "resource_job": "OneCPU <=900MiB, host500MiBreserve; failures/setup/unknowncharged; chunkbeforecumcap, noHadan/cloud/newpaidspending",
+    "source_stop": "No infinitefirstseenhunt; existingprovidermethodreceipts suffice. NoX403orplaylistthrottlingretry. No pay/login/contactprivateledger.",
+    "input_stop": "Ifheldassetbasis/terminalcash,raw-daily/minutevintageororderedclock cannotbeidentifiedwithinaccepted96/128MiB, stopaffectednumericclaimanddeliverexactmissingpacket; retainedlegalper-namefeatures remainusable.",
+    "method_stop": "Interpret pairedmethod failures onlyonidentifiedinput/adequatecoverage; no globalMartin/Flandersrefutation or privateaccountreplication. Cashunknown=>NAV/SharpeN/A; source/pricecomponents continue."
+  },
+  "author_self_approval": false,
+  "new_backtests": 0,
+  "new_fits": 0,
+  "paper_ready": false,
+  "supersedes_unexecuted_definition": {
+    "path": "reports/research/program/usic-practitioner-research-20261013/revisions/v2/scientific-plan.json",
+    "sha256": "9bba4f8efe8f07c3e5de99a3434e27af3f5c46ccccf5c95c9124a441622d3cb3"
+  },
+  "revision_trigger": {
+    "path": "reports/research/program/usic-practitioner-research-20261013/continuity-source-locator/root-scope-and-resource-decision.json",
+    "sha256": "2d2d664d4f924db1e6a7eca59e1c4c7f720865b33f1c2b4806b4264ed6490151"
+  },
+  "authoritative_state_and_ledger_contract": {
+    "path": "reports/research/program/usic-practitioner-research-20261013/revisions/v3-finite-qqq/state-and-ledger-contract.json",
+    "sha256": "72c435eb983bc0597aa7ae995464b8919aef15e3b9a8961b32a605e2e4b271e1"
+  }
+}

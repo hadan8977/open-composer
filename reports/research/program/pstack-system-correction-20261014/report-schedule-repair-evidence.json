@@ -1,0 +1,199 @@
+[
+  {
+    "id": "e2572f80",
+    "name": "oc-codex-owner-daily-writer",
+    "cadence": {
+      "type": "cron",
+      "expression": "5 0 * * *",
+      "timezone": "UTC"
+    },
+    "target": {
+      "type": "new-agent",
+      "config": {
+        "provider": "codex",
+        "cwd": "/root/codex-test/open-composer",
+        "modeId": "full-access",
+        "model": "gpt-6.1-sol"
+      }
+    },
+    "status": "active",
+    "prompt": "你是Open Composer现有报告流程，本次kind=writer。先读取reports/research/control/owner-compute-hold.json，根据其中当前报告动作授权决定是否执行；缺失、损坏或未授权时退出。动态暂停/恢复状态只来自该权威记录，不从历史提示推断。获准后读取config/research-agent-roles.json的reporting配置与prompts/owner-daily-weekly-writer.zh.md，按该当前文件完成本次报告。沿用原时区、频率、事件去重和唯一报告会话/邮件分工；设置并一次核验支持的实际模型、effort与mode。不新增研究、训练、设备探测、订单、费用或调度，不改变任何暂停开关。发现报告中的目标/证据错位或无接续owner，按现有事件路由说明，不建立Astra值守或重复唤醒。",
+    "nextRunAt": "2026-10-15T00:05:00.000Z",
+    "skipped_runs": [
+      {
+        "id": "d5179baf-59f0-47e9-ba43-c22a8fdd6c5c",
+        "scheduledFor": "2026-10-14T00:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "08e81e7a-86e7-4f2e-a836-87fca0fa4f7b",
+        "output": "\n\n---\n\n已核对控制文件：其中保留了 10 月 13 日的报告授权，但你本次明确指出“当前报告仍暂停”，两者冲突，不能据旧记录继续。\n\n本次立即退出：未生成或投递报告，未派工、刷新研究索引、运行研究、探测 DS 或更改暂停状态。"
+      }
+    ]
+  },
+  {
+    "id": "b211abe7",
+    "name": "oc-owner-round-report",
+    "cadence": {
+      "type": "cron",
+      "expression": "5 */2 * * *",
+      "timezone": "UTC"
+    },
+    "target": {
+      "type": "new-agent",
+      "config": {
+        "provider": "codex",
+        "cwd": "/root/codex-test/open-composer",
+        "modeId": "full-access",
+        "model": "gpt-6.1-sol",
+        "thinkingOptionId": "xhigh"
+      }
+    },
+    "status": "active",
+    "prompt": "你是Open Composer现有报告流程，本次kind=round。先读取reports/research/control/owner-compute-hold.json，根据其中当前报告动作授权决定是否执行；缺失、损坏或未授权时退出。动态暂停/恢复状态只来自该权威记录，不从历史提示推断。获准后读取config/research-agent-roles.json的reporting配置与prompts/owner-report-dispatch.zh.md，按该当前文件完成本次报告。沿用原时区、频率、事件去重和唯一报告会话/邮件分工；设置并一次核验支持的实际模型、effort与mode。不新增研究、训练、设备探测、订单、费用或调度，不改变任何暂停开关。发现报告中的目标/证据错位或无接续owner，按现有事件路由说明，不建立Astra值守或重复唤醒。",
+    "nextRunAt": "2026-10-14T18:05:00.000Z",
+    "skipped_runs": [
+      {
+        "id": "2cd7a69a-067e-4ab8-8861-4164013a26e4",
+        "scheduledFor": "2026-10-13T10:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "42bd1a63-9fac-4472-b30c-c1680ee9e805",
+        "output": "\n\n---\n\n已退出。[控制文件](/root/codex-test/open-composer/reports/research/control/owner-compute-hold.json)虽标记报告已恢复，但与你本次“当前报告仍暂停”的明确指令冲突，因此按本次暂停指令处理。\n\n未生成或投递报告、未派工、未刷新研究索引，也未更改暂停状态。"
+      },
+      {
+        "id": "bfa04795-33b2-4372-8f28-ae65ef4b9644",
+        "scheduledFor": "2026-10-13T12:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "314f1dd0-59df-4bf4-ae82-0526d02453a1",
+        "output": "\n\n---\n\n本次 round 已退出。控制文件虽标记 `reporting.allowed=true`，但与你本次“报告仍暂停”的明确指令冲突，无法确认有效恢复授权。\n\n未生成或投递报告，未派工、刷新索引、运行研究、修改暂停状态或探测 DS。"
+      },
+      {
+        "id": "5dd992bd-ab04-4ba9-b82b-2370cdf720e1",
+        "scheduledFor": "2026-10-13T14:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "722f7226-fa5b-4425-ab21-ae7b90265e95",
+        "output": "\n\n---\n\n已退出本次 round 报告任务。控制文件标记 `reporting.allowed=true`，与你本条“当前报告仍暂停”指令冲突，未通过授权核验。\n\n未生成或投递报告、派工、刷新研究索引或更改暂停状态。"
+      },
+      {
+        "id": "9f773d40-d9bf-4c48-8cb8-654606446a3d",
+        "scheduledFor": "2026-10-13T16:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "ccc41b1a-f6c4-41d0-966b-5a7b43a50116",
+        "output": "\n\n---\n\n已退出本次 `round`。控制文件标记报告已恢复，但与你本次“当前报告仍暂停”的明确指令冲突，按冲突不授权处理。\n\n未生成或投递报告、派工、刷新研究索引，也未更改暂停状态。"
+      },
+      {
+        "id": "3cc1e2fb-cff6-40e0-bcb1-1437486beae8",
+        "scheduledFor": "2026-10-13T18:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "1c52e856-6a95-41ac-b62c-d687b1175d52",
+        "output": "\n\n---\n\n已退出。控制文件记录 `reporting.allowed=true`，但与你本次“当前报告仍暂停”的最新指令冲突，无法确认本次 round 报告已获恢复授权。\n\n未生成或投递报告，未派工、刷新研究索引、更改暂停状态或探测 DS。"
+      },
+      {
+        "id": "272473e9-2d6c-470f-b897-702989f17f03",
+        "scheduledFor": "2026-10-13T20:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "3c73daef-263c-4abf-872a-a8164d6a7cc9",
+        "output": "\n\n---\n\n已核对：控制文件记录 `reporting.allowed=true`（2026-10-13 03:37 UTC），但本次最新指令明确报告仍暂停，授权存在冲突，按规则退出。\n\n未生成或投递报告、派工、刷新研究索引、探测 DS 或修改暂停状态。"
+      },
+      {
+        "id": "0ec7865d-a2c1-41d7-9367-66a452313f7a",
+        "scheduledFor": "2026-10-13T20:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "e2a26e17-b132-4ea1-97c1-ff59beee590a",
+        "output": "\n\n---\n\n已退出。控制文件标记 `reporting.allowed=true`，但与本次“报告仍暂停”的明确指令冲突，无法确认 round 报告恢复授权。\n\n未生成或投递报告、派工、刷新研究索引、运行研究或修改暂停状态。"
+      },
+      {
+        "id": "2361e91d-33ce-448e-89e4-e6882eff7235",
+        "scheduledFor": "2026-10-14T00:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "563380a3-312d-4977-8f70-e2299c87e13c",
+        "output": "\n\n---\n\n已退出。控制文件记录了 2026-10-13 的报告恢复，但与你本次“报告仍暂停”的最新指令冲突，按暂停执行。\n\n未生成或投递报告，未派工、刷新研究索引、运行研究或探测 DS；未更改暂停状态。"
+      },
+      {
+        "id": "df835652-6be4-457b-b148-b28081416aec",
+        "scheduledFor": "2026-10-14T02:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "48e6dfc3-ad25-42b1-95f2-7e0a9f8853ec",
+        "output": "\n\n---\n\n已立即退出。控制文件仍记录 10 月 13 日的报告恢复，但你本次明确说明报告仍暂停，没有可核验的后续恢复授权。\n\n本轮未生成或投递报告，未派工、刷新研究索引、运行研究或探测 DS；未更改暂停状态。"
+      },
+      {
+        "id": "96ff7499-824f-4f16-8b49-92bff5ad1953",
+        "scheduledFor": "2026-10-14T04:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "6163b969-a80d-41bd-ba2e-b635f4604d85",
+        "output": "\n\n---\n\n已退出。控制文件保留的 10 月 13 日报告授权与本次“报告仍暂停”的最新指令冲突，不能据此恢复。\n\n本次未生成或投递报告、派工、刷新索引、运行研究、更改暂停状态或探测 DS。"
+      },
+      {
+        "id": "3d0fcd29-2cb4-443d-a5a4-3ff3646a930d",
+        "scheduledFor": "2026-10-14T06:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "98427685-de23-453d-9db8-cd2b9ff38d60",
+        "output": "\n\n---\n\n已退出。控制文件中的 2026-10-13 恢复记录早于本次“报告仍暂停”的明确指令，不能作为当前恢复授权。\n\n未生成或投递报告，未派工、刷新研究索引、运行研究或更改暂停状态。"
+      },
+      {
+        "id": "7639e2ed-6a87-45ce-8c44-7a8c4b49910c",
+        "scheduledFor": "2026-10-14T08:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "f7bf27ee-4f76-45e0-9fee-f30179b203e2",
+        "output": "\n\n---\n\n已退出。最新机主指令明确报告仍暂停，优先于控制文件中 10 月 13 日的旧恢复记录。\n\n本次未生成或投递报告、未派工、未刷新研究索引，也未更改暂停状态。"
+      },
+      {
+        "id": "6758354c-5be2-47c8-8201-d6d4193319fb",
+        "scheduledFor": "2026-10-14T10:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "2de1c88e-ff44-4f83-9a85-346756e7c9f5",
+        "output": "\n\n---\n\n已退出。[控制文件](/root/codex-test/open-composer/reports/research/control/owner-compute-hold.json)中的报告许可来自 10 月 13 日旧授权，与本次明确的“报告仍暂停”冲突，不能作为恢复依据。\n\n本次未生成或投递报告、未派工、未刷新研究索引；未运行研究、探测 DS 或更改暂停状态。"
+      },
+      {
+        "id": "d5199d3f-fcd2-4819-89ea-ed36e373abdf",
+        "scheduledFor": "2026-10-14T12:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "7add6718-7d8b-4f0b-bac2-6db3fbe94a3d",
+        "output": "\n\n---\n\n已退出。控制文件保留的 10 月 13 日恢复记录与本次“报告仍暂停”指令冲突，不能作为当前恢复授权。\n\n未生成或投递报告，未派工、刷新研究索引、运行研究、探测 DS 或更改暂停状态。"
+      },
+      {
+        "id": "24bf85fb-5998-4c6d-8da0-a0f0830d8194",
+        "scheduledFor": "2026-10-14T14:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "497759a9-5972-4bbd-8487-9ef1121f9e1c",
+        "output": "\n\n---\n\n已退出。控制文件记录的 10 月 13 日报告授权早于你本次“报告仍暂停”的明确指令，不能作为本次 kind=round 的恢复授权。\n\n未生成或投递报告、未派工、未刷新研究索引；未运行研究、探测 DS 或更改暂停状态。"
+      },
+      {
+        "id": "13eb746c-dc07-46f9-a7a1-c13833c6a3c6",
+        "scheduledFor": "2026-10-14T16:05:00.000Z",
+        "status": "succeeded",
+        "agentId": "32b08e96-907e-40c0-980d-5394320b2e7d",
+        "output": "\n\n---\n\n已退出本次 `kind=round`。[控制文件](/root/codex-test/open-composer/reports/research/control/owner-compute-hold.json)记录的 10 月 13 日报告授权与你本次“报告仍暂停”的最新指令冲突，不能据此恢复报告。\n\n未生成或投递报告，未派工、刷新研究索引、运行研究或探测 DS；未更改暂停状态。"
+      }
+    ]
+  },
+  {
+    "id": "8a81c331",
+    "name": "oc-owner-daily-weekly-chat",
+    "cadence": {
+      "type": "cron",
+      "expression": "0 1 * * *",
+      "timezone": "UTC"
+    },
+    "target": {
+      "type": "new-agent",
+      "config": {
+        "provider": "codex",
+        "cwd": "/root/codex-test/open-composer",
+        "modeId": "full-access",
+        "model": "gpt-6.1-sol",
+        "thinkingOptionId": "xhigh"
+      }
+    },
+    "status": "active",
+    "prompt": "你是Open Composer现有报告流程，本次kind=daily_or_sunday_weekly。先读取reports/research/control/owner-compute-hold.json，根据其中当前报告动作授权决定是否执行；缺失、损坏或未授权时退出。动态暂停/恢复状态只来自该权威记录，不从历史提示推断。获准后读取config/research-agent-roles.json的reporting配置与prompts/owner-report-dispatch.zh.md，按该当前文件完成本次报告。沿用原时区、频率、事件去重和唯一报告会话/邮件分工；设置并一次核验支持的实际模型、effort与mode。不新增研究、训练、设备探测、订单、费用或调度，不改变任何暂停开关。发现报告中的目标/证据错位或无接续owner，按现有事件路由说明，不建立Astra值守或重复唤醒。",
+    "nextRunAt": "2026-10-15T01:00:00.000Z",
+    "skipped_runs": [
+      {
+        "id": "99869dce-8051-433b-a550-053c53e7f217",
+        "scheduledFor": "2026-10-14T01:00:00.000Z",
+        "status": "succeeded",
+        "agentId": "aa8dcf43-37ce-4dda-88fc-1d03ab5ca0ad",
+        "output": "\n\n---\n\n控制文件记载 2026-10-13 已恢复报告权限，但与你本次“当前报告仍暂停”的最新指令冲突。\n\n本次按暂停退出：未生成或投递报告，未派工、刷新研究索引、运行研究或更改暂停状态。"
+      }
+    ]
+  }
+]

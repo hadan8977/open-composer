@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "task_id": "DAY3-EQUITY-ROLE",
+  "as_of_utc": "2026-10-13T08:30:55.604067+00:00",
+  "author": "b497883a-0236-422c-929b-f9b5998fff83",
+  "actual_runtime": "gpt-6.1-sol/xhigh/full-access once verified",
+  "outcome": "complete_admitted_source_gross_study_downgrade_local_dynamic_D_stop_stock_numeric_allocation",
+  "author_decision": "The present source evidence does not justify prioritizing a new local conditional-mean D implementation. Keep inverse-variance/volatility information as a possible auxiliary role only. Q/MAX avoid-side remains untested, conditional on actual PIT/cash-book admission; current stock work stops with a concrete dependency. Reallocate immediate research effort to other independently owned mechanisms rather than rescue nearby D variants.",
+  "approved_source_scope_complete": true,
+  "full_equity_net_objective_proved": false,
+  "source_OLS_experiment_completed": true,
+  "source_strategy_diagnostics": [
+    {
+      "candidate_id": "S0_STATIC_WML",
+      "gross_annualized_sharpe": 0.6818283737073537,
+      "negative_weight_months": 0,
+      "role": "Static winner-minus-loser gross reference",
+      "actual_evidence": "Matches published Table7 Sharpe to0.00018; identity/primary monthly series validated.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    },
+    {
+      "candidate_id": "S1_CVOL",
+      "gross_annualized_sharpe": 1.0415233584310917,
+      "negative_weight_months": 0,
+      "role": "Lagged volatility scaling",
+      "actual_evidence": "Gross improvement over static is large; no conditional mean model, cash or cost claim.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    },
+    {
+      "candidate_id": "S2_INVVAR",
+      "gross_annualized_sharpe": 1.1269811729346444,
+      "negative_weight_months": 0,
+      "role": "Lagged variance scaling",
+      "actual_evidence": "Most gross WML improvement already exists without mean forecasting; matched control is decisive.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    },
+    {
+      "candidate_id": "S3_DM_MEAN",
+      "gross_annualized_sharpe": 1.1598132402697736,
+      "negative_weight_months": 31,
+      "role": "Expanding WML conditional mean",
+      "actual_evidence": "Only+0.03283 gross Sharpe overS2; family interval crosses0, no demonstrated positive marginal credit.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    },
+    {
+      "candidate_id": "S4_WINNER_STATIC",
+      "gross_annualized_sharpe": 0.7037325708112329,
+      "negative_weight_months": 0,
+      "role": "Winner excess static anchor",
+      "actual_evidence": "Separate host, not equal to top30 cash-net local momentum.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    },
+    {
+      "candidate_id": "S5_WINNER_INVVAR",
+      "gross_annualized_sharpe": 0.80113362952328,
+      "negative_weight_months": 0,
+      "role": "Winner variance auxiliary control",
+      "actual_evidence": "Gross Sharpe exceeds winner static, still no execution/cost/margin/near-term claim.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    },
+    {
+      "candidate_id": "S6_WINNER_MEAN",
+      "gross_annualized_sharpe": 0.7534884218506146,
+      "negative_weight_months": 10,
+      "role": "Signed winner conditional mean",
+      "actual_evidence": "Gross Sharpe worse thanS5 by0.04765; ten short-winner months mean it is not a cash-long strategy.",
+      "net_return_proved": false,
+      "local_cash_deployment_proved": false
+    }
+  ],
+  "matched_questions": {
+    "WML_mean_beyond_variance": {
+      "observed": 0.03283206733512922,
+      "family95": [
+        -0.021804852435821094,
+        0.08746898710607953
+      ],
+      "verdict": "small positive point estimate; statistically unresolved under fixed two-contrast family; not source marginal-alpha pass",
+      "approx_family_MDE_80pct": 0.08420072776867747
+    },
+    "winner_target_transportability": {
+      "observed": -0.047645207672665446,
+      "family95": [
+        -0.10228212744361576,
+        0.0069917120982848704
+      ],
+      "unadjusted95": [
+        -0.08793655946487385,
+        -0.009413155977887997
+      ],
+      "verdict": "negative point estimate; unadjusted interval below0 but family interval slightly crosses0. Large positive winner increment is unsupported in this source sample; local D priority falls.",
+      "approx_family_MDE_80pct": 0.060611366348810404
+    }
+  },
+  "signed_and_two_leg_explanation": {
+    "S3_negative_weight_months": 31,
+    "S6_negative_weight_months": 10,
+    "signed_WML": "negativeS3 reverses to long loser/short winner",
+    "signed_winner": "negativeS6 shorts winner; cannot describe as cash long-only",
+    "c1_distribution": "S3 median192.565 andS2 median11678.802 are dimensional raw coefficients; WML gross exposure2*abs(w). Absolute c1-scaled wealth is not investable capital.",
+    "raw_same_weight_identity_max_abs_error": 4.547473508864641e-13,
+    "same_19pct_vol_descriptive_winner_annual_mean_increment": -0.006738677299105338,
+    "same_19pct_vol_descriptive_negative_loser_annual_mean_increment": 0.012976770092779656,
+    "same_19pct_vol_descriptive_total_annual_mean_increment": 0.006238092793674316,
+    "interpretation": "In the allowed ex-post19%vol description, positive WML marginal mean is supplied by the negative-loser leg while winner leg subtracts. Together with direct S6-S5 it supports host mismatch. Algebraic attribution and ex-post scaling do not prove unique short-loser causality."
+  },
+  "what_is_strongly_lowered": [
+    "Treating the DM mean term as the main source of source Sharpe gain: variance scaling already moves0.68183 to1.12698, mean only to1.15981.",
+    "Automatically transporting published WML mean forecasting to a signed winner-only target:0.80113 to0.75349 is opposite the desired matched increment.",
+    "Calling S6 cash long-only or source weights cash/margin-safe; signed months and raw gross distributions rule this out.",
+    "C1 equal-weight quality reordering as a selectable alpha remains lowered by prior matched10/20bps failures; this study does not reopen it."
+  ],
+  "what_remains_unproved_or_underpowered": [
+    "S3-S2 small positive gross effect;951months,147bear months in17contiguous episodes, overlapping126-day variance and ~0.0842 Sharpe MDE limit certainty.",
+    "Exact original Table7 dynamic mean result: original CRSP VW/RF vintage and1927:07 fully observable predictor absent. Controls match within0.001Sharpe, but dynamic1.15981 differs from paper1.194.",
+    "The future zero-interest cash D uses absolute matured net-account labels, bounded allocation and20-session overlapping holdings; sourceS6 uses winner-minus-RF, signed unbounded source weights and monthly value-weighted portfolios. Therefore no global local-D or DM refutation.",
+    "Q/MAX avoid-side stock selection remains unmeasured; sourceD evidence is not evidence against Q.",
+    "Any current2026 after-cost/short recovery result, stock/PIT/delisting/corporate-action/funding/borrow/marginal account contribution."
+  ],
+  "data_and_visibility": {
+    "published_source_evaluation": "1934:01-2013:03;951months; published/seen, not freshOOS",
+    "training_first_identified_x": "1928:07; nominal1927:07 skipped because24months prehistory absent",
+    "source_decile_orientation": "AuthorD10 winner/D1loser, body15.3/-2.5; caption long/short reversed, discrepancy retained",
+    "daily_monthly_reconstruction": "Matched calendars but per-decile residualp95=0.0016385555/max=0.0715635610. Monthly author labels and daily author variance used separately. Cause of month-level discrepancies not independently resolved.",
+    "French_market_RF": "202608 revisedCRSP/CIZ daily proxy; not originalCRSP VW index and not original RF vintage",
+    "stock_input": "blocked,0stock definitions runnable; no stock matrix read",
+    "old_windows": "2017-2026 and2024+ already seen; noOOS relabel/reset",
+    "historical_exposure": "unknown; original known evidence/closed scopes retained;8147 only historical unverified contract declaration",
+    "capability_fixture": "market.dm_author_deciles remains trial/research-only; generic capability fixture test cannot parse12-membertar. Exact-member source qualification independently accepted; no paper-readiness workaround."
+  },
+  "stop_and_priorities": [
+    {
+      "priority": 1,
+      "action": "Do not allocate localD or further source-fit rescues now. Retain source variance information as auxiliary, requiring a later matched costed cash book for any local credit.",
+      "why": "Conditional mean does not demonstrate robust WML increment and loses winner-target comparison; present near-term capital objective needs absolute net contribution."
+    },
+    {
+      "priority": 2,
+      "action": "Q/MAX avoid-side is the only remaining equity role experiment worth conditional consideration: same-N PIT pool and cash book, fixed source MAX-decile exclusion preserving momentum ordering, same-count random exclusions and leave-cash controls.",
+      "condition": "Only if real permanent-ID/corporate-action/delisting and funding inputs can be accepted without turning this week into a data platform project. New stock compute and$0.75 remain unallocated.",
+      "why": "Prior raw C1 decile shape supports avoid-side information but not top30 reranking; costs did not explain the old shortfall. This is an untested role, not claimed alpha."
+    },
+    {
+      "priority": 3,
+      "action": "Let Root prefer currently independent complete research such as the existing NEWS semantic owner over rescuing D; no NEWS/Chinco/DLSA/Step5 ownership or budget change.",
+      "why": "No net source contribution has been shown here; direction comparison must follow credible empirical potential, not this lane's prepared code."
+    }
+  ],
+  "not_selected": [
+    "No clipping/turning negativeS6 weights into cash as a post-result rescue; that changes scientific policy.",
+    "No nearby bear window,126-day variance,mean predictor or normalization sweep.",
+    "No reuse of closedC1/Form4/meta/CG names or quotas; no stock universe substitution.",
+    "No1902-to2200 quota filling, repeated full evaluation, new API/provider/cloud spend or source-net assumption."
+  ],
+  "applicable_native_gates": {
+    "direction": "ok",
+    "campaign_pre_discovery": "ok",
+    "knowledge": "ok",
+    "iteration_pre_backtest": "ok",
+    "independent_plan": "approve_deep_plan scoped source",
+    "independent_implementation": "approve_implementation",
+    "exact_source_execution_admission": "admit_source_full_fits"
+  },
+  "status_flags": {
+    "workflow_pass": true,
+    "research_pass": false,
+    "ml_contribution_pass": false,
+    "llm_contribution_pass": false,
+    "paper_ready_pass": false,
+    "promotion_eligible": false,
+    "source_question_answered": true,
+    "source_net": null,
+    "local_stock_net": null,
+    "broker_activity_started": false,
+    "economic_weekly_positive_contribution_credit": false,
+    "weekly_complete_net_model_goal_credit": false
+  },
+  "frozen_success_gate": {
+    "applicable_now": false,
+    "metric": "future selectable20bps continuous terminal-freeOOS annualizedSharpe excessBIL",
+    "operator": ">",
+    "threshold": 1.0,
+    "actual": null,
+    "reason": "This sourcegross seen nonselectable package does not evaluate a promotion cohort."
+  },
+  "evidence": {
+    "source_results": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-results.json",
+      "sha256": "e99cea0bfca9cd43bcf5aa5cebf5638745de9e0a29380d251f74d48e63b8d382",
+      "bytes": 5773
+    },
+    "source_arrays": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-evaluation-arrays.npz",
+      "sha256": "d836de1587bfe5e2107d2a69d06ea390a524591ae57447be40b12aaffbad9b15",
+      "bytes": 148363
+    },
+    "interpretation": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-interpretation.json",
+      "sha256": "609f85a2c4aa43377a6b8ea5ec9998baeb4fe2526d86cc92be2ae51f678ad5ec",
+      "bytes": 9813
+    },
+    "qualified_input": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/qualified-source.npz",
+      "sha256": "83f354e81e90d4a82b9683396d638bfa46fa6941ff5ee17b34f8658d2569a74e",
+      "bytes": 844886
+    },
+    "input_qualification": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-input-qualification.json",
+      "sha256": "9882b93560a76d2fd59db6b432eab6482a85db8c72cd22ac12dec558cb100bdb",
+      "bytes": 5124
+    },
+    "stock_targeted_revision": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/stock-targeted-revision.json",
+      "sha256": "1d66028b26bd95edbcbe239f8fe3ee1d68a2037e1430d5fa0c2aade3b77cba30",
+      "bytes": 2760
+    },
+    "independent_implementation_review": {
+      "path": "reports/research/iterations/eq_role_source_20261013/independent-implementation-review.json",
+      "sha256": "8eae2d09d2f301fda0870340d4dcfa1bebee50bf5a0e519787430927b775a686",
+      "bytes": 6199
+    },
+    "root_execution_admission": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/root-source-full-fit-admission.json",
+      "sha256": "b145b6419581191e55d9037499ffeba0df0b5bcb249e25352d10289ad18a2b17",
+      "bytes": 2326
+    },
+    "iteration_admitted_gate": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/iteration-admitted-gate.json",
+      "sha256": "fff44dd0a791009b75e518e596da93a502a1c06e441571bfe01f829ce27669f1",
+      "bytes": 213
+    },
+    "knowledge_admitted_gate": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/knowledge-admitted-gate.json",
+      "sha256": "5ffe5d6d65daae7435bd73f4bc3dd0f8da012b0f42418eef2c0af3f2d996c5bf",
+      "bytes": 2486
+    },
+    "campaign_admitted_gate": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/campaign-admitted-gate.json",
+      "sha256": "bce3324e04804a36b37f03a744759b43553a1d60b88f71ffaeec31abca8e63a2",
+      "bytes": 676
+    },
+    "evaluate_start_reservation": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/evaluate-start.json",
+      "sha256": "fcd0e034ad15c9ecb99806450b33c797517e4e4b41fbde38ab769b8264b4fcca",
+      "bytes": 753
+    },
+    "evaluate_launcher": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-evaluate-launcher.py",
+      "sha256": "3ffe74b01a62e5dfbf06537c37e99333cab6f62c7393731eb75a687306a86d1d",
+      "bytes": 5170
+    },
+    "actual_resource_log": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-evaluate-resource.txt",
+      "sha256": "fe944ad6e6b23926f809c00431793427b603e80e9a7c1994d6e2e974562b5d51",
+      "bytes": 1059
+    },
+    "final_accounting": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/source-final-accounting.json",
+      "sha256": "b0a31f3b642215347666c18816d6807b69cbe11a8ddb0f63b634e15e1b5c3f7e",
+      "bytes": 1881
+    },
+    "old_role_counterevidence": {
+      "path": "reports/research/program/day-goal-20261013/research-frontier/old-results.json",
+      "sha256": "fc204db78f6be799d12703738f27eb049c9e332200fd85ee4b2ef853c8d2a085",
+      "bytes": 51867
+    },
+    "paper_primary": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-2016-final.txt",
+      "sha256": "ccec5bba6b85414e08b38b12f80f4f536173d9f06fc8a6253614d64daca08068",
+      "bytes": 213266
+    },
+    "portfolio_primary": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/sources/dm-portfolio-definition.txt",
+      "sha256": "aa65cdffe795c2eba339ac46a5ede843a241c8fe397a6f187d408de10afe72c2",
+      "bytes": 15853
+    },
+    "counterevidence_primary": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/sources/cederburg-2020.txt",
+      "sha256": "708ec739a56c51d74eb0e5ba5469f79f17bcb96ca9de4db5c9deb4475a116c56",
+      "bytes": 203291
+    },
+    "report_zh": {
+      "path": "reports/research/program/day-goal-20261013/equity-role/result.zh.md",
+      "sha256": "1c7acebc681e08cf8913cfa6ee99ce2df025819d39cfb5058bdaab42d048c252",
+      "bytes": 5381
+    },
+    "candidate_manifest": {
+      "path": "reports/research/iterations/eq_role_source_20261013/candidate-manifest.json",
+      "sha256": "669965efe6954a4832a95430dde61c5212b037b8ecbeb802ea3ce432d15fd919",
+      "bytes": 12561
+    },
+    "method_definition": {
+      "path": "reports/research/iterations/eq_role_source_20261013/method-definition.json",
+      "sha256": "7fd3f1ec986ea4e237b9eadadc02cafe4f11b55784058d8cd016be412863fa0c",
+      "bytes": 1762
+    },
+    "data_feasibility": {
+      "path": "reports/research/iterations/eq_role_source_20261013/data-feasibility.json",
+      "sha256": "a349e0ac3278f0dd0aec5eddbf88751bf4e10db5cd88975b35777f81da54731b",
+      "bytes": 4845
+    },
+    "search_space_final_metadata": {
+      "path": "reports/research/iterations/eq_role_source_20261013/search-space.json",
+      "sha256": "1a5bf52a197cc536be0f14bd19a8e59106eabf97237be2ff79579743fce64bc6",
+      "bytes": 2193
+    },
+    "source_trial_ledger": {
+      "path": "reports/research/iterations/eq_role_source_20261013/trial-ledger.jsonl",
+      "sha256": "2395a60d23517b37020baf3e76b5a73d150a4d5c299e40e7ef78ccf19cb31ee1",
+      "bytes": 3426
+    },
+    "direction_review": {
+      "path": "reports/research/iterations/eq_role_source_20261013/direction-review.json",
+      "sha256": "fe1333c092722431880e688d7f1c3ce475fa9d673be9b11a2d9bc85f90697691",
+      "bytes": 6134
+    },
+    "campaign_contract": {
+      "path": "reports/research/campaigns/eq_role_source_20261013/research-campaign-contract.json",
+      "sha256": "5c7ae030ccdfa8bf0b439cb7094bc6b5ff61b20f4c048a0d7dd2e283d4e9e70a",
+      "bytes": 9835
+    }
+  },
+  "final_independent_result_acceptance": "Pending Astra outcome review via automatic native finish; author does not claim independently acceptedAlpha.",
+  "notification_route": "native_finish_only_no_explicit_duplicate_Root_message",
+  "resource_summary": {
+    "OLS_fit_attempts": 1902,
+    "source_policies": 7,
+    "full_evaluation_launches": 1,
+    "evaluation_process_wall_seconds": 4.93,
+    "evaluation_peak_RSS_MiB": 150.01171875,
+    "source_cumulative_conservative_wall_upper_seconds": 1440.411067,
+    "wall_cap_seconds": 2700,
+    "cloud_USD": 0,
+    "stock_evaluations": 0
+  },
+  "validation": {
+    "source_math_and_clock_checks": "all seven saved outputs finite; exact return formulas, prior-month daily cutoffs, saved result hashes and both two-leg identities pass",
+    "approval_integrity": "reviewed source code/implementation and exact qualified input unchanged",
+    "native_gates_actual": "all four pre-execution gates ok, artifacts retained",
+    "owner_report_lint": "Ran; owner-facing email/report prose linter rejects exact strategy/decile identifiers and evidence paths. This is a technical research artifact requiring those identifiers and source paths, so that prose lint is inapplicable; no email/report-dispatch performed."
+  }
+}

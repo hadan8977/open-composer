@@ -19,6 +19,11 @@ no credential:
    back on pace.
 3. **Dead lock.** A round lock whose holder agent no longer runs is moved aside, so
    the next round does not skip for up to the preflight's ``--lock-max-hours``.
+4. **Memory.** Owner 2026-10-07: the project must always leave the owner >=500 MB
+   free. While the memory governor (scripts/memory_budget.py) reports the live
+   background agents at their cap, or too little headroom for a new agent for
+   ``gate_pause_after_s``, the rounds pause; they resume once that clears
+   (config/memory-budget.json, docs/runbook-memory.zh.md).
 
 It resumes only schedules it paused itself, so a manual pause stays paused. One pass
 per call; it prints only when it acts.
@@ -54,6 +59,9 @@ LOG_PATH = STATE_DIR / "round-gate.log"
 LOCK_PATH = STATE_DIR / "round.lock"
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
 PASEO_FALLBACK = Path("/root/.hermes/node/bin/paseo")
+MEMORY_CONFIG_PATH = ROOT / "config" / "memory-budget.json"
+MEMORY_STATUS_PATH = ROOT / "logs" / "memory" / "governor-status.json"
+MEMORY_STATUS_MAX_AGE_S = 120
 FAMILIES = ("opus", "sonnet", "haiku", "fable")
 READ_BLOCK = 8 << 20
 RECENT_IDS = 200
@@ -386,6 +394,32 @@ class PaseoCli:
 # --- one pass ------------------------------------------------------------------------
 
 
+def memory_reasons(
+    now: datetime, status_path: Path | None, config_path: Path = MEMORY_CONFIG_PATH
+) -> list[str]:
+    """Reasons to hold the rounds for memory; none when the governor status is missing or stale."""
+    if status_path is None:
+        return []
+    status = _load(status_path, {}) if status_path.exists() else {}
+    checked = _ts(status.get("checked_at"))
+    if checked is None or (now - checked).total_seconds() > MEMORY_STATUS_MAX_AGE_S:
+        return []
+    budget = _load(config_path, {})
+    reasons = []
+    cap = int(budget.get("background_agents_max", 3))
+    if int(status.get("background_agents", 0)) >= cap:
+        reasons.append(
+            f"memory: {status.get('background_agents')} background agents live (cap {cap})"
+        )
+    pause_after = float(budget.get("gate_pause_after_s", 300))
+    if float(status.get("low_headroom_s", 0)) >= pause_after:
+        reasons.append(
+            f"memory: headroom {status.get('headroom_mb')} MB below "
+            f"{budget.get('agent_admit_headroom_mb', 400)} MB for {status.get('low_headroom_s')}s"
+        )
+    return reasons
+
+
 def run_once(
     now: datetime,
     cfg: dict[str, Any],
@@ -397,6 +431,8 @@ def run_once(
     status_path: Path = STATUS_PATH,
     lock_path: Path = LOCK_PATH,
     log_path: Path = LOG_PATH,
+    memory_status_path: Path | None = None,
+    memory_config_path: Path = MEMORY_CONFIG_PATH,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     margin = timedelta(minutes=float(cfg.get("resume_margin_minutes", 2)))
@@ -422,6 +458,7 @@ def run_once(
         actions.append(
             f"weekly limit seen at {pace['used_units']} units (config cap {pace['cap_units']})"
         )
+    memory = memory_reasons(now, memory_status_path, memory_config_path)
     current = {str(s.get("id")): s for s in paseo.schedules()}
     for schedule_id, family in cfg["schedules"].items():
         binding = [lim for lim in limits if limit_applies(lim.kind, family)]
@@ -435,6 +472,7 @@ def run_once(
                 f"pace: used {pace['used_units']} > allowed at {pace['pace_units']} "
                 f"(cap {pace['cap_units']})"
             )
+        reasons.extend(memory)
         status = (current.get(schedule_id) or {}).get("status")
         if reasons and status == "active":
             if not dry_run:
@@ -458,6 +496,7 @@ def run_once(
             {"kind": lim.kind, "until": _iso(lim.until), "source": lim.source} for lim in limits
         ],
         "pace": pace,
+        "memory": memory,
         "usage_by_kind": {k: round(v, 1) for k, v in sorted(ledger["units"].items())},
         "paused_by_gate": sorted(gate_paused),
         "actions": actions,
@@ -524,7 +563,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
-    summary = run_once(now, cfg, PaseoCli(), dry_run=args.dry_run)
+    summary = run_once(
+        now, cfg, PaseoCli(), memory_status_path=MEMORY_STATUS_PATH, dry_run=args.dry_run
+    )
     if summary["actions"] or args.dry_run:
         print(json.dumps(summary, ensure_ascii=False))
     return 0

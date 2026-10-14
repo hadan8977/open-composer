@@ -84,6 +84,10 @@ from open_composer.cockpit.data.hypotheses import (
     lane_status,
 )
 from open_composer.cockpit.data.now import summarize_research
+from open_composer.cockpit.data.overview import (
+    get_default_paper_equity_cache,
+    get_default_research_overview_cache,
+)
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
     build_account_equity_history,
@@ -164,14 +168,14 @@ def _asset_version() -> str:
 # the research queue; Agents / Quota / Health are the System group. ⌘1-7
 # follow this order. Lineage is reached from Research and has no rail entry.
 SCREENS: tuple[tuple[str, str, str], ...] = (
-    ("today", "/", "Today"),
-    ("reports", "/reports", "Reports"),
-    ("paper", "/paper", "Paper"),
-    ("research", "/research", "Research"),
-    ("agents", "/agents", "Agents"),
-    ("quota", "/quota", "Quota"),
-    ("health", "/health", "Health"),
-    ("lineage", "/lineage", "Lineage"),
+    ("today", "/", "总览"),
+    ("reports", "/reports", "报告"),
+    ("paper", "/paper", "模拟盘"),
+    ("research", "/research", "研究"),
+    ("agents", "/agents", "运行中"),
+    ("quota", "/quota", "额度"),
+    ("health", "/health", "系统"),
+    ("lineage", "/lineage", "研究链路"),
 )
 
 #: The desktop rail's grouping: (heading or None, screen slugs). The System
@@ -184,11 +188,11 @@ NAV_GROUPS: tuple[tuple[str | None, tuple[str, ...]], ...] = (
 #: The phone tab bar holds five: (slug, label). System opens Health; the tab
 #: stays lit on Quota and Agents too (see `TAB_ALSO`).
 TABS: tuple[tuple[str, str], ...] = (
-    ("today", "Today"),
-    ("reports", "Reports"),
-    ("paper", "Paper"),
-    ("research", "Research"),
-    ("health", "System"),
+    ("today", "总览"),
+    ("reports", "报告"),
+    ("paper", "模拟盘"),
+    ("research", "研究"),
+    ("health", "系统"),
 )
 
 #: Other screens a tab stays highlighted for.
@@ -540,6 +544,8 @@ def _warm_loop() -> None:
 
 _TODAY_WARM_THREAD_NAME = "cockpit-today-warm"
 _TODAY_WARM_STARTED = False
+_OVERVIEW_WARM_THREAD_NAME = "cockpit-research-overview-warm"
+_OVERVIEW_WARM_STARTED = False
 
 
 def _today_warm_loop() -> None:
@@ -573,6 +579,49 @@ def _start_today_warm_thread() -> threading.Thread | None:
         _TODAY_WARM_STARTED = True
     thread = threading.Thread(target=_today_warm_loop, name=_TODAY_WARM_THREAD_NAME, daemon=True)
     thread.start()
+    return thread
+
+
+def _research_overview_loop() -> None:
+    cache = get_default_research_overview_cache()
+    while True:
+        try:
+            cache.refresh(project_root())
+        except Exception:
+            pass
+        time.sleep(60.0)
+
+
+def _paper_equity_loop() -> None:
+    # Equity history scans many paper-cycle files. Delay the first scan so it
+    # cannot compete with the owner's first page load after a service restart.
+    time.sleep(8.0)
+    cache = get_default_paper_equity_cache()
+    while True:
+        try:
+            cache.refresh(project_root())
+        except Exception:
+            pass
+        time.sleep(300.0)
+
+
+def _start_research_overview_thread() -> threading.Thread | None:
+    global _OVERVIEW_WARM_STARTED
+    with _WARM_THREAD_LOCK:
+        if _OVERVIEW_WARM_STARTED:
+            return None
+        _OVERVIEW_WARM_STARTED = True
+    thread = threading.Thread(
+        target=_research_overview_loop,
+        name=_OVERVIEW_WARM_THREAD_NAME,
+        daemon=True,
+    )
+    thread.start()
+    threading.Thread(
+        target=_paper_equity_loop,
+        name="cockpit-paper-equity-warm",
+        daemon=True,
+    ).start()
     return thread
 
 
@@ -635,6 +684,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
     if warm:
         _start_warm_thread()
         _start_today_warm_thread()
+        _start_research_overview_thread()
     app.mount("/static", _ImmutableStaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")
@@ -668,6 +718,8 @@ def create_app(*, warm: bool = True) -> FastAPI:
         context["report"] = today_report_for(
             root, now=datetime.now(UTC), cache=get_default_today_cache()
         )
+        context["equity"] = get_default_paper_equity_cache().get()
+        context["research_overview"] = get_default_research_overview_cache().get()
         context["refresh_seconds"] = int(TODAY_REFRESH_SECONDS)
         return templates.TemplateResponse(request, "today.html", context)
 

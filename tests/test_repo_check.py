@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from shutil import copytree
+from shutil import copyfile, copytree
 
 import pytest
 from typer.testing import CliRunner
 
+from open_composer.capabilities import load_registry
 from open_composer.cli import app
 from open_composer.repo_check import CURRENT_DOCS, build_repo_check_report
 
@@ -32,6 +33,17 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
     copytree(repo_root / ".agents", target / ".agents", dirs_exist_ok=True)
     copytree(repo_root / ".claude", target / ".claude", dirs_exist_ok=True)
     copytree(repo_root / "harness", target / "harness", dirs_exist_ok=True)
+    # The live registry may reference a research fixture outside data/fixtures.
+    # Copy only declared files absent from the isolated workspace, not entire
+    # research output directories or shared writable links to real evidence.
+    for capability in load_registry(repo_root).capabilities:
+        if not capability.fixture:
+            continue
+        source = repo_root / capability.fixture
+        destination = target / capability.fixture
+        if source.is_file() and not destination.exists():
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            copyfile(source, destination)
 
 
 def test_repo_check_passes_for_repo_control_surface(
@@ -157,12 +169,16 @@ def test_repo_check_blocks_non_strict_verify_gates(
     assert "feature-validate runs strict" in str(check.details)
 
 
+@pytest.mark.parametrize(
+    "skill_name", ["risk-reviewer", "backtest-forensics", "research-plan-reviewer"]
+)
 def test_repo_check_blocks_when_claude_skill_mirror_drifts(
     sample_workspace: Path,
     repo_root: Path,
+    skill_name: str,
 ) -> None:
     _copy_repo_check_inputs(repo_root, sample_workspace)
-    skill = sample_workspace / ".claude" / "skills" / "risk-reviewer" / "SKILL.md"
+    skill = sample_workspace / ".claude" / "skills" / skill_name / "SKILL.md"
     skill.write_text(skill.read_text(encoding="utf-8") + "\nDrifted.\n", encoding="utf-8")
 
     report = build_repo_check_report(sample_workspace)
@@ -170,43 +186,23 @@ def test_repo_check_blocks_when_claude_skill_mirror_drifts(
     assert report.status == "blocked"
     check = next(item for item in report.checks if item.name == "claude_parity")
     assert check.status == "blocked"
-    assert "risk-reviewer" in str(check.details)
+    assert skill_name in str(check.details)
 
 
-@pytest.mark.parametrize(
-    "heading",
-    [
-        "# UltraCode Reviewer V2",
-        "## 1. Objective, Boundaries, Acceptance",
-        "## 2. Dependency Graph",
-        "## 3. Critical Path and Concurrency",
-        "## 4. Role Selection",
-        "## 5. Write Ownership",
-        "## 6. Agent Contract",
-        "## 7. Adversarial Review",
-        "## 8. Conflict Resolution",
-        "## 9. Evidence and Acceptance",
-        "## 10. Stop Conditions",
-    ],
-)
-def test_repo_check_blocks_when_ultracode_v2_contract_is_missing(
+def test_repo_check_blocks_stale_claude_only_skill(
     sample_workspace: Path,
     repo_root: Path,
-    heading: str,
 ) -> None:
     _copy_repo_check_inputs(repo_root, sample_workspace)
-    skill = sample_workspace / ".agents/skills/ultracode-reviewer/SKILL.md"
-    skill.write_text(
-        skill.read_text(encoding="utf-8").replace(heading, "## Removed"),
-        encoding="utf-8",
-    )
+    stale = sample_workspace / ".claude" / "skills" / "retired-method"
+    stale.mkdir()
+    (stale / "SKILL.md").write_text("Retired method.", encoding="utf-8")
 
     report = build_repo_check_report(sample_workspace)
 
-    assert report.status == "blocked"
-    check = next(item for item in report.checks if item.name == "repo_skills")
+    check = next(item for item in report.checks if item.name == "claude_parity")
     assert check.status == "blocked"
-    assert heading in str(check.details)
+    assert check.details["unexpected_skills"] == ["retired-method"]
 
 
 def test_repo_check_blocks_when_skill_manifest_path_is_missing(
@@ -217,8 +213,8 @@ def test_repo_check_blocks_when_skill_manifest_path_is_missing(
     manifest = sample_workspace / "harness" / "skill_manifest.yaml"
     manifest.write_text(
         manifest.read_text(encoding="utf-8").replace(
-            ".agents/skills/ultracode-reviewer/SKILL.md",
-            ".agents/skills/ultracode-reviewer/MISSING.md",
+            ".agents/skills/risk-reviewer/SKILL.md",
+            ".agents/skills/risk-reviewer/MISSING.md",
         ),
         encoding="utf-8",
     )
@@ -229,7 +225,7 @@ def test_repo_check_blocks_when_skill_manifest_path_is_missing(
     check = next(item for item in report.checks if item.name == "harness_policy")
     assert check.status == "blocked"
     assert "missing_skill_paths" in str(check.details)
-    assert "ultracode-reviewer/MISSING.md" in str(check.details)
+    assert "risk-reviewer/MISSING.md" in str(check.details)
 
 
 def test_repo_check_blocks_when_risk_domain_skill_is_not_manifested(

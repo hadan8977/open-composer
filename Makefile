@@ -88,4 +88,4 @@ verify: format lint test-full repo-check capability-test agent-parity deploy-pre
 # the static bundle into open_composer/cockpit/static/v2, which the cockpit
 # serves at /v2/ when it exists. Needs node 22 + pnpm; the server never does.
 cockpit-v2:
-	cd frontend/cockpit-v2 && pnpm install --frozen-lockfile --ignore-scripts && pnpm exec tsc --noEmit && ../../scripts/run_capped.sh --mem 1.8G -- pnpm exec vite build
+	cd frontend/cockpit-v2 && pnpm install --frozen-lockfile --ignore-scripts && pnpm exec tsc --noEmit && ../../scripts/run_capped.sh --mem 1.2G -- pnpm exec vite build

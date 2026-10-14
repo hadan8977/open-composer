@@ -1149,28 +1149,7 @@ def test_iteration_dossier_enforces_declared_knowledge_contract(
     paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
     _write_complete_pre_backtest_payload(paths)
     search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
-    artifact_root = paths.root
-    artifacts = {
-        "assessment_path": artifact_root / "knowledge-assessment.json",
-        "scout_path": artifact_root / "knowledge-scout.json",
-        "model_reuse_decision_path": artifact_root / "model-reuse-decision.json",
-        "modality_role_matrix_path": artifact_root / "modality-role-matrix.json",
-    }
-    for field_name, path in artifacts.items():
-        payload = (
-            {
-                "status": "ok",
-                "external_brief_path": paths.external_brief_json.relative_to(
-                    sample_workspace
-                ).as_posix(),
-                "external_brief_sha256": hashlib.sha256(
-                    paths.external_brief_json.read_bytes()
-                ).hexdigest(),
-            }
-            if field_name == "assessment_path"
-            else {"rows": []}
-        )
-        path.write_text(json.dumps(payload), encoding="utf-8")
+    artifacts = _write_bound_knowledge_contract(paths, sample_workspace)
     search["knowledge_contract"] = {
         **{
             field_name: path.relative_to(sample_workspace).as_posix()
@@ -1233,6 +1212,92 @@ def test_iteration_dossier_blocks_non_ok_knowledge_assessment(
 
     result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
     assert "knowledge_contract_assessment_not_ok" in result.blocked
+
+
+def _write_bound_knowledge_contract(paths, root: Path) -> dict[str, Path]:
+    from open_composer.research.knowledge_memory import assess_iteration_knowledge
+
+    artifacts = {
+        "assessment_path": paths.root / "knowledge-assessment.json",
+        "scout_path": paths.root / "knowledge-scout.json",
+        "model_reuse_decision_path": paths.root / "model-reuse-decision.json",
+        "modality_role_matrix_path": paths.root / "modality-role-matrix.json",
+    }
+    manifest = paths.root / "knowledge-scout-queries.json"
+    baseline = paths.root / "knowledge-baseline.json"
+    manifest.write_text(json.dumps({"queries": [{"query": "fixture source"}]}))
+    baseline.write_text(json.dumps({"prior_claims": []}))
+    artifacts["scout_path"].write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "iter_id": paths.root.name,
+                "query_manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+                "baseline_sha256": hashlib.sha256(baseline.read_bytes()).hexdigest(),
+                "candidate_count": 0,
+                "new_candidate_count": 0,
+                "candidates": [],
+            }
+        )
+    )
+    artifacts["modality_role_matrix_path"].write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "iter_id": paths.root.name,
+                "roles": [{"role": "return_ranking", "fallback": "quant_only"}],
+            }
+        )
+    )
+    result = assess_iteration_knowledge(paths.root.name, root)
+    assert result.payload["status"] == "ok", result.payload["blocked"]
+    return artifacts
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("scout_path", "not json after assessment"),
+        ("modality_role_matrix_path", "not json after assessment"),
+        ("modality_role_matrix_path", '{"schema_version":1,"iter_id":"mom_minute_r1","roles":[]}'),
+        ("model_reuse_decision_path", "[]"),
+    ],
+)
+def test_knowledge_contract_rejects_replaced_assessed_content(
+    sample_workspace: Path, field: str, replacement: str
+) -> None:
+    test_iteration_dossier_enforces_declared_knowledge_contract(sample_workspace)
+    paths = iteration_dossier_paths("mom_minute_r1", sample_workspace)
+    artifacts = _write_bound_knowledge_contract(paths, sample_workspace)
+    artifacts[field].write_text(replacement)
+
+    result = validate_iteration_dossier(paths.root.name, sample_workspace)
+
+    assert result.status == "blocked"
+    assert f"knowledge_contract_assessment_binding_sha256_mismatch:{field}" in result.blocked
+
+
+def test_knowledge_contract_refreshes_legacy_receipt_without_changing_scientific_contract(
+    sample_workspace: Path,
+) -> None:
+    from open_composer.research.knowledge_memory import assess_iteration_knowledge
+
+    test_iteration_dossier_enforces_declared_knowledge_contract(sample_workspace)
+    paths = iteration_dossier_paths("mom_minute_r1", sample_workspace)
+    artifacts = _write_bound_knowledge_contract(paths, sample_workspace)
+    brief_before = paths.external_brief_json.read_bytes()
+    search_before = paths.search_space_json.read_bytes()
+    assessment = json.loads(artifacts["assessment_path"].read_text())
+    assessment.pop("artifact_bindings")
+    artifacts["assessment_path"].write_text(json.dumps(assessment))
+    blocked = validate_iteration_dossier(paths.root.name, sample_workspace)
+    assert "knowledge_contract_assessment_bindings_missing_refresh_assessment" in blocked.blocked
+
+    assess_iteration_knowledge(paths.root.name, sample_workspace)
+
+    assert validate_iteration_dossier(paths.root.name, sample_workspace).status == "ok"
+    assert paths.external_brief_json.read_bytes() == brief_before
+    assert paths.search_space_json.read_bytes() == search_before
 
 
 def test_iteration_dossier_validates_machine_candidate_manifest(
@@ -3330,3 +3395,232 @@ def test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(
     assert result.status == "ok"
     assert result.blocked == []
     assert LIGHTWEIGHT_EXEMPTION_WARNING in result.warnings
+
+
+@pytest.mark.parametrize("mutation", ["entry", "provider", "costs"])
+def test_execution_gate_rejects_supplied_unregistered_semantics_before_data(
+    sample_workspace: Path, mutation: str
+) -> None:
+    from open_composer.engines.backtest_engine import backtest_frame
+    from open_composer.models.strategy_spec import StrategySpec
+
+    test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(sample_workspace)
+    path = sample_workspace / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    raw = load_strategy_spec(path).model_dump(mode="json")
+    if mutation == "entry":
+        raw["entry"] = {"all": ["close < 0"]}
+    elif mutation == "provider":
+        raw["data"].update(source="alpaca", path=None)
+        raw["data_assumptions"]["source"] = "alpaca"
+    else:
+        raw["costs"]["slippage_bps"] = 0
+    spec = StrategySpec.model_validate(raw)
+
+    class NoDataAccess:
+        def copy(self):
+            raise AssertionError("execution gate must block before data or calculation")
+
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        backtest_frame(spec, NoDataAccess(), root=sample_workspace)
+
+
+def test_execution_gate_allows_reporting_metadata_and_registered_candidate(
+    sample_workspace: Path,
+) -> None:
+    from open_composer.models.strategy_spec import StrategySpec
+
+    test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(sample_workspace)
+    path = sample_workspace / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    source = load_strategy_spec(path)
+    renamed = source.model_copy(update={"name": "renamed_report", "description": "report metadata"})
+    assert require_iteration_execution_gate(renamed, sample_workspace).ok
+
+    paths = iteration_dossier_paths("step10_lightweight_fixture_r1", sample_workspace)
+    manifest_path = paths.root / "candidate-manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    raw = source.model_dump(mode="json")
+    raw["name"] = "registered_alternative"
+    raw["entry"] = {"all": ["close > 1"]}
+    candidate_path = path.with_name("registered_alternative.yaml")
+    candidate_path.write_text(yaml.safe_dump(raw, sort_keys=False))
+    candidate = load_strategy_spec(candidate_path)
+    candidate_ref = candidate_path.relative_to(sample_workspace).as_posix()
+    manifest["candidates"][0]["spec_path"] = candidate_ref
+    manifest["spec_hashes"][candidate_ref] = strategy_content_hash(candidate)
+    manifest_path.write_text(json.dumps(manifest))
+    feasibility_path = paths.root / "data-feasibility.json"
+    feasibility = json.loads(feasibility_path.read_text())
+    feasibility["candidate_authorization"]["rows"][0]["candidate_binding_sha256"] = (
+        candidate_authorization_binding_sha256(manifest["candidates"][0])
+    )
+    feasibility_path.write_text(json.dumps(feasibility))
+    search = json.loads(paths.search_space_json.read_text())
+    search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    search["data_feasibility_sha256"] = hashlib.sha256(feasibility_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search))
+
+    assert require_iteration_execution_gate(candidate, sample_workspace).ok
+    raw["entry"] = {"all": ["close > 2"]}
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        require_iteration_execution_gate(StrategySpec.model_validate(raw), sample_workspace)
+
+
+def test_execution_gate_reconstructs_bounded_frozen_parameter_derivation(
+    sample_workspace: Path,
+) -> None:
+    from open_composer.research.parameter_sweep import _candidate_from_params
+
+    test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(sample_workspace)
+    path = sample_workspace / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    raw = yaml.safe_load(path.read_text())
+    raw["notes"]["research_design"]["parameter_space"] = {"risk.max_position_weight": [0.25, 0.5]}
+    path.write_text(yaml.safe_dump(raw, sort_keys=False))
+    source = load_strategy_spec(path)
+    digest = strategy_content_hash(source)
+    paths = iteration_dossier_paths("step10_lightweight_fixture_r1", sample_workspace)
+    manifest_path = paths.root / "candidate-manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["spec_hashes"][path.relative_to(sample_workspace).as_posix()] = digest
+    manifest_path.write_text(json.dumps(manifest))
+    for target in (paths.external_brief_json, paths.search_space_json):
+        payload = json.loads(target.read_text())
+        payload["spec_hash"] = digest
+        if target == paths.search_space_json:
+            payload["candidate_manifest_sha256"] = hashlib.sha256(
+                manifest_path.read_bytes()
+            ).hexdigest()
+        target.write_text(json.dumps(payload))
+    candidate, _ = _candidate_from_params(
+        source, {"risk.max_position_weight": "0.5"}, 1, sample_workspace
+    )
+    assert require_iteration_execution_gate(candidate, sample_workspace).ok
+    # A caller cannot relabel a provider change or an out-of-range value as the
+    # same admitted derivation. The frozen source and candidate budget stay intact.
+    changed = candidate.model_copy(
+        update={"entry": type(source.entry).model_validate({"all": ["close < 0"]})}
+    )
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        require_iteration_execution_gate(changed, sample_workspace)
+    outside, _ = _candidate_from_params(
+        source, {"risk.max_position_weight": "0.75"}, 1, sample_workspace
+    )
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        require_iteration_execution_gate(outside, sample_workspace)
+    # A frozen candidate-policy/campaign inventory cannot be replaced by a
+    # broad parameter-space claim. Its actual registered versions still pass.
+    lock_path = paths.root / "phase-one-preregistration-lock.json"
+    lock_path.write_text(json.dumps({"fixture": "frozen exact candidate inventory"}))
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        require_iteration_execution_gate(candidate, sample_workspace)
+    assert require_iteration_execution_gate(source, sample_workspace).ok
+
+
+def _rebind_lightweight_source(root: Path, update: dict[str, object]):
+    from open_composer.models.strategy_spec import StrategySpec
+
+    test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(root)
+    path = root / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    raw = load_strategy_spec(path).model_dump(mode="json")
+    raw.update(update)
+    path.write_text(yaml.safe_dump(raw, sort_keys=False))
+    source = load_strategy_spec(path)
+    paths = iteration_dossier_paths("step10_lightweight_fixture_r1", root)
+    manifest_path = paths.root / "candidate-manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["spec_hashes"][path.relative_to(root).as_posix()] = strategy_content_hash(source)
+    manifest_path.write_text(json.dumps(manifest))
+    for target in (paths.external_brief_json, paths.search_space_json):
+        payload = json.loads(target.read_text())
+        payload["spec_hash"] = strategy_content_hash(source)
+        if target == paths.search_space_json:
+            payload["candidate_manifest_sha256"] = hashlib.sha256(
+                manifest_path.read_bytes()
+            ).hexdigest()
+        target.write_text(json.dumps(payload))
+    return StrategySpec.model_validate(raw), paths
+
+
+@pytest.mark.parametrize(
+    "purpose",
+    [
+        "ml_linear_baseline",
+        "llm_quant_baseline",
+        "llm_missing_modality",
+        "cost_sensitivity",
+        "cost_grid",
+        "blind_test",
+    ],
+)
+def test_native_diagnostics_require_registered_source_and_exact_producer(
+    sample_workspace: Path, purpose: str
+) -> None:
+    from open_composer.engines.backtest_engine import backtest_frame
+    from open_composer.research.blind_test import _rewrite_spec
+    from open_composer.research.cost_sensitivity import _rewrite_costs
+    from open_composer.research.iteration_dossier import NativeExecutionControl
+    from open_composer.research.ml_backend.evaluation import _linear_baseline_spec
+    from open_composer.research.promotion import _clone_spec_with_costs, _llm_control_spec
+
+    source, paths = _rebind_lightweight_source(
+        sample_workspace,
+        {
+            "model": {"kind": "ridge_regressor", "features": ["llm_score"]},
+            "factors": {
+                "llm_score": {
+                    "source": "llm_feature",
+                    "field": "score",
+                    "path": "data/features/llm-score.jsonl",
+                    "default": 0.1,
+                }
+            },
+        },
+    )
+    parameters = {"slippage_bps": 0} if purpose == "cost_sensitivity" else {}
+    if purpose == "cost_grid":
+        parameters = {"commission_pct": 0.02, "slippage_bps": 7.5, "impact_model": "almgren_chriss"}
+    elif purpose == "blind_test":
+        parameters = {"mode": "anonymous", "seed": 17}
+    control = NativeExecutionControl(source=source, purpose=purpose, parameters=parameters)
+    if purpose == "ml_linear_baseline":
+        derived = _linear_baseline_spec(source)
+    elif purpose == "cost_sensitivity":
+        derived = _clone_spec_with_costs(source, slippage_bps=0)
+    elif purpose == "cost_grid":
+        derived = _rewrite_costs(source, **parameters)
+    elif purpose == "blind_test":
+        derived, _ = _rewrite_spec(source, parameters["mode"], seed=parameters["seed"])
+    else:
+        derived = _llm_control_spec(source, purpose=purpose)
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        require_iteration_execution_gate(derived, sample_workspace)
+    result = require_iteration_execution_gate(derived, sample_workspace, native_control=control)
+    assert result.info["native_execution_control"]["promotion_eligible"] is False
+    assert result.info["native_execution_control"]["selectable_candidate"] is False
+    assert result.info["native_execution_control"]["source_spec_hash"] == strategy_content_hash(
+        source
+    )
+
+    class ReachedAfterGate(Exception):
+        pass
+
+    class NoCalculation:
+        def copy(self):
+            raise ReachedAfterGate
+
+    with pytest.raises(ReachedAfterGate):
+        backtest_frame(derived, NoCalculation(), root=sample_workspace, native_control=control)
+    forged = derived.model_copy(
+        update={"entry": type(source.entry).model_validate({"all": ["close < 0"]})}
+    )
+    with pytest.raises(ValueError, match="differs from its registered source/producer"):
+        backtest_frame(forged, NoCalculation(), root=sample_workspace, native_control=control)
+    forged_source = source.model_copy(update={"entry": forged.entry})
+    with pytest.raises(ValueError, match="execution_spec_not_registered"):
+        require_iteration_execution_gate(
+            derived,
+            sample_workspace,
+            native_control=NativeExecutionControl(
+                source=forged_source, purpose=purpose, parameters=parameters
+            ),
+        )
+    assert json.loads(paths.search_space_json.read_text())["total_candidate_budget"] == 6

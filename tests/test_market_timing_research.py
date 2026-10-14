@@ -8,7 +8,37 @@ import pytest
 import yaml
 
 from open_composer.adapters.data.sample import normalize_ohlcv
-from open_composer.research.market_timing import run_market_timing_research
+from open_composer.research.market_timing import (
+    _build_timing_grid,
+    _candidate_spec,
+    run_market_timing_research,
+)
+
+
+def _preregister_timing_candidates(
+    spec_path, root, preregister, *, profiles, fast_bars, exit_bars, stop_loss_pct, max_candidates
+):
+    grid = _build_timing_grid(
+        profiles,
+        fast_bars,
+        [8],
+        exit_bars,
+        [3],
+        [0.0],
+        [5],
+        [3],
+        stop_loss_pct,
+        [None],
+        max_candidates=max_candidates,
+    )
+    preregister(
+        spec_path,
+        candidate_count=len(grid),
+        candidate_factory=lambda source: [
+            _candidate_spec(source, source.primary_symbol, "alpaca", "iex", params, index)
+            for index, params in enumerate(grid, start=1)
+        ],
+    )
 
 
 def test_market_timing_research_rejects_unregistered_iteration_before_data_load(
@@ -91,7 +121,16 @@ def test_market_timing_research_reports_primary_buy_hold_alpha(
         ),
         encoding="utf-8",
     )
-    preregister_iteration_dossier(spec_path, candidate_count=1)
+    _preregister_timing_candidates(
+        spec_path,
+        sample_workspace,
+        preregister_iteration_dossier,
+        profiles=["trend_pullback"],
+        fast_bars=[3],
+        exit_bars=[8],
+        stop_loss_pct=[10.0],
+        max_candidates=1,
+    )
 
     result = run_market_timing_research(
         spec_path,
@@ -186,7 +225,16 @@ def test_market_timing_research_walk_forward_top_k_reduces_reported_cost(
         ),
         encoding="utf-8",
     )
-    preregister_iteration_dossier(spec_path, candidate_count=2)
+    _preregister_timing_candidates(
+        spec_path,
+        sample_workspace,
+        preregister_iteration_dossier,
+        profiles=["risk_control_hold"],
+        fast_bars=[3, 4],
+        exit_bars=[13],
+        stop_loss_pct=[20.0],
+        max_candidates=2,
+    )
 
     result = run_market_timing_research(
         spec_path,
@@ -259,7 +307,16 @@ def test_market_timing_research_supports_risk_control_hold_profile(
         ),
         encoding="utf-8",
     )
-    preregister_iteration_dossier(spec_path, candidate_count=1)
+    _preregister_timing_candidates(
+        spec_path,
+        sample_workspace,
+        preregister_iteration_dossier,
+        profiles=["risk_control_hold"],
+        fast_bars=[3],
+        exit_bars=[13],
+        stop_loss_pct=[20.0],
+        max_candidates=1,
+    )
 
     result = run_market_timing_research(
         spec_path,

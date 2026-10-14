@@ -1,0 +1,16 @@
+# open-composer memory budget (owner 2026-10-07: always leave the owner >=500 MB free).
+# Everything the project runs lives below this slice: Paseo agents (paseo-claude-launch),
+# research jobs (scripts/run_capped.sh) and the cockpit (quant.service drop-in).
+# MemoryHigh is moved at run time by oc-memory-governor.service (900-2000 MB);
+# numbers: config/memory-budget.json; rules: docs/runbook-memory.zh.md.
+[Unit]
+Description=open-composer memory budget
+Before=slices.target
+
+[Slice]
+MemoryAccounting=yes
+MemoryMax=2200M
+MemoryHigh=2000M
+# 3G since 2026-10-08 (6 background agents): their idle memory is compressed by zswap
+# (oc-zswap.service) before it reaches the swap files.
+MemorySwapMax=3G

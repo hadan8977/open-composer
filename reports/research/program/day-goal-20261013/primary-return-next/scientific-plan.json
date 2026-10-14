@@ -1,0 +1,182 @@
+{
+  "schema_version": 2,
+  "task_id": "DAY3-PRIMARY-RETURN-NEXT",
+  "iter_id": "t20261013_earnings_uncertainty_conditional",
+  "author": "7b109880-ac40-447e-b2a6-f0ed1266ebac",
+  "reviewer_requested": "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3",
+  "as_of_utc": "2026-10-13T11:06:05.105166+00:00",
+  "status": "complete_conditional_plan_R1_R2_revision_pending_independent_diff_acceptance",
+  "question": "Does option-market under-anticipation of a scheduled earnings event deliver a substantial aftercost funded20k gain and matchedrisk portfolio increment, rather than merely a pooledmidpoint premiumreturn?",
+  "source_reproduction": {
+    "source": "BoundGao/Xing/Zhang1996-2013original; sourceinputs/config unaccepted.",
+    "portfolio": "Fixed fractional call/put quantities q=-delta_put/(delta_call-delta_put), 1-q; initialdelta neutral, no rehedge duringwindow. Holding return=(q*C_exit+(1-q)*P_exit)/(q*C_entry+(1-q)*P_entry)-1. Sourceclose midpoints and sourceTable2pooled vsTable3quarterly weighting are separate reports; three originalwindows [-3,-1],[-3,0],[-3,+1].",
+    "filters": "Original price>=0.125,stock>=5,positiveOI,basicarbitragebounds,10..60calendarDTE,absolutelegdelta0.375..0.625, strike/previousstockclose0.9..1.1, matchedexpiry/strike. Originalendingquote and everyinterimquote filters reproduced only as labeled source-selecteddiagnostics, never carried into causaleligibletrades.",
+    "limits": "No originalnetSharpe/accountCAGR claim. Exactexpecteddate-match and fullsubperiodmedian sourcecontrols usefutureinformation and cannot be causaltrades. This source reproduction remains unavailable, not refuted."
+  },
+  "application_information": {
+    "universe": "Every historicallyidentified standard100-shareUScommonstock optionissuer in an accepted inputpacket with a thenknown previousyear samefiscalquarter earnings8K; no current survivor list. Exclude unverifiedepisode/deliverable before formation, retain auditledger; never exclude basedon outcome/exitquote. Actualdatedcohort is not accepted.",
+    "calendar": "At completedclose t determine next fiscalquarter schedule using only the samefirm prior-year samequarter announceddate: nthweekday in thatcalendar month carried into currentyear; weekend/exchangeholiday moved to nextregularsession. Include all forecasts including those that later differfromactualannouncement. No fullsamplemedian or ex-postexpected/actualmatch selection. ConfirmedIRscheduleddates would require a separately bound advance-visible packet; unavailabledate -> noforecast/order.",
+    "cutoff": "Signal t is closingbell beforepredictedday−3. APPformationfilters/contract/delta/quantity/costbudgetfreeze follow frozen_target_and_arrival_contract; allinputs visible<=tclose. Existingpairtie-break and onepair-versus-sourcepoolingdifference unchanged. No ending/interimquote eligibility.",
+    "labels": "Accountlabels mature after actual scheduledexitobservations are available. Source-event grosslabels andactualforecastsample are separate; failures/earlyorlateearnings remain inAPPaccount. No training/ML and no futurecomplete label filter."
+  },
+  "application_clock": {
+    "timezone": "America/New_York actualexchangecalendar/DST",
+    "entry": "Predictedday−3 09:45:00..09:45:05 firstvalidboth-legobservedNBBO; frozenIDs/deltas/counts frompriorclose. Arrivalall-inbudgetfailure -> skipentirepair asfrozen_target_and_arrival_contract; no substitute/downgrade/retry. DailyNAVis theclosingbell per daily_nav_contract, never09:45dateindexedhostreturns.",
+    "exits": "Exactlypredicted day−1/day0/day+1 09:45 using same5second quote rule, three preregisteredphase streams. These differfromsourceEODwindows and are explicitclock adaptation. Earliestposition enters/holds through thefixedchosen interval whetheractualrelease shifts; noannouncedfuturedate hindsight.",
+    "no_fill": "Missingeitherentryleg -> no position/noorder, retainedcash. Atomicmodeledpair condition is an assumption, not actualfillproof; do not claim multileg fill. Missingexitquote -> retain/unpricedposition; completeaccountNAV/returnN/A untilacceptedvalidmark/terminal resolution. No deletingtrade/no freeliquidation.",
+    "corporate_actions": "Acceptedpermanentstockepisode, OCCdeliverable/multiplier change and terminalconsideration mandatory. Do not erase split/bankruptcy optionholdings or multiply bycurrent100 blindly. No exercisebeforeplannedexit. Failedexit held through expiry requiresactualautoeexercise/cashstockdelivery/settlement inputs; otherwiseNAVN/A."
+  },
+  "candidate_definitions": {
+    "conceptual_ids_only_not_generated_economic_manifest": [
+      "APP_PRE_UNCERTAINTY_P3_M1",
+      "APP_THROUGH_EXPECTED_RELEASE_P3_0",
+      "APP_POST_RESOLUTION_P3_P1"
+    ],
+    "count": 3,
+    "policy": "Fixedthreeeconomically differentuncertaintyphases; no adjacentgrid/selector or return-informedcalendarfeature. All attemptedstreams/seeds/failures counted; no winner selectedforpromotion fromthisseenstudy. Source fractional views notextra selectablecandidates.",
+    "gate": "Actualcandidate/contract/campaigndefinitions generated only afternative source/inputscope acceptance; conceptualplan does not allocate trials or compute."
+  },
+  "capital_execution": {
+    "initial_USD": 20000,
+    "cash_return": 0,
+    "premium_limits": "All-inriskcommitment(entrydebitincludingactualfees+earmarkedfixedexitfees) aggregate<=50%currentNAV, perissuer<=10%, max5concurrentpairs; owncapital/cashatbothsignalcloseandarrival. Entirefrozenintent skippedifactualarrivalfees/gapexceedanycap; no borrowing/shortpositions.",
+    "integer": "ContractIDs/q/deltas fixedatsignalclose; countsearch1..20/deltaobjective/ties aspreviousplan. Eachfundedcapital/costaccount freezesitsownintegercountsunderfeeinclusiveclosebudget;09:45 checksactualcash/NAVand eitherexecutesthewholefrozenpairor skipsit. No arrivalreoptimizing/downsize. Independent4khostaccounts notscaled20kreturnseries.",
+    "ledger": "Debitask*actualdeliverablemultiplier*contracts+costs atmodeledentry; creditbid*multiplier*contracts-costs atexit; receivable/settledcash/T+1 explicitly maintained, no dailycapital reset or spendunsettledproceeds. Midpointdiagnostic and integernetNAV separate.",
+    "primary_cost": "Observedaskentry/bidexit plus20bp ofactualexecutedpremium notional and fixed$1/contract/side bufferedcommission/regfee assumption. This is deliberately fixedresearchcost, not verifiedcurrentbrokerfee.",
+    "stress_cost": "Doubleactualbidaskcrossingfrommid plus40bp executedpremiumnotional+$1.50/contract/side. Distinctunfundedexact-primary-orderdiagnostic and independentbudget-checkedfundedstressaccount as frozen_target_and_arrival_contract; dailyNAVmarksactualbid once. Sameorders isnotpromisedforthefundedstresspath.",
+    "borrow_financing": "None bylongpremium/nohedgefullyfundedconstruction. Unresolvedearlyexercise/expiry delivery blockscompleteaccount rather than creatingfunding forfree."
+  },
+  "three_decision_depth_points": [
+    {
+      "id": "D1_INFORMATION_CLOCK",
+      "test": "Separate originalactualEA/sourceendingquote selection from actualcausalprior-yearforecastsample and fixed executablehorizons; retain late/earlycalendar misses.",
+      "value": "Tests whether apparentuncertaintyalpha survives a tradeknownbeforetheevent, not anex-postcalendar."
+    },
+    {
+      "id": "D2_FRICTION_AND_CAPITAL",
+      "test": "Originalmid/fractionalq versusrealNBBO/integerratio and fixed1:1pairbaseline; reportpastsource-liquidity quartiles andskippedexpensivepairs withoutselectingaprofitablequartile. Primary/stresssameorders/independentledger.",
+      "value": "Tests whether sourceeffectconcentratedin highspreads canactuallycrossquotes at20k andlimitedrisk."
+    },
+    {
+      "id": "D3_ACCOUNT_AND_HOST",
+      "test": "Fullcontinuousallacceptedseen2024-01-02..2026-10-12calendar, peryear/quarter attribution, monetarygains/DD/loss/recovery and matchedhost/IWN/SPY/broadmarket controls; no2026winner/windowselection. Source1996-2013separateiforiginalinputs everaccepted.",
+      "value": "Tests absoluteaccountreturn and deployableportfolio contribution versus poolingeventpayoffs. Sparsecohort/short history notglobalmechanismrefutation."
+    }
+  ],
+  "controls_and_inference": {
+    "baselines": "1:1longstraddle sameeligiblepair/time/cost, no-eventcalendar shift placebo(+10tradingdays withsamecausaleligibility/observablequotes), nopositionzeroyieldcash, sourceeligible-stockB&H, equalweighthistoricaleligibleunderlyings, SPY/BIL, ex-postbesteligibleunderlyingdiagnostic only. Same-quote/commoncoverage report plusfullaccountN/A handling; no syntheticquotes.",
+    "primary_estimand": "ContinuousclosingbellbidmarkedintegerNAV/USDandconsecutiveclose-to-closecash/positionreturns per daily_nav_contract, includingallintermediatehelddays;30/60sessionloss/DD/recovery/HAC/bootstrap/DSRrequirecompletecalendarcoverage.09:45fill timestampsdonotbecometheNAVlabel. Existingevent/sourcegrossdiagnosticsremainseparate.",
+    "statistics": "NeweyWest lag5 onpairedcontinuousseenreturn differences; calendar-blockbootstrap20sessions/2000draws seed20261013; simultaneous3-streammaxT andDSRtrialcount>=3 plusactualfailed/otherexposure. Cluster byday/issuer for eventleveldescriptions. Power/MDEreport N/A ifsmall/fullyunpriced; neverrejectentiremechanismusinglowsample.",
+    "host": "Bindtheunchangedhostnet10dailycloseinput/consumer through host-close-clock-binding.json. For eachcomparison initialize16khostproxy+actual4koptionscashatfirstcommondeclaredclosingbell, discardonlythatinitializationrowfrompairedinference, applysamepolicyfromthereandallowdrift. SynchronousclosingNAVreturnsandmissingrows per daily_nav_contract; neverpair09:45 optionreturns withhostclose dates orreuse a scaled20koptionspath. Preservehostinternalnet10/F1lag2/C2caveats; realjointmargin/funding stillunaccepted.",
+    "thresholds": "Thisseenconditionalstudy hasnopromotiongatepass; canonicalresearch_passfalseuntilactualqualifyingevidence. Frozenfutureselectable20bpcontinuous terminal-free OOS SRexBILstrict>1 remains unchanged andunopened. Mainreturnranking needs substantiveabsoluteCAGR/dollars with crediblematchedriskhostincrement and tolerableloss/recovery; sourcehighSharpeor eventmeans alone insufficient. No newaccountreturnforecast orpost-resultbar."
+  },
+  "model_roles": "Deterministicoption/eventtiming/lotallocation only; zeroMLtraining, zeroLLMfinancialsignal. No DLSA/Attention/NEWS/Step5/Chinco scope.",
+  "readiness": {
+    "real_input_ready": false,
+    "resource_ready_for_economics": false,
+    "economic_execution_admitted": false,
+    "implementation_accepted": false,
+    "actual_Attention_or_DLSA_work_changed": false
+  },
+  "resources": {
+    "inherited": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/inherited-resource-accounting.json",
+      "sha256": "5fc1038b17643f70900e04da11fea47b1da42bf9ca62550dd555220106d6b05a",
+      "bytes": 3038
+    },
+    "source_requests_shared_cap": 40,
+    "known_previous_source_units": 29,
+    "current_source_units": 11,
+    "source_remaining": 0,
+    "new_market_request_max": 24,
+    "new_market_byte_max": 16777216,
+    "market_requests_already_made_this_task": 0,
+    "market_values_read_this_task": 0,
+    "new_economic_cpu_core_seconds_max": 7200,
+    "new_economic_cpu_already_used": 0,
+    "job": "Freshmemory<=900MiB/singleCPU capped,owner500MiBreserve",
+    "cloud": "Noreservation/download; originalshared25USD andthislineunspent1USD cannotbeduplicated. No newpaidspending.",
+    "Hadan": "No need/probe/wake orborrowofanotherownerlane."
+  },
+  "native_admissions": "Independent complete-plan scientificreview first. Realcapability/PITcontract/inputacceptance then actualdirection/iteration/candidate/campaign/resource/implementation gates asapplicable; no fitting/backtest/data-dependentcost arithmetic untilall actualeconomicadmissions pass. Unknownnativecommand isnot apass. options.trial_chainfixture cannot certifyrealquotes.",
+  "stop_or_major_decision": "Currentrealinputgate fails. Ordinaryschema/metadataattempts cannot create missinghistory/timestamps/deliverables or configurelegalentitlement. AuthorwillnotreplacewithETF B&H, tradeprints/inferredtimes orrevivefailedDoltcontract. Ifnoexistingqualifiedoptionpacket canbeaccepted withincurrentcaps, deferthiseconomicdirection notatdepth and handoneconcreteRootdecision onregisteredhistoricalquotes/inputscope versusnewindependentdirection/sourceallocation. No newpaidspending recommended ontheseunconfirmednetpriors.",
+  "bindings": [
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/mechanism-selection.json",
+      "sha256": "9caf12a20711c8045a39cbcdbc7d873bea9384bb4ede4e425d7ac2207ab3173b",
+      "bytes": 5137
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/input-feasibility-evidence.json",
+      "sha256": "9e747407469c495c043dc54ea09eb578171fac3d8c359cf48072b0928c8f6622",
+      "bytes": 4306
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/source-cards.jsonl",
+      "sha256": "1d7e163174551bfb2de6a663bcf309fa0985e3e146f168509e45027ac2092e13",
+      "bytes": 4386
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/sources/earnings_straddles.pdf",
+      "sha256": "178765ec7b40a41642a8da7729daee782cd82ede7e1d41996f308f740da3b156",
+      "bytes": 268347
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/sources/dispersion.pdf",
+      "sha256": "c07e61f3ebfc693f5ed4819ae9d49b7d9e44e310935e75796035da4523b77a47",
+      "bytes": 892363
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/sources/rfs-publisher-index-read.txt",
+      "sha256": "49563257d5136ca405c63c0294f0a0a499677700ec4656ae16a99507224c17e5",
+      "bytes": 33268
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/sources/option_cost_counterevidence.pdf",
+      "sha256": "3495a3aae8051d02af7baf3dba813d2ad8a946bb6bab54ccd67ceec8942c51f7",
+      "bytes": 584270
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/brief.md",
+      "sha256": "ffaba60294532046dc58fe8aeb777f7cfdb1678848807ffd08fadecb5e3b6c07",
+      "bytes": 4258
+    },
+    {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/host-close-clock-binding.json",
+      "sha256": "f0180b76a7419190786affe175c8ebaca7abe7fd6636ff7c96a18fde2ee6959d",
+      "bytes": 1975
+    }
+  ],
+  "revision": "R1_dailyclose_NAV_host_alignment_R2_frozenlots_arrival_cash_formationfilters_only",
+  "daily_nav_contract": {
+    "id": "APP_CLOSE_BID_NAV_v1",
+    "timestamp": "EachactualUSregularstockexchangesessionclosingbell inAmerica/New_York, inclDST/earlycloses/holidays:16:00ETnormal,13:00ETearlyclose.09:45is onlythefixedtradingtimestamp; it isnot the dailyreturnvaluation clock.",
+    "quote_rule": "For eachheldlegchoose latestvalidNBBO observed_at<=bell and age<=5seconds; record source/observed_at/visibility/provenance inacceptedpacket. No afterbellquote, forwardfill, inferredEODtime orresearchfetched_at substitutedforhistoricalavailability. Validmark hasfinitebid>=0, finiteask>0, bid<=ask andknownactualdeliverable; observedzerobid is a zero liquidationmark, not an inventedcashsale.",
+    "side": "Longoptionmarketvalue=actualbid*actualOCCdeliverablemultiplier*integercontracts. Midpoint/sourceportfolio is a separatediagnostic. Do not subtracthypotheticaldailyexitfees: actualcosts chargedonlyonexecutedorders. Fundedstressuses the sameactualbid dailyvaluation, despite itsmoreadversemodeledfillprices; stressspread isnot appliedagainto NAV.",
+    "state_at_cutoff": "NAV=settledcash+unsettledcashreceivables/payables+acceptedotherreceivables+allheldcontractbidvalues asofthebell. Settlementmoves receivabletocashonactualT+1session withoutdoublecountingwealth; pendingproceedsremainunspendable before settlement. Fixedexitfeereservesremaincashassets but are notspendable. Corporateaction/terminaladjustments mustbeeffective/visiblebycutoffand mechanicallytransformdeliverables/entitlements; unresolveddeliverables/exercise/terminaloutcome -> NAVN/A.",
+    "every_intermediate_day": "Markeveryopenpositionon everyintermediateregularsession, even whennodailytradeoccurs; acompleteentryandexitdoesnotjustifyfillingmissingintermediatemarks. Unpricedpositionsremainin inventory/cash andexposureledger.",
+    "missing": "If anyheldleg has novalidasofclosequote/deliverable oranyrequiredcash/actionstateis unresolved, completeaccountNAVforthatdate=N/A. Do notremoveposition/date, carryforwardprice, attributezeroreturn orrenormalizevalidpositions. Cash-onlyaccount hasknown NAV withnooptionquote requirement.",
+    "daily_return": "r_d=NAV_d/NAV_prev_regular_session−1 only whenbothconsecutiveclosingNAVsvalidandprevNAVpositive. KeepallcalendarrowsandN/A; afteragap a newlyvalidmarkrestorescurrentNAV but doesnotallocateunobservedP&L to a fabricateddailyreturn. Knownendpointwealth/changemaybereported withunresolvedpathlabel. ContinuouswholewindowSharpe/DD/30-60sessionloss/recovery/HAC/bootstrap/maxT/DSR areN/A unlesscompletecontinuouscoverage; common-completeevent/daydiagnostics explicitlylimited, never completefundedaccountproof.",
+    "initialization": "Standalone20kcash isinitializedonceatfirstdeclaredinput-windowclosingbell, with noentryreturnatthatinitialrow. No tradesduringorbefore initialization; firsteligibletargetformsatthatcloseor laterforfuture09:45entry. Actualdatesfreeze ininputadmission fromcalendar/coverage provenancebeforeeconomicresults, notfromgoodreturns.",
+    "host_binding": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/host-close-clock-binding.json",
+      "sha256": "f0180b76a7419190786affe175c8ebaca7abe7fd6636ff7c96a18fde2ee6959d",
+      "bytes": 1975
+    },
+    "host_alignment": "For eachcomparison firstcommondeclaredsessionclosingbell s0 is initializationonly, excluding itsreturnfrominference. At s0 initialize16khostwealth fromthebounddailycloseproxy+separate4koptionscash, nooptionspositionscarriedfromthe20kaccount. Runtheexact sameforecast/lot/cash/limitsruleswith4kcapital froms0; nevermultiply20koptionreturns by0.2. Hostdailycloseproxywealth usesitsoriginalnet10returnsafter s0; bothcomponents then drift withoutdaily80/20rebalance. AlignconsecutiveclosingNAVreturns ontheactualsamecalendar; donotpair09:45returnswithhostclose bydate.",
+    "host_scope": "F1andHOST_EW comparisons preserveboundhostrealizationdating/internalcost/caveats. Counterfactualproxywealthcomparison, not a certifiedjointbrokerfundedaccount; no useofhostshortproceeds/margin tofundoptionpremium. Same4ksleevecomparison toSPY/IWN requirestheirownacceptedwhole-share09:45entry/dividendcashpacketandclosingmarks. Missinghostrows oroptionscloseNAV remainmissing; donotsearchforwardpastunpricedholdings/rebasedlosses tocreatefirstcommon profitabledate.",
+    "ready": false
+  },
+  "frozen_target_and_arrival_contract": {
+    "id": "APP_CLOSE_FREEZE_ARRIVAL_ALL_OR_NONE_v1",
+    "formation_filters": "APPinherits sourceformationfilters1..8, evaluatedonlywiththen-visibleformationinformation: eachlegmid>=0.125, underlyingpriorcompletedclose>=5, positiveknownOIforbothlegs(noOIimputation); validpositivebid<ask andarbitragebounds versusformationunderlyingprice; DTE10..60calendar days onplannedentrydate(computableatfreeze); eachlegabsdelta0.375..0.625; strike/priorcompletedclose0.9..1.1; sameexpiry/strike call-putpair. APPadditionallyrequiresstandardmonthlyexpiry, verified100-sharestandarddeliverable/permanentstockepisode/sourcequotes/timestamps andmandatorypricehygiene onthen-visibleprefix, with split-like triggerexcluded. No sourcefilter9endingquote orfilter10everyinterimquote/OI/volume copiedto eligibility. No futureactualEAdate-match orsurvival/completenessselection. Dailyvolume isnot a newformationthreshold; theproviderfield vol isIVandcannotstandforvolume orOI. Missinganyrequiredformationfield -> skiptheforecast/pair beforeorder.",
+    "freeze": "At signalclosingbell t, afteracceptedpackets atcutoff, choosepaircontractIDs/forecastdates and q/deltasonce withthedeclaredtie-break. Eachcapital/costaccount independentlydeterminesintegercountsusingitsownsame-bellbidmarkedNAV, settledavailablecash andheldpositions. Everychoiceand integercount arefrozen at t for next09:45. Countsearch1..20 anddelta objective/ties unchanged; no arrivalGreeks reoptimization, newpair/strike/expiry orhorizonswitch. UnknownNAV/cash/filter -> no target.",
+    "signal_sizing": "Usevalidasofsignalcloseasks forprimary modeledentrypremium; stressfunded usesmid+(ask-bid). Includechargedentryadvalorem andfixedcontractcosts plus earmarkfixedpercontractplannedexitfees. Riskcommitment foreachopenposition=itsactualentrycashdebit(includingentrycharges)+earmarkedfixedexitfees, retaineduntilactualclose. Prospectivecommitmentmustfit perissuer10%/aggregate50%currentcloseNAV, max5concurrentpairs andsettledavailablecash afterexistingexitfeereserves. TheseareAPP feeinclusivebudgetconventions, not sourceportfolio rules.",
+    "arrival_book": "At09:45process actualdue settlements first, thenscheduledexits atvalidquotes (netproceedsunsettledT+1, cannotfundsamedayentry), thenentryintents in fixedolderforecasttime/permanentIDqueue. Eachentry sees accountstateupdatedbyearlierfills. ArrivalNAVusesactualpre-fillcash/receivables plusvalid latestasof09:45heldlegbidmarks age<=5seconds; do not reuse tcloseNAVthroughagap. Anyunpricedexistingposition oruncertainstate -> skipallnewentries untilacceptedvaluation/terminalresolution.",
+    "arrival_rule": "Freeze countsstayunchanged. At firstpermittedvalidboth-legNBBO recomputethefullprimaryall-inaskdebit+fixedexitfeereserve usingactualmultiplier/counts/costs. Test againstactualsettledavailablecash, perissuer10%/aggregate50%arrivalNAV commitments and5pairlimit afterpriorqueuefills. Ifanyfails, skipbothlegs/entirefrozenintent, retaincash; zero downsize, ratiochange orlaterquote retry. This deterministicall-or-nonecheckalsoappliesto1:1control. No futureprice/returnaffectschoice. Atomicmodeledboth-legfill remainsanexecutionassumption, not observedfillproof.",
+    "stress_same_orders_diagnostic": "Replayexactprimaryexecutedorders atdoublecrossing/40bp/$1.50stresscosts onlyas explicitlyunfunded cost-sensitivity whenitscash/limitsfail. Recordshortfall/violationsand labelunfunded_primary_order_cost_replay; no borrowingornegativecash granted tofundedaccountand no deploymentperformanceclaim. Sameorders diagnosticisnot the fundedstressNAV.",
+    "stress_funded_account": "Separaterealfunded20k(or4khost)sensitivityaccount, sameforecast/pairchoice/queue/initialcapital/filters/valuationclocks but ownholdings/cash/closingNAV andstressprices/costs. Freeze its ownintegercounts at t andperformtheidenticalall-or-none09:45arrivalchecks usingitsownavailablecash/commitments; skipifviolated. Stressorders maythereforedifferfromprimary. Reportfills/skips/lotdifferences andfundedstresscontinuousNAVseparately; count asfixednonselectableaccountingview, not a tunedcandidate or purecostdecomposition.",
+    "exit_fee_and_cash": "Fixedexitfee earmarkedatentry remainsunspendable untilclosure; actualexitprice-dependentcharge paidfromsaleproceedsplusreservedcash, no assumedfuturefinancing. Ifrequiredcost/state cannotbecoveredbyavailablecash/reserve or exitquoteinvalid, preserveposition/exposure and record failedexecution/unpricedNAV asapplicable, nofreeliquidation. Settlement/effectivecorporateactions remainbytheacceptedledger.",
+    "no_economic_admission": true
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "schema_version": 3,
+  "task_id": "DAY3-PRIMARY-RETURN-BREADTH",
+  "author": "7b109880-ac40-447e-b2a6-f0ed1266ebac",
+  "created_at": "2026-10-13T12:46:24.007203+00:00",
+  "research_role": "market_component_method",
+  "question": "Does late intermeeting timing add substantial funded20k return after market losses, beyond generic short-term reversal, under realistic cash and20bp execution costs?",
+  "selection": {
+    "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/primary-return-breadth/mechanism-selection.json",
+    "sha256": "2f69c86c8d508142b9ff56cbe84a3988bd58d37e77391af534819b94fd7fd5d8",
+    "bytes": 3528
+  },
+  "early_input": {
+    "path": "reports/research/program/day-goal-20261013/primary-return-breadth/early-input-evidence.json",
+    "sha256": "7ff7a3f8b3ac41ae7c3e1ecd126c43910ce289b3c2caea26b7bfcad9d4c99acf",
+    "bytes": 1934
+  },
+  "source_fidelity": {
+    "paper": {
+      "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/primary-return-breadth/sources/original_cycle.pdf",
+      "sha256": "07c3577a5ebea277c3f12a25622e9bf1122bde342c5a2f104f869205db67df1c",
+      "bytes": 496036
+    },
+    "text": {
+      "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/primary-return-breadth/sources/original_cycle.txt",
+      "sha256": "9089ce60e48130c9041d45d3143fdcc7d7c52f2e2bbd813ec4083dc36942154d",
+      "bytes": 184227
+    },
+    "new_counterevidence": {
+      "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/primary-return-breadth/sources/fed_2026.pdf",
+      "sha256": "0fa80a4af119ceb69876ca01549261174bd6034964282b0d726222f2a5465d92",
+      "bytes": 1678128
+    },
+    "definitions": "Original weekdays excluding weekends, holidays set zero; week0=-1..3,lateeven=9..13/19..23/29..33. Table7 cols1/3/4 nested lag5/lag5+month/lag5+month+quarter loss quintiles. Regressions condition full-sample quintiles; coefficient contrasts not absolute daily returns. Originalfootnote4 publicFrench aggregate Mkt-RF/RF primitives AREavailable in boundexisting officialZIP; originalvintage/calendar1994-2014 andpreciseoriginalinput acceptance remainunready. No faithful complete source/globalrefutation claim.",
+    "adaptations": "SPY total return minus BIL total-return proxy; causal expanding quintiles;21/63 weekdays for month/quarter; known past scheduled anchor only; excludes week0 entirely. These are declared APP conventions. 2026 author update finds aggregate cycle reversed2017-2021; cannot presume Fed-put state survives.",
+    "sealed_scope": "No original premeeting single-day branch, NIXT, ORB, residual18, DLSA/Attention/Chinco/NEWS/Step5 rerun.",
+    "available_aggregate_and_diagnostic": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-breadth/french-source-availability.json",
+      "sha256": "97623ccae341689e1379041a249f679ef8e9ea4f5bac89adb340e6d019077e63",
+      "bytes": 2650
+    },
+    "input_coverage_delta": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-breadth/input-coverage-and-scope-delta.json",
+      "sha256": "7831352feeed7fb300ee83cdedcfc20bd7249519c65386e8aad6ca7869baf996",
+      "bytes": 4391
+    }
+  },
+  "information_clock": {
+    "calendar": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-breadth/calendar-packet.json",
+      "sha256": "9b03bdf39c4555ec51a2c63af63246a8227dc181a15529ac0d21c6915bd3f73d",
+      "bytes": 130901
+    },
+    "event_asof": "Sourcecalendar establishesactualmeeting/publicationDATES, notobservedintradaypublicationtimes. published_at/visible_at remainnull, actualsourceHTTP fetched_at retained. Conservative replayactivation atnativeexchangeclose offirstsession strictlyafter actualscheduledmeetingdate. Atclose t use latestanchor whose replay_activation_at<=that actualsessionclose; phase remains measuredfromactualmeetingdate, notactivationdate. No futuremeetingdate, canceledorunscheduledanchor, same-dayassumedtimestamp orPITcertificate.",
+    "prices": "ActualboundAlpaca SIPraw/alldailyhistory2016-01-04..2026-10-12 complete;2015 requestedbutnotreturned, no invented warmup. Use2016..2019 completedreturns forcausalstatewarmup only. Fundedapplication commoninitialclose2020-01-02 afterbothprice/actualpayable coverage, noSPY/BILfeature substitution.",
+    "states": "Build weekday grid with explicit zero market/cash-proxy returns on exchange holidays; compound excess return=sum log(1+SPY dailyTR)-log(1+BILdailyTR) over5/21/63 prior completed weekdays including signal day. Each horizon threshold20th percentile linear interpolation of all valid historical feature observations strictly before signal day, min252. X<=threshold. D1=Q5;D2=Q5&Q21;D3=Q5&Q21&Q63. No fit, optimization, future thresholds or sample-end conditioning.",
+    "target": "At close t intent for nextsession open: long if causal state and lateeven elapsed9..13,19..23,29..33; elsecash. Holding may cross overnight because policy changes only next open. Scheduled announcement day uses previous anchor until that close, not an unseen same-day anchor."
+  },
+  "candidate_inventory": {
+    "conceptual_ids": [
+      "FEDPUT_SPY_D1",
+      "FEDPUT_SPY_D2",
+      "FEDPUT_SPY_D3",
+      "FEDPUT_SSO_D1",
+      "FEDPUT_SSO_D2",
+      "FEDPUT_SSO_D3"
+    ],
+    "count": 6,
+    "single_mechanism_no_breadth_campaign": true,
+    "meaning": "Original nested drawdown conditions and1x/actual2x fund are depth/risk levels of one fixed mechanism; no discovery/branch allocation across the3 compared papers, no selector or tuning.",
+    "controls": "6 same-symbol generic drawdown states with no calendar;2 calendar-only;6 same-state +5weekday phase-shift placebos (use past anchor shifted+5, available only aftershiftdate). Buyhold SPY/SSO/BIL, zero-yield cash, equalweightSPY+SSO, market/theme proxySPY, ex-postbest fixedsymbol diagnostic; controls not promotable."
+  },
+  "funded_execution": {
+    "initial_capital": [
+      20000,
+      4000
+    ],
+    "primary_model": "Next-session SIP daily raw opening eligible trade reference, not NBBO or actual auction fill. Side cost20bp notional inclusive fixed research spread/slippage/fees;40bp independently funded stress. Zero cost is diagnostic only. Source regression and gross paths separated.",
+    "frozen_orders": "On every completed close after settlement credit, freeze intent. If flat andtarget1, integer q=floor(settled_cash/[previous_raw_close*1.05*(1+sidecost)]). Nextopen execute exactlyq only if q>0, open<=1.05previousclose and actual all-in debit<=settledcash; elsewhole-intent skip. No arrival upsize/downsize. When held andtarget1 drift existing shares with no daily rebalance. Target0 freezes full existing share sale; nextopen sale proceeds unsettled, no borrowing. Missing open retains position/skipentry and logs; nextclose forms a new intent.",
+    "settlement": "Threeclocks: weekdayphase countsallMonday-Friday inclmarket holidays; trading/close fromboundnativeUS-equitycalendar; eligibleproxycashdays=tradingdates minusboundpandasUSFederalHolidayCalendar. Salesavailable on4th eligible date strictlyaftertrade for2015-2017,3rd for2018-01-01..2024-05-27,2nd from2024-05-28. Extra1daybuffer,2017T3retainedthroughyearend; SECtransitionbound butactualsettlementcalendar/brokercreditUNVERIFIED. Cashbudgetisconditionalfundedresearchproxy, neververifiedactualcash. Dividendex-date entitledpriorholdings createNAVreceivable; actualpayable_date required, cash firsteligibleproxyday strictlyafterit. No borrowing/futuresalecredit/inferredpaydate.",
+    "corporate_actions": "Explicit actual split ratio applies before effective-date open, prior frozenquantity/limit transformed same ratio; no current share count applied historically. Unreconciled split/dividend/unsupported fund lifecycle yields N/A, not a filtered winner. Every mandatory action is accounting data, never entry eligibility based on futureactions. Fixed live-inceptionSPY/SSO/BIL identity; no current-stock survivor universe.",
+    "nav": "Actual daily raw close*integer shares +proxy-availablecash+unsettledsalecredit+dividend receivables. Complete continuous session calendar, no terminal liquidation fee in terminal-free NAV; optional marked liquidation separated. Missing held close meansNAV N/A, no forward fill/delete. Raw/all adjusted views and explicit ledger separately reconcile.",
+    "risk_capacity": "No account margin/short/borrow; SSO embeds actual daily2x fund costs/path/financing in rawNAV. Not synthetic2xSPY returns. Wholequantity, cash, rejects and average dollars/exposure recorded. One20k account per independent stream, not pooled funded6strategies.",
+    "quote_audit": "Fixed stress dates2020-03-16,2022-06-13,2025-04-07,2026-09-30; documented historical SIP SPY/SSO/BIL quotes09:30:00..09:30:05 first valid bid<=ask with positive sizes, quote timestampwithin5sec. Compare halfspread andavailable size to20k intended scale; no quote=>auditN/A, not syntheticquote/exactfillclaim. Quotes do not selectparameters ordays.",
+    "cash_calendar": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-breadth/cash-calendar.json",
+      "sha256": "1935e7c9dae06398a06701196200301409ad1d54b00ec81b0d7828f11aea3d62",
+      "bytes": 67162
+    },
+    "cash_clock_diagnostic": "One immediate-salecredit sensitivity withsamefixedpolicy/risk/cost definitions, explicitlyunqualified/unfundedcashclockdiagnostic; notactualcash-account result, selectablecandidate ordeployableevidence. Itisolateseconomicpenalty fromcashavailability proxy ratherthan silentlyloosening itafterweakreturns.",
+    "verified_actual_settled_cash_claim": false,
+    "source_action_admission": "Provider actualcash/splitfields within2020..2026 plusalreadyretainedofficialSSGA workbook ex/record/pay/amount reconciliation. MissingSSOpayables pre2020 retainedoriginalscopeN/A andnot guessed. Studyonlyafterfieldcoverage independentlyapproved; causalfeatures still2016-onwardhistory andknownpastcalendaractivation."
+  },
+  "depth": [
+    {
+      "id": "INFORMATION",
+      "test": "Separate source-descriptive lag-state regression from causal expandingQ; test Fedcalendar\u00d7loss interaction against genericloss andphase placebo. Original historical input incomplete preserved."
+    },
+    {
+      "id": "CAPITAL_FRICTION",
+      "test": "Three published nested loss states,SPY vs actualSSO, gross/20/40bp funded paths; frozen orders, settlement anddividend ledgers expose whether large conditional mean produces substantial account dollars."
+    },
+    {
+      "id": "RECENT_PORTFOLIO",
+      "test": "Commonfunded2020-2021/2022-2026 andeveryyear/recentfixedviews; full2017-2021French source-form descriptivecounterevidence andoriginal2016cashscopeN/A retained. Same20% cashbook hostreplacement andmatchedsame-riskcontrols, no profitablewindowselector."
+    }
+  ],
+  "inference": {
+    "primary": "Fullcontinuous funded daily dollar gain/CAGR,SharpeexBIL,DD,recovery/underwater,5/21/63sessionloss; paired calendar-conditioned versus genericdrawdown accounts; no pooled-event mean substitute.",
+    "uncertainty": "HAC lag5 and20session calendar block bootstrap2000draws seed20261013.6primary streams jointmaxT vsmatchedgeneric; DSR effective trials at least6+14economiccontrols andallfailed/mathvariants; PBO/SPA promotion N/A because no selectableOOS cohort. Show effectiveevents,entries,distinctcycles andMDE forpairedmean. Small conditional samples -> uncertain, not mechanism refuted.",
+    "riskmatch": "Same symbol/cost/policyloss state compare; additional causal trailing252vol risk-match ofSPY BH cappedweight1 withzero cash, previousclose weights, non-executable fractional diagnostic only. Avoid claimSSO outrightbeatsSPY becauseleverage; report actualexposure/beta andhostincrement.",
+    "partitions": "Allhistory isseen/development. Fundedprimary6streams andallcashcontrols commoninitialclose2020-01-02 through2026-10-12. Chronological2020-2021 partialoverlap ofdocumented2017-2021reversal,2022-2026current,eachyear,last252/126/63/2026YTD. Full2017-2021 source-currentvintage descriptiveFrench comparison separately retained; noSSOfunded2017-2019claim. Original2016-04-01fundedrange staysN/A due2015warmup/SSOoldpaydates. Newstart fixedbyfieldsbeforeanyreturncalculation, notperformance orparameterselection. NoOOS orwholemechanismrefutation."
+  },
+  "host": {
+    "clock": {
+      "path": "reports/research/program/day-goal-20261013/primary-return-next/host-close-clock-binding.json",
+      "sha256": "f0180b76a7419190786affe175c8ebaca7abe7fd6636ff7c96a18fde2ee6959d",
+      "bytes": 1975
+    },
+    "rule": "Unchanged F1__net10 and equalweight five stored net10 host daily closing returns. Each paired comparison firstcommonclose initializes16khost and separate4k actual cash sleeve; applyonlysubsequenthostreturns andsleeveorders, no daily80/20rebalance. Delete only that comparison initialization row frompairedinference; not global strategyentry. Compare replacing same4k withmatchedgenericdrawdown,SPY,BIL,zero cash. Storednet10 not relabelednet20, host is research proxy, not broker fundedintegratedaccount. No multiplying20kpath by0.2."
+  },
+  "resources": {
+    "source_new_cap_units": 40,
+    "source_used": 40,
+    "source_direct_bytes": 7448389,
+    "source_byte_cap": 67108864,
+    "web_bytes": "unknown",
+    "old40_sealed": true,
+    "market_requests_cap": 24,
+    "market_bytes_cap": 16777216,
+    "economic_coreseconds_cap": 7200,
+    "source_CPU": "Preserve original cumulative preparation/unknownnonzero reservations; no reset. Economic0 sofar.",
+    "route": "Local1CPU<=900MiB withfreshmemoryadmit+run_capped,500MiBreserve. NoHadan,paid/newcloud, fits ororders.",
+    "request_scope": "Documented standard rawfactory: raw/all3symbol2015-2026dailybars completepagination; /v1/corporate-actions samefixed3symbols, allactiontypes/process-dateextended2014-2026 andactualex/paydates;4fixed5secquoteaudits. CountallHTTPfailures/retries/bytes. Stop beforecap, no truncationtreatedcomplete.",
+    "gate": "Independentcompleteplan first; numerical input preparation after scopedauthorization; economic only afteractualinput+independentimplementation+nativeiteration/resource gates.",
+    "source_addendum": "Final1publicunit SEC2024-62 consumed; new40/40 exhausted. Directmeteredbodies7448389 bytesunchanged; web/HTTP-error unreadtransferunknown. ExistingFrench reused,no re-download ornewmarketrequest."
+  },
+  "model_roles": {
+    "ML": false,
+    "LLM_signal": false,
+    "news_signal": false,
+    "event_signal": "Known publicly past scheduled FOMC eventdate only; no text orannouncedfuturecalendar features."
+  },
+  "decision_rule": "Positive conditional means insufficient: main role needs substantial dollars/CAGR and net same-risk increment with tolerableloss/stress/uncertainty. HighSharpe lowCAGR needs provenhostrole. Ifcost/funding/cycle instability removevalue, defer currentapplication; no entireFedputmechanismrefutation withoutoriginalinputs/power. Ifinputblocksfirst reasonable independent mechanism, reassess alternatives withinbrief ratherthan stopatlist. No numericprofit thresholdretrofit; permanentpromotiongate strictly>1 primarycostcontinuousOOS SRexBIL remains untouched butnoteligiblehere.",
+  "promotion_eligible": false,
+  "paper_trading_allowed": false,
+  "broker_activity_allowed": false,
+  "implementation_ready": false,
+  "input_ready": false,
+  "native_ready": false,
+  "economic_ready": false,
+  "revision": "R4 actualinputcoverage delta before anyeconomiccalculation; originalrange unready preserved.",
+  "input_coverage_delta": {
+    "path": "reports/research/program/day-goal-20261013/primary-return-breadth/input-coverage-and-scope-delta.json",
+    "sha256": "7831352feeed7fb300ee83cdedcfc20bd7249519c65386e8aad6ca7869baf996",
+    "bytes": 4391
+  }
+}

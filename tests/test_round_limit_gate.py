@@ -322,3 +322,55 @@ def test_extra_reset_doubles_that_weeks_cap_only() -> None:
     assert not gate.pace_check(600, next_week, start + timedelta(days=7), cfg, paused=False)[
         "allowed"
     ]
+
+
+def _memory_files(tmp_path: Path, at: datetime, **status: Any) -> dict[str, Path]:
+    status_path = tmp_path / "memory" / "governor-status.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(
+        json.dumps({"checked_at": at.strftime("%Y-%m-%dT%H:%M:%SZ"), **status}), encoding="utf-8"
+    )
+    config_path = tmp_path / "memory" / "budget.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "background_agents_max": 3,
+                "gate_pause_after_s": 300,
+                "agent_admit_headroom_mb": 400,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return {"memory_status_path": status_path, "memory_config_path": config_path}
+
+
+def test_memory_cap_pauses_rounds_and_resumes_when_clear(tmp_path: Path) -> None:
+    paseo = FakePaseo({"lead": "active", "exec": "active"})
+    full = _memory_files(tmp_path, NOW, background_agents=3, low_headroom_s=0, headroom_mb=900)
+    summary = _run(tmp_path, paseo, **full)
+    assert paseo.calls == [("pause", "lead"), ("pause", "exec")]
+    assert summary["memory"] == ["memory: 3 background agents live (cap 3)"]
+
+    later = NOW + timedelta(minutes=5)
+    clear = _memory_files(tmp_path, later, background_agents=1, low_headroom_s=0, headroom_mb=900)
+    _run(tmp_path, paseo, now=later, **clear)
+    assert paseo.calls[2:] == [("resume", "lead"), ("resume", "exec")]
+
+
+def test_memory_low_headroom_needs_the_full_window(tmp_path: Path) -> None:
+    paseo = FakePaseo({"lead": "active", "exec": "active"})
+    short = _memory_files(tmp_path, NOW, background_agents=0, low_headroom_s=120, headroom_mb=200)
+    assert _run(tmp_path, paseo, **short)["memory"] == []
+    assert paseo.calls == []
+    long = _memory_files(tmp_path, NOW, background_agents=0, low_headroom_s=300, headroom_mb=200)
+    assert _run(tmp_path, paseo, **long)["memory"][0].startswith("memory: headroom 200 MB")
+
+
+def test_memory_stale_or_missing_status_never_pauses(tmp_path: Path) -> None:
+    paseo = FakePaseo({"lead": "active", "exec": "active"})
+    stale = _memory_files(
+        tmp_path, NOW - timedelta(minutes=10), background_agents=9, low_headroom_s=9999
+    )
+    assert _run(tmp_path, paseo, **stale)["memory"] == []
+    assert _run(tmp_path, paseo)["memory"] == []  # default: no memory status consulted
+    assert paseo.calls == []

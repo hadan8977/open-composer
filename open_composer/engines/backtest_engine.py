@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,7 +31,10 @@ from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.reports.writer import write_backend_parity_report, write_backtest_report
-from open_composer.research.iteration_dossier import require_iteration_execution_gate
+from open_composer.research.iteration_dossier import (
+    NativeExecutionControl,
+    require_iteration_execution_gate,
+)
 from open_composer.storage import append_jsonl
 from open_composer.strategy_versions import register_strategy_version
 
@@ -52,6 +56,11 @@ def run_backtest(
     base = root or project_root()
     require_iteration_execution_gate(spec_path, base, enforce_unbound_design=True)
     spec = load_strategy_spec(spec_path)
+    if spec.portfolio.mode == "source_method_policy":
+        raise ValueError(
+            "source_method_policy requires its independently admitted causal intent consumer; "
+            "the generic single-symbol reference loop cannot execute this policy"
+        )
     version = register_strategy_version(spec_path, base, created_by="backtest")
     current_run_id = run_id(spec.name)
     backend_plan_path: Path | None = None
@@ -158,11 +167,13 @@ def backtest_frame(
     backend_plan_path: str | None = None,
     execution_backend: str = "python_reference",
     evaluation_start_index: int = 0,
+    native_control: NativeExecutionControl | None = None,
 ) -> BacktestArtifacts:
-    require_iteration_execution_gate(
+    iteration_validation = require_iteration_execution_gate(
         spec,
         root or project_root(),
         enforce_unbound_design=True,
+        native_control=native_control,
     )
     frame = frame.copy()
     frame.attrs.update({"strategy_name": spec.name})
@@ -381,6 +392,19 @@ def backtest_frame(
         "NautilusTrader-compatible strategies may also emit a backend plan artifact.",
         "This backtest does not model dividends or corporate actions.",
     ]
+    if iteration_validation is not None:
+        control_evidence = iteration_validation.info.get("native_execution_control")
+        if isinstance(control_evidence, dict):
+            assumptions.append(
+                "Native diagnostic control: "
+                + json.dumps(control_evidence, sort_keys=True)
+                + "; not a selectable or promotion-eligible candidate."
+            )
+    elif native_control is not None:
+        assumptions.append(
+            f"Native local sample workflow control: {native_control.purpose}; "
+            "not a selectable or promotion-eligible candidate."
+        )
     if spec.position_direction == "short_only":
         assumptions.append(
             "Short-only backtest reverses entry/exit PnL direction but does not model borrow "

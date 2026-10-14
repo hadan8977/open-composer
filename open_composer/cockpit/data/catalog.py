@@ -167,6 +167,9 @@ def write_dashboard_catalog(
     ensure_dir(json_path.parent)
     ensure_dir(md_path.parent)
     write_json(json_path, catalog)
+    from open_composer.cockpit.data.overview import write_overview_snapshot
+
+    write_overview_snapshot(json_path, base / "reports" / "dashboard" / "overview.json")
     md_path.write_text(_render_catalog_markdown(catalog), encoding="utf-8")
     return DashboardCatalogArtifacts(
         catalog_path=json_path,

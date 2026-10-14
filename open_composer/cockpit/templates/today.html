@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from "_instruments.html" import money_hero %}
-{% block title %}Today · Quant{% endblock %}
+{% from "_instruments.html" import money_hero, equity_chart %}
+{% block title %}总览 · Quant{% endblock %}
 {% block content %}
 {% set r = report %}
 {% set m = r.money %}
@@ -9,7 +9,7 @@
 <header class="page-head page-head--today">
   <div>
     <div class="eyebrow num">{{ r.generated_at.strftime("%a %d %b · %H:%M") }} UTC{% if r.collected_at %} · data {{ r.collected_at|ago }}{% endif %}</div>
-    <h1>Today</h1>
+    <h1>总览</h1>
   </div>
   <span class="aside num">{% if m.as_of %}close {{ m.as_of.strftime("%a %m-%d") }}{% endif %}</span>
 </header>
@@ -27,8 +27,8 @@
   {# 1 · What needs me #}
   <section class="tile t-needs t-needs--{{ n.level }}">
     <header class="tile-head">
-      <span class="tile-label">Needs you</span>
-      <span class="tile-meta">{% if n.items or n.decisions %}same list as the daily mail{% else %}owner actions only · ops stays in System{% endif %}</span>
+      <span class="tile-label">需要你处理</span>
+      <span class="tile-meta">{% if n.items or n.decisions %}按优先级列出{% else %}暂无需要处理的事项{% endif %}</span>
     </header>
     <div class="verdict">
       <span class="verdict-lamp"></span>
@@ -65,8 +65,8 @@
   {# 2 · Money #}
   <section class="tile t-money">
     <header class="tile-head">
-      <a class="tile-label" href="/paper">Money</a>
-      <span class="tile-meta">Alpaca paper{% if m.as_of %} · close {{ m.as_of.strftime("%a %m-%d") }}{% endif %}{% if m.sleeves %} · {{ m.sleeves|length }} sleeves{% endif %}</span>
+      <a class="tile-label" href="/paper">模拟盘</a>
+      <span class="tile-meta">Alpaca Paper{% if m.as_of %} · 收盘 {{ m.as_of.strftime("%a %m-%d") }}{% endif %}{% if m.sleeves %} · {{ m.sleeves|length }} 个袖套{% endif %}</span>
     </header>
     {% if m.total is not none %}
     <div class="hero">
@@ -106,13 +106,20 @@
       {% if m.live %}<span class="dot dot--ok dot--live"></span>Live: <b lang="zh">{{ m.live|join(", ") }}</b>
       {% else %}<span class="dot dot--unknown"></span>Live: <b>none</b>{% endif %}
     </div>
+    {% if equity and equity.latest %}
+    <div class="home-equity">
+      <div class="home-equity-head"><span class="t-cap">模拟盘权益轨迹</span><span class="num">{{ equity.observations }} observations</span></div>
+      <div class="well well--chart">{{ equity_chart(equity) }}</div>
+      <div class="foot-row num"><span>{{ equity.latest.at|ago }} · {{ equity.latest.equity|money(0) }}</span><span>{{ equity.note }}</span></div>
+    </div>
+    {% endif %}
   </section>
 
   {# 3 · How far from live #}
   <section class="tile t-track">
     <header class="tile-head">
-      <span class="tile-label">Path to live</span>
-      <span class="tile-meta">{{ r.candidates|length }} candidates · {{ r.candidates|selectattr("enough_sessions")|list|length }} with {{ r.candidates[0].needed if r.candidates else 10 }} paper sessions</span>
+      <span class="tile-label">纸面路径</span>
+      <span class="tile-meta">{{ r.candidates|length }} 条收益线 · {{ r.candidates|selectattr("enough_sessions")|list|length }} 条达到纸面会话要求</span>
     </header>
     {% if r.candidates %}
     <div class="track">
@@ -140,8 +147,8 @@
   {# 4 · What research is doing #}
   <section class="tile t-engines">
     <header class="tile-head">
-      <a class="tile-label" href="/research">Research</a>
-      <span class="tile-meta">queue · {{ r.queue.running }} running · {{ r.queue.review }} to review · {{ r.queue.ready }} ready{% if r.queue.blocked %} · {{ r.queue.blocked }} blocked{% endif %}</span>
+      <a class="tile-label" href="/research">研究推进</a>
+      <span class="tile-meta">队列 · {{ r.queue.running }} 运行 · {{ r.queue.review }} 待复核 · {{ r.queue.ready }} 就绪{% if r.queue.blocked %} · {{ r.queue.blocked }} 阻塞{% endif %}</span>
     </header>
     <div class="engines-grid">
       <div class="engines">
@@ -175,5 +182,52 @@
   </section>
 
 </div>
+{% set ov = research_overview %}
+<section class="tile tile--evidence overview-evidence">
+  <header class="tile-head">
+    <span class="tile-label">收益线与证据</span>
+    <span class="tile-meta">研究、模型、因子和纸面放在同一张表里，详情按策略展开</span>
+  </header>
+  {% if ov.loading %}
+  <div class="well empty">正在读取研究读模型，已有页面仍可正常使用</div>
+  {% else %}
+  <div class="overview-metrics num">
+    <span><b>{{ ov.strategy_count }}</b> 策略</span>
+    <span><b>{{ ov.model_count }}</b> 模型角色</span>
+    <span><b>{{ ov.factor_count }}</b> 因子</span>
+    <span><b>{{ ov.market_timing_report_count }}</b> 择时研究</span>
+    <span><b>{{ ov.alternative_data_report_count }}</b> 另类数据</span>
+    <span><b>{{ ov.paper_strategy_count }}</b> 纸面收益线</span>
+    <span><b>{{ ov.research_blocked_count }}</b> 研究阻塞</span>
+  </div>
+  <div class="overview-roles num">
+    {% for role, count in ov.model_roles|dictsort %}<span>{{ role|replace("_", " ") }} <b>{{ count }}</b></span>{% endfor %}
+  </div>
+  <div class="overview-table-wrap">
+    <table class="t overview-table">
+      <thead><tr><th>收益线</th><th>角色</th><th>回测证据</th><th>研究门</th><th>纸面结果</th><th>纸面门</th><th>因子</th><th>阻塞</th></tr></thead>
+      <tbody>
+      {% for row in ov.rows %}
+        {% set paper = namespace(sleeve=none) %}
+        {% for sleeve in m.sleeves if sleeve.name == row.name %}{% set paper.sleeve = sleeve %}{% endfor %}
+        <tr>
+          <td><span class="text">{{ row.name|replace("_", " ") }}</span><span class="row-sub">{{ row.lifecycle }}</span></td>
+          <td>{{ row.model_role|replace("_", " ") }}</td>
+          <td class="num">{% if row.latest_sharpe is not none %}SR {{ "%.2f"|format(row.latest_sharpe) }}{% else %}N/A{% endif %}<span class="row-sub">{{ row.evidence_level or "no bound evidence" }}</span></td>
+          <td><span class="chip chip--{{ 'ok' if row.research_status == 'pass' else 'warn' if row.research_status in ('warning', 'blocked') else 'unknown' }}">{{ '通过' if row.research_status == 'pass' else '阻塞' if row.research_status == 'blocked' else '警告' if row.research_status == 'warning' else '未知' }}</span></td>
+          <td class="num">{% if paper.sleeve %}{{ paper.sleeve.since|pct }}<span class="row-sub">{{ paper.sleeve.sessions }} sessions</span>{% else %}N/A{% endif %}</td>
+          <td><span class="chip chip--{{ 'ok' if row.paper_status == 'pass' else 'warn' if row.paper_status in ('warning', 'blocked') else 'unknown' }}">{{ '通过' if row.paper_status == 'pass' else '阻塞' if row.paper_status == 'blocked' else '警告' if row.paper_status == 'warning' else '未知' }}</span></td>
+          <td class="num">{{ row.factor_count }}</td>
+          <td class="row-sub">{{ row.blocker or "—" }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8">没有可展示的 approved/active 收益线</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="foot-row num"><span>catalog {{ ov.catalog_at|ago if ov.catalog_at else "unknown" }}{% if ov.stale %} · stale{% endif %}</span><span>workflow/research/ml/llm/paper-ready 分开判断</span></div>
+  {% endif %}
+</section>
 {% if r.errors %}<div class="foot-row"><span>{{ r.errors|join(" · ") }}</span></div>{% endif %}
 {% endblock %}

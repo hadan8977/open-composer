@@ -36,9 +36,12 @@ def optimize_strategy(
         require_registered_iteration=True,
     )
     spec = load_strategy_spec(spec_path)
+    planned_candidates = _candidate_specs(spec)
+    for candidate in planned_candidates:
+        require_iteration_execution_gate(candidate, base, enforce_unbound_design=True)
     frame = load_ohlcv_for_spec(spec, base)
     candidates = []
-    for candidate in _candidate_specs(spec):
+    for candidate in planned_candidates:
         artifacts = backtest_frame(
             candidate,
             frame,

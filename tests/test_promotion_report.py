@@ -17,6 +17,34 @@ from open_composer.research.hybrid_paper_plan import (
 from open_composer.research.research_brief import init_research_brief
 
 
+def test_workflow_only_sample_promotion_controls_preserve_original_exemption(
+    sample_workspace: Path,
+) -> None:
+    from open_composer.adapters.data import load_ohlcv_for_spec
+    from open_composer.research.iteration_dossier import require_iteration_execution_gate
+    from open_composer.research.promotion import _cost_sensitivity_check
+
+    spec = load_strategy_spec(sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml")
+    assert (
+        require_iteration_execution_gate(
+            spec, sample_workspace, enforce_unbound_design=True, require_registered_iteration=True
+        )
+        is None
+    )
+    frame = load_ohlcv_for_spec(spec, sample_workspace)
+    _, runs = _cost_sensitivity_check(
+        spec=spec, frame=frame, root=sample_workspace, slippage_bps=[0, 5]
+    )
+    assert len(runs) == 2
+    assert all(
+        any(
+            "Native local sample workflow control" in assumption
+            for assumption in run.run.assumptions
+        )
+        for run in runs
+    )
+
+
 def test_strategy_promotion_report_writes_promotion_artifacts(
     sample_workspace: Path,
     monkeypatch,

@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "author": "7b109880-ac40-447e-b2a6-f0ed1266ebac",
+  "reviewer": "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3",
+  "as_of_utc": "2026-10-13T20:29:19.541854+00:00",
+  "bindings": {
+    "implementation_manifest": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/implementation-manifest.json",
+      "sha256": "5ff67d4897f08c8b8bb85431fd6f72699f32de515c9da39f335d7dd52668e5ec",
+      "bytes": 22693
+    },
+    "I1_revision": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/implementation-I1-revision.json",
+      "sha256": "4bbf13f90e3ca59d6152e69f8d7b82339cf44af43e6fb98587fd4b30c4d3d53c",
+      "bytes": 2387
+    },
+    "M0_review": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/implementation-M0-archive/independent-implementation-review.json",
+      "sha256": "9bb6cc45876fe1c0073db5f66aedc46cafb63ef4bd04432fc0c8007cfcfa49bd",
+      "bytes": 10353
+    },
+    "M0_manifest": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/implementation-M0-archive/implementation-manifest.json",
+      "sha256": "0c297b1c0ed87e9a83d5cee986c9357cc7aff47a5181f7e8006064ee14514e08",
+      "bytes": 20174
+    },
+    "M0_completed_checks": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-implementation-verification-partial.json",
+      "sha256": "d4d905f92a6366a8ab9c011f6efe483c9253f75885d07b8d8f9f051cca15e4d3",
+      "bytes": 15293
+    },
+    "M0_HAR_spots": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-implementation-small-checks.json",
+      "sha256": "3a8ee865ac6d0834aa3a74ce887c62fa199ab69f4b5567b2224ba949c7cc16cf",
+      "bytes": 1971
+    },
+    "I1_residual_verification": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-I1-residual-verification.json",
+      "sha256": "0edcb703d64dfe0ba136aa228fba523f04e1f86e9a6dafb02ff089ddc55d7430",
+      "bytes": 21358
+    },
+    "review_code": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent_I1_residual_verify.py",
+      "sha256": "5e433660caf7f03adcf2770e3917f1db4b2eb3ca12d3b76c798e13a27aad40bb",
+      "bytes": 8067
+    },
+    "measured_resource": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-I1-residual-resource.txt",
+      "sha256": "b2639f1928c24c66bca751909ee46b18c02862217748f724b397d3a267af110b",
+      "bytes": 884
+    },
+    "author_resource_prior": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/preparation-resource-continuation-07.json",
+      "sha256": "beadf2d4660cc242cac4fcf10b3d9e37fb38e520f35f7d9ee4bcf18b4e127b70",
+      "bytes": 1155
+    }
+  },
+  "resource": {
+    "pool": "HF new preparation/inputQA2000 only",
+    "current_review_cap_coresec": 23,
+    "job_soft_hard_CPU_limit": [
+      16,
+      17
+    ],
+    "actual_measured_job_CPU": 16.56,
+    "job_exit": 90,
+    "reason": "Saved partial on CPU signal during last full HAR-IDX SHA; no mismatch observed.",
+    "peak_RSS_KiB": 199208,
+    "verified_affinity": [
+      0
+    ],
+    "fresh_run_capped_memory_MiB": 400,
+    "setup_conservative_CPU": 1.0,
+    "small_reads_and_seal_conservative_CPU": 5.0,
+    "this_review_total_charge": 22.56,
+    "prior_cumulative_2000_pool": 1969.29992391,
+    "new_cumulative_2000_pool": 1991.85992391,
+    "remaining_2000_pool": 8.14007609,
+    "old500_economic7006_69_and_failures_preserved": true,
+    "new_source_market_fit_economics_cloud_orders": 0
+  },
+  "verdict": "revise_implementation",
+  "scope": "M1 I1 same-semantics difference acceptance plus residual input verification. No scientific re-review, new economic plan or resource allocation.",
+  "I1": {
+    "status": "resolved_accept_diff",
+    "evidence": "Inspected full changed diagnostic/evaluation code and tests; four named rules now explicit, plain zero>=0 positive, strict threshold bands retain actual prior exposure, nonfinite fallback0. Independent pure function checks cover positive smallscore/nonzero cost, zero, boundary/missing and800 unique cells.",
+    "inventory": "20pipelines x5fees x4rules x2lags=800, fixednight+1; no extra night-off simulated books.",
+    "attribution": "Same-book priorclose to nominal09:30 opening gross overnight plus residual gross/net intraday; same-day fees/borrow assigned intraday. Missing nominal opening with holdings gives attribution N/A, leaves independently marked daily NAV. Exposure and components are saved; not independent compounded strategies.",
+    "author_tests": "Five new bound synthetic tests pass, including actual synthetic order fee and additive NAV attribution, delayed nofill. Reviewed code and JUnit; no new market account run.",
+    "core_scope_unchanged": "Exact M0/M1 manifest diff is four small priorfiles plus nine addedbindings. Models, frozen plan/contract, costs, source tensors and20candidate identities preserved."
+  },
+  "native_hash_addendum": {
+    "status": "accepted_and_now_bound_in_M1",
+    "reader": {
+      "path": "open_composer/research/market_component.py",
+      "sha256": "5453e938bf2ba0e0bf5e5f07b1c2df2f8c6988f7e5aeb88d9e088de865cca0fc",
+      "bytes": 8973
+    },
+    "reuse": "Prior independent exact inverse reconstruction and two-site guard equivalence retained; no full source/big-feature hash repeated for addendum."
+  },
+  "I2": {
+    "status": "partially_resolved_only_one_guard_remaining",
+    "feature_receipt": {
+      "path": "reports/research/program/day-goal-20261013/hf-factor-return/independent-feature-input-acceptance.json",
+      "sha256": "8a3c1272f2efd6f68558134cd7b7cab005e38cb7b21633f21fa6a8279fc6f29a",
+      "bytes": 8449
+    },
+    "required_correction": "No remaining formula/code correction identified in this diff. Complete only the full HAR-IDX SHA under a valid remaining resource admission; other69+labels checks, source spots and label spots already retained.",
+    "pending_binding": {
+      "path": "/root/codex-test/open-composer/reports/research/program/day-goal-20261013/hf-factor-return/features/HAR-IDX.npy",
+      "sha256": "54da782b85ba5f6ef82e038cbdfc7b45aa8a2cad556990783e9fc708b4abaf1f",
+      "bytes": 904062848
+    },
+    "uncompleted_work_is_review_guard_not_invalid_feature": true
+  },
+  "implementation_semantics_accepted": true,
+  "full_implementation_approval": false,
+  "input_ready": false,
+  "economic_execution_admitted": false,
+  "native_gate_approved_by_this_receipt": false,
+  "remaining_resource_decision": {
+    "fact": "Only8.14007609 coresec remain in preparation pool; this23cap review used22.56 and has no permission for another full-file hash.",
+    "measured_scale": "Prior completed904062848-byte HAR hashes took approximately12-15 CPU each. Latest residual verification completed math by6.38CPU and stopped during HAR-IDX at16.56 inclusive; no resumable hash state saved.",
+    "next_action": "Original owner retains full M1 and all completed evidence. If a same-scope remaining-resource-admitted hash path cannot fit, submit one concrete preparation/native-resource decision with actual cumulative costs; do not borrow old500/economic7006.69 or rerun source300/market361/fiveHAR. No extra fits or economic launch.",
+    "no_automatic_new_budget": true
+  },
+  "no_Root_intermediate_notification": true
+}

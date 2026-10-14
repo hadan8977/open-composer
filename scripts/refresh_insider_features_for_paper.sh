@@ -24,7 +24,7 @@
 #       [--as-of YYYY-MM-DD] [--skip-tail] [--allow-broad-while-building]
 #
 # Memory: run the whole thing under scripts/run_capped.sh (1.8G) and detached:
-#   OC_ALREADY_CAPPED=1 nohup ./scripts/run_capped.sh --mem 1.8G -- \
+#   OC_ALREADY_CAPPED=1 nohup ./scripts/run_capped.sh --class paper --mem 1.8G -- \
 #       bash scripts/refresh_insider_features_for_paper.sh --root narrow \
 #       > logs/refresh_insider_narrow_$(date -u +%Y%m%dT%H%M%SZ).log 2>&1 &
 # (OC_ALREADY_CAPPED=1 tells the script not to nest a second capped scope.)
@@ -54,7 +54,8 @@ mkdir -p logs
 
 log() { echo "[$(date -u +%FT%TZ)] $*"; }
 
-CAP=(./scripts/run_capped.sh --mem 1.8G --)
+# --class paper: paper-rehearsal data, outside the research memory budget (docs/runbook-memory.zh.md).
+CAP=(./scripts/run_capped.sh --class paper --mem 1.8G --)
 if [ "${OC_ALREADY_CAPPED:-0}" = "1" ]; then
     CAP=()
 fi

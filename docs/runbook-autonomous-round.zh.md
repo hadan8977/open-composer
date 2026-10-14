@@ -1,3 +1,9 @@
+机主2026-10-13已明确恢复按完整任务方法开展研究，并建立Sol专用汇报会话；当前范围以 reports/research/control/owner-compute-hold.json 和本日 day-goal.json 为准。旧固定研究轮仍退役，DS仍搁置，原科学/累计预算/设备开关不变。下文暂停记录为历史，不覆盖此次明确恢复。
+
+机主2026-10-13现行方法入口（优先于下文旧模型默认、固定研究轮与逐次复核要求）：先读 `docs/task-owned-research.zh.md`，角色单处配置为 `config/research-agent-roles.json`；Astra/xhigh 写详细完整 brief 与最终判断，Sol/xhigh 独立拥有完整执行任务，Sol 整理既有证据并按原路线汇报。旧固定 Astra 研究轮退役，恢复也不按旧周期重启。
+
+首先核对 `reports/research/control/owner-compute-hold.json`。当前全部研究、训练、代理、自动研究与报告生成暂停；缺失或不可读不能自动启动，仅机主明确恢复的范围可继续。本次明确授权的方法维护与 GitHub 发布不解除暂停、不启动经济工作或设备；已完成结果、原生断点、累计预算/试验、冻结标准和既有模拟盘授权保留。历史正文保留供追溯，冲突时以此入口和现行方法为准。
+
 # 自动研究轮执行手册 — 2026-09-27
 
 机主 2026-09-27 批准自动研究轮；2026-09-28 改为每 3 小时一轮。**2026-09-30 起主审轮和执行轮交替**（机主：「用 opus xhigh/max 做好规划，其他的交给 sonnet5.5 high 来做也比较好，注意控制额度」）：
@@ -5,7 +11,17 @@
 - **主审轮**：UTC 01:07、07:07、13:07、19:07。Opus 5.5，思考强度 max。Paseo 定时任务 `oc-research-lead-round`。
 - **执行轮**：UTC 04:07、10:07、16:07、22:07。Sonnet 5.5，思考强度 high。Paseo 定时任务 `oc-research-exec-round`，模型写明 `claude-sonnet-5-5`（2026-10-07 起）。机主更新 Paseo 后，模型列表里 Sonnet 5.5 和 Sonnet 5 并列；别名 `sonnet` 只有靠 `~/.claude/settings.json` 才会解析成 5.5。
 
+> **当前生效的 Codex schedule（2026-10-10）**：上面的 Claude schedule 已暂停。现行主审为 GPT-6-Astra `xhigh`，UTC 奇数小时 `:17`；执行为 GPT-6.1-Sol `max`，UTC 偶数小时 `:37`；两者派出的可见 subagent 统一为 GPT-6.1-Sol `xhigh`。本段旧 Claude 时间只作历史交接记录，不覆盖现行 Codex schedule。
+
+> **持续研究（机主 2026-10-11）**：新的交互要求不暂停自动研究；在现有单轮/任务预算内衔接准备、独立审查和获准执行，不把每个小步骤拖到下一班。独立 subagent 不固定只派两个，按实际槽位和资源准入扩展。16:39 UTC机主已纠正持续训练暂停解释：合适已有资源可恢复训练，Hadan仅在线且fresh worker=ready、usage_ok与<50GiB检查通过时使用；科学/输入门、预算和本机开关保持。归属只保护实际活动任务。规则见 `docs/research-continuity.zh.md`，短知识记忆见 `reports/research/knowledge/llm-internals-20261011/memory.json`。
+
+> **当前执行方式（2026-10-11 修复）**：调度使用 `prompts/continuous-alpha-lead.zh.md` 与 `prompts/continuous-alpha-execution.zh.md` 的当前正文，短任务索引为 `reports/research/control/next-actions.json`。当前 Codex 轮次以完整工作包衔接设计、独立审查、实施和验收；下面旧 Claude 的“下一主审/执行轮再做”、旧模型/调用工具、已撤回的授权与历史时点只作历史材料。预算与具体冻结合同继续约束执行，不能由本段扩大。
+
+> **无人值守权限（机主 2026-10-10 08:40 UTC 明确要求）**：主审 `0fef96a6`、执行 `b80044de`、日报 `e2572f80` 的实际 `target.config.modeId` 必须为 `full-access`。新建可见 Codex 子代理显式传 `settings={modeId:"full-access",thinkingOptionId:"xhigh"}`；回读 `currentModeId` 和 `runtimeInfo.modeId`，不能仅在 prompt 写“全自动”。08:37 执行轮曾因 factory 漏传 modeId 落入 Default Permissions，卡在 `paseo.update_agent` MCP 人工批准；08:42 已修正三条调度和当前 session。证据：`reports/research/program/autonomous-permissions-fix-2026-10-10.json`。常规研究不再逐项请示；已有预算、研究合同和本机暂停控制仍按原范围执行。
+
 2026-09-29 机主决定不再查真实额度接口（第 6 节；**额度方案 A** 已被取代，不再是生效规则）。每轮由 Paseo 定时任务启动一个新代理。本手册就是那个代理的完整任务说明；定时任务的提示词只写轮次类型，让它读本文件照做。改流程时改本文件。改模型、思考强度或时间要重建定时任务：`paseo schedule update` 改不了思考强度，要先用 `paseo schedule create --thinking <id>` 新建，再暂停旧的。
+
+> **自主判断与机主汇报（2026-10-11 最新）**：先读 `docs/research-autonomy-policy.zh.md`。已授权常规来源/准备/同语义修复按累计预算直接完成，不反复经济十一项；新研究定义才做适用独立审查。每约2小时的整轮汇总及北京时间09:00日报/周日周报由“研究汇报与待决事项”会话发布；重要阻塞立即登记并通知。路由和实际调度见 `config/owner-reporting.json`。旧逐步审批、必须等下一轮、机主聊天则跳过、过时写作/转发路径均不生效。
 
 ## 0. 身份、目标和边界
 
@@ -88,7 +104,17 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 
 ## 4. 本轮做什么
 
-`running` 且 notes 写着"交互会话"的任务，两种轮次都不要碰。
+`running` 且有实际活动 owner 或受监管进程的具体交互任务，两种轮次不得重复领取；选择独立工作。聊天中的交互会话不构成整个研究方向的占用。已结束或失联阶段按 `docs/research-continuity.zh.md` 核实后交接，不能只凭历史 notes 永久停放。
+
+### 4R. 研究计划独立复核（每个新方向/新优化轮的硬前置）
+
+任何新建、重开、模型训练、因子优化或执行 pivot，在回测/训练/资源分配前必须先经过独立的 `research-plan-reviewer` 复核。复核标准在 `docs/research-plan-review-standard.zh.md`，重点是：方向和 prior-art 对齐、今天完成历史研究闭环、至少三个真正的经济深度点、忠实复现、成本/执行、简单基线与安慰剂、模型角色/fallback、共同日组合边际和功效。便宜测试只能促进入深，不能单独否定方向。
+
+- 主审先写计划和机器可读 `direction-review.json`，再派一个不参与计划设计的可见 reviewer；reviewer 只审计划和既有证据，不跑回测、不写生产代码。
+- reviewer 必须返回 `approve_deep_plan`、`revise_plan` 或 `stop_or_pivot`，逐项给出 11 项检查、当天应交付的产物和未验证范围。
+- `revise_plan` 时主审必须修订后再次复核；最多两轮结构性修订。没有 `approve_deep_plan`，执行轮不得取任务、训练、回测或分配 Modal/Windows 资源。
+- “14 天”只计 shadow/paper/实时成交等外部时钟；历史复现、深度曲线、成本和组合分析默认当天完成。不能用 D+1/D+7/D+14 代替具体研究动作。
+- reviewer 发现计划主要由测试、加密、格式整理或无关防御性代码构成时，直接 `revise_plan`，要求把预算转回 Alpha、成本、模型、组合和执行证据。
 
 ### 4A. 主审轮（Opus max）
 
@@ -192,8 +218,8 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
   - 保留档只表示"值得继续看"，测得越多假阳性越多，汇报时同时给 DSR。淘汰的写清楚是哪一条没过。
 - **优化迭代**：只对保留的候选做。预注册有界网格（每个候选最多 12 个参数或方法变体，写明范围），全部变体计入试验次数；变体只有在对标窗和压力期的偏移中位数夏普都比原版高 ≥0.10 时才替换原版。
 - **核对**：每个结论都要自己对着原始 JSON 逐条核对预注册的标准，再写进汇报（子代理说"过了"不算数）。
-- **算力**：这台机器 4 GB 内存、没有 GPU，内存紧张时系统先杀 Claude。读行情数据的任务一律 `scripts/run_capped.sh --mem 1.8G -- ...`，同一时间只跑一个重任务。长任务用 `setsid nohup ... > logs/<名字>.log 2>&1 &` 脱离运行、写断点；等待用前台命令分段等：`timeout 540 bash -c 'while kill -0 <PID> 2>/dev/null; do sleep 30; done'`（Bash 工具 timeout 设 600000），没结束就再调一次，直到结束。**本轮在所有任务和子代理结束前不能结束回合**：回合一结束 Paseo 就归档本轮，后台的东西全部被杀。
-- **云端算力（Modal，机主 2026-09-28 批准，只用每月 $30 免费额度）**：本机 4 GB 内存放不下的重任务（大面板因子复现、LightGBM/模型训练、成批回测）交给 Modal。凭证在 `~/.modal.toml`（不进仓库）；网页端已设消费上限，本地再加一道：每次启动前必须跑 `python3 scripts/modal_budget.py check --job <名字> --cpu <核> --memory-gib <GiB> --timeout-min <分钟> [--gpu T4]`，退出码 2 就不启动；函数的 `timeout=` 必须等于检查时的分钟数；本月上限 $25（最坏情况计价，留 $5 余量）。先用 CPU（每核每小时 $0.047，每 GiB 每小时 $0.008），GPU 只在神经网络训练时用。只上传公开行情数据和代码，`.env`、Alpaca/DeepSeek 密钥、Google Drive 凭证一律不上传。容器里 `os.cpu_count()` 显示的是宿主机核数，polars/LightGBM 要显式设线程数（`POLARS_MAX_THREADS`、`num_threads`）等于申请的核数。汇报里写本月 Modal 花费（`python3 scripts/modal_budget.py status`）。
+- **算力**：机主 2026-10-07 规定本项目任何时候都要给机主留约 500 MB 空闲，预算按 `config/memory-budget.json`，不按整台机器（3.9 GB 里本项目最多 2.2 GB，内核强制；细则 `docs/runbook-memory.zh.md`）。本地读行情数据的任务用 `scripts/run_capped.sh --mem 900M -- ...`，最多 `--mem 2.4G`；启动前按当前余量准入。超过本机预算的大面板、模型训练和宽回测，在独立计划审查及迭代门通过后优先使用 Hadan Windows Paseo worker；每次先运行 `uv run oc remote windows-worker preflight --remote --json`，确认 `ready`、`usage_ok=true`、不超过 50 GiB，再按 `.agents/skills/windows-paseo-worker/SKILL.md` 用 manifest、SHA-256 和 scratch 清理。机主可本机 pause/hard-off，看到暂停就尊重，不绕过；Hadan 不可用或不适合时才用已批准的 Modal 免费额度或拆分任务。pytest 同时只跑一个（`tests/conftest.py` 的锁）。长任务留断点；**本轮所有任务和子代理结束前不能结束回合**。
+- **云端算力（Modal，机主 2026-09-28 批准，只用每月 $30 免费额度）**：作为 Hadan 不可用/不适合时的后备，不增加预算。启动前跑 `python3 scripts/modal_budget.py check --job <名字> --cpu <核> --memory-gib <GiB> --timeout-min <分钟> [--gpu T4]`，退出码 2 就不启动；函数 `timeout=` 必须等于检查分钟数；本月上限 $25（最坏情况计价，留 $5 余量）。先用 CPU；只上传公开行情数据和代码，不上传 `.env`、Alpaca/DeepSeek 密钥或 Drive 凭证。报告需要说明本月 Modal 花费（`python3 scripts/modal_budget.py status`）。
 - **改代码后**：`uv run ruff format <文件>`、`uv run ruff check <文件>`、相关测试。动了共享模块才跑全量 `uv run pytest`（约 40 分钟，放后台）。产品界面改动还要 `uv run oc repo check --strict`。
 - **子代理**：只用 `subagent_type: "sonnet-high"`（Sonnet 5.5，high）。
   - 定义文件已把模型固定为 `claude-sonnet-5-5`。**不要给 Agent 工具传 `model` 参数**：传了会覆盖固定的型号。
@@ -202,7 +228,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
     - 参数：`provider: "claude/claude-sonnet-5-5"`（2026-10-07 起写明型号）、`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`、`notifyOnFinish: true`。
     - 不准选列表里的 `claude-sonnet-5`：机主 10-07 更新 Paseo 后，它是上一代 Sonnet 5。更新前 10-06/07 有 6 个独立代理标的是它，抽查 T-20261007-03 的记录，实际应答的是 `claude-sonnet-5-5`。建完用 `list_agents` 核对 `model` 字段，应为 `claude-sonnet-5-5`。
     - 任务说明里要写进 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项。
-  - 一轮最多 3 个，同一时间最多 2 个。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
+  - 一轮最多 3 个，同一时间最多 2 个。后台代理（轮次加子代理）全机同时最多 6 个（机主 10-08 从 3 个翻倍），第 7 个会被内存包装器拒绝；派之前先跑 `python3 scripts/memory_budget.py admit --kind agent`，退出码 2 就先归档一个用完的子代理。子代理空闲 2 小时自动归档，还要追问的加标签 `memory.keep=true`。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
   - 任务说明第一行写任务代码，例如 `任务代码 T-20260930-12`。之后给这个子代理的 SendMessage 都以同一代码开头，否则它会把消息当成注入拒绝（2026-09-29）。
 - **额度：主代理做还是子代理做**。机主 2026-09-30：「注意控制额度，比如反复的上下文，你要分清楚 subagent 还是在主 agent 做要更节省呢」。
   - **实测**：数据是 2026-09-29/30 的七轮加上 07:07 那一轮，出自本机 transcript 的粗算，不是额度接口。
@@ -266,16 +292,11 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - **下一轮做什么**
    - **需要你决定的**（没有就写"无"）
    第一次出现的专业词用一句话解释。不要贴日志，不要列文件清单。
-7. **把同一段汇报送到机主的对话里**（定时任务结束后会自动归档本代理，机主看不到这里）：用 ToolSearch 加载 `mcp__paseo__send_agent_prompt`，`agentId` 取 `config/autonomous-report-target.json` 的 `agent_id`，`background: true`，`notifyOnFinish: false`，消息以 `【自动研究轮汇报 MM-DD HH:MM UTC】` 开头。跳过的轮不发（机主在用对话时本来就会跳过）。发送失败就在自动轮日志的摘要里写"汇报未送达"。
-   - **主审轮**只在三种情况发（机主 10-06：逐轮记录只当附件，没意义的事不写）：
-     - 模拟盘异常；
-     - 需要机主决定的事；
-     - 阶段性结论，例如某个策略升档、关线或上模拟盘。
-
-     消息按 `docs/owner-reporting.zh.md` 第 0 节写：业务名称，不写任务号和代号，不贴过程。其余进展由每天 00:05 UTC 的日报撰写步骤从逐轮记录里整理进日报。
-   - **执行轮**平时不发：它的结果还没审核，由下一主审轮汇报。只有两种情况要发，消息以 `【执行轮提醒 MM-DD HH:MM UTC】` 开头：
-     - 模拟盘值守发现异常；
-     - 有需要机主决定的事。
+7. **报告由专用会话统一发布**：普通结果留在本轮记录和短状态，由 `config/owner-reporting.json` 的每2小时调度汇总；每日北京时间09:00发日报，周日发周报。不是每个子代理结束都单独发给机主。
+   - API周期额度耗尽、模拟盘异常、新费用/授权选择等重要阻塞立即登记 `reports/owner/live-track.json` 的 `owner_decisions`，包括事实、影响、已处理内容、选项/建议、截止和不答复默认。
+   - 使用 `mcp__paseo__send_agent_prompt`，目标为报告配置的 `report_agent_id`，`background:true`、`notifyOnFinish:false`、`sessionMode:"full-access"`；前缀 `【重要阻塞汇报】`，带稳定待决ID和证据路径。报告会话核对后按机主格式给出完整正文；同一状态不反复告警，重大阶段结果进入下一次整轮报告。
+   - 调用成功只算已排队；报告正文生成及会话回应才是发布证据，用户是否已读未知。失败记真实状态并修复路由，不悄悄丢掉报告。
+   - 机主新聊天不停止研究。报告等待、单个接口耗尽或机主尚未答复，只影响相应动作；其他可执行线继续。日常修复不用让机主逐步批准。
 
 ## 8. 子代理任务说明模板
 
@@ -292,7 +313,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 禁止：<不许改的文件、不许做的操作；照抄 ~/.claude/agents/sonnet-high.md 的"Never"之外的本任务特有限制；不许删除或回退不是本任务创建的文件；不整文件读队列、current-view、日志，JSON 只取需要的字段>
 产出：<写到哪些文件>
 汇报：<不超过 12 行：做了什么、结论和数字（注明来自哪个文件）、没做完的>
-上限：<时间、内存（run_capped 的 --mem）>
+上限：<时间、内存（run_capped 的 --mem，默认 900M，最多 2.4G）>
 等待：长任务在本任务内前台分段等（timeout 540 的 PID 循环），不许结束回合去等后台通知
 ```
 

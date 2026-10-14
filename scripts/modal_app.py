@@ -17,10 +17,10 @@ own CLI-argument parsing.
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import tarfile
+import tempfile
 import time
 from pathlib import Path
 
@@ -115,6 +115,18 @@ volumes: dict[str, modal.Volume] = {}
 if DATA_DIRS:
     volumes[VOLUME_MOUNT] = modal.Volume.from_name("oc-data", create_if_missing=True)
 
+# Shard outputs travel through a volume, not through the function's return value:
+# returned tarballs were buffered by the local `modal run` client (several shards at
+# once, whatever order we consumed them in) and pushed it to 1.9 GB on 2026-10-07,
+# then past its 1 GB cap four times (docs/runbook-memory.zh.md). Each shard writes
+# its tarball to OUT_MOUNT and commits; the client streams it to a local temp file,
+# extracts it and deletes the remote copy. RUN_ID is the log file stem
+# (modal-<job>-<stamp>), identical locally and in the container.
+OUT_MOUNT = "/mnt/oc-out"
+RUN_ID = Path(OC_LOG_PATH_RAW).stem
+out_volume = modal.Volume.from_name("oc-out", create_if_missing=True)
+volumes[OUT_MOUNT] = out_volume
+
 
 @app.function(
     image=image,
@@ -125,7 +137,7 @@ if DATA_DIRS:
     volumes=volumes,
     env=_oc_env,
 )
-def run_shard(argv: list[str], out_rel: str) -> dict[str, object]:
+def run_shard(argv: list[str], out_rel: str, index: int = 0) -> dict[str, object]:
     import subprocess
 
     os.chdir("/root/repo")
@@ -155,28 +167,40 @@ def run_shard(argv: list[str], out_rel: str) -> dict[str, object]:
     proc.wait()
     wall = time.time() - t0
     out_path = Path("/root/repo") / out_rel
-    blob = b""
+    out_remote = ""
     if out_path.exists():
-        buf = io.BytesIO()
-        with tarfile.open(fileobj=buf, mode="w:gz", dereference=True) as tf:
+        out_remote = f"{RUN_ID}/shard_{index}.tar.gz"
+        target = Path(OUT_MOUNT) / out_remote
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(target, mode="w:gz", dereference=True) as tf:
             tf.add(out_path, arcname=".")
-        blob = buf.getvalue()
+        out_volume.commit()
     return {
+        "index": index,
         "returncode": proc.returncode,
         "stdout": "".join(tail)[-20000:],
         "stderr": "",
         "wall_seconds": wall,
-        "out_tar_gz": blob,
+        "out_remote": out_remote,
     }
 
 
 @app.local_entrypoint()
 def main() -> None:
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    results = list(run_shard.starmap([(sc["argv"], sc["out_rel"]) for sc in SHARD_COMMANDS]))
+    # Take each shard's result as soon as it finishes (completion order) and drop
+    # its output tarball after extracting it. Collecting them all first held every
+    # shard's output in this local process at once: 1.9 GB on 2026-10-07
+    # (t21-features, 4 shards); shard order still buffered finished shards behind a
+    # slow one, and the driver hit its 1 GB cap. The owner keeps 500 MB free
+    # (docs/runbook-memory.zh.md), so the local driver must stay small.
+    inputs = [(sc["argv"], sc["out_rel"], i) for i, sc in enumerate(SHARD_COMMANDS)]
+    results = run_shard.starmap(inputs, order_outputs=False)
+    single = len(SHARD_COMMANDS) == 1
     summary = []
     with LOG_PATH.open("w", encoding="utf-8") as logf:
-        for i, r in enumerate(results):
+        for r in results:
+            i = int(r["index"])
             logf.write(
                 f"=== shard {i} argv={SHARD_COMMANDS[i]['argv']} "
                 f"returncode={r['returncode']} wall={r['wall_seconds']:.1f}s ===\n"
@@ -184,12 +208,19 @@ def main() -> None:
             logf.write(str(r["stdout"]))
             logf.write(str(r["stderr"]))
             logf.write("\n")
-            dest = OUT_DIR if len(results) == 1 else OUT_DIR / f"shard_{i}"
+            dest = OUT_DIR if single else OUT_DIR / f"shard_{i}"
             dest.mkdir(parents=True, exist_ok=True)
-            blob = r["out_tar_gz"]
-            if blob:
-                with tarfile.open(fileobj=io.BytesIO(blob), mode="r:gz") as tf:
-                    tf.extractall(dest)  # noqa: S202 -- our own container output, not untrusted input
+            remote = str(r.get("out_remote") or "")
+            if remote:
+                with tempfile.TemporaryFile() as tmp:
+                    out_volume.read_file_into_fileobj(remote, tmp)
+                    tmp.seek(0)
+                    with tarfile.open(fileobj=tmp, mode="r:gz") as tf:
+                        tf.extractall(dest, filter="data")  # noqa: S202 -- our own container output
+                try:
+                    out_volume.remove_file(remote)
+                except Exception as exc:  # cleanup only; the result is already local
+                    logf.write(f"(could not delete remote {remote}: {exc!r})\n")
             summary.append(
                 {
                     "shard": i,
@@ -198,6 +229,12 @@ def main() -> None:
                     "out": str(dest),
                 }
             )
+            logf.flush()
+    summary.sort(key=lambda row: row["shard"])
+    try:
+        out_volume.remove_file(RUN_ID, recursive=True)
+    except Exception:  # noqa: S110 -- already empty or never created
+        pass
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "_modal_shards.json").write_text(json.dumps(summary, indent=2))
     print("OC_MODAL_SUMMARY_JSON:" + json.dumps(summary))

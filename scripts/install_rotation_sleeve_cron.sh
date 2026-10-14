@@ -22,7 +22,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENVPREP="export PATH=\"\$HOME/.local/bin:\$PATH\" && export UV_CACHE_DIR=/tmp/open-composer-uv-cache"
-CAPPED="./scripts/run_capped.sh --mem 1.8G --"
+# --class paper: these lines feed paper orders, so they run outside the research memory
+# budget and are never queued or refused (owner 2026-10-07, docs/runbook-memory.zh.md).
+CAPPED="./scripts/run_capped.sh --class paper --mem 1.8G --"
 
 SLEEVES=(
   "us_etf_sector_rotation_252_top2_weekly"

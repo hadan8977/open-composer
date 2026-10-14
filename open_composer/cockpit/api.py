@@ -67,6 +67,7 @@ from open_composer.cockpit.data.hypotheses import (
     headline_summary,
     lane_status,
 )
+from open_composer.cockpit.data.overview import get_default_research_overview_cache
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
     build_paper_report,
@@ -405,6 +406,17 @@ def register_api_routes(app: FastAPI, *, status_context: Callable[[], dict[str, 
             raw["enough_sessions"] = candidate.enough_sessions
         payload["loading"] = report.loading
         return _json(payload)
+
+    @app.get("/api/overview.json")
+    def api_overview() -> JSONResponse:
+        """Compact evidence summary for the responsive home shell."""
+        root = project_root()
+        return _json(
+            {
+                "generated_at": to_jsonable(datetime.now(UTC), root=root),
+                "overview": to_jsonable(get_default_research_overview_cache().get(), root=root),
+            }
+        )
 
     @app.get("/api/reports.json")
     def api_reports() -> JSONResponse:

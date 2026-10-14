@@ -6,7 +6,9 @@ import pandas as pd
 import pytest
 
 from open_composer.adapters.data.sample import normalize_ohlcv
-from open_composer.research.universe_optimizer import optimize_strategy_universe
+from open_composer.config import data_feed
+from open_composer.research.optimizer import _candidate_specs
+from open_composer.research.universe_optimizer import _symbol_spec, optimize_strategy_universe
 
 
 @pytest.mark.slow
@@ -25,7 +27,17 @@ def test_universe_optimizer_writes_per_symbol_specs(
 
     monkeypatch.setattr("open_composer.research.universe_optimizer.fetch_ohlcv", fake_fetch_ohlcv)
     spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
-    preregister_iteration_dossier(spec_path, candidate_count=18)
+    preregister_iteration_dossier(
+        spec_path,
+        candidate_count=18,
+        candidate_factory=lambda source: [
+            candidate
+            for symbol in ["AAA", "BBB"]
+            for candidate in _candidate_specs(
+                _symbol_spec(source, symbol, ["AAA", "BBB"], "alpaca", data_feed())
+            )
+        ],
+    )
     result = optimize_strategy_universe(
         spec_path,
         sample_workspace,

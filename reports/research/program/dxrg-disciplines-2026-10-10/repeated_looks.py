@@ -36,10 +36,19 @@ q99 = np.quantile(mdd[:half], 0.99, axis=0)
 for horizon in (63, 126, 252):
     w = slice(9, horizon)
     test = mdd[half:, w]
-    out["rules"][f"MDD>q95(t) ever, sessions 10..{horizon}"] = float((test > q95[w]).any(axis=1).mean())
-    out["rules"][f"MDD>q99(t) ever, sessions 10..{horizon}"] = float((test > q99[w]).any(axis=1).mean())
+    out["rules"][f"MDD>q95(t) ever, sessions 10..{horizon}"] = float(
+        (test > q95[w]).any(axis=1).mean()
+    )
+    out["rules"][f"MDD>q99(t) ever, sessions 10..{horizon}"] = float(
+        (test > q99[w]).any(axis=1).mean()
+    )
 
-out["single_look_nominal"] = {"z<-2": 0.0228, "PSR>=0.9 under SR=0": 0.10, "MDD>q95": 0.05, "MDD>q99": 0.01}
+out["single_look_nominal"] = {
+    "z<-2": 0.0228,
+    "PSR>=0.9 under SR=0": 0.10,
+    "MDD>q95": 0.05,
+    "MDD>q99": 0.01,
+}
 print(json.dumps(out, indent=1))
 with open("reports/research/program/dxrg-disciplines-2026-10-10/repeated_looks.json", "w") as f:
     json.dump(out, f, indent=1)
