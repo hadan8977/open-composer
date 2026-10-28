@@ -1,0 +1,28 @@
+[Unit]
+Description=Open Composer six-strategy paper validation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/codex-test/open-composer
+Environment=OPEN_COMPOSER_ROOT=/root/codex-test/open-composer
+ExecStartPre=/root/codex-test/open-composer/.venv/bin/python deploy/paper/runtime/verify_runtime.py --environment service
+ExecStartPre=/usr/bin/python3.12 deploy/paper/runtime/verify_runtime.py --environment inference
+ExecStart=/root/codex-test/open-composer/.venv/bin/python -m open_composer.intraday_runner.six_paper_service --root /root/codex-test/open-composer --config /root/codex-test/open-composer/config/paper/six-service.json --state /root/codex-test/open-composer/runtime/paper/six/runtime-state.json
+Restart=on-failure
+RestartSec=20
+TimeoutStopSec=20
+KillMode=control-group
+Slice=paper-capped.slice
+MemoryMax=600M
+MemorySwapMax=0
+Nice=5
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
