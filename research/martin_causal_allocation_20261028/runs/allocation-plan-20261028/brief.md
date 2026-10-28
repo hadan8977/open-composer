@@ -1,0 +1,4 @@
+Plan only: read research/martin_research_restart_20261028/runs/opportunity-audit-retry-20261028/lead/allocation-plan-handoff.md, including inherited owner constraints and evidence.
+Define causal simultaneous cash allocation A versus saved ranked sequential R(cap3); retain B(cap1) as economic incumbent and cash=0. Freeze batch clocks, eligibility, rank/slots, proportional funding, integer shares, residuals, T+1, risk, costs, full-account comparison and acceptance; justify the rule without outcome tuning. Reuse controls only if semantics match.
+No accounts, labels, fits, grids, off-window reads or providers. Keep65-start floor, cross-window exposure,8666 roots/1152 prefix, native gates, authority, paper and schedules.
+Done: reviewable protocol, causal/support witnesses and measured prep cost plus execution estimate; independent plan verdict accepts scope, requests a concrete repair or parks for explicit insufficiency. Acceptance precedes any later economic execution.

@@ -1,0 +1,415 @@
+{
+  "schema_version": 1,
+  "updated_at_utc": "2026-10-26T17:26:57.544117+00:00",
+  "purpose": "Single model mapping for task-owned research; declarative configuration, not proof of runtime activation.",
+  "authorization": "Read the current action-specific owner-compute-hold.json and admitted task scope; this configuration grants no compute, device, spending or order permission and does not cache pause/resume status.",
+  "pause_authority": "reports/research/control/owner-compute-hold.json",
+  "missing_or_unreadable_hold": "do_not_autostart; record concrete gap",
+  "method": "docs/task-owned-research.zh.md",
+  "startup": {
+    "settings": {
+      "modeId": "full-access"
+    },
+    "set_and_read_back_once": [
+      "provider",
+      "effectiveThinkingOptionId"
+    ],
+    "verify_if_exposed": [
+      "currentModeId",
+      "runtimeInfo.modeId"
+    ],
+    "unsupported_or_unreadable": "record actual limitation; do not claim verified activation; do not launch merely to verify"
+  },
+  "roles": {
+    "decision": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Own project technical route selection, continue/repair/pivot and next assignments at substantive route outcomes, integrating economic results, papers, factor/knowledge libraries and targeted research. Handle owner-level goal/risk/priority/authority decisions; no per-file approval or arbitrary local budget gate.",
+      "prompt": "prompts/continuous-alpha-lead.zh.md"
+    },
+    "execution": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Own the complete economic question through rapid source-backed empirical tests, ordinary scientific/implementation repairs and substantive results with an independent peer. Send one route-outcome handoff to the main session for continue/pivot/next assignment; no user-supplied technical direction or microbudget approval loop.",
+      "prompt": "prompts/continuous-alpha-execution.zh.md"
+    },
+    "scientific_review": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Independent scientific/evidence judgment directly with the complete owner; distinguish validity defects from later deployment/optional improvements. No automatic Root countersign or per-file review; escalate only owner-level consequential conflicts.",
+      "prompt": ".agents/skills/research-plan-reviewer/SKILL.md"
+    },
+    "reporting": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Report verified existing artifacts through the existing single hub and mail route; no new experiments or substituted final decisions.",
+      "prompts": [
+        "prompts/owner-daily-weekly-writer.zh.md",
+        "prompts/owner-report-dispatch.zh.md",
+        "prompts/owner-report-hub.zh.md"
+      ],
+      "runtime_route_dependencies": [
+        "config/owner-reporting.json",
+        "config/autonomous-report-target.json"
+      ]
+    },
+    "research_operations_manager": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "responsibility": "Sole owner-requested30minute quota/research-run manager. Every10percentage points of additional total weekly usage requests a new-start checkpoint and Main goal/direction review; pause research at70percent total used. Preserve protected paper operations; other agents do not query quota.",
+      "prompt": "reports/research/program/research-quota-manager-20261023/brief.md",
+      "authority": "reports/research/program/research-quota-manager-20261023/owner-authorization.json",
+      "owner_agent_id": "a7f63106-6c63-4f49-9702-fc173c17da9e"
+    },
+    "opportunity_scout": {
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "thinkingOptionId": "xhigh",
+        "modeId": "full-access"
+      },
+      "responsibility": "Open current primary papers/implementations/practitioner evidence and counterevidence, assess actual data/code/clock applicability and propose a distinguishing economic test. Source-only support does not authorize finance or count as Alpha.",
+      "prompt": "prompts/autonomous-research-scout.md"
+    },
+    "martin_execution": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Own the complete owner-prioritized Martin multiscale intraday decision-loop and real trained-model question through scoped evidence, implementation, economics and substantive handoff; preserve original frozen history and direct independent peer acceptance.",
+      "prompt": "prompts/continuous-alpha-execution.zh.md"
+    }
+  },
+  "astra_notification_triggers": [
+    "owner_requested_decision",
+    "owner_level_goal_risk_or_major_weekly_priority_change",
+    "authority_or_spending_change_not_resolvable_within_standing_scope",
+    "material_cross_task_conflict_not_resolvable_by_owners",
+    "urgent_risk_to_existing_operations_or_assets",
+    "completed_route_result_requiring_main_session_continue_pivot_or_next_task_selection"
+  ],
+  "ordinary_progress_or_repair": "Owners and independent peers continue ordinary work without main-session messages. Substantive completed-route results or structural blockers receive one main-session technical decision handoff; reporting keeps the existing cadence.",
+  "retired_schedules": "Old fixed Astra/research rounds remain retired on future resume; preserve three existing Sol reporting cadences only within explicit resume scope.",
+  "evolution": "Canonical principles: docs/task-owned-research.zh.md Principles for changing the method. Models/effort/organization are revisable defaults. Owners may remove/merge/replace self-imposed workflow, prompts, tools and internal slices as capability improves. Preserve evidence and actual authorization; judge research outcomes and turnaround, not fewer rules or more tests as ends.",
+  "temporary_task_overrides": {
+    "2df73225-951f-4539-9d8d-506a3b8a73fe": {
+      "task_id": "DAY3-NEWS-EMBEDDING",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+      "reason": "gpt-6.1-sol at capacity; same-model recovery failed once per affected task",
+      "authority_scope": "These two existing sessions only; preserve source/resource/scientific contracts. No automatic switchback or global reporting change.",
+      "previous_provider": "codex/gpt-6-sol"
+    },
+    "4355e32e-2ee2-4499-b814-7a912ac2b7c3": {
+      "task_id": "DAY3-EQUITY-PLAN-REVIEW",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+      "reason": "gpt-6.1-sol at capacity; same-model recovery failed once per affected task",
+      "authority_scope": "These two existing sessions only; preserve source/resource/scientific contracts. No automatic switchback or global reporting change.",
+      "previous_provider": "codex/gpt-6-sol"
+    },
+    "ee7b92dc-c2dd-41e6-8cf2-9ec3d9cb51b3": {
+      "task_ids": [
+        "DAY3-ATTENTION-COMPLETE",
+        "DAY3-DLSA-DEEPENING"
+      ],
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "trigger": "Selected model is at capacity",
+      "at_utc": "2026-10-13T10:00:48.609210+00:00",
+      "reason": "Actual selected6.1capacity error; same owner continuation, original native training retained",
+      "runtime_verified": true
+    },
+    "f9add224-744b-471c-b812-c43cc179fa38": {
+      "task_id": "PAPER-CONTINUITY-20261014",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+      "trigger": "Selected model is at capacity",
+      "at_utc": "2026-10-14T13:44:53.324333+00:00",
+      "same_session": true,
+      "native_work_preserved": true,
+      "runtime_verified": true,
+      "next_action": "Independent review of completed revision first; actual fallback readback on next required author turn.",
+      "runtime_readback": {
+        "at_utc": "2026-10-14T13:59:54.902412+00:00",
+        "status": "running",
+        "model": "gpt-6-astra",
+        "thinkingOptionId": "high",
+        "modeId": "full-access",
+        "actual_turn": "codex-turn-42"
+      }
+    },
+    "64f24793-7101-457e-aefb-b6255febfc66": {
+      "task_id": "MARTIN-EXIT-TAIL-SCALEOUT-20261023",
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "xhigh",
+        "modeId": "full-access"
+      },
+      "authority": "reports/research/program/martin-quantization-plan-20261021/resume-20261023/exit-tail-and-scaleout/owner-authorization.json",
+      "scope": "One explicitly owner-requested Martin continuation only;other Astra and global roles unchanged.",
+      "runtime_verified": true,
+      "runtime_readback": "reports/research/program/martin-quantization-plan-20261021/resume-20261023/exit-tail-and-scaleout/runtime-readback.json"
+    },
+    "a7f63106-6c63-4f49-9702-fc173c17da9e": {
+      "task_id": "RESEARCH-RUN-AND-QUOTA-MANAGER-20261023",
+      "provider": "codex/gpt-6.1-sol",
+      "settings": {
+        "thinkingOptionId": "high",
+        "modeId": "full-access"
+      },
+      "scope": "Owner-requested sole quota/run manager only.",
+      "authority": "reports/research/program/research-quota-manager-20261023/owner-authorization.json",
+      "runtime_verified": true,
+      "runtime_readback": "reports/research/program/research-quota-manager-20261023/runtime-readback.json"
+    },
+    "MARTIN-SOURCE-DECISION-LOOP-REASSESSMENT-20261026": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "thinkingOptionId": "xhigh",
+        "modeId": "full-access"
+      },
+      "scope": "Only owner-requested original-source/design review; no old Astra owner restart or economic work.",
+      "authority_key": "martin_source_decision_loop_reassessment_20261026",
+      "explicit_owner_request": true,
+      "status": "complete_no_further_Astra_work",
+      "Main_reception": "reports/research/program/martin-source-decision-loop-reassessment-20261026/Main-reception-and-next-allocation.json"
+    },
+    "MARTIN-DECISION-LOOP-MODEL-CONTINUATION-20261026": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "scope": "Existing restored Martin task economic ownership; not a new scientific scope.",
+      "authority": "reports/research/program/owner-astra-role-change-20261026/owner-authorization-and-role-reception.json",
+      "owner_native_task": "/root/martin_source_reassessment_astra_20261026",
+      "independent_peer_native_task": "/root/fresh_martin_review_20261025"
+    }
+  },
+  "Astra_review_for_temporary_fallback": {
+    "applies_to": [
+      "2df73225-951f-4539-9d8d-506a3b8a73fe",
+      "4355e32e-2ee2-4499-b814-7a912ac2b7c3",
+      "dd82be2c-580c-4ff7-9db4-27158a68b632",
+      "b497883a-0236-422c-929b-f9b5998fff83"
+    ],
+    "decision_owner": "codex/gpt-6-astra/xhigh",
+    "focus": [
+      "Read actual primary evidence behind consequential claims; separate fact, inference and unknown.",
+      "Check causal clocks, source fidelity, baseline information parity and material economic assumptions before accepting conclusions.",
+      "Check actual runtime/results and appropriate bounded numerical evidence; artifact presence/hash alone does not establish scientific correctness.",
+      "Retain original success thresholds and scope; false or weak evidence leads to targeted revision, not automatic approval."
+    ],
+    "ordinary_fixes": "Remain with complete-task owner; no extra checklist layers, unconditional retest or Astra execution takeover.",
+    "latest_process_scope": "Original named historical fallback decisions retained. New ordinary reviews follow2026-10-15 owner-level escalation principle; model fallback alone does not require another Astra acceptance."
+  },
+  "fallback_policy": {
+    "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+    "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+    "primary": "codex/gpt-6.1-sol",
+    "primary_thinking": "xhigh",
+    "fallback": "codex/gpt-6-astra",
+    "fallback_thinking": "high",
+    "scope": "Execution and independent review when preferred6.1Sol is unavailable; existing reporter remains preferredSol unless actually unavailable. Decision Root remainsAstra/xhigh.",
+    "trigger": "Confirmed selected-model capacity/unavailability, not a workaround for financial caps or denied permissions.",
+    "method": "Use existing agent settings; preserve logical owner/session/native work. No new routing daemon, retry loops or quota reset.",
+    "previous_gpt6sol_fallback_superseded": true,
+    "switchback": "No polling to test6.1recovery and no interruption of a good running native job."
+  },
+  "notification_delivery": "Direct team handoffs use notifyOnFinish=false. Main session receives one substantive route outcome for technical selection/reassignment, plus owner-level choices or urgent risks. No per-file, polling or duplicate messages; existing reporting remains.",
+  "review_handoff": "Independent receiver returns directly to complete owner. Scientific acceptance and current exact implementation/input/resource evidence are still real; Root-only technical countersignatures are replaced prospectively by the applicable Root delegation, retaining old receipts. Final ordinary judgments belong to the team.",
+  "resolved_task_overrides": {
+    "dd82be2c-580c-4ff7-9db4-27158a68b632": {
+      "previous_override": {
+        "task_id": "DAY3-OPENCODE-STEP5-RECOVERY",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "high",
+          "modeId": "full-access"
+        },
+        "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+        "scope": "Current complete-task continuation during6.1capacity shortage",
+        "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+        "previous_provider": "codex/gpt-6-sol"
+      },
+      "resolved_at_utc": "2026-10-13T08:08:33.852872+00:00",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "mode": "full-access",
+      "evidence": "One actual get_agent_status readback: runtimeInfo.model=gpt-6.1-sol, effectiveThinkingOptionId=xhigh, currentModeId=runtimeInfo.modeId=full-access; real continuation running since 2026-10-13T07:57:17.271Z."
+    },
+    "b497883a-0236-422c-929b-f9b5998fff83": {
+      "previous_override": {
+        "task_id": "DAY3-EQUITY-ROLE",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "high",
+          "modeId": "full-access"
+        },
+        "owner_quote": "我改主意了，如果6.1sol不可用，就由astra high来做吧",
+        "scope": "Current complete-task continuation during6.1capacity shortage",
+        "authorized_at_utc": "2026-10-13T07:31:19.210357+00:00",
+        "previous_provider": "codex/gpt-6-sol"
+      },
+      "resolved_at_utc": "2026-10-13T08:10:57.131002+00:00",
+      "requested_model": "gpt-6.1-sol",
+      "requested_thinking": "xhigh",
+      "mode": "full-access",
+      "evidence": "update_agent success and real full-task continuation dispatched; owner performs one runtime readback. No separate probe or polling."
+    },
+    "7b109880-ac40-447e-b2a6-f0ed1266ebac": {
+      "previous_override": {
+        "task_id": "HF-FACTOR-RETURN-CONTINUATION",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "high",
+          "modeId": "full-access"
+        },
+        "owner_authority": "existing fallback_policy; selected Sol route repeatedly unavailable",
+        "trigger": "Two actual stream disconnected errors; one same-route recovery failed",
+        "request_ids": [
+          "3a7a7df3-aabe-4104-bd62-4fa64b3feb92",
+          "8c8ed442-2661-4a39-ba6e-86a362d9cef8"
+        ],
+        "at_utc": "2026-10-14T02:00:48.840516+00:00",
+        "runtime_readback": "owner to verify once on resumed turn",
+        "native_job_restart": false,
+        "global_primary_unchanged": true
+      },
+      "resolved_at_utc": "2026-10-14T07:14:49.568444+00:00",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "mode": "full-access",
+      "evidence": "Astra capacity failure; returned same session to preferred model, which also returned capacity. No further automatic retry.",
+      "actual_status": "both_authorized_routes_capacity_error"
+    }
+  },
+  "task_replenishment": {
+    "responsible_role": "Main session at substantive route outcome; complete task owners/peers handle ordinary repairs and scientific acceptance.",
+    "trigger": "One substantive result/failure/structural-blocker handoff: main session compares evidence and alternatives, then continues/repairs/pivots and assigns next useful authorized work without waiting for user direction.",
+    "desired_active_complete_task_owners": "Owner2026-10-26 requests at least3 independent useful complete research owners and assessment of5 directions; actual current holds/capacity remain binding. Replenish at substantive outcomes; reviewers do not count as research lines.",
+    "conditional_on": "valuable independent work, actual concurrency, fresh memory admission and cumulative resource/science/input scope",
+    "blocked_owner_counts_as_active": false,
+    "source_led_candidate_questions_to_keep": "useful source-backed alternatives as needed, no mandatory count",
+    "no_ready_economic_task": "Dispatch a bounded full research owner to resolve source/input choice and proceed via independent review to empirical decision; do not merely record waiting.",
+    "continuity": "Owner questions steer active work; only explicit pause/cancel stops it. Preserve original task ownership/cumulative records.",
+    "implementation": "Existing day-goal/next-actions and native events only; no polling, new scheduler, fixed Astra standby or busywork.",
+    "owner_requested_minimum_complete_owners": 3,
+    "owner_requested_direction_assessment_width": 5,
+    "latest_owner_directive": "reports/research/program/parallel-five-line-assessment-20261026/Main-five-line-assessment.json",
+    "Martin_parent_priority": "Retain an explicit complete Martin multiscale intraday and genuine trained decision-loop lane per owner2026-10-26. A local proxy result or missing-source boundary closes its dependent contract, not the parent; use a faithful next Martin question before substituting unrelated daily ETF/factor convenience. Preserve frozen results and Main scientific discretion within the parent.",
+    "latest_owner_priority": "reports/research/program/owner-Martin-priority-correction-20261026/Main-deviation-and-restored-mission.json"
+  },
+  "prompt_assembly": {
+    "command": "python3 scripts/research_task_prompt.py --role <role> --brief <existing-brief>",
+    "create_payload": "create_agent",
+    "continuation_field": "continuation_prompt",
+    "purpose": "Render canonical current role text/settings and task context; no scheduler, dispatch, permission or runtime verification."
+  },
+  "resource_and_feedback_policy": {
+    "source": "docs/task-owned-research.zh.md#fast-empirical-feedback-and-resource-judgment",
+    "priority": "Near-term absolute net return first; obtain credible replication/backtest data quickly, then optimize, deepen or reallocate from measured evidence across all research objects.",
+    "administrative_limits": "Retired prospectively: local cumulativeCPUsecond pools, tiny stage/subagent time allocations, arbitrary public-reading/document/file/GET counts, and repeated extension/signature handoffs. They no longer block useful authorized work.",
+    "actual_authority": [
+      "Existing owner-approved paid spending/provider caps and actual rate/access restrictions",
+      "Memory reserve, kernel/job concurrency and workload-proportionate technical runaway guards",
+      "Hadan ready/usage/path/device controls",
+      "Data rights, confidential credentials, broker/order/production authority",
+      "Frozen scientific windows, selection rules and trial exposure; conditional results remain conditional"
+    ],
+    "accounting": "Retain historical requests, reservations, measured usage, failures and labelled conservative estimates. Use substantial job/provider accounting; do not invent per-read charges or equate a reservation with measured consumption. Unmeasured work stays unknown."
+  },
+  "route_iteration_policy": {
+    "at_utc": "2026-10-16T06:48:23.477351+00:00",
+    "permanent": true,
+    "owner_instruction": "Do not linger on failed optimization attempts. Main session owns the technical route decision and next assignment after each substantive subagent route outcome, using knowledge, research, project papers, factor and knowledge libraries. Target at least an order-of-magnitude improvement in useful iteration efficiency, with concise prompts/workflow and no innovation/model/evolution restrictions or frequent chatter.",
+    "owner_of_next_technical_direction": "main_session",
+    "handoff": "One concise substantive result/cause/next-question event; ordinary technical repairs remain with task owner and peer.",
+    "selection_basis": [
+      "Near-term absolute net return and speed of useful empirical feedback",
+      "Actual results and counterevidence",
+      "Accumulated papers, factor library, knowledge library and existing code/data",
+      "Targeted external primary-source research when useful"
+    ],
+    "continuation_rule": "Compare decision value of another attempt with a credible alternative; repair a specific answerable cause or pivot promptly. Strong unresolved economic evidence can justify depth. No fixed retry count, time quota, mandatory shortlist or model/tool restriction.",
+    "efficiency_target": "At least10x improvement in useful learning/iteration speed versus prior process; assess with existing timestamps/results, no new monitoring platform and no achieved-gain claim without evidence.",
+    "user_escalation": "Goals/risk/major priorities/real authority or spending only; user need not supply routine technical directions."
+  },
+  "owner_model_policy_20261021": {
+    "at_utc": "2026-10-21T02:10:43.301479+00:00",
+    "only_provider_model": "codex/gpt-6.1-sol",
+    "thinkingOptionId": "xhigh",
+    "astra_research_paused": true,
+    "historical_task_overrides_are_not_current_permission": true,
+    "no_automatic_Astra_fallback": true,
+    "resume_condition": "Explicit owner instruction",
+    "task_scoped_owner_exceptions": {
+      "MARTIN-EXIT-TAIL-SCALEOUT-20261023": {
+        "authorized_at_utc": "2026-10-23T03:20:56.250101+00:00",
+        "provider": "codex/gpt-6-astra",
+        "settings": {
+          "thinkingOptionId": "xhigh",
+          "modeId": "full-access"
+        },
+        "authority": "reports/research/program/martin-quantization-plan-20261021/resume-20261023/exit-tail-and-scaleout/owner-authorization.json",
+        "single_owner": true,
+        "global_roles_and_other_pauses_unchanged": true
+      }
+    },
+    "superseded_for_named_roles_by": "reports/research/program/owner-astra-role-change-20261026/owner-authorization-and-role-reception.json",
+    "historical_pause_still_applies_outside_explicit_current_exceptions": true
+  },
+  "prospective_feedback_method": "docs/task-owned-research.zh.md#useful-evidence-before-infrastructure",
+  "prospective_usage_checkpoint_policy": "reports/research/program/owner-resume70-progress5-20261025/owner-authorization-and-persistent-policy.json",
+  "owner_model_policy_20261026": {
+    "at_utc": "2026-10-26T17:26:57.544117+00:00",
+    "owner_quote": "成果汇报和主会话决策和martin都改成用astra吧",
+    "current_role_overrides": {
+      "decision": "codex/gpt-6-astra",
+      "reporting": "codex/gpt-6-astra",
+      "martin_execution": "codex/gpt-6-astra"
+    },
+    "settings": {
+      "modeId": "full-access",
+      "thinkingOptionId": "xhigh"
+    },
+    "other_execution_and_independent_review_default": "codex/gpt-6.1-sol/xhigh",
+    "quota_manager": "codex/gpt-6.1-sol/high",
+    "authority": "reports/research/program/owner-astra-role-change-20261026/owner-authorization-and-role-reception.json",
+    "no_model_fallback_or_general_Astra_resume": true
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": [
+        "complete",
+        "blocked"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "accept",
+        "revise",
+        "continue",
+        "repair",
+        "branch",
+        "park",
+        "none"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "results": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Results"
+    },
+    "next_brief": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Brief"
+    },
+    "checkpoint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Checkpoint"
+    }
+  },
+  "required": [
+    "status",
+    "summary",
+    "decision",
+    "results",
+    "next_brief",
+    "checkpoint"
+  ],
+  "title": "Reply",
+  "type": "object"
+}

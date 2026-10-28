@@ -18,8 +18,8 @@ from open_composer.intraday_runner.validation_account_partition import (
 )
 
 
-def context():
-    now = datetime(2026, 10, 19, 9, 30, tzinfo=UTC)
+def context(*, now=None):
+    now = now or datetime(2026, 10, 19, 9, 30, tzinfo=UTC)
     state = dict(
         cashbook=dict(cash=10000, sales=[], purchases=[], dividends=[], lots={}, next_id=0),
         pending={},
@@ -169,6 +169,6 @@ def test_six_scope_exact_selected_cash_commitments(tmp_path):
 
 def test_lstm_actual_order_namespace_is_admitted_only_exact():
     namespace = SLOTS["CROSS-ASSET-LSTM-PAPER-VALIDATION-20261019"][1]
-    identity(namespace + "-1019-buy-SPY", "SPY", "buy", namespace=namespace)
+    identity(namespace + "-1020-buy-SPY", "SPY", "buy", namespace=namespace)
     with pytest.raises(ValueError):
         identity("arbitrary", "SPY", "buy", namespace=namespace)

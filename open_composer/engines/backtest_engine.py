@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pandas as pd
@@ -41,6 +41,8 @@ class BacktestArtifacts:
     signals: list[Signal]
     trades: list[Trade]
     backend_plan_path: str | None = None
+    # Existing account marks, including starting equity. Exposed without recalculating fills.
+    equity_curve: list[float] = field(default_factory=list)
 
 
 def run_backtest(
@@ -84,6 +86,7 @@ def run_backtest(
             version_id=version.version_id,
             spec_hash=version.content_hash,
             backend_plan_path=str(backend_plan_path) if backend_plan_path else None,
+            equity_curve=nautilus_artifacts.equity_curve,
             execution_backend="python_reference",
         )
         nautilus_artifacts = run_nautilus_backtest(
@@ -451,7 +454,11 @@ def backtest_frame(
         trades=trades,
     )
     return BacktestArtifacts(
-        run=run, signals=signals, trades=trades, backend_plan_path=backend_plan_path
+        run=run,
+        signals=signals,
+        trades=trades,
+        backend_plan_path=backend_plan_path,
+        equity_curve=list(equity_curve),
     )
 
 

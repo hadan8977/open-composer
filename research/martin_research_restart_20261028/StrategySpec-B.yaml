@@ -1,0 +1,193 @@
+name: martin_development_attempt_cap_b_20261028
+description: Seen 2024-Q1 watched-event native account with 1 submitted attempts per
+  name per day; always A, common protection and partial runner
+timeframe: 1m
+universe:
+- TSLA
+- NVDA
+- AAPL
+- MSFT
+- AMZN
+- AMD
+- META
+- GOOGL
+- GOOG
+- AVGO
+- XOM
+- NFLX
+- LLY
+- ADBE
+- INTC
+- UNH
+- CVX
+- V
+- JPM
+- BAC
+- UBER
+- BA
+- BABA
+- COIN
+- PLTR
+- COST
+- MA
+- DIS
+- WMT
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - signal_ready > 0
+  any: []
+exit:
+  all: []
+  any:
+  - exit_ready > 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 0.25
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: source_method_policy
+  max_symbols_per_day: null
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.25
+  same_day_flatten: false
+costs:
+  commission_pct: 0.1
+  slippage_bps: 0
+  impact_model: linear
+  impact_eta: 0
+  impact_gamma: 0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: TSLA
+  path: reports/research/program/martin-quantization-plan-20261021/resume-20261023/owner-prompt-route-reassessment/sequence-context-information/minute-months
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+factors:
+  signal_ready:
+    source: feature_packet
+    field: signal_ready
+    default: 0
+    description: Causal deterministic state-machine emission, not LLM/news
+  exit_ready:
+    source: feature_packet
+    field: exit_ready
+    default: 0
+    description: Causal deterministic state-machine emission, not LLM/news
+llm_review:
+  enabled: false
+required_capabilities:
+- market.alpaca_bars
+notes:
+  intent: Development component comparison; source-inspired repeated attempts, not
+    model validation
+  decision_system:
+    primary_cost_per_side_bps: 10
+    entry_price_cap_bps: 50
+    risk_normal: 0.005
+    position_cap: 0.25
+    gross_cap: 1.0
+    aggregate_risk_cap: 0.02
+    max_held_names: 4
+    attempts_per_day: 1
+    entry_cutoff_minute: 120
+    entry_clock:
+    - - 0
+      - 15
+      - 1
+    - - 15
+      - 120
+      - 5
+    max_stop_ADR: 0.5
+    max_stop_pct: 0.05
+    price_tick: 0.01
+    minimum_stop_bps: 30
+    participation_fraction: 0.01
+    support_radius_ADR: 0.15
+    partial_R: 3.0
+    partial_fraction: 0.15
+    maximum_holding_sessions: 20
+    daily_context_sessions: 60
+    minute_context_slots: 60
+    opening_slots: 5
+    opening_history_sessions: 20
+  active_parameter_allowlist:
+  - primary_cost_per_side_bps
+  - entry_price_cap_bps
+  - risk_normal
+  - position_cap
+  - gross_cap
+  - aggregate_risk_cap
+  - max_held_names
+  - attempts_per_day
+  - entry_cutoff_minute
+  - entry_clock
+  - max_stop_ADR
+  - max_stop_pct
+  - price_tick
+  - minimum_stop_bps
+  - participation_fraction
+  - support_radius_ADR
+  - partial_R
+  - partial_fraction
+  - maximum_holding_sessions
+  - daily_context_sessions
+  - minute_context_slots
+  - opening_slots
+  - opening_history_sessions
+  native_book_compatibility_nonoperative:
+    feedback_pause_drawdown: 0.05
+    feedback_pause_sessions: 3
+    feedback_closed_trades: 5
+  compatibility_precedence: Only the exact active allowlist enters custom entry/management
+    decisions. Compatibility keys are passed to unchanged NativeBookView observational
+    bookkeeping; no drawdown/probe/pause/monthly-risk/epoch/confluence/anchor decision
+    is enabled. Custom step REPLACES DecisionSystem.step, not its matcher/book/report
+    callbacks. Frame.leadership/rising-EMA cannot exclude O; no P_EMA epoch cap is
+    used.
+  generic_metadata_scope: risk.max_trades_per_day=3 denotes per-security submitted
+    buy intents/day for this custom consumer, not three portfolio trades; max_held_names4
+    is concurrent names. Generic engine does not execute this spec.
+  policy_consumer: custom AttemptPolicy over existing SequenceNativeStrategy/native
+    engine; exact active entry/state contract replaces old P_EMA entry step
+  protocol: research/martin_research_restart_20261028/protocol.md
+  transition_contract: reports/research/program/martin-learned-payoff-state-20261026/transition-contract-v3.md
+  feature_contract: reports/research/program/martin-learned-payoff-state-20261026/feature-contract-v3.md
+  research_design:
+    object: fixed_seen_attempt_capacity_component
+    candidate_cap: 2
+    new_model_fits: 0
+    parameter_optimization: false
+    promotion_eligible: false
+    selection_objective: R-B full account net USD with costs and drawdown
+    all_history_seen: true
+  conditional_execution: Received quotes only with existing synthetic O-L-H-C; absent
+    intervals have no invented quotes/fills/management; standing protection continues
+    until next own quote; stale marks separately tagged; actual stale-book fill makes
+    result incomplete
+  open_questions:
+  - All history seen and static/current29-name conditional identity
+  - Synthetic adjusted OHLC/depth/ACK/tick/cost conventions are not physical execution
+  - Conditional one-attempt Delta is not full portfolio Q; dynamic exit/control unfinished
+  - Conditional observed-tape economics cannot bound unobserved physical market loss
+    or certify real profit
+  missing_observation_policy:
+    flat_wait: Cancel on completed-minute gap notification, known cash0 for cancelled
+      no-position W; later fresh structure separate
+    held: Keep existing native order, no fill/partial in missing interval; actual
+      next received quote can gap beyond stop; disclose exposure
+    training: No unknown legacy outcome relabelling; only path-identical gap-free
+      known A outcomes may be referenced after peer reception
+    future_selection: No later completeness or profitability eligibility filter

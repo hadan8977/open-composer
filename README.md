@@ -38,11 +38,9 @@ Windows PowerShell:
 
 The setup path is idempotent. It installs Python dependencies, creates `.env`
 from `.env.example` when needed, and builds the read-only cockpit catalog
-under `reports/dashboard/`. There is no browser UI yet (the old Dashboard was
-removed; a read-only Cockpit rebuild is tracked in
-[docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md)).
+under `reports/dashboard/`. The read-only Cockpit runs from `open_composer/cockpit/`; its React view is built from `frontend/cockpit-v2/`.
 External API keys are optional; sample data and fixtures are enough for a
-local smoke test. Day-to-day work happens through the CLI (`uv run oc ...`)
+local smoke test. Day-to-day work happens through the CLI (`uv run --no-sync oc ...`)
 and Codex/Claude Code work sessions.
 
 ## Product Map
@@ -52,15 +50,15 @@ and Codex/Claude Code work sessions.
 | Strategy specs | YAML `StrategySpec` drafts, approvals, activation state, version diffs, and rollback. |
 | Research reports | Backtests, promotion gates, research contracts, factor diagnostics, execution reality, cost sensitivity, and data quality. |
 | Data capabilities | Sample OHLCV, Alpaca, Longbridge, SEC filings, FRED macro, Alpha Vantage news, and GDELT through a registry. |
-| Cockpit catalog | Read-only artifact aggregation (`oc cockpit index`) over strategies, runs, signals, orders, and reviews; no browser UI yet (Step 18 rebuild in progress). |
+| Cockpit catalog | Read-only artifact aggregation (`oc cockpit index`) over strategies, runs, signals, orders, and reviews; native and React browser views over the same read-only API. |
 | Paper safety | Alpaca Paper-only automation with explicit confirmation, readiness gates, kill switch, and audit artifacts. |
-| Deployment | CLI/file/agent driven; remote access will go through Cloudflare Access once the read-only Cockpit ships. |
+| Deployment | CLI/file/agent driven; remote access uses Cloudflare Access. |
 
 ## Two Ways To Use Open Composer
 
 | Audience | Primary interface |
 |---|---|
-| Day-to-day user | CLI (`uv run oc ...`); create, continue, review, promote, and monitor strategies from the terminal. |
+| Day-to-day user | CLI (`uv run --no-sync oc ...`); create, continue, review, promote, and monitor strategies from the terminal. |
 | Agent (Codex / Claude Code) | CLI plus file contracts: `oc strategy ...`, `projects/{id}/queue.jsonl`, `projects/{id}/trace.jsonl`, and `projects/{id}/context.md`. |
 
 Agent and CLI paths write the same project files, so sessions can close
@@ -82,7 +80,7 @@ When you do not know which indicator or parameter set to start with, describe
 the thesis and let the catalog workflow draft the first research pass:
 
 ```bash
-uv run oc research auto "Find a TQQQ trend strategy that exits in high-volatility regimes" \
+uv run --no-sync oc research auto "Find a TQQQ trend strategy that exits in high-volatility regimes" \
   --universe TQQQ --timeframe daily
 ```
 
@@ -111,13 +109,10 @@ OpenAI, Longbridge, Dashboard, or legacy remote secrets.
 
 ## Cockpit And Deployment
 
-The old password-session/Vercel BFF Dashboard was removed; a read-only Cockpit
-rebuild is in progress (see
-[docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md)).
-The Cockpit will expose no command entry point. Remote access will be
-authenticated at the edge by Cloudflare Access, and commands will continue to
-go through CLI/file/agent workflows via a Paseo session rather than the
-Cockpit itself.
+The Cockpit exposes read-only views of research and paper activity. Remote access
+uses Cloudflare Access. Commands use the CLI or an authorized agent session.
+Pure-Codex research runs through `scripts/research_round.py`; role bindings are
+in `research/workflow.json`, while financial evidence remains provider-neutral.
 
 ## Safety Boundaries
 
@@ -145,27 +140,17 @@ For a lighter Python-only pass:
 make check
 ```
 
-Use `uv run oc cache status` when you need to inspect local cache and runtime
+Use `uv run --no-sync oc cache status` when you need to inspect local cache and runtime
 artifact size without deleting anything.
 
 ## Project Docs
 
-- [docs/user-guide.md](docs/user-guide.md) - command-level user guide
-- [docs/setup-local.zh.md](docs/setup-local.zh.md) - local setup details and troubleshooting
-- [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - deprecated VPS Dashboard deployment notes, superseded by Step 18
-- [docs/longbridge-integration.md](docs/longbridge-integration.md) - Longbridge configuration and data scope
-- [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) - no-context Codex starting review document
-- [docs/strategy-research-product-remediation-plan-2026-05-26.zh.md](docs/strategy-research-product-remediation-plan-2026-05-26.zh.md) - strategy research workflow remediation plan for no-context agent review
-- [docs/plan-step-1-simplification-2026-05-22.zh.md](docs/plan-step-1-simplification-2026-05-22.zh.md) - Step 1 simplification and legacy cleanup plan
-- [docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md](docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md) - Step 2 long-lived worksession and LLM factor plan
-- [docs/plan-step-3-dashboard-first-2026-05-22.zh.md](docs/plan-step-3-dashboard-first-2026-05-22.zh.md) - Step 3 Dashboard-first interaction plan
-- [docs/local-product-optimization-plan-2026-05-25.zh.md](docs/local-product-optimization-plan-2026-05-25.zh.md) - local-first product optimization plan
-- [docs/plan-step-6-factor-catalog-and-ai-research-2026-05-26.zh.md](docs/plan-step-6-factor-catalog-and-ai-research-2026-05-26.zh.md) - Step 6 factor catalog and auto research plan
-- [docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md](docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md) - Step 6.5 auto research fixes
-- [docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md](docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md) - Step 6.6 pre-Step 7 research evidence hardening
-- [docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md](docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md) - Step 6.7 tradeable auto research signal generation fix
-- [docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md](docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md) - Step 6.8 skill governance and research workflow hardening
-- [docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md](docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md) - Step 7 conditional ML, decay, and LLM plan
+- [research/README.md](research/README.md) — no-context Codex entry: file contracts, finite research rounds and recovery.
+- [docs/user-guide.md](docs/user-guide.md) — CLI reference.
+- [docs/research-mission.zh.md](docs/research-mission.zh.md) — investment objectives.
+- [docs/rules.md](docs/rules.md) — current research, execution and resource rules.
+- [docs/restructure-progress.zh.md](docs/restructure-progress.zh.md) — implementation and validation status.
+- [docs/archive/](docs/archive/) — historical plans and retired agent material; not startup instructions.
 
 ## License
 

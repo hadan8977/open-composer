@@ -13,14 +13,12 @@ skills:
 
   strategy-research-orchestrator:
     description: >
-      Orchestrates the full research workflow: spec → harness plan → capabilities
-      → source research → search space → trials → benchmark family → forensics →
-      execution reality → promotion → paper readiness.
+      Coordinates strategy research, optimization and lifecycle decisions using
+      applicable native gates; adapts methods to the research object and stage.
+      Component or agent-method work does not require an unrelated strategy.
     triggers:
-      - user requests strategy creation, optimization, or evaluation
-      - user gives a natural-language trading idea
-      - user requests paper ready or paper automation
-      - user requests professional research or full review
+      - user requests strategy research, optimization, or evaluation
+      - user requests strategy promotion or paper readiness
     primary_outputs:
       - reports/harness/plans/{strategy}.json
       - reports/research/{strategy}-research-brief.json
@@ -29,14 +27,12 @@ skills:
 
   idea-to-paper:
     description: >
-      Owner 2026-10-06: turns every owner idea, doubt or new requirement into
-      professional work -- intent, how institutions / mature individuals / good
-      projects solve it, judgment first, a family of variants run to minimum
-      effective depth, paper within 14 days, iteration, plain-language report.
+      Turns an investment or research idea into a source-led economic decision,
+      including factors, data, models, timing and execution. Unrelated product,
+      documentation and agent-method maintenance do not use this workflow.
     triggers:
-      - owner states an idea, direction, doubt, complaint or new requirement
-      - a new research direction is opened
-      - owner asks why something is not being done
+      - owner states an investment or strategy-research idea or challenge
+      - a new economic research direction is opened
     primary_outputs:
       - reports/research/control/briefs/{task}.md
       - reports/research/iterations/{iteration}/direction-review.json
@@ -117,21 +113,6 @@ skills:
       - reports/harness/paper/{strategy}-paper-safety-review.json
     skill_path: .agents/skills/paper-auto-safety-reviewer/SKILL.md
 
-  evidence-curator:
-    description: >
-      Periodic curation of source cards, evidence artifacts, and skill references.
-      Merges duplicates, flags stale sources, consolidates recurring lessons.
-    triggers:
-      - weekly review cycle
-      - every 20 strategy research runs
-      - repo check warns about source staleness
-      - user requests evidence cleanup
-    primary_outputs:
-      - reports/harness/curation/{date}-evidence-curation.md
-    skill_path: .agents/skills/evidence-curator/SKILL.md
-
-  # ── Existing skills (retained, not restructured) ──────────────────────────
-
   capability-evaluator:
     description: >
       Evaluate market, event, macro, and news data capabilities before allowing
@@ -141,17 +122,6 @@ skills:
       - capability.status == trial
       - oc capability test called
     skill_path: .agents/skills/capability-evaluator/SKILL.md
-
-  strategy-researcher:
-    description: >
-      Lightweight draft-to-research quick path for a natural-language idea.
-      Escalates to strategy-research-orchestrator for optimization, paper
-      readiness, source research, execution reality, and forensics.
-    triggers:
-      - user gives a simple natural-language trading idea
-      - user asks for a quick draft or smoke research path
-      - no high-risk domains are active yet
-    skill_path: .agents/skills/strategy-researcher/SKILL.md
 
   python-backtest-writer:
     description: >
@@ -189,73 +159,32 @@ skills:
       - execution_policy references nautilus adapter
     skill_path: .agents/skills/nautilus-trader-adapter/SKILL.md
 
-  pine-exporter:
+  research-plan-reviewer:
     description: >
-      Export TradingView Pine Script from an Open Composer StrategySpec.
+      Independently reviews new economic hypotheses, material scientific
+      definition changes or work beyond approved scope. Routine authorized
+      execution and same-semantics repair use relevant diff/result acceptance.
     triggers:
-      - user requests Pine Script export
-    skill_path: .agents/skills/pine-exporter/SKILL.md
+      - a new economic hypothesis requires independent review
+      - a material scientific definition or approved research scope changes
+    skill_path: .agents/skills/research-plan-reviewer/SKILL.md
 
-  signal-parity-reviewer:
+  windows-paseo-worker:
     description: >
-      Compare Python signal logs with Pine semantics and record parity risks.
+      Routes memory-heavy research work to the owner's Windows computer through
+      Paseo, with the fixed C:\\paseo root, 50 GiB cap, preflight, manifest,
+      hash verification, pause controls, and cleanup requirements.
     triggers:
-      - Pine Script exported and Python signals diverge
-      - user requests parity check
-    skill_path: .agents/skills/signal-parity-reviewer/SKILL.md
+      - a research task needs the Windows compute worker
+      - a session asks how to connect to or pause the Windows worker
+      - a remote research task needs transfer or cleanup rules
+    primary_outputs:
+      - config/windows-paseo-worker.json
+      - reports/research/control/autonomous-log.md
+    skill_path: .agents/skills/windows-paseo-worker/SKILL.md
 
-  weekly-reviewer:
-    description: >
-      Produce weekly reviews from backtest reports, signal logs, paper orders,
-      and journal entries.
-    triggers:
-      - weekly review cycle
-      - user requests weekly summary
-    skill_path: .agents/skills/weekly-reviewer/SKILL.md
-
-  ultracode-reviewer:
-    description: >
-      Meta-review workflow for Open Composer codebase, architecture, project
-      optimization, broad bug/risk assessment, and professional implementation
-      planning before edits.
-    triggers:
-      - user asks to review, audit, evaluate, optimize, harden, or improve Open Composer
-      - user asks for broad bug, architecture, research workflow, or project assessment
-      - user asks for an implementation plan before coding
-    skill_path: .agents/skills/ultracode-reviewer/SKILL.md
-
-# ── Claude Code hook entry points ─────────────────────────────────────────────
-# Hooks run automatically in Claude Code sessions. They are lightweight scripts;
-# they do NOT invoke skills or run backtests. Skills are invoked separately by
-# the orchestrator or user commands.
-
-hooks:
-
-  UserPromptSubmit-harness-context:
-    path: .claude/hooks/UserPromptSubmit-harness-context.sh
-    event: UserPromptSubmit
-    description: >
-      Detects strategy-related prompts and injects a brief harness context note
-      (last verify status, missing report warning). Exits 0 always; never blocks.
-    scope: lightweight — reads one JSON file at most
-
-  PreToolUse-paper-write-guard:
-    path: .claude/hooks/PreToolUse-paper-write-guard.sh
-    event: PreToolUse
-    matcher: Bash
-    description: >
-      Intercepts Bash tool calls that look like paper order submission. Blocks
-      execution and prints an actionable error if no harness verify report exists
-      or the report status is 'blocked'. Exits 0 to allow, 1 to block.
-    scope: lightweight — reads one JSON file at most
-
-  Stop-artifact-summary:
-    path: .claude/hooks/Stop-artifact-summary.sh
-    event: Stop
-    description: >
-      At session end, prints a summary of harness verify findings (blocked/warning
-      strategies) and stale source cards (> 60 days). Informational only; exits 0.
-    scope: lightweight — scans reports/harness/*.json and source_cards/*.jsonl
+# Automatic Claude hooks retired by the owner-approved restructure.
+hooks: {}
 
 # ── Subagent templates ──────────────────────────────────────────────────────────
 # Agent templates in .claude/agents/ describe research-agent roles, I/O contracts,

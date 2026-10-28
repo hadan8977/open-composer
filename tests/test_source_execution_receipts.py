@@ -3,7 +3,6 @@
 import copy
 import hashlib
 import json
-import os
 import socket
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,9 +24,7 @@ def case(tmp_path, monkeypatch):
 
     monkeypatch.setattr(socket.socket, "connect", deny)
     monkeypatch.setattr(socket.socket, "connect_ex", deny)
-    root = os.environ.get("OC_SOURCE_REFERENCE_ROOT")
-    if root is None:
-        pytest.skip("explicit frozen source reader root required")
+    root = tmp_path
     state = SourceReservations(
         source_module(Path(root), "cash").CashState(
             cash=100,

@@ -13,6 +13,7 @@ import requests
 from open_composer.intraday_runner import source_bounded_gateway as g
 from open_composer.intraday_runner import source_cash_observation as c
 from open_composer.intraday_runner.source_dispatch_journal import SourceDispatchJournal
+from tests.source_method_fixtures import source_reference
 
 NOW = datetime(2026, 11, 3, 14, 35, tzinfo=UTC)
 START = datetime(2026, 10, 19, tzinfo=UTC)
@@ -271,13 +272,12 @@ def test_cash_missing_checkpoint_never_constructs_client(cash_auth):
 
 @pytest.fixture
 def funded_sales(tmp_path):
-    import os
 
     from open_composer.intraday_runner.source_method_bindings import source_module
     from open_composer.intraday_runner.source_reservations import SourceReservations
     from open_composer.intraday_runner.source_state_checkpoint import SourceStateCheckpoint
 
-    root = Path(os.environ["OC_SOURCE_REFERENCE_ROOT"])
+    root = source_reference(tmp_path / "reference")
     state = SourceReservations(
         source_module(root, "cash").CashState(
             cash=20,
@@ -450,7 +450,6 @@ def test_missing_post_checkpoint_proof_excludes_known_sale_without_erasing_it(fu
 
 
 def make_cash_state(root, directory, account):
-    import os
 
     from open_composer.intraday_runner.source_method_bindings import source_module
     from open_composer.intraday_runner.source_reservations import SourceReservations
@@ -459,7 +458,7 @@ def make_cash_state(root, directory, account):
         snapshot,
     )
 
-    source_root = Path(os.environ["OC_SOURCE_REFERENCE_ROOT"])
+    source_root = root
     state = SourceReservations(source_module(source_root, "cash").CashState(cash=20000))
     store = SourceStateCheckpoint(directory, account_hash=account, sleeve_id="dia-base")
     store.commit(
@@ -482,6 +481,7 @@ def make_cash_state(root, directory, account):
         "truncated",
     ],
 )
+@pytest.mark.native_resource
 def test_complete_cash_branch_current_reconciliation_without_writes(cash_auth, fault):
     from open_composer.adapters.broker.alpaca_paper import _optional_broker_account_hash
 
@@ -593,7 +593,6 @@ def test_cash_http_boundary_has_no_write_or_retry(monkeypatch):
 
 @pytest.fixture
 def quantity_case(tmp_path):
-    import os
 
     from open_composer.intraday_runner.source_dispatch_journal import _hash
     from open_composer.intraday_runner.source_method_bindings import source_module
@@ -603,7 +602,7 @@ def quantity_case(tmp_path):
         snapshot,
     )
 
-    root = Path(os.environ["OC_SOURCE_REFERENCE_ROOT"])
+    root = source_reference(tmp_path / "reference")
     contract = root / (
         "reports/research/program/owner-profit-delivery-plan-20261017/"
         "candidate-contribution/future-input-receiver/accepted-integration-contract.json"
@@ -740,7 +739,6 @@ def test_quantity_actual_input_refuses_before_publication(quantity_case, fault):
 
 @pytest.mark.parametrize("late", [False, True])
 def test_actual_reception_checkpoint_clock_and_terminal_fee_hold(tmp_path, monkeypatch, late):
-    import os
     from types import SimpleNamespace
 
     from open_composer.adapters.broker.alpaca_paper import _optional_broker_account_hash
@@ -759,8 +757,7 @@ def test_actual_reception_checkpoint_clock_and_terminal_fee_hold(tmp_path, monke
         snapshot,
     )
 
-    reference = Path(os.environ["OC_SOURCE_REFERENCE_ROOT"])
-    (tmp_path / "reports").symlink_to(reference / "reports", target_is_directory=True)
+    reference = source_reference(tmp_path / "reference")
     account_id = "invented-account"
     ah = _optional_broker_account_hash(account_id)
     state = SourceReservations(
@@ -988,12 +985,11 @@ def test_actual_close_reception_boundary_without_any_real_source(quantity_case, 
 
 @pytest.mark.parametrize("fault", [None, "403", "late", "repeating_token", "withdrawal"])
 def test_exact_sip_capture_preserves_failed_packets_and_fixed_cutoff(tmp_path, fault):
-    import os
     from types import SimpleNamespace
 
     from open_composer.intraday_runner.source_quote_reception import receive_window
 
-    root = Path(os.environ["OC_SOURCE_REFERENCE_ROOT"])
+    root = source_reference(tmp_path / "reference")
     meta = json.loads(
         (
             root
@@ -1161,6 +1157,7 @@ def test_account_observation_risk_basis_and_unresolved_hold(funded_sales, tmp_pa
         assert row["method_invocations"] == 5
 
 
+@pytest.mark.native_resource
 def test_native_gate_uses_actual_cgroup_and_exact_code_before_any_factory(tmp_path):
     from open_composer.intraday_runner import source_runtime_entry as entry
 
@@ -1484,6 +1481,7 @@ def test_repair_source_pacing_rechecks_absolute_deadline_and_grant(tmp_path, mon
         assert len(calls) == 1 and 0 < calls[0][1]["timeout"] < 1
 
 
+@pytest.mark.native_resource
 def test_repair_bound_output_and_consumed_failure_cannot_be_retargeted(tmp_path, monkeypatch):
     import sys
     from types import SimpleNamespace

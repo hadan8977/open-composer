@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from open_composer.intraday_runner.current_initialization_storage import CaptureSlots
+from open_composer.intraday_runner.current_initialization_storage import CaptureSlots, NativeStorage
 
 
 @pytest.fixture
@@ -26,6 +26,7 @@ def slots(tmp_path, monkeypatch):
         check=lambda *a, **kw: checks.append((a, kw)),
         save=save_manifest,
     )
+    storage.physical = lambda: NativeStorage.physical(storage)
     trace = tmp_path / "transport"
     trace.mkdir()
     result = CaptureSlots(storage, tmp_path / "account", trace, {"AAPL"}, 0)

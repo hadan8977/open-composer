@@ -1,0 +1,42 @@
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -1,39 +1,4 @@
+ {
+-  "hooks": {
+-    "UserPromptSubmit": [
+-      {
+-        "matcher": "",
+-        "hooks": [
+-          {
+-            "type": "command",
+-            "command": "bash .claude/hooks/UserPromptSubmit-harness-context.sh"
+-          }
+-        ]
+-      }
+-    ],
+-    "PreToolUse": [
+-      {
+-        "matcher": "Bash",
+-        "hooks": [
+-          {
+-            "type": "command",
+-            "command": "bash .claude/hooks/PreToolUse-paper-write-guard.sh"
+-          }
+-        ]
+-      }
+-    ],
+-    "Stop": [
+-      {
+-        "matcher": "",
+-        "hooks": [
+-          {
+-            "type": "command",
+-            "command": "bash .claude/hooks/Stop-artifact-summary.sh"
+-          }
+-        ]
+-      }
+-    ]
+-  },
+   "permissions": {
+     "allow": [
+       "Bash(uv run oc *)",

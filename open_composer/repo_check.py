@@ -14,108 +14,45 @@ from open_composer.storage import write_json
 
 RepoCheckStatus = Literal["ok", "warning", "blocked"]
 
-NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.zh.md"
+NO_CONTEXT_START_DOC = "research/README.md"
 
+# These are required entry points, not a closed inventory of project history.
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
+    "docs/rules.md",
     "docs/research-mission.zh.md",
-    "docs/research-program.zh.md",
-    "docs/equity-book-design.zh.md",
-    "docs/evaluation-standard.zh.md",
+    "docs/research-plan-review-standard.zh.md",
     "docs/owner-reporting.zh.md",
-    "docs/owner-rules-register.zh.md",
-    "docs/plan-owner-feedback-2026-10-04.zh.md",
-    "docs/plan-v2-requirements-2026-10-04.zh.md",
-    "docs/plan-v2-2026-10-05.zh.md",
-    "docs/plan-v3-2026-10-06.zh.md",
-    "docs/research-autonomy.zh.md",
-    "docs/plan-research-autonomy-2026-09-21.zh.md",
-    "docs/alpha158-recovery-2026-09-21.zh.md",
-    "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
-    "docs/design-token-budget-2026-09-20.zh.md",
-    "docs/answers-friday-plan-questions-2026-09-15.zh.md",
-    "docs/answers-iteration-intelligence-llm-quant-2026-09-15.zh.md",
-    "docs/current-view.zh.md",
-    "docs/plan-strategy-factory-2026-09-22.zh.md",
-    "docs/plan-giants-sweep-2026-09-22.zh.md",
-    "docs/plan-earnings-text-forward-test-2026-09-22.zh.md",
-    "docs/handoff-2026-09-23.zh.md",
-    "docs/plan-broad-search-and-direction-registry-2026-09-23.zh.md",
-    "docs/plan-research-coverage-2026-09-23.zh.md",
-    "docs/runbook-autonomous-round.zh.md",
-    "docs/runbook-disk.zh.md",
-    "docs/runbook-intraday-runner.zh.md",
-    "docs/plan-post-reset-roadmap-2026-09-11.zh.md",
-    "docs/plan-step-14-timeframe-agnostic-bar-cycle-runner-2026-09-11.zh.md",
-    "docs/plan-step-15-gtja17-port-and-insider-transactions-packet-2026-09-11.zh.md",
-    "docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md",
-    "docs/proposal-research-loop-redesign-2026-09-15.zh.md",
     "docs/user-guide.md",
-    "docs/setup-local.zh.md",
-    "docs/remote-dashboard-deploy.zh.md",
-    "docs/longbridge-integration.md",
-    "docs/plan-step-1-simplification-2026-05-22.zh.md",
-    "docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md",
-    "docs/plan-step-3-dashboard-first-2026-05-22.zh.md",
-    "docs/local-product-optimization-plan-2026-05-25.zh.md",
-    "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
-    "docs/plan-step-6-factor-catalog-and-ai-research-2026-05-26.zh.md",
-    "docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md",
-    "docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md",
-    "docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md",
-    "docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md",
-    "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
-    "docs/plan-step-7a-ml-training-backend-2026-06-30.zh.md",
-    "docs/plan-step-7-complete-ultracode-2026-07-02.zh.md",
-    "docs/plan-step-7r-pdr-router-ml-gate-2026-07-03.zh.md",
-    "docs/plan-step-7s-product-consolidation-2026-07-03.zh.md",
-    "docs/plan-step-7t-pdr-gate-round2-2026-07-04.zh.md",
-    "docs/plan-step-8-go-live-readiness-2026-07-06.zh.md",
-    "docs/plan-step-9-autonomous-loop-momentum-2026-07-09.zh.md",
-    "docs/plan-step-9r-momentum-validation-and-loop-hardening-2026-07-11.zh.md",
-    "docs/plan-step-9o-momentum-shadow-observation-2026-07-13.zh.md",
-    "docs/plan-step-9f-final-momentum-product-loop-2026-07-13.zh.md",
-    "docs/plan-step-9m-multiasset-momentum-lab-2026-07-14.zh.md",
-    "docs/plan-step-9n-ai-factor-ml-expansion-2026-07-14.zh.md",
-    "docs/plan-step-9p-multimodal-momentum-memory-2026-07-15.zh.md",
-    "docs/plan-step-9q-evidence-driven-momentum-codesign-2026-07-15.zh.md",
-    "docs/runbook-live-manual-execution.zh.md",
-    "docs/strategy-alpha-paper-execution-plan-2026-08-04.zh.md",
-    "docs/strategy-optimization-progress-log.zh.md",
-    "docs/strategy-optimization-progress-report-template.zh.md",
-    "docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md",
-    "docs/plan-kernel-extraction-and-auto-research-real-data-2026-08-28.zh.md",
-    "docs/plan-sip-migration-and-wide-search-2026-09-01.zh.md",
-    "docs/finding-iex-cache-price-adjustment-defect-2026-09-01.zh.md",
-    "docs/review-kernel-search-2026-09-01.zh.md",
-    "docs/data-layer-pitfalls-and-capabilities.zh.md",
-    "docs/capability-gap-analysis-2026-09-02.zh.md",
-    "docs/plan-goal-first-verification-2026-09-02.zh.md",
-    "docs/conclusion-goal-first-2026-09-03.zh.md",
-    "docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md",
-    "docs/plan-step-11-ml-first-loop-2026-09-06.zh.md",
-    "docs/plan-step-12-groupb-recent-regime-high-hit-rate-2026-09-09.zh.md",
-    "docs/plan-step-13-recent-high-return-ml-and-llm-tracks-2026-09-09.zh.md",
-    "docs/plan-step-13f-open-factor-library-import-and-screening-2026-09-09.zh.md",
-    "docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md",
+    "docs/archive/owner-rules-register-20261028.zh.md",
+}
+
+REQUIRED_ENTRY_FILES = CURRENT_DOCS | {
+    "AGENTS.md",
+    "CLAUDE.md",
+    "control.json",
+    "board.md",
+    "research/workflow.json",
+    "research/schemas/reply.schema.json",
+    "research/schemas/results.schema.json",
+    "research/templates/brief.md",
+    "research/templates/decisions.tsv",
+    "prompts/lead.md",
+    "prompts/worker.md",
+    "prompts/reviewer.md",
 }
 
 REQUIRED_SKILLS = [
     "capability-evaluator",
+    "idea-to-paper",
     "nautilus-trader-adapter",
-    "pine-exporter",
     "python-backtest-writer",
+    "research-plan-reviewer",
     "risk-reviewer",
-    "signal-parity-reviewer",
     "strategy-designer",
-    "strategy-researcher",
-    "ultracode-reviewer",
-    "weekly-reviewer",
+    "windows-paseo-worker",
 ]
 
-# Harness skills introduced by the skill-first harness foundation (P0-P2).
-# These are checked in addition to REQUIRED_SKILLS to ensure the harness
-# pack is mirrored to .claude/skills and contains expected anchors.
 HARNESS_SKILLS = [
     "strategy-research-orchestrator",
     "source-researcher",
@@ -123,7 +60,6 @@ HARNESS_SKILLS = [
     "backtest-forensics",
     "data-capability-reviewer",
     "paper-auto-safety-reviewer",
-    "evidence-curator",
 ]
 
 REQUIRED_CAPABILITIES = {
@@ -175,6 +111,7 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _no_live_llm_backtest_check(base),
         _makefile_verify_check(base),
         _harness_policy_check(base),
+        _evaluation_standard_changelog_check(base),
     ]
     status = _overall_status(checks)
     return RepoConsistencyReport(
@@ -229,71 +166,33 @@ def _license_check(root: Path) -> RepoConsistencyCheck:
 
 def _no_context_start_doc_check(root: Path) -> RepoConsistencyCheck:
     path = root / NO_CONTEXT_START_DOC
-    if not path.exists():
-        return RepoConsistencyCheck(
-            name="no_context_start_doc",
-            status="blocked",
-            message="No-context Codex starting review document is missing.",
-            details={"path": NO_CONTEXT_START_DOC},
-            suggested_actions=[f"Create {NO_CONTEXT_START_DOC}"],
-        )
-    text = path.read_text(encoding="utf-8")
-    required = [
-        "no-context Codex",
-        "StrategySpec",
-        "capabilities/registry.yaml",
-        "uv run oc repo check",
-        "make verify",
-    ]
-    missing = [item for item in required if item not in text]
-    if missing:
-        return RepoConsistencyCheck(
-            name="no_context_start_doc",
-            status="blocked",
-            message="No-context start document exists but is missing required anchors.",
-            details={"path": NO_CONTEXT_START_DOC, "missing": missing},
-            suggested_actions=[f"Update {NO_CONTEXT_START_DOC}"],
-        )
+    required = ["scripts/research_round.py", "control.json", "brief.md", "results.json"]
+    missing = _missing_text(path, required)
     return RepoConsistencyCheck(
         name="no_context_start_doc",
-        status="ok",
-        message="No-context Codex starting review document is present.",
-        details={"path": NO_CONTEXT_START_DOC},
+        status="blocked" if missing else "ok",
+        message=(
+            "Research starting document is missing required workflow entry points."
+            if missing
+            else "Research starting document describes the current file workflow."
+        ),
+        details={"path": NO_CONTEXT_START_DOC, "missing": missing},
+        suggested_actions=[f"Update {NO_CONTEXT_START_DOC}"] if missing else [],
     )
 
 
 def _readme_project_docs_check(root: Path) -> RepoConsistencyCheck:
-    path = root / "README.md"
-    if not path.exists():
-        return RepoConsistencyCheck(
-            name="readme_project_docs",
-            status="blocked",
-            message="README.md is missing.",
-            suggested_actions=["Restore README.md"],
-        )
-    text = path.read_text(encoding="utf-8")
-    missing = []
-    if "## Project Docs" not in text:
-        missing.append("## Project Docs")
-    if "docs/user-guide.md" not in text:
-        missing.append("docs/user-guide.md")
-    if NO_CONTEXT_START_DOC not in text:
-        missing.append(NO_CONTEXT_START_DOC)
-    if "no-context Codex" not in text:
-        missing.append("no-context Codex")
-    if missing:
-        return RepoConsistencyCheck(
-            name="readme_project_docs",
-            status="blocked",
-            message="README Project Docs does not mark the no-context Codex entry.",
-            details={"missing": missing},
-            suggested_actions=["Update README.md Project Docs"],
-        )
+    missing = _missing_text(root / "README.md", [NO_CONTEXT_START_DOC, "docs/user-guide.md"])
     return RepoConsistencyCheck(
         name="readme_project_docs",
-        status="ok",
-        message="README Project Docs points to the no-context Codex entry.",
-        details={"path": "README.md"},
+        status="blocked" if missing else "ok",
+        message=(
+            "README Project Docs is missing the current research or user entry."
+            if missing
+            else "README links the current research and user entry points."
+        ),
+        details={"missing": missing},
+        suggested_actions=["Update README.md entry links"] if missing else [],
     )
 
 
@@ -347,214 +246,235 @@ def _readme_research_controls_check(root: Path) -> RepoConsistencyCheck:
 
 
 def _agents_rules_check(root: Path) -> RepoConsistencyCheck:
-    path = root / "AGENTS.md"
-    required = [
-        "StrategySpec",
-        "capabilities/registry.yaml",
-        "parameter ranges",
-        "benchmark family",
-        "workflow_pass",
-        "research_pass",
-        "llm_contribution_pass",
-        "paper_ready_pass",
-        "Sample, fixture, cache fallback, and trial/research-only data",
-        "visible_at",
-        "oc research knowledge assess",
-        "modality/role matrix",
-        "serialized estimator",
-        "untrusted reader input",
-        "Real-money broker write access is out of scope",
-        "Run `uv run ruff format .`, `uv run ruff check .`, and `uv run pytest`",
-    ]
-    missing = _missing_text(path, required)
-    if missing:
-        return RepoConsistencyCheck(
-            name="agents_rules",
-            status="blocked",
-            message="AGENTS.md is missing required product and safety rules.",
-            details={"missing": missing},
-            suggested_actions=["Update AGENTS.md"],
-        )
+    required = ["docs/rules.md", "control.json", "research/workflow.json"]
+    missing = _missing_text(root / "AGENTS.md", required)
     return RepoConsistencyCheck(
         name="agents_rules",
-        status="ok",
-        message="AGENTS.md carries the core product, workflow, safety, and verification rules.",
+        status="blocked" if missing else "ok",
+        message=(
+            "AGENTS.md must point to the shared rules, authority index and role bindings."
+            if missing
+            else "AGENTS.md points to the shared instruction and authority entries."
+        ),
+        details={"missing": missing},
+        suggested_actions=["Restore shared entry references in AGENTS.md"] if missing else [],
     )
 
 
 def _current_product_docs_check(root: Path) -> RepoConsistencyCheck:
-    docs = sorted(CURRENT_DOCS)
-    missing_paths = [path for path in docs if not (root / path).exists()]
-    if missing_paths:
-        return RepoConsistencyCheck(
-            name="current_product_docs",
-            status="blocked",
-            message="One or more current product governance documents are missing.",
-            details={"missing": missing_paths},
-            suggested_actions=["Restore current product docs"],
-        )
+    missing = sorted(
+        name
+        for name in REQUIRED_ENTRY_FILES
+        if not (root / name).is_file() or not (root / name).stat().st_size
+    )
+    invalid: dict[str, str] = {}
+    for name in (
+        "control.json",
+        "research/workflow.json",
+        "research/schemas/reply.schema.json",
+        "research/schemas/results.schema.json",
+    ):
+        if name in missing:
+            continue
+        try:
+            data = json.loads((root / name).read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                raise ValueError("must contain a JSON object")
+            if name == "control.json":
+                for switch in ("draft", "research", "ab_research"):
+                    if not isinstance(data.get(switch), bool):
+                        raise ValueError(f"{switch} must be an explicit boolean")
+            elif name == "research/workflow.json":
+                roles = data.get("roles")
+                if not isinstance(roles, dict):
+                    raise ValueError("roles must contain lead, worker and reviewer bindings")
+                for role_name in ("lead", "worker", "reviewer"):
+                    role = roles.get(role_name)
+                    if not isinstance(role, dict) or any(
+                        not isinstance(role.get(key), str) or not role[key].strip()
+                        for key in ("provider", "model", "effort", "prompt")
+                    ):
+                        raise ValueError(f"{role_name} needs provider/model/effort/prompt")
+                    prompt = _repository_file(root, role["prompt"])
+                    if prompt is None or not prompt.stat().st_size:
+                        raise ValueError(f"{role_name} prompt must be a repository file")
+            elif data.get("type") != "object":
+                raise ValueError("schema must describe an object")
+        except (OSError, ValueError) as exc:
+            invalid[name] = str(exc)
+    blocked = bool(missing or invalid)
     return RepoConsistencyCheck(
         name="current_product_docs",
-        status="ok",
-        message="Current product governance documents are present.",
-        details={"docs": docs},
+        status="blocked" if blocked else "ok",
+        message=(
+            "Required current entry files are missing or invalid."
+            if blocked
+            else "Current instruction, authority and research entry files are present."
+        ),
+        details={"missing": missing, "invalid": invalid},
+        suggested_actions=["Restore the current entry files and JSON structure"] if blocked else [],
     )
 
 
 def _docs_inventory_check(root: Path) -> RepoConsistencyCheck:
     docs_root = root / "docs"
-    if not docs_root.exists():
-        return RepoConsistencyCheck(
-            name="docs_inventory",
-            status="blocked",
-            message="docs directory is missing.",
-            suggested_actions=["Restore docs directory with current product documents"],
-        )
-    extra_docs = sorted(
-        path.relative_to(root).as_posix()
-        for path in docs_root.glob("*")
-        if path.is_file() and path.relative_to(root).as_posix() not in CURRENT_DOCS
-    )
-    if extra_docs:
-        return RepoConsistencyCheck(
-            name="docs_inventory",
-            status="blocked",
-            message="docs directory contains historical or non-current documents.",
-            details={"extra_docs": extra_docs, "allowed_docs": sorted(CURRENT_DOCS)},
-            suggested_actions=["Move historical docs out of docs/ or delete obsolete docs"],
-        )
     return RepoConsistencyCheck(
         name="docs_inventory",
-        status="ok",
-        message="docs directory contains only current product documents.",
-        details={"doc_count": len(CURRENT_DOCS), "docs": sorted(CURRENT_DOCS)},
+        status="ok" if docs_root.is_dir() else "blocked",
+        message=(
+            "Project docs and history may coexist; only current entry files are required."
+            if docs_root.is_dir()
+            else "docs directory is missing."
+        ),
+        details={"required_docs": sorted(CURRENT_DOCS)},
     )
 
 
 def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
-    missing = [
-        skill
-        for skill in REQUIRED_SKILLS
-        if not (root / ".agents" / "skills" / skill / "SKILL.md").exists()
-    ]
-    required_anchors = {
-        "capability-evaluator": ["provider timeframe support", "paper-ready market evidence"],
-        "nautilus-trader-adapter": ["data manifest", "feature packet", "backend plan"],
-        "python-backtest-writer": ["visible_at", "benchmark family", "trial count"],
-        "risk-reviewer": ["workflow_pass", "paper_ready_pass", "LLM fallback"],
-        "strategy-designer": ["notes.research_design", "parameter ranges", "benchmark family"],
-        "strategy-researcher": [
-            "strategy-research-orchestrator",
-            "promotion-report",
-            "llm_contribution_pass",
-        ],
-        "ultracode-reviewer": [
-            "# UltraCode Reviewer V2",
-            "## 1. Objective, Boundaries, Acceptance",
-            "## 2. Dependency Graph",
-            "## 3. Critical Path and Concurrency",
-            "## 4. Role Selection",
-            "## 5. Write Ownership",
-            "## 6. Agent Contract",
-            "## 7. Adversarial Review",
-            "## 8. Conflict Resolution",
-            "## 9. Evidence and Acceptance",
-            "## 10. Stop Conditions",
-            "StrategySpec",
-        ],
-        "weekly-reviewer": ["LLM contribution evidence", "paper readiness evidence"],
-    }
-    missing_anchors: dict[str, list[str]] = {}
-    for skill, anchors in required_anchors.items():
-        skill_path = root / ".agents" / "skills" / skill / "SKILL.md"
-        if not skill_path.exists():
-            continue
-        text = skill_path.read_text(encoding="utf-8")
-        missing_for_skill = [anchor for anchor in anchors if anchor not in text]
-        if missing_for_skill:
-            missing_anchors[skill] = missing_for_skill
-    if missing:
-        return RepoConsistencyCheck(
-            name="repo_skills",
-            status="blocked",
-            message="Required repo skills are missing.",
-            details={"missing": missing},
-            suggested_actions=["Restore .agents/skills entries"],
-        )
-    if missing_anchors:
-        return RepoConsistencyCheck(
-            name="repo_skills",
-            status="blocked",
-            message="Required repo skills are missing research, strict-data, or gate anchors.",
-            details={"missing_anchors": missing_anchors},
-            suggested_actions=["Update .agents/skills/*/SKILL.md"],
-        )
+    skills = _agent_skill_dirs(root)
+    missing = sorted((set(REQUIRED_SKILLS) | set(HARNESS_SKILLS)) - skills)
+    metadata_errors = {}
+    for skill in sorted(skills):
+        path = root / ".agents/skills" / skill / "SKILL.md"
+        metadata = _skill_metadata(path)
+        if (
+            metadata.get("name") != skill
+            or not isinstance(metadata.get("description"), str)
+            or not metadata["description"].strip()
+        ):
+            metadata_errors[skill] = "SKILL.md needs matching name and non-empty description"
+    blocked = bool(missing or metadata_errors)
     return RepoConsistencyCheck(
         name="repo_skills",
-        status="ok",
-        message="Required repo skills are present and carry research gate anchors.",
-        details={"skill_count": len(REQUIRED_SKILLS)},
+        status="blocked" if blocked else "ok",
+        message=(
+            "Current skills are missing or have invalid metadata."
+            if blocked
+            else "Current canonical skills have valid discovery metadata."
+        ),
+        details={
+            "missing": missing,
+            "metadata_errors": metadata_errors,
+            "skill_count": len(skills),
+        },
+        suggested_actions=["Restore current skills and valid SKILL.md frontmatter"]
+        if blocked
+        else [],
     )
 
 
-def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
+def _skill_tree_files(path: Path) -> dict[str, bytes]:
+    return {
+        file.relative_to(path).as_posix(): file.read_bytes()
+        for file in path.rglob("*")
+        if file.is_file()
+        and "__pycache__" not in file.relative_to(path).parts
+        and file.suffix != ".pyc"
+    }
+
+
+def agent_parity_problems(root: Path) -> dict[str, object]:
+    """Shared checks for the CLI report and the standalone parity command."""
     required_paths = [
+        "AGENTS.md",
         "CLAUDE.md",
         ".claude/settings.json",
         ".claude/commands/repo-check.md",
         ".claude/commands/verify.md",
         "scripts/sync-agent-skills.py",
         "scripts/check-agent-parity.py",
+        ".agents/skills",
+        ".claude/skills",
     ]
-    missing_paths = [path for path in required_paths if not (root / path).exists()]
-    missing_skills = [
-        skill
-        for skill in REQUIRED_SKILLS
-        if not (root / ".claude" / "skills" / skill / "SKILL.md").exists()
-    ]
-    drifted_skills = []
-    for skill in REQUIRED_SKILLS:
-        source = root / ".agents" / "skills" / skill / "SKILL.md"
-        target = root / ".claude" / "skills" / skill / "SKILL.md"
-        if (
-            source.exists()
-            and target.exists()
-            and source.read_text(encoding="utf-8") != target.read_text(encoding="utf-8")
-        ):
-            drifted_skills.append(skill)
-    required_anchors = [
-        "StrategySpec",
-        "capabilities/registry.yaml",
-        "parameter ranges",
-        "workflow_pass",
-        "research_pass",
-        "llm_contribution_pass",
-        "paper_ready_pass",
-        "Cockpit is read-only",
-    ]
-    missing_anchors = _missing_text(root / "CLAUDE.md", required_anchors)
-    problems = {
-        "missing_paths": missing_paths,
-        "missing_skills": missing_skills,
-        "drifted_skills": drifted_skills,
-        "missing_anchors": missing_anchors,
+    problems: dict[str, object] = {
+        "missing_paths": [path for path in required_paths if not (root / path).exists()]
     }
-    if any(problems.values()):
-        return RepoConsistencyCheck(
-            name="claude_parity",
-            status="blocked",
-            message="Claude Code parity artifacts are missing or drifted.",
-            details=problems,
-            suggested_actions=[
-                "Run uv run python scripts/sync-agent-skills.py",
-                "Run uv run python scripts/check-agent-parity.py",
-            ],
+    claude = root / "CLAUDE.md"
+    if claude.is_file():
+        text = re.sub(r"<!--.*?-->", "", claude.read_text(encoding="utf-8"), flags=re.DOTALL)
+        directives = [
+            line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")
+        ]
+        if directives != ["@AGENTS.md"]:
+            problems["claude_import"] = (
+                "CLAUDE.md must import @AGENTS.md without a second rules body"
+            )
+    settings = root / ".claude/settings.json"
+    if settings.is_file():
+        try:
+            data = json.loads(settings.read_text(encoding="utf-8"))
+            permissions = data.get("permissions") if isinstance(data, dict) else None
+            if not isinstance(permissions, dict):
+                raise ValueError("permissions must be an object")
+            if any(
+                not isinstance(permissions.get(group), list)
+                or any(not isinstance(rule, str) for rule in permissions[group])
+                for group in ("allow", "ask", "deny")
+            ):
+                raise ValueError("allow, ask and deny must be lists of permission rules")
+            required = {
+                "allow": "Bash(uv run oc *)",
+                "ask": "Bash(uv run oc paper submit*)",
+                "deny": "Bash(git reset --hard*)",
+            }
+            missing_permissions = [
+                f"{group}: {anchor}"
+                for group, anchor in required.items()
+                if anchor not in permissions.get(group, [])
+            ]
+            if "Read(.env)" not in permissions.get("deny", []):
+                missing_permissions.append("deny: Read(.env)")
+            if missing_permissions:
+                problems["missing_permissions"] = missing_permissions
+        except (OSError, ValueError) as exc:
+            problems["settings"] = str(exc)
+    source_root, target_root = root / ".agents/skills", root / ".claude/skills"
+    source_skills = _agent_skill_dirs(root)
+    target_skills = _skill_dirs(target_root)
+    problems["missing_skills"] = sorted(source_skills - target_skills)
+    problems["unexpected_skills"] = sorted(target_skills - source_skills)
+    drifted_files = []
+    missing_files = []
+    unexpected_files = []
+    for skill in sorted(source_skills & target_skills):
+        source_files = _skill_tree_files(source_root / skill)
+        target_files = _skill_tree_files(target_root / skill)
+        missing_files.extend(
+            f"{skill}/{name}" for name in source_files.keys() - target_files.keys()
         )
+        unexpected_files.extend(
+            f"{skill}/{name}" for name in target_files.keys() - source_files.keys()
+        )
+        drifted_files.extend(
+            f"{skill}/{name}"
+            for name in source_files.keys() & target_files.keys()
+            if source_files[name] != target_files[name]
+        )
+        if "SKILL.md" not in source_files:
+            missing_files.append(f"{skill}/SKILL.md (canonical)")
+    problems["missing_files"] = sorted(missing_files)
+    problems["unexpected_files"] = sorted(unexpected_files)
+    problems["drifted_files"] = sorted(drifted_files)
+    return {name: value for name, value in problems.items() if value}
+
+
+def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
+    problems = agent_parity_problems(root)
     return RepoConsistencyCheck(
         name="claude_parity",
-        status="ok",
-        message="Claude Code rules, commands, settings, and mirrored skills are present.",
-        details={"skill_count": len(REQUIRED_SKILLS)},
+        status="blocked" if problems else "ok",
+        message=(
+            "Claude shared instructions, permissions or skill mirrors are missing or drifted."
+            if problems
+            else "Claude imports the shared instructions and mirrors all skill resources."
+        ),
+        details=problems,
+        suggested_actions=[
+            "Inspect mirror-only changes before running scripts/sync-agent-skills.py",
+            "Run scripts/check-agent-parity.py",
+        ]
+        if problems
+        else [],
     )
 
 
@@ -643,58 +563,92 @@ def _no_live_llm_backtest_check(root: Path) -> RepoConsistencyCheck:
 
 def _makefile_verify_check(root: Path) -> RepoConsistencyCheck:
     path = root / "Makefile"
-    if not path.exists():
+    if not path.is_file():
         return RepoConsistencyCheck(
-            name="makefile_verify",
-            status="blocked",
-            message="Makefile is missing.",
-            suggested_actions=["Restore Makefile"],
+            name="makefile_verify", status="blocked", message="Makefile is missing."
         )
     text = path.read_text(encoding="utf-8")
     missing = []
-    if "repo-check:" not in text:
-        missing.append("repo-check target")
-    if "capability-test:" not in text:
-        missing.append("capability-test target")
-    if "agent-parity:" not in text:
-        missing.append("agent-parity target")
-    if "uv run oc repo check --strict" not in text:
-        missing.append("repo-check runs strict")
-    if "uv run oc readiness --strict" not in text:
-        missing.append("readiness runs strict")
-    if "uv run oc deploy prepare --strict" not in text:
-        missing.append("deploy-prepare runs strict")
-    if "uv run oc feature validate --strict" not in text:
-        missing.append("feature-validate runs strict")
-    if not re.search(r"^verify:.*\brepo-check\b", text, re.MULTILINE):
-        missing.append("verify depends on repo-check")
-    if not re.search(r"^verify:.*\bcapability-test\b", text, re.MULTILINE):
-        missing.append("verify depends on capability-test")
-    if not re.search(r"^verify:.*\bagent-parity\b", text, re.MULTILINE):
-        missing.append("verify depends on agent-parity")
-    if not re.search(r"^verify:.*\bdeploy-prepare\b", text, re.MULTILINE):
-        missing.append("verify depends on deploy-prepare")
-    if not re.search(r"^verify:.*\breadiness\b", text, re.MULTILINE):
-        missing.append("verify depends on readiness")
-    if missing:
-        return RepoConsistencyCheck(
-            name="makefile_verify",
-            status="blocked",
-            message="Makefile verify target does not include the full local closure checks.",
-            details={"missing": missing},
-            suggested_actions=[
-                "Add repo-check, capability-test, deploy-prepare, "
-                "feature-validate, and readiness to make verify"
-            ],
-        )
+    for target, command in {
+        "repo-check": "uv run --no-sync oc repo check --strict",
+        "capability-test": "uv run --no-sync oc capability test",
+        "agent-parity": "scripts/check-agent-parity.py",
+        "deploy-prepare": "uv run --no-sync oc deploy prepare --strict",
+        "feature-validate": "uv run --no-sync oc feature validate --strict",
+        "readiness": "uv run --no-sync oc readiness --strict",
+    }.items():
+        _, recipe = _makefile_target(text, target)
+        if command not in "\n".join(recipe):
+            missing.append(
+                f"{target} runs strict" if "--strict" in command else f"{target} command"
+            )
+    dependencies, _ = _makefile_target(text, "verify")
+    for target in (
+        "format-check",
+        "lint",
+        "test-full",
+        "repo-check",
+        "capability-test",
+        "agent-parity",
+        "deploy-prepare",
+        "feature-validate",
+        "readiness",
+    ):
+        if target not in dependencies:
+            missing.append(f"verify depends on {target}")
+    if "format" in dependencies:
+        missing.append("verify must not run the modifying format target")
+    for target in dependencies:
+        _, recipe = _makefile_target(text, target)
+        command = "\n".join(recipe)
+        if re.search(r"\buv\s+run(?!\s+--no-sync\b)", command) or re.search(
+            r"\buv\s+sync\b", command
+        ):
+            missing.append(f"{target} must not sync the live Python environment")
+    _, format_recipe = _makefile_target(text, "format-check")
+    if "ruff format --check $(MAINTAINED_PYTHON)" not in "\n".join(format_recipe):
+        missing.append("format-check validates maintained code without writes")
+    maintained = re.search(r"(?m)^MAINTAINED_PYTHON\s*:?=\s*(.+)$", text)
+    paths = maintained.group(1).split() if maintained else []
+    if not {"open_composer", "scripts", "tests"}.issubset(paths) or any(
+        name in {".", "reports", "data", "drafts"} or name.startswith("reports/") for name in paths
+    ):
+        missing.append("format scope includes maintained code and excludes frozen evidence")
+    for target in ("test", "test-fast", "test-full"):
+        _, recipe = _makefile_target(text, target)
+        command = "\n".join(recipe)
+        if "pytest" not in command or re.search(r"(?:^|\s)-n(?:\s|=|[0-9])", command):
+            missing.append(f"{target} uses one pytest process")
+    if not re.search(r"(?m)^\.NOTPARALLEL:\s*$", text):
+        missing.append("release recipes run serially")
     return RepoConsistencyCheck(
         name="makefile_verify",
-        status="ok",
+        status="blocked" if missing else "ok",
         message=(
-            "make verify includes repository, capability, deployment, feature, "
-            "and readiness checks."
+            "Makefile verify is missing read-only or release checks."
+            if missing
+            else "make verify validates code read-only and retains serial release checks."
         ),
+        details={"missing": missing},
+        suggested_actions=["Restore the read-only format and full strict release checks"]
+        if missing
+        else [],
     )
+
+
+def _makefile_target(text: str, target: str) -> tuple[list[str], list[str]]:
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith(f"{target}:"):
+            dependencies = line.partition(":")[2].split("#", 1)[0].split()
+            recipe = []
+            for following in lines[index + 1 :]:
+                if following.startswith("\t"):
+                    recipe.append(following.strip())
+                elif following.strip() and not following.startswith("#"):
+                    break
+            return dependencies, recipe
+    return [], []
 
 
 def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
@@ -810,11 +764,23 @@ def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
     )
 
 
-def _agent_skill_dirs(root: Path) -> set[str]:
-    skills_root = root / ".agents" / "skills"
-    if not skills_root.exists():
+def _skill_dirs(path: Path) -> set[str]:
+    if not path.is_dir():
         return set()
-    return {p.name for p in skills_root.iterdir() if p.is_dir()}
+    return {
+        entry.name
+        for entry in path.iterdir()
+        if entry.is_dir() and entry.name != "__pycache__" and not entry.name.startswith(".")
+    }
+
+
+def _agent_skill_dirs(root: Path) -> set[str]:
+    return _skill_dirs(root / ".agents/skills")
+
+
+def _repository_file(root: Path, name: str) -> Path | None:
+    path = (root / name).resolve()
+    return path if path.is_relative_to(root.resolve()) and path.is_file() else None
 
 
 def _validate_skill_manifest(
@@ -844,8 +810,8 @@ def _validate_skill_manifest(
             if not raw_path:
                 missing_paths.append(str(skill_name))
                 continue
-            path = root / raw_path
-            if not path.exists():
+            path = _repository_file(root, raw_path)
+            if path is None or raw_path != f".agents/skills/{skill_name}/SKILL.md":
                 missing_paths.append(raw_path)
                 continue
             frontmatter_name = _skill_frontmatter_name(path)
@@ -875,7 +841,7 @@ def _validate_skill_manifest(
             for hook_name, raw in hooks.items()
             if not isinstance(raw, dict)
             or not raw.get("path")
-            or not (root / str(raw.get("path"))).exists()
+            or _repository_file(root, str(raw.get("path"))) is None
         )
         if missing_hook_paths:
             problems["missing_hook_paths"] = missing_hook_paths
@@ -891,7 +857,7 @@ def _validate_skill_manifest(
                 missing_agent_paths.append(str(agent_name))
                 continue
             raw_path = str(raw.get("path") or "")
-            if not raw_path or not (root / raw_path).exists():
+            if not raw_path or _repository_file(root, raw_path) is None:
                 missing_agent_paths.append(raw_path or str(agent_name))
             used = raw.get("skills_used") or []
             if not isinstance(used, list):
@@ -908,12 +874,23 @@ def _validate_skill_manifest(
     return problems
 
 
+def _skill_metadata(path: Path) -> dict[str, object]:
+    import yaml
+
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if not lines or lines[0] != "---":
+            return {}
+        end = lines.index("---", 1)
+        metadata = yaml.safe_load("\n".join(lines[1:end]))
+        return metadata if isinstance(metadata, dict) else {}
+    except (OSError, ValueError, yaml.YAMLError):
+        return {}
+
+
 def _skill_frontmatter_name(path: Path) -> str | None:
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---"):
-        return None
-    match = re.search(r"(?m)^name:\s*([A-Za-z0-9_-]+)\s*$", text)
-    return match.group(1) if match else None
+    name = _skill_metadata(path).get("name")
+    return name if isinstance(name, str) else None
 
 
 def _missing_text(path: Path, required: list[str]) -> list[str]:
@@ -959,3 +936,38 @@ def _render_markdown(report: RepoConsistencyReport) -> str:
                 lines.append(f"  - `{action}`")
         lines.append("")
     return "\n".join(lines)
+
+
+def _evaluation_standard_changelog_check(root: Path) -> RepoConsistencyCheck:
+    """Every state of the evaluation standard needs a signed changelog entry."""
+    from open_composer.research.gate_additions import evaluation_standard_status
+
+    status = evaluation_standard_status(root)
+    if not status.get("present"):
+        return RepoConsistencyCheck(
+            name="evaluation_standard_changelog",
+            status="ok",
+            message="No evaluation standard file in this workspace; nothing to log.",
+        )
+    if status["invalid_entries"] or not status["covered"]:
+        return RepoConsistencyCheck(
+            name="evaluation_standard_changelog",
+            status="blocked",
+            message="config/evaluation-standard-v2.json has no valid changelog entry for its "
+            "current sha256.",
+            details={
+                "sha256": status["sha256"],
+                "entries": status["entries"],
+                "invalid_entries": status["invalid_entries"],
+            },
+            suggested_actions=[
+                "Append a line to config/evaluation-standard-changelog.jsonl with the new "
+                "sha256, date, changed_by, reason and signed_by (lead-round signature)"
+            ],
+        )
+    return RepoConsistencyCheck(
+        name="evaluation_standard_changelog",
+        status="ok",
+        message="Evaluation standard hash is covered by the changelog.",
+        details={"sha256": status["sha256"], "entries": status["entries"]},
+    )

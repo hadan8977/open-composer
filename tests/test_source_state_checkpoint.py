@@ -4,7 +4,6 @@ import copy
 import json
 import os
 import socket
-from pathlib import Path
 
 import pytest
 
@@ -23,10 +22,7 @@ def case(tmp_path, monkeypatch):
 
     monkeypatch.setattr(socket.socket, "connect", deny)
     monkeypatch.setattr(socket.socket, "connect_ex", deny)
-    root = os.environ.get("OC_SOURCE_REFERENCE_ROOT")
-    if not root:
-        pytest.skip("explicit accepted CashState source root required")
-    root = Path(root)
+    root = tmp_path
     cash = source_module(root, "cash").CashState(
         cash=100,
         lots={"AAPL": [{"quantity": 10, "funded": "2026-10-19"}]},

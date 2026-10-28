@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
 from open_composer.research import autonomy
+from open_composer.research.agent_workflow import run_round
 from open_composer.research.direction import (
     TEXT_FIELDS,
     direction_review_template,
@@ -154,22 +153,51 @@ def test_new_iteration_gate_cannot_omit_direction_review(tmp_path: Path) -> None
     )
 
 
-def test_chinese_prompt_injects_documented_context_not_rewritten_prompt(tmp_path: Path) -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / ".claude/hooks/UserPromptSubmit-harness-context.sh"
-    )
-    result = subprocess.run(
-        ["bash", str(script)],
-        input=json.dumps({"prompt": "继续优化策略，尽快盈利"}),
-        text=True,
-        capture_output=True,
-        check=True,
-        env={**os.environ, "OC_ROOT": str(tmp_path)},
-    )
-    output = json.loads(result.stdout)
-    assert "prompt" not in output
-    assert output["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
-    assert "research-mission.zh.md" in output["hookSpecificOutput"]["additionalContext"]
+def test_chinese_brief_is_preserved_in_neutral_workflow(tmp_path: Path, repo_root: Path) -> None:
+    write_json(tmp_path / "control.json", {"draft": False, "research": True})
+    workflow = json.loads((repo_root / "research/workflow.json").read_text())
+    write_json(tmp_path / "research/workflow.json", workflow)
+    for role in workflow["roles"].values():
+        prompt_path = tmp_path / role["prompt"]
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_bytes((repo_root / role["prompt"]).read_bytes())
+    brief = tmp_path / "research/chinese_fixture/brief.md"
+    brief.parent.mkdir()
+    original = "继续优化策略，尽快盈利\nContext: docs/research-mission.zh.md\n".encode()
+    brief.write_bytes(original)
+    prompts = {}
+
+    def transport(_command, prompt, folder, _timeout):
+        phase = folder.name
+        prompts[phase] = prompt
+        reference = next(
+            line.removeprefix("Brief: ")
+            for line in prompt.splitlines()
+            if line.startswith("Brief: ")
+        )
+        assert (tmp_path / reference).read_bytes() == original
+        write_json(
+            folder / "reply.json",
+            {
+                "status": "blocked" if phase == "worker" else "complete",
+                "summary": "Synthetic transport only; no model or research execution",
+                "decision": "none" if phase == "worker" else "park",
+                "results": None,
+                "next_brief": None,
+                "checkpoint": None,
+            },
+        )
+        return {"exit_code": 0, "session": f"fixture-{phase}", "usage": None}
+
+    state = run_round(tmp_path, "chinese_fixture", "r1", 30, execute_fn=transport)
+
+    assert state["status"] == "round_finished"
+    assert set(prompts) == {"worker", "lead"}
+    assert brief.read_bytes() == original
+    assert (brief.parent / "runs/r1/brief.md").read_bytes() == original
+    worker = workflow["roles"]["worker"]
+    assert prompts["worker"].startswith((repo_root / worker["prompt"]).read_text())
+    assert "继续优化策略" not in prompts["worker"]  # Read the file; do not inject/rewrite it.
 
 
 def setup_queue(tmp_path: Path, monkeypatch) -> dict:

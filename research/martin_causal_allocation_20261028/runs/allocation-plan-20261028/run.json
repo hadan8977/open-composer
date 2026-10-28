@@ -1,0 +1,79 @@
+{
+  "direction": "martin_causal_allocation_20261028",
+  "run_id": "allocation-plan-20261028",
+  "status": "round_finished",
+  "phases": {
+    "worker": {
+      "requested_runtime": {
+        "provider": "codex",
+        "model": "gpt-6.1-sol",
+        "effort": "xhigh",
+        "prompt": "prompts/worker.md"
+      },
+      "status": "complete",
+      "session": "01a182ab-0989-7c60-b185-b710ed5cb3c8",
+      "usage": {
+        "input_tokens": 3434488,
+        "cached_input_tokens": 3307264,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 37954,
+        "reasoning_output_tokens": 12426
+      },
+      "exit_code": 0,
+      "checkpoint": null,
+      "results_snapshot": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/worker/results.json",
+      "summary": "已完成分配协议、因果证据与成本记录，确认3批同刻现金竞争。实测CPU 4.52秒、墙钟10.55秒；后续单账户预计20–35分钟。来源、链接、结果契约及格式检查通过。候选收益未知，下一步独立计划评审；本轮未启动账户，权限、paper及调度未变。",
+      "decision": "continue",
+      "results": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/results.json",
+      "next_brief": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/next-review-brief.md"
+    },
+    "reviewer": {
+      "requested_runtime": {
+        "provider": "codex",
+        "model": "gpt-6.1-sol",
+        "effort": "xhigh",
+        "prompt": "prompts/reviewer.md"
+      },
+      "status": "complete",
+      "session": "01a182ba-cc0e-7702-ab0b-0c0481de9cab",
+      "usage": {
+        "input_tokens": 2609269,
+        "cached_input_tokens": 2507008,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 26107,
+        "reasoning_output_tokens": 7117
+      },
+      "exit_code": 0,
+      "checkpoint": null,
+      "summary": "接受计划，无需修订。独立核验1,754行状态、1,420个提案及九条成交量，确认三批现金竞争，足以支持已见Q1机制实验，尚不证明收益改善。financial_go仍为false；账户启动前须验证StrategySpec、独立审阅实现并完成资源准入。详见本轮reviewer/review.md和review.json。累计暴露、学习检查点、paper与调度保留。",
+      "decision": "accept",
+      "results": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/results.json",
+      "next_brief": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/reviewer/next-implementation-brief.md"
+    },
+    "lead": {
+      "requested_runtime": {
+        "provider": "codex",
+        "model": "gpt-6-astra",
+        "effort": "xhigh",
+        "prompt": "prompts/lead.md"
+      },
+      "status": "complete",
+      "session": "01a182c5-ed6a-7402-9027-032f2fdbb863",
+      "usage": {
+        "input_tokens": 586467,
+        "cached_input_tokens": 512768,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 8242,
+        "reasoning_output_tokens": 1608
+      },
+      "exit_code": 0,
+      "checkpoint": null,
+      "summary": "继续：独立计划已接受，三批现金竞争支持进入实现核验。A收益未知，后续须超过R的$2,993.36、B的$4,099.75并比较风险。下一轮完成实现与独立审阅，financial_go仍为false。共享周额度已用73%，不设额度停机。brief、链接及25项原绑定检查通过；证据见本轮lead/decision.zh.md。",
+      "decision": "continue",
+      "results": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/results.json",
+      "next_brief": "research/martin_causal_allocation_20261028/runs/allocation-plan-20261028/lead-next-brief.md"
+    }
+  },
+  "active_phase": null,
+  "finished": "2026-10-28T13:54:38.673702+00:00"
+}

@@ -55,10 +55,8 @@ def test_all_open_aggregates_every_open_library_but_not_daily27() -> None:
     assert len(columns) == 154 + 33 + 20 + 25 + 21
 
 
-def test_screened_top40_recent_missing_file_raises_actionable_error() -> None:
-    original_exists = fs.SCREENED_TOP40_PATH.exists()
-    if original_exists:
-        pytest.skip("screened_top40_recent.json already exists on disk")
+def test_screened_top40_recent_missing_file_raises_actionable_error(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(fs, "SCREENED_TOP40_PATH", tmp_path / "missing-screened-top40.json")
     with pytest.raises(FileNotFoundError, match="screen_factors.py"):
         fs.resolve_feature_set("screened_top40_recent")
 

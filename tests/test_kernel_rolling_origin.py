@@ -104,6 +104,7 @@ def test_returns_from_ohlcv_computes_simple_returns_sorted_by_time() -> None:
     assert returns.iloc[1] == pytest.approx(1.0 / 101.0)
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(
     not (default_sip_root() / "daily").is_dir(),
     reason="local SIP daily archive (data/sip/daily) is not present",

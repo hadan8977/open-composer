@@ -386,6 +386,7 @@ HAVE_S0 = (S0_DIR / "cache/price_panel.parquet").exists() and (
 ).exists()
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(not HAVE_S0, reason="Stage-0 cache / daily_broad not available")
 @pytest.mark.xfail(
     strict=False,

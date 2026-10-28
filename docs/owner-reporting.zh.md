@@ -1,134 +1,84 @@
-# 给机主的汇报规范（日报、周报）
+# Owner reporting
 
-机主 2026-10-04 要求：进展汇报要有固定、合乎逻辑的形式，并且每天发邮件，不用再到对话里问。本文件规定格式、口径和投递方式。研究内容的口径以 `docs/research-mission.zh.md` 和 `docs/evaluation-standard.zh.md` 为准。
+This document defines reporting content and delivery. Research method and scientific thresholds live in their own references; a report does not authorize research, spending or orders. Write owner-facing reports in the owner's requested language, currently Chinese. English guidance does not require translating historical reports or quotations.
 
-## 0. 机主 2026-10-06 的要求（优先于本文件其他各节）
+## 0. Editorial rules
 
-机主读完 10-06 的邮件日报后说："如果把这份日报发给一个不带上下文的 Subagent 去读，我相信它是读不懂的，因为连我都看不懂你在说什么。"要求如下，日报、周报和发到机主对话的汇报都适用：
+Lead with money, useful research evidence and consequential problems. Separate existing paper/live operations from new research. Explain conclusions in business language; keep task IDs, hashes, internal approval jargon and file paths in the evidence appendix. A report must be understandable without opening attachments.
 
-1. **分类清楚**：一部分讲模拟盘和实盘具体做了什么；一部分讲今天研究了什么。可以附文件，但核心内容必须在正文里用机主看得懂的话写出来，机主没有时间逐个打开附件。
-2. **只写有意义的事**：真有问题就直接说；"限额暂停"这类琐事不写。
-3. **括号里不写内部细节**：例如"只测数据，没有碰信号和收益"这类话，自己知道就行。
-4. **严禁内部代号**：任务号（如 T75、T-20261005-31）、策略代号（S1–S3、C2、F1、F2）、版本号（v1.2）、计划代号（P1–P6）、修正案编号等一律换成业务名称。对照表见第 7 节。
-5. **专业汇报，不是流水账**：自动研究轮的逐轮记录只作附件，用来证明做了工作或显示状态，不能代替正式汇报。
-6. **机主问过的问题要正面回答**：不能只把问题"体现到研究里"。每个问题登记在 `reports/owner/live-track.json` 的 `owner_asks`，每期日报都报告进展，直到关闭。
+Use actual dated results, not plans or stale summaries. Address unresolved owner questions from `reports/owner/live-track.json`. Report confirmed quota exhaustion, unavailable inputs or permissions and financial decisions when consequential; do not turn ordinary technical recovery into owner approval. Already-decided matters such as parked DS are not new pending decisions.
 
-### 0.1 日报正文的固定结构
+### 0.1 Standard report structure
 
-```
-# Open Composer 日报 · MM-DD（周X）
-一、结论（3–6 条：钱、最重要的进展、最大的问题、要你决定的事）
-二、模拟盘和实盘今天做了什么
-    ETF 轮动策略：表格加一两句，说明调仓、成交、对账
-    股票多空组合：下了多少单、成交多少、盈亏，有问题直接说
-    高频和日内策略：从上模拟盘那天起列入
-    实盘：没有就写"没有"
-三、今天研究了什么（只列有结论的）
-    每条依次写：要回答什么问题；怎么做的；结果，带关键数字；对赚钱意味着什么，下一步和日期
-四、你的问题和要求：进展（owner_asks 表，加必要的说明）
-五、需要你决定的事（表：事项、截止、不答复时的默认）
-附：证据（不必读）——文件路径只能出现在这里；逐轮记录在邮件附件里
-```
+Use the five semantic sections expected by `scripts/owner_report.py lint`, in the owner's language:
 
-### 0.2 谁来写，怎么检查
+1. Conclusions:3–6 concise points covering account outcomes, decisive progress, the main gap and any owner decision.
+2. Paper and live operations:ETF sleeves, equity long/short, intraday/HFT and live status; actual orders, fills, rejections, partial/missing receipts, reconciliation, PnL and data dates.
+3. Research:question, method, real numbers, economic meaning, limitations, next action and date.
+4. Progress on the owner's questions and requirements.
+5. Owner decisions:issue, impact, recommendation/options, deadline and what happens without a reply. State none when applicable.
 
-- **日报撰写步骤**：Paseo 定时任务 `oc-owner-daily-writer`，每周一到周六 00:05 UTC（北京 08:05），Opus 5.5。它读本节、上一期日报、上一期以来的逐轮记录、`docs/current-view.zh.md` 的新章节、`reports/owner/live-track.json`，并运行 `uv run python scripts/owner_report.py tables` 取交易表格。然后写 `reports/owner/daily/<UTC 日期>.zh.md`。
-  - 关键数字要回到结果文件核对，不照抄逐轮记录。
-  - 只写上一期日报以后的新事；旧事有新进展才写。
-  - 写完运行 `uv run python scripts/owner_report.py lint <文件>`，错误必须为 0，警告逐条看过再决定是否改。
-  - 用 `git add -f` 提交，不改别的文件。
-- **01:00 UTC 的 cron**（北京 09:00）把这个文件原样作为正文发出，代号会自动换成业务名称，再加一行附件说明。逐轮记录、任务清单和运行状态作为附件 `运行记录-<日期>.md` 一起发。
-- 文件不存在时，比如撰写步骤没跑成，就发自动生成的简版：问题、交易表格、问题进展、待决定事项，开头写明"今天的文字总结没有按时写成"。下一期日报补上研究部分。
-- 周报：周六 19:07 的主审轮按同样的规则写 `reports/owner/weekly/<ISO 周>.zh.md`，并跑同样的检查。
-- 交互会话给机主写汇报时，也按本节的规则。
-- **研究全景** `reports/owner/research-map.zh.md`（机主 10-06 问"这些方向到底做没做"后建立）：每个方向做了什么、结论、现在在哪一步。周六 19:07 主审轮写周报时同步更新，日报的研究部分只写新结论。
+Append evidence paths and detailed inventories. Round reports prioritize the period's increment in roughly600–1200 Chinese characters; daily/weekly reports may expand. Do not repeat unchanged inventories every two hours.
 
-## 1. 汇报要回答的问题（按优先级）
+### 0.2 Writers and state
 
-1. **钱怎么样**：各账户和子策略的盈亏、和 SPY 比、回撤、成交和对账是否正常。实盘状态单列，没有实盘就写"没有"。
-2. **离赚钱有多近**：每条候选策略在哪一档（P1 模拟孵化 → P2 实盘候选 → L1 实盘试点提议 → L2 加到目标规模），差什么，最早什么时候能到下一档。
-3. **这段时间学到了什么**：保留、停放、否定了哪些方向，关键数字和档案路径。否定也是产出，要写死因。
-4. **风险和事故**：集中度、数据缺陷、运行故障、预算（Claude 额度、Modal、磁盘）、授权到期日。
-5. **接下来做什么**：带日期的步骤，每步写通过或停止条件。
-6. **需要机主做什么**：只列真正需要机主决定或知道的事。没有就写"没有"。
+`config/owner-reporting.json` and `config/autonomous-report-target.json` are the current routes. `config/research-agent-roles.json` retains reporting settings only; new research roles live in `research/workflow.json`. Reuse the single persistent report hub and existing event state; never recreate research rounds for reporting.
 
-## 2. 三层汇报
+Before reporting, check the action-specific hold. Read relevant task states and original evidence, not entire histories. A process/session ending is not proof of an economic result. If events change materially while drafting, add a timestamped publication update without mixing it into the earlier counting window.
 
-| 层 | 时间 | 生成方式 | 内容 |
-|---|---|---|---|
-| 日报 | 每天 01:00 UTC（北京 09:00） | 00:05 UTC 撰写步骤写正文（第 0.2 节），`scripts/owner_report.py auto --send` 发出；逐轮记录作附件 | 第 0.1 节的固定结构 |
-| 周报 | 每周日 01:00 UTC，替代当天的日报 | 周六 19:07 主审轮写判断部分（`reports/owner/weekly/<ISO 周>.zh.md`），脚本附上一周数据 | 第 3 节的固定结构 |
-| 即时告警 | 发生时 | 现有的紧急停止和故障日志；日报汇总前一天的告警 | 本规范不新增即时通道 |
+## 2. Existing cadence
 
-周报文件缺失时（例如主审轮被额度闸门暂停），周日照常发脚本生成的一周数据，并在开头注明"本周判断未写"。
-
-## 3. 周报固定结构
-
-0. **一页结论**：钱、最大进展、研究面、最大风险、运营事故、需要你决定的。每条一到两行。
-1. **账户与模拟盘**：
-   - 账户一览，含实盘行；
-   - 子策略表：做什么、持仓、本周、起始以来、SPY 同期、最大回撤、授权到期；
-   - 前向与回测是否对得上，对不上要写原因；
-   - 研究预期，标明是回测。
-2. **策略管线**：按阶段排的表，列出关键证据、下一步和截止日、退出或停止条件。
-3. **本周研究结论**：
-   - 数量：登记簿和任务队列的统计；
-   - 共同的失败模式；
-   - 按类别（组合构造、交易成本、因子、事件、择时、日内、模型、LLM、另类数据）列的表：结论、关键数字、档案路径。
-4. **风险与运营**：集中度、数据坑、事故、预算、授权到期。
-5. **项目与工程改动**：按交易执行、数据、研究框架、自动化分组，附提交统计。
-6. **下周计划**：带日期的表，外加"离实盘还有多远"。
-7. **需要你知道或决定的事**。
-8. **附：术语**。
-
-第一份范例：`reports/owner/weekly/2026-W40.zh.md`。
-
-## 4. 口径
-
-- **子策略收益**：账本净值相对预算（每条 1.5 万美元），按本地 SIP 收盘价估值，与 cockpit 的 `/paper` 同源（`open_composer.cockpit.data.paper`）。
-- **SPY 同期**：
-  - 起始以来：子策略第一个会话的开盘价到最近收盘价；
-  - 本周、当日：收盘价到收盘价。
-- **最大回撤**：从预算起算，按日收盘净值计算。
-- **"本周"**：上一个周五收盘到本周五收盘。研究和运营按周日 00:00 UTC 切周，和 Claude 周额度一致。
-- **回测数字**：一律标"回测"，写清窗口和成本，优先用不挑调仓日的中位数。
-- **短窗口**：前向不到 20 个会话时只做跟踪，不下结论。
-- **前向对预期**（T-20261005-39 A 批）：读 `reports/research/program/forward-record-2026-10-06/`。z 和夏普取自 `summary.json`（不重算）；概率夏普 = 该夏普对 0 的 PSR（Bailey–López de Prado 2012，偏度、峰度来自 `record.csv` 的前向日收益），记录标为夏普不具意义（前向少于 20 天）时夏普和概率夏普都不给。95% 所需会话 = 假如前向夏普等于回测近期夏普（`summary.json` 的 backtest_recent 均值和标准差，未按试验数打折），达到 95% 信心的最短记录长度（正态矩），是下限；不能用前向夏普本身算（10-06 主审：11 天的年化夏普标准误约 4.8，曾得出 S2"只需 12 个会话"）。进度 = 前向会话 / 所需会话。记录里没有的写"缺"。实现 `open_composer/reports/owner_forward.py`。
-- **v1.2 每日动作**：2026-10-07 起，读 `reports/paper/book/<账户>/` 的 `plans/`（计划单数、成交额）、`orders/`（发出、未接受 = 回执里 failed）、`daily/`（成交、部分成交、未成交 + 缺失）；换手 = （买入 + 卖出金额）/ 权益基数；没有文件写"未开始"，此前的计划是彩排不计入。
-- **四个 pass 分开报**：`workflow_pass`、`research_pass`、`paper_ready_pass`、`ml_contribution_pass` / `llm_contribution_pass`。
-
-## 5. 写作规则（另见第 0 节）
-
-- 每个关键数字带来源路径或提交号；数字用代码算，不心算；不确定写"待核对"。
-- 先写结论，再写证据。用机主能看懂的话，术语放在附录里解释。
-- 不写空话，不把计划写成进展。"数据下载完""界面做好"不算策略进展。
-- 不在报告和邮件里写任何密钥、账户号、`.env` 内容。
-
-## 6. 投递
-
-- 发件和收件都是机主的 Gmail，走 SMTP 587 STARTTLS，用的是 himalaya 里现有的应用专用密码。
-  - 配置在 `/root/.config/open-composer/report-mail.env`（权限 600，不进仓库），键为 `SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`MAIL_FROM`、`MAIL_TO`。`MAIL_TO` 可以写多个地址，用逗号分隔。
-  - Gmail API 的两个旧令牌在 2026-10-04 都已失效（客户端被删、令牌过期），不要再用。
-- cron：`0 1 * * *`（10-06 前是 00:50）运行 `scripts/owner_report.py auto --send`，周日自动发周报。日志在 `logs/owner_report.log`，生成的正文存在 `logs/owner-report/`。
-- 手动预览不发信：`uv run python scripts/owner_report.py daily`。手动发周报：`uv run python scripts/owner_report.py weekly --send`。
-- 改发送时间或收件人：改 crontab 那一行或配置文件，不用改代码。
-
-## 7. 业务名称对照表（写给机主的文字一律用右列）
-
-| 内部叫法 | 写给机主 |
+| Output | Existing time/route |
 |---|---|
-| S1，`us_etf_sector_rotation_252_top2_weekly` | 行业轮动 |
-| S2，`us_etf_growth_rotation_blend_top2_monthly` | 成长轮动 |
-| S3，`us_etf_levered_rotation_63_top2_monthly` | 杠杆轮动 |
-| C2，`us_etf_eom_sector_blend_monthly` | 月末效应 |
-| v1.2 股票组合，F1 / F2 | 股票多空组合：市场中性版 / SPY 增强版 |
-| quant1 / quant2 | 市场中性账户 / SPY 增强账户 |
-| 主模拟账户 | 主模拟账户（ETF 策略所在） |
-| DSR | 按试过的版本数打折后的"真实有效概率"（第一次出现时这样解释） |
-| 同波动夏普、ΔSR | 承担同样波动时，收益比原来高多少 |
-| P1 / P2 / L1 / L2 档 | 模拟孵化 / 实盘候选 / 小规模实盘试点 / 加到目标规模 |
-| P1–P6 项目 | 中频选股、市场状态和主题风险、复杂建模、实盘通道和资金配置、研究工厂、期权 |
-| 主审轮 / 执行轮 / 简报 / 队列 | 不写；需要时说"自动研究" |
-| 预注册、合同冻结 | 事先写定检验方案和通过标准 |
-| 修正案 A1、A2 | 不写编号，直接说改了什么 |
+| Round | Every even UTC hour at:05, covering the previous approximately2hours; persistent hub |
+| Daily | Writer00:05UTC; publication01:00UTC,09:00Beijing |
+| Weekly | Sunday, replacing that day's daily report |
+| Material blocker | One event when confirmed; coalesce unchanged repeats |
 
+Read actual schedule context when execution is delayed. Existing mail delivery remains separate from chat publication. This document does not authorize creating schedules, extra emails or replaying missed reports in a burst.
+
+Daily drafts: `reports/owner/daily/<UTC-date>.zh.md`; weekly drafts: `reports/owner/weekly/<ISO-week>.zh.md`. Published chat reports: `reports/owner/updates/<UTC-time>-<kind>.zh.md`. Missing human-readable drafts must be disclosed; do not claim a scheduled trigger produced a report.
+
+## 3. Weekly additions
+
+Include account/sleeve returns, matched benchmarks, drawdown, authorization expiry and forward-versus-backtest evidence; a strategy pipeline with next milestones; significant findings and shared failure modes across mechanisms; operational incidents and actual budgets; useful engineering changes; next week's proposal and genuine owner decisions. Update the existing research map for actual changes. A historical example is `reports/owner/weekly/2026-W40.zh.md`, not a source of current numbers.
+
+## 4. Measurement
+
+- Explain net profit consistently. **Broker-reported paper PnL** uses the broker's simulated fills and marks, with external cash flows and missing statements/marks identified; label a raw equity change as such when those adjustments are unavailable. **Model-adjusted paper PnL** subtracts only explicitly stated estimated incremental costs and is not an actual-cost certification. **Historical-simulation net PnL** uses the declared fill, funding, dividend/action and transaction/holding-cost assumptions. Preserve these separate figures and show the reconciliation when comparing them.
+- For each cost component, state whether it is already embedded in the fill price or separately deducted, whether it is observed or modeled, its notional/time basis, and missing coverage. Bid/ask fills already embed a spread; additional friction must have a distinct interpretation. Check possible duplicate spread deductions before calling a broker-plus-model figure fully net. Borrow/financing are holding costs, not per-trade fees. Keep primary and stress assumptions distinct; a fixed bps scenario is not the broker's fee schedule. Preserve historical records and publish traceable corrections instead of silently rewriting them.
+- Read the current owner's goal interpretation. A valid negative result remains completed scientific research, but does not satisfy a goal explicitly requiring positive model/alternative-data contribution. A queued task, preparation, read-only observation or shadow backtest does not satisfy newly operating paper delivery. Preserve missed original deadlines separately from an explicitly requested recovery date.
+- State the report window, as-of time and each account's latest market date. Stale/missing daily ledgers and repeated dates are operating faults, not current profitability. Read the applicable `reports/paper/lifecycle/review-plan-20261014.json` or its accepted successor for review/expiry dates.
+- ETF sleeve returns use ledger equity relative to actual allocated capital and local SIP marks. SPY inception comparison uses the sleeve's first-session open through latest close; daily/weekly comparisons use close-to-close. Drawdown starts at allocated capital. Trading week means priorFriday close to currentFriday close; research/operations use the reporting week boundary.
+- For equity books, reconcile `plans/`, `orders/` and `daily/` together. A zero unfilled counter does not prove no submission rejection, missing receipt or position drift. Turnover is buy-plus-sell notional divided by the correct equity basis.
+- Label backtests with samples, costs, selection and funding assumptions. Original-sample, recent, method and deployment results are separate. Show informative realistic-cost and pressure results together; do not use an old sample's final days as evidence about today's market.
+- Fewer than20forward sessions are tracking evidence, not a meaningful forward Sharpe/PSR verdict. Reuse accepted forward statistics and `open_composer/reports/owner_forward.py`; do not derive required record length from a highly noisy short forward Sharpe. A95% duration based on unshrunk backtest moments is only a lower bound.
+- Keep workflow, research, ML/LLM contribution and paper readiness separate. Missing performance is N/A, not zero; conditional method results remain visible at their actual scope. Use the progress template for unambiguous inventory and exposure counts.
+- When useful results have a relevant correlation comparison, summarize it against existing paper strategies and explain possible account benefit. Keep the common sample and costs clear, and distinguish a proposed different mechanism from measured diversification. Correlation testing is not required for every iteration or report; reuse unchanged evidence and add rolling/downside or portfolio detail only when useful to the decision. Follow the owner's lightweight preference rather than an exhaustive checklist.
+
+## 6. Delivery and material issues
+
+Run `.venv/bin/python scripts/owner_report.py lint <file>`; resolve errors and examine warnings without deleting inconvenient facts. `health <event_id>` verifies the business artifact, not delivery or readership. Maintain `reports/owner/reporting-state.json` event IDs, window, evidence, pending decisions and actual delivery state. Do not claim a queued message was published or read.
+
+The dispatcher routes one event to the valid persistent hub. If it is closed, reuse another valid hub or create one only under current reporting authority, using an actually existing stable project workspace. Do not reuse a dead workspace ID, archive the hub after a report, or prompt it recursively. Hub failures are operational events; do not repeatedly notify a closed decision agent.
+
+The hub writes and publishes the complete report in its own final response. The writer does not send duplicate mail. Existing mail uses the configured SMTP route; never read/print credentials or alter recipients/cadence as a reporting side task. Existing preview commands include `scripts/owner_report.py daily` and `weekly`; `--send` requires the existing applicable delivery authority.
+
+Material owner decisions include new spending, account/authority changes, owner-only information and changes to goals/risk/major priorities. Routine scientific/technical decisions stay with the research team. State evidence, impact, remedies already tried, options, deadline and default. Waiting affects only the dependent operation. Update `owner_decisions` and preserve actual replies; never infer consent from elapsed time.
+
+## 7. Business names
+
+Translate these meanings into the report language instead of exposing internal codes:
+
+| Internal identity | Business meaning |
+|---|---|
+| S1 / sector rotation | Sector rotation |
+| S2 / growth rotation | Growth rotation |
+| S3 / leveraged rotation | Leveraged rotation |
+| C2 / end-of-month | Month-end effect |
+| quant1 / F1 | Market-neutral equity long/short account |
+| quant2 / F2 | SPY-enhanced equity account, only when currently applicable |
+| P1 / P2 / L1 / L2 | Paper incubation / live candidate / proposed small live pilot / target-scale proposal |
+| DSR | Sharpe evidence adjusted for the variants tried |
+
+Use current strategy/account records when roles have changed. A historical label is not proof that an account is still operating that strategy.

@@ -295,6 +295,7 @@ def test_available_sip_years(archive: Path) -> None:
 
 
 @requires_real_daily
+@pytest.mark.research_snapshot
 def test_real_archive_daily_qqq_window() -> None:
     frame = load_sip_bars("QQQ", frequency="daily", start="2022-01-01", end="2022-12-31")
     assert 240 <= len(frame) <= 256
@@ -306,6 +307,7 @@ def test_real_archive_daily_qqq_window() -> None:
 
 
 @requires_real_minute
+@pytest.mark.research_snapshot
 def test_real_archive_minute_is_partial_but_finer_than_daily() -> None:
     """The minute tape is still being fetched, so assert shape, not row counts."""
     years = available_sip_years("minute")

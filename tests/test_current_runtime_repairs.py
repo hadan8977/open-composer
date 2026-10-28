@@ -31,7 +31,7 @@ from open_composer.intraday_runner.source_state_checkpoint import (
 ROOT = Path("/root/codex-test/open-composer")
 P = ROOT / "reports/research/program/owner-profit-delivery-plan-20261017"
 CAPACITY = ROOT / "reports/ops/disk-audit-20261015/capacity-BASE-H5-22MiB-admission-20261019.json"
-BUY = f"{NAMESPACE}-1019-buy-AAPL"
+BUY = f"{NAMESPACE}-1020-buy-AAPL"
 
 
 @pytest.fixture(autouse=True)
@@ -134,7 +134,7 @@ def fake_gateway(r):
 
 @pytest.mark.parametrize("defect", ["oldest", "capture", "paired", "head", "future", "valid"])
 def test_final_delete_full_temporal_guard(tmp_path, monkeypatch, defect):
-    now = datetime(2026, 10, 19, 14, 1, tzinfo=UTC)
+    now = datetime(2026, 10, 20, 14, 1, tzinfo=UTC)
     r, current = make_runtime(tmp_path, monkeypatch, now)
     r.current_phase = "cancel"
     if defect == "oldest":
@@ -168,11 +168,11 @@ def test_final_delete_full_temporal_guard(tmp_path, monkeypatch, defect):
 @pytest.mark.parametrize(
     "phase,killed,when,allowed",
     [
-        ("exit", True, "2026-10-19T13:45:00+00:00", True),
-        ("exit", False, "2026-10-19T13:45:00+00:00", False),
-        ("cancel", True, "2026-10-19T13:45:00+00:00", False),
+        ("exit", True, "2026-10-20T13:45:00+00:00", True),
+        ("exit", False, "2026-10-20T13:45:00+00:00", False),
+        ("cancel", True, "2026-10-20T13:45:00+00:00", False),
         ("exit", False, "2026-11-13T20:46:00+00:00", True),
-        ("exit", True, "2026-10-19T19:59:00+00:00", False),
+        ("exit", True, "2026-10-20T19:59:00+00:00", False),
     ],
 )
 def test_cancel_trigger_not_original_request_mutation(
@@ -201,7 +201,7 @@ def test_cancel_trigger_not_original_request_mutation(
 def test_kill_cancels_then_reconciles_before_any_exit(tmp_path, monkeypatch, terminal, racing_fill):
     from open_composer.intraday_runner.source_terminal_holds import retain_terminal_liability
 
-    now = datetime(2026, 10, 19, 13, 45, tzinfo=UTC)
+    now = datetime(2026, 10, 20, 13, 45, tzinfo=UTC)
     r, initial = make_runtime(tmp_path, monkeypatch, now)
     request = dict(
         client_order_id=BUY,
@@ -282,17 +282,25 @@ def test_kill_cancels_then_reconciles_before_any_exit(tmp_path, monkeypatch, ter
     assert result["flat_certified"] is False
 
 
-def test_active22_exact_receipt_and_stale14_refused():
+def test_active22_exact_receipt_and_stale14_refused(tmp_path):
     from open_composer.intraday_runner.current_initialization_storage import capacity
 
     receipt = json.loads(CAPACITY.read_text())
     proposal = json.loads((ROOT / receipt["proposal"]["path"]).read_text())
+    owned = tmp_path / "owned"
+    owned.mkdir()
+    proposal["current_root_allocation"] = [{"root": str(owned)}]
+    proposal_path = tmp_path / "proposal.json"
+    proposal_path.write_text(json.dumps(proposal))
+    receipt["proposal"] = bound(proposal_path)
+    receipt_path = tmp_path / "receipt.json"
+    receipt_path.write_text(json.dumps(receipt))
     job = dict(
         task_id="BASE-CURRENT-INITIALIZATION-20261019",
         whole_route_bytes=23068672,
         protected_normal_bytes=10918819017,
         terminal_bytes=65536,
-        capacity_receipt=bound(CAPACITY),
+        capacity_receipt=bound(receipt_path),
         owned_roots=[r["root"] for r in proposal["current_root_allocation"]],
     )
     assert capacity(ROOT, job)["remaining_current"] >= 0
@@ -304,7 +312,9 @@ def test_active22_exact_receipt_and_stale14_refused():
 def prepared(tmp_path, monkeypatch):
     from open_composer.intraday_runner import current_initialization_storage as storage
 
-    monkeypatch.setattr(storage, "capacity", lambda *a: dict(remaining_current=2000000))
+    monkeypatch.setattr(
+        storage, "capacity", lambda *a: dict(remaining_current=sum(storage.SLOTS.values()) + 65536)
+    )
     job = dict(owned_roots=[str(tmp_path)], invocation_id="invented")
     manager = storage.NativeStorage(tmp_path, job)
     binding = {"invented": True}
@@ -344,7 +354,11 @@ def test_preallocated_failure_slot_without_new_allocation(tmp_path, monkeypatch)
     assert before == after
     assert json.loads((directory / "entry-emergency.json").read_text())["outcome"] == "UNKNOWN"
     with pytest.raises(FileExistsError):
-        monkeypatch.setattr(storage, "capacity", lambda *a: dict(remaining_current=2000000))
+        monkeypatch.setattr(
+            storage,
+            "capacity",
+            lambda *a: dict(remaining_current=sum(storage.SLOTS.values()) + 65536),
+        )
         manager.prepare(output, binding)
 
 
@@ -449,7 +463,7 @@ if pid==0:
         os.setsid()
         os.write(w,json.dumps(process_identity(os.getpid())).encode()+b'\n')
         os.close(w)
-        time.sleep(30)
+        time.sleep(60)
         os._exit(5)
     os.close(w)
     os._exit(0)
@@ -461,10 +475,14 @@ fixed_record(directory,'worker.json',dict(job=binding,entry=identity,worker=None
 stop_recorded_worker(directory,binding)
 reap_recorded_children(directory,binding)
 assert not Path('/proc/'+str(identity['pid'])).exists()
-print('owned orphan reaped')
+# Lifecycle assertions are complete; avoid unrelated interpreter finalizers.
+print('owned orphan reaped',flush=True)
+os._exit(0)
 """
+    # Include interpreter imports and durable slot barriers in the harness
+    # allowance; ownership, signalling and actual OS reap remain asserted below.
     result = subprocess.run(
-        [sys.executable, "-c", code, str(directory)], capture_output=True, text=True, timeout=5
+        [sys.executable, "-c", code, str(directory)], capture_output=True, text=True, timeout=30
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "owned orphan reaped"

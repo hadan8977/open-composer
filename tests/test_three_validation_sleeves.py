@@ -183,7 +183,7 @@ def test_ten_continuous_targets_reach_existing_whole_quantity_path(tmp_path):
     r.auth = dict(
         capital_usd=4000, authorized_at="2026-10-19T00:00:00Z", expires_at="2026-11-14T00:00:00Z"
     )
-    r.clock = lambda: datetime(2026, 10, 19, 9, tzinfo=UTC)
+    r.clock = lambda: datetime(2026, 10, 20, 9, tzinfo=UTC)
     r.directory = tmp_path
     original = invented_result()
     r.receive_science = lambda: component.normalize_received(original)

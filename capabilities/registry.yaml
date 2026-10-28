@@ -11,7 +11,8 @@ capabilities:
     supported_timeframes: [daily]
     paper_ready_timeframes: []
     strict_behavior: research_only
-    fixture: reports/research/program/portfolio-dynamic-allocation-increment-20261026/input-reception.json
+    fixture: data/fixtures/capabilities/synthetic_operating_nav_receipt.json
+    retained_source_artifact: reports/research/program/portfolio-dynamic-allocation-increment-20261026/input-reception.json
     min_score: 1.0
     caveats:
       - fixed S1 S2 S3 C2 BASE and H5 saved operating-NAV indices; all source history and prior trials remain seen
@@ -20,6 +21,7 @@ capabilities:
       - original source-specific costs leverage survivorship and restatement limitations remain; outer unit fees are additional hypothetical costs
       - no promotion paper readiness new data acquisition or source-account replay authority
       - generic OHLCV fixture scoring does not validate this receipt format; exact saved-unit input reception is required separately
+      - portable fixture is invented schema and byte-binding coverage only, not an accepted source-account receipt
 
   - id: events.fed_scheduled_statement_dates
     kind: event
@@ -31,11 +33,12 @@ capabilities:
     supported_timeframes: [daily]
     paper_ready_timeframes: []
     strict_behavior: research_only
-    fixture: reports/research/program/day-goal-20261013/primary-return-breadth/calendar-events.jsonl
+    fixture: data/fixtures/capabilities/synthetic_fed_scheduled_statement_dates.jsonl
+    retained_source_artifact: reports/research/program/day-goal-20261013/primary-return-breadth/calendar-events.jsonl
     min_score: 0.95
     caveats:
       - historical archives establish dates and statement links, not every original publication timestamp or advance calendar vintage
-      - actual fetched_at and first_seen_at are current acquisition receipts; fixture visible_at does not certify historical replay availability
+      - actual retained fetched_at and first_seen_at are acquisition receipts; invented fixture timestamps do not certify historical replay availability or actual meeting dates
       - conditional replay uses declared next-session-close activation while phase remains anchored to actual scheduled meeting date
       - no calendar or fixture pass permits promotion, paper execution, or causal Fed policy claims
 
@@ -50,12 +53,14 @@ capabilities:
     supported_timeframes: [daily, monthly]
     paper_ready_timeframes: []
     strict_behavior: research_only
-    fixture: reports/research/program/day-goal-20261013/equity-role/sources/dm-published-portfolios-201402.tar.gz
+    fixture: data/fixtures/capabilities/synthetic_dm_author_deciles.tar.gz
+    retained_source_artifact: reports/research/program/day-goal-20261013/equity-role/sources/dm-published-portfolios-201402.tar.gz
     min_score: 0.95
     caveats:
       - published all-firm decile returns are gross historical portfolio series, not tradable stock bars
       - daily-to-monthly reconstruction differs from the separately published monthly returns
       - no historical stock identity, holdings, borrow, costs, or paper execution readiness
+      - portable fixture contains invented daily and monthly decile rows for native archive-schema validation only
 
   - id: market.sample_ohlcv
     kind: market
@@ -498,7 +503,8 @@ capabilities:
     supported_timeframes: [monthly]
     paper_ready_timeframes: []
     strict_behavior: research_only
-    fixture: reports/research/program/return-line-replenishment-20261016/common-factor-residual-momentum-20261017/ff3-selected-monthly.csv
+    fixture: data/fixtures/capabilities/synthetic_ff3_current_monthly.csv
+    retained_source_artifact: reports/research/program/return-line-replenishment-20261016/common-factor-residual-momentum-20261017/ff3-selected-monthly.csv
     source_urls:
       archive: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip
       definitions: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library/f-f_factors.html
@@ -508,7 +514,7 @@ capabilities:
       - monthly RF is a regression input, not permission to accrue the account cash rate
       - no generic executable market-bar provider or fixture-based paper readiness is certified
       - actual source bytes, percentage units, factor clock and task input bindings require independent reception
-      - fixture is the immutable accepted monthly four-factor-vector input in decimal return units, not OHLC bars; the generic market-bar fixture evaluator does not validate this schema
+      - portable fixture is an invented monthly four-factor vector in decimal return units; native schema validation does not replace the accepted vector at retained_source_artifact
 
   - id: market.french_ff3_annual_archives
     kind: market
@@ -521,7 +527,8 @@ capabilities:
     supported_timeframes: [monthly]
     paper_ready_timeframes: []
     strict_behavior: research_only
-    fixture: reports/research/program/return-line-replenishment-20261016/factor-vintage-sensitivity-20261017/sources/ff3-july-2023-selected.csv
+    fixture: data/fixtures/capabilities/synthetic_ff3_annual_archive_monthly.csv
+    retained_source_artifact: reports/research/program/return-line-replenishment-20261016/factor-vintage-sensitivity-20261017/sources/ff3-july-2023-selected.csv
     source_urls:
       archives: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_factors_archive.html
       definitions: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
@@ -531,7 +538,7 @@ capabilities:
       - archive-overlap perturbation keeps uncovered current-vintage cells unchanged and unverified
       - original FF3 four-column vector includes RF; no substitution of FF5 SMB or account cash interest
       - no historical PIT, executable annual-update policy, physical fill or paper-readiness claim
-      - fixture is the immutable accepted July 2023 selected four-factor-vector input in decimal return units, not all archive coverage or OHLC bars; the generic market-bar fixture evaluator does not validate this schema
+      - portable fixture is an invented monthly four-factor vector in decimal return units; it neither replaces the accepted July 2023 vector at retained_source_artifact nor validates archive coverage
 
   - id: reference.sec_sic_industry
     kind: event

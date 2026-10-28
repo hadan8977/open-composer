@@ -1,58 +1,31 @@
 ---
 name: strategy-research-orchestrator
 description: >
-  Orchestrates the full research workflow for an Open Composer strategy:
-  spec validation → harness plan → capability evaluation → source research →
-  search space → trials → benchmark family → backtest forensics →
-  execution reality → promotion report → paper readiness.
-  Use when the user gives a trading idea, requests strategy creation or
-  optimization, asks for paper ready, or requests professional review.
+  Coordinate strategy research, optimization, promotion and paper readiness
+  using applicable native gates. Adapt to the research object and lifecycle;
+  components and method maintenance need no unrelated strategy or deployment.
 ---
 
-## Inputs
+# Strategy research tools and routing
 
-- Natural-language idea OR existing StrategySpec YAML path
-- Desired lifecycle stage (draft / research / promotion / paper_ready)
+Use [idea-to-paper](../idea-to-paper/SKILL.md) to frame an economic question, [research workflow](../../../research/README.md) for team continuity, and [the review standard](../../../docs/research-plan-review-standard.zh.md) for acceptance. Reuse the existing complete task, evidence and cumulative budgets.
 
-## Mandatory outputs
+| Purpose | Native entry or specialist |
+|---|---|
+| Strategy behavior | Draft/load a StrategySpec; `uv run --no-sync oc spec validate <spec>` before strategy code/Pine. |
+| Risk-dependent artifacts | `uv run --no-sync oc harness plan <spec>`; read its detected domains and requirements. |
+| Required inputs | `uv run --no-sync oc spec capabilities <spec> --json`; [data review](../data-capability-reviewer/SKILL.md). Use [capability-evaluator](../capability-evaluator/SKILL.md) for registry/fixture hygiene. |
+| Unstable external claims | [source-researcher](../source-researcher/SKILL.md). |
+| Economic admission | `uv run --no-sync oc research direction-check <path>` and `uv run --no-sync oc research iteration validate <iter_id>`; apply campaign and knowledge gates where the contract requires them. |
+| Bounded candidate evaluation | Registered search and trial accounting; `uv run --no-sync oc strategy parameter-sweep <spec>` only for an admitted search. |
+| Refresh evidence | `uv run --no-sync oc strategy evidence <spec>` after relevant artifact changes; do not use the deprecated hidden `research-control` path. |
+| Optimized strategy validity | [backtest-forensics](../backtest-forensics/SKILL.md). |
+| Daily-open, leveraged-ETF or paper-auto execution | [execution-reality-reviewer](../execution-reality-reviewer/SKILL.md). |
+| Lifecycle assessment | `uv run --no-sync oc strategy promotion-report <spec>` or `uv run --no-sync oc paper readiness <spec>` when applicable. |
+| Paper activation | `uv run --no-sync oc harness verify <spec>` and [paper-auto-safety-reviewer](../paper-auto-safety-reviewer/SKILL.md), within effective order authorization. |
 
-- `reports/harness/plans/{strategy}.json` — harness plan with detected risk domains
-- `reports/research/{strategy}-research-brief.json` — research brief and search space
-- `reports/research/{strategy}-evidence-manifest.json` — artifact checklist
-- `reports/research/control/{strategy}-state.json` — compact research state
-- `reports/research/control/{strategy}-memory.md` — short LLM memory packet
+The table is a reference, not a mandatory sequence. Dependent computation requires its actual input and economic admission; bounded preparation can resolve gaps without an empty StrategySpec.
 
-## Step sequence
+Use native outputs where consumers require them: `reports/harness/plans/{strategy}.json`, research briefs/evidence manifests under `reports/research/`, and existing task state under `reports/research/control/`. [Risk domains](../../../harness/risk_domains.yaml), [artifact contracts](../../../harness/artifact_contracts.yaml), and [skill routing](../../../harness/skill_manifest.yaml) define the actual consumer requirements. Preserve frozen definitions, seen OOS and cumulative exposure; a harness pass does not grant resource or order permission.
 
-0. **Read research memory** — if `reports/research/control/{strategy}-memory.md` exists, read it before proposing changes. Use it to avoid repeated failed parameter combinations. Do not treat it as a global factor blacklist.
-1. **Draft spec** — `uv run oc strategy draft --idea "<idea>"` or load existing spec under `strategy_specs/{drafts,active,approved}/`.
-2. **Validate spec** — `uv run oc spec validate <spec>`. Fix any schema errors before proceeding.
-3. **Harness plan** — `uv run oc harness plan <spec>`. Read detected risk domains and required skills. Do not skip this step.
-4. **Capability evaluation** — run `uv run oc spec capabilities <spec> --json`; run `uv run oc capability test` if registry fixture hygiene matters. Flag trial or sample capabilities.
-5. **Source research** — invoke `source-researcher` for every risk domain that requires source cards. Do not proceed past research without source cards for unstable external claims.
-6. **Bounded search space** — if spec has adjustable parameters, define a small parameter range before running sweep.
-7. **Trials and candidate set** — run `uv run oc strategy parameter-sweep <spec>` and write trial ledger. This automatically refreshes research control memory.
-8. **Research evidence checkpoint** — run `uv run oc strategy evidence <spec>` after manual report edits or external artifact changes. The hidden `research-control` command is deprecated and should not be the primary path.
-9. **Benchmark family** — compare against benchmark proxies (SPY, QQQ, sector ETFs as appropriate).
-10. **Backtest forensics** — invoke `backtest-forensics` skill. Required for any optimized strategy and at promotion stage.
-11. **Execution reality review** — invoke `execution-reality-reviewer` if `daily_open_execution`, `leveraged_etf`, or `paper_auto` domain is active.
-12. **Promotion report** — `uv run oc strategy promotion-report <spec>`.
-13. **Paper readiness** — `uv run oc paper readiness <spec>` only if lifecycle or user requests paper automation.
-
-## Gate rules
-
-- Do not skip source research when risk domain requires it.
-- Do not skip execution reality review when daily_open_execution or paper_auto is active.
-- Do not recommend paper_auto activation unless `oc harness verify <spec>` passes.
-- Use research memory as a compact control signal: change at most one or two strategic variables per loop, preserve current effective combinations unless there is contrary evidence, and avoid context-specific failures.
-- Do not globally reject a factor solely because one single-factor or one-parameter trial failed; multifactor interactions remain valid research space.
-- Treat multiple-testing, DSR, and regime diagnostics as warnings during exploration and stronger gates near promotion/paper readiness.
-- Label `workflow_pass`, `research_pass`, `llm_contribution_pass`, `paper_ready_pass` separately in every summary.
-- Never enable real-money broker writes.
-
-## References
-
-- `harness/risk_domains.yaml` — risk domain definitions and required skills
-- `harness/artifact_contracts.yaml` — artifact required fields
-- `harness/skill_manifest.yaml` — skill trigger index
-- `AGENTS.md` — project-level rules
+Deliver results through [owner reporting](../../../docs/owner-reporting.zh.md). Components may have different useful endpoints; do not create a second execution engine, fixed role hierarchy or deployment requirement for them.

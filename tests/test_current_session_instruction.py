@@ -102,22 +102,38 @@ def test_gen1_zero_flow_successor_and_partial_hold(tmp_path, monkeypatch, saved,
     clone.mkdir()
     for name in ("head.json", "revision-00000000.json", "revision-00000001.json"):
         (clone / name).write_bytes((source / name).read_bytes())
+    # Reconstruct the historical GEN1 pointer from its retained immutable bytes;
+    # the active ledger head may have advanced since this evidence was recorded.
+    retained = json.loads((clone / "revision-00000001.json").read_text())
+    (clone / "head.json").write_text(
+        json.dumps(
+            dict(generation=1, sha256=_hash(retained)), sort_keys=True, separators=(",", ":")
+        )
+        + "\n"
+    )
     store = SourceStateCheckpoint(clone, account_hash=ACCOUNT, sleeve_id=BASE)
     before = store.load()
     assert before["generation"] == 1
     before_raw = (clone / "revision-00000001.json").read_bytes()
     pointer_dir = tmp_path / "registry"
     pointer_dir.mkdir()
-    original_pointer = Path(old["ledger_root"]).parent / ".account-envelope" / (BASE + ".json")
-    # Real registry is beside the strategy's account root, not inside it.
-    if not original_pointer.exists():
-        original_pointer = (
-            ROOT
-            / ("reports/paper/intraday/dia-base-initialization-20261019/.account-envelope")
-            / (BASE + ".json")
-        )
     pointer = pointer_dir / (BASE + ".json")
-    pointer.write_bytes(original_pointer.read_bytes())
+    # Recreate the exact received GEN1 registry from its immutable authority.
+    # The active registry is allowed to advance to later reviewed successors.
+    save(
+        pointer,
+        dict(
+            task=BASE,
+            authority=bind(auth_path),
+            partition=old["partition"],
+            ledger_root=old["ledger_root"],
+            namespace=old["namespace"],
+            allocation=old["capital_usd"],
+        ),
+    )
+    assert bind(pointer)["sha256"] == (
+        "77f9dcbf6774d293ca8d1fc82bca9e04f199657deeb84a207be48636959aea7c"
+    )
     old_pointer = pointer.read_bytes()
     new = copy.deepcopy(old)
     new.update(
@@ -254,7 +270,8 @@ def test_unchanged_cash_observation_and_final_order_guards():
     from open_composer.intraday_runner import current_initialization_runtime as module
 
     path = "open_composer/intraday_runner/current_initialization_runtime.py"
-    old = ast.parse(subprocess.check_output(["git", "show", "b79178c:" + path], text=True))
+    # Accepted deployed runtime already includes the Oct20 continuation guards.
+    old = ast.parse(subprocess.check_output(["git", "show", "242f3b09:" + path], text=True))
     new = ast.parse(Path(module.__file__).read_text())
     names = {
         "load_authority",
@@ -621,6 +638,15 @@ def test_saved_gen1_later_initialization_NAV_observe_without_opening_retag(
     clone.mkdir()
     for name in ("head.json", "revision-00000000.json", "revision-00000001.json"):
         (clone / name).write_bytes((original / name).read_bytes())
+    # Reconstruct the historical GEN1 pointer from its retained immutable bytes;
+    # the active ledger head may have advanced since this evidence was recorded.
+    retained = json.loads((clone / "revision-00000001.json").read_text())
+    (clone / "head.json").write_text(
+        json.dumps(
+            dict(generation=1, sha256=_hash(retained)), sort_keys=True, separators=(",", ":")
+        )
+        + "\n"
+    )
     store = SourceStateCheckpoint(clone, account_hash=ACCOUNT, sleeve_id=BASE)
     before = store.load()
     before_bytes = (clone / "revision-00000001.json").read_bytes()

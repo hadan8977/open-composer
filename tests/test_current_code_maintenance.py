@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import socket
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,6 @@ from open_composer.intraday_runner.validation_account_partition import (
     BASE,
     H5,
     LSTM,
-    SLOTS,
     slot,
 )
 
@@ -369,7 +369,7 @@ def partition_successor(f):
         "three-partition.json",
         dict(
             selected_task=LSTM,
-            selected_tasks=list(SLOTS),
+            selected_tasks=[BASE, H5, LSTM],
             owner_instruction=owner,
             account_binding=f["old"]["main_scope"],
             prior_partition=f["old"]["partition"],
@@ -517,7 +517,7 @@ def funding_successor(f, monkeypatch):
             audit_directory=str(data / "funding-audit"),
         ),
     )
-    c, o, kw = context()
+    c, o, kw = context(now=datetime(2026, 10, 20, 9, 30, tzinfo=UTC))
     o["checkpoint_hash"] = _hash(original)
     partition = SimpleNamespace(held=True)
     runtime = SimpleNamespace(

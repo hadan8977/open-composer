@@ -100,14 +100,23 @@ target identities, so old evidence remains inspectable.
 
 ## Verification commands
 
-Run one pytest process at a time with the existing memory guard. The accepted
-scientific fixtures are read-only and require the existing evidence tree;
-`OPEN_COMPOSER_ROOT` selects that evidence while `PYTHONPATH` selects candidate
-code during worktree review:
+Run one pytest process at a time. `make verify-paper` runs the portable release
+checks and then the physical source-admission proofs. Packaged source readers
+and private synthetic metadata replace the former external-root test dependency;
+no `OC_SOURCE_REFERENCE_ROOT` or `OPEN_COMPOSER_ROOT` override is required.
 
 ```bash
-scripts/run_capped.sh --class paper --mem 900M --swap 0 -- env OPEN_COMPOSER_ROOT=/root/codex-test/open-composer PYTHONPATH=/root/codex-test/oc-restructure-paper-20261028 PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /root/codex-test/open-composer/.venv/bin/python -m pytest tests/test_paper_production_migration.py tests/test_six_paper_service.py tests/test_six_paper_service_fill_regression.py tests/test_six_paper_input_hook.py tests/test_six_paper_order_lookup_evidence.py tests/test_source_state_checkpoint.py tests/test_cockpit_paper_trials.py tests/test_cockpit_input_recovery_reading.py tests/test_dated_refresh_exec_recovery.py tests/test_paper_formation_continuity.py
+make verify-paper
+# Focused recheck of the 11 physical CPU/cgroup admission cases:
+make test-native-resource
 ```
+
+The native target uses the existing admission wrapper with a real 400 MiB limit,
+zero swap and CPU 0. Its assertions must not be mocked or weakened to fit an
+unconstrained test process. This target needs the managed Linux host's systemd
+and cgroup facilities. The Makefile prepends the current checkout to `PYTHONPATH`, so an isolated
+worktree tests its candidate code even when the environment is shared. Never
+install or synchronize over the running service's environment as part of validation.
 
 No test activation, new timer, authorization renewal or numerical job is needed
 to validate this relocation. A historical recovery manifest remains evidence of

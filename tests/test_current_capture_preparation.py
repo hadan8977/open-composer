@@ -197,7 +197,8 @@ def test_body_budget_refusal_retains_unusable_metadata(rig, tmp_path):
 
 def test_financial_methods_and_limits_are_unchanged():
     path = "open_composer/intraday_runner/current_initialization_runtime.py"
-    old = ast.parse(subprocess.check_output(["git", "show", "0752864d:" + path], text=True))
+    # Accepted deployed runtime already includes the Oct20 continuation guards.
+    old = ast.parse(subprocess.check_output(["git", "show", "242f3b09:" + path], text=True))
     new = ast.parse(Path(runtime.__file__).read_text())
     names = {
         "load_authority",

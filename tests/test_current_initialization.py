@@ -28,9 +28,9 @@ from open_composer.intraday_runner.current_initialization_dispatch import (
 )
 from open_composer.intraday_runner.source_activity_reception import bind
 
-START = datetime(2026, 10, 19, tzinfo=UTC)
+START = datetime(2026, 10, 20, tzinfo=UTC)
 END = datetime(2026, 11, 14, tzinfo=UTC)
-NOW = datetime(2026, 10, 19, 13, 40, tzinfo=UTC)
+NOW = datetime(2026, 10, 20, 13, 40, tzinfo=UTC)
 
 
 @pytest.fixture(autouse=True)
@@ -128,9 +128,9 @@ def test_complete_cash_observation_is_not_exchange_time():
         ("account_hash", "b" * 64),
         ("checkpoint_hash", "old"),
         ("completed_monotonic", 30),
-        ("oldest_response_at", "2026-10-19T13:39:40+00:00"),
-        ("completed_at", "2026-10-19T13:40:01+00:00"),
-        ("completed_at", "2026-10-19T13:40:00"),
+        ("oldest_response_at", "2026-10-20T13:39:40+00:00"),
+        ("completed_at", "2026-10-20T13:40:01+00:00"),
+        ("completed_at", "2026-10-20T13:40:00"),
     ],
 )
 def test_observation_fail_closed(field, value):
@@ -165,7 +165,7 @@ def risk():
     return dict(
         initial_capital="10000",
         high_water="24000",
-        day="2026-10-19",
+        day=NOW.date().isoformat(),
         day_open_nav="22000",
         halted=False,
         killed=False,
@@ -197,14 +197,14 @@ def test_actual_opening_clock_no_reset():
     o = observation()
     o.update(
         verified_nav="20000",
-        started_at="2026-10-19T13:30:00+00:00",
-        completed_at="2026-10-19T13:30:02+00:00",
+        started_at="2026-10-20T13:30:00+00:00",
+        completed_at="2026-10-20T13:30:02+00:00",
     )
     r = risk_transition(p, o, now=NOW, opening=True)
     assert r["day_open_nav"] == "20000"
     with pytest.raises(ValueError):
         risk_transition(r, o, now=NOW, opening=True)
-    o["completed_at"] = "2026-10-19T13:31:00+00:00"
+    o["completed_at"] = "2026-10-20T13:31:00+00:00"
     with pytest.raises(ValueError):
         risk_transition(p, o, now=NOW, opening=True)
 
@@ -244,7 +244,7 @@ def transport(tmp_path, monkeypatch):
 
     client = Client()
     journal = CurrentDispatchJournal(tmp_path / "journal")
-    cid = f"{NAMESPACE}-1019-buy-AAPL"
+    cid = f"{NAMESPACE}-{DAY:%m%d}-buy-AAPL"
     reservation = dict(side="buy", symbol="AAPL", quantity=2, filled=0, limit_price=10.0)
     req = dict(
         client_order_id=cid,
@@ -254,8 +254,8 @@ def transport(tmp_path, monkeypatch):
         type="limit",
         time_in_force="day",
         limit_price=10.0,
-        execution_day="2026-10-19",
-        reference_day="2026-10-16",
+        execution_day=DAY.isoformat(),
+        reference_day="2026-10-19",
         reference_price=10.009,
         reference_valid=True,
         reservation=reservation,
@@ -322,46 +322,32 @@ def test_final_no_write_boundaries(transport, fault):
 
 
 def test_shared_run_body_only_policy_hook_extraction():
-    repo = Path("/root/codex-test/open-composer")
-    old = ast.parse((repo / "open_composer/intraday_runner/source_dispatch_journal.py").read_text())
-    new = ast.parse(Path("open_composer/intraday_runner/source_dispatch_journal.py").read_text())
+    import subprocess
+
+    path = "open_composer/intraday_runner/source_dispatch_journal.py"
+    # Freeze the accepted deployed journal, including its durable storage hooks.
+    old = ast.parse(subprocess.check_output(["git", "show", "242f3b09:" + path], text=True))
+    new = ast.parse(Path(path).read_text())
 
     def method(tree, name):
         return next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == name)
 
-    # Remove only the additive storage hook and inline its atomic writer.
-    # Cancellation/read/durability economic behavior must remain exact.
-    class WithoutStorage(ast.NodeTransformer):
-        def visit_Expr(self, node):
-            call = node.value
-            if (
-                isinstance(call, ast.Call)
-                and isinstance(call.func, ast.Attribute)
-                and call.func.attr == "_before_write"
-            ):
-                return None
-            return self.generic_visit(node)
-
-        def visit_Call(self, node):
-            node = self.generic_visit(node)
-            if isinstance(node.func, ast.Attribute) and node.func.attr == "_write_text":
-                node.func = ast.Name(id="_atomic_write_text", ctx=ast.Load())
-            return node
-
-    new = WithoutStorage().visit(new)
     for name in ("cancel_own_remainder_once", "receive", "_ensure_durable_directory"):
         assert ast.dump(method(old, name), include_attributes=False) == ast.dump(
             method(new, name), include_attributes=False
         )
 
 
-def test_generic_execution_refuses_day_limit():
+def test_generic_execution_refuses_day_limit(fixture_specs_root, tmp_path):
     from open_composer.execution_policy import require_orderable_execution_policy
-    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.models.strategy_spec import ExecutionPolicy, load_strategy_spec
 
-    spec = load_strategy_spec("strategy_specs/drafts/dia_base_current_initialization_20261019.yaml")
-    with pytest.raises(ValueError):
-        require_orderable_execution_policy(spec, Path.cwd())
+    spec = load_strategy_spec(fixture_specs_root / "fixture_pullback_15m.yaml")
+    spec.execution_policy = ExecutionPolicy(
+        policy_id="invented-current-day-limit", order_style="day_limit", time_in_force="day"
+    )
+    with pytest.raises(ValueError, match="unsupported paper order_style: day_limit"):
+        require_orderable_execution_policy(spec, tmp_path)
 
 
 @pytest.mark.parametrize("route", ["BASE", "H5"])
@@ -376,6 +362,7 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
     from open_composer.intraday_runner import current_initialization_account as account_module
     from open_composer.intraday_runner import current_initialization_runtime as runtime_module
     from open_composer.intraday_runner.source_state_checkpoint import SourceStateCheckpoint
+    from tests.test_current_validation_authority import authority as invented_authority
 
     synthetic_id = "invented-isolated-test-account"
     synthetic_hash = hashlib.sha256(synthetic_id.encode()).hexdigest()
@@ -387,7 +374,7 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
 
     monkeypatch.setattr(controls, "ACCOUNT", synthetic_hash)
     monkeypatch.setattr(old_gateway, "_require_verified_paper_client", lambda c: None)
-    clock = [datetime(2026, 10, 19, 13, 0, tzinfo=UTC)]
+    clock = [datetime(2026, 10, 20, 13, 0, tzinfo=UTC)]
     mono = [100.0]
     calls = []
 
@@ -475,21 +462,27 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
     runtime.clock = lambda: clock[0]
     runtime.monotonic = lambda: mono[0]
     runtime.auth = dict(
+        capital_usd=10000,
         account_hash=synthetic_hash,
         authorized_at=START.isoformat(),
         expires_at=END.isoformat(),
         reconciliation_after=START.isoformat(),
     )
     runtime.authority = {}
-    runtime.task = runtime_module.BASE if route == "BASE" else runtime_module.H5
+    runtime.task = (
+        runtime_module.BASE if route == "BASE" else "H5-LEARNED-SWING-PAPER-VALIDATION-20261019"
+    )
     runtime.namespace = NAMESPACE if route == "BASE" else "h5cur-20261019-fa6147de"
     from open_composer.intraday_runner.validation_account_partition import (
         ValidationAccountPartition,
     )
 
+    _, partition_authority = invented_authority(tmp_path, runtime.task)
+
     class SyntheticPartition(ValidationAccountPartition):
         def __init__(self):
-            pass
+            self.root = tmp_path
+            self.binding = partition_authority["partition"]
 
         def register(self, task, authority):
             assert task == runtime.task
@@ -518,11 +511,16 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
     runtime.transport_bytes = 0
     runtime.transport_count = 0
     runtime.trace_directory = tmp_path / "transport"
+    runtime.trace_directory_identity = None
+    runtime.current_request = None
+    runtime.current_response = None
+    runtime.capture_storage = None
+    runtime.capture_slots = None
     runtime.observation = None
     runtime.required_symbols = set()
     runtime.current_phase = "decision"
     runtime.secure_snapshot = None
-    runtime.read_guard = lambda: None
+    runtime.read_guard = lambda **kwargs: None
     runtime.entry_guard = lambda **kwargs: None
     dated = tmp_path / "dated.json"
     dated.write_text(
@@ -549,7 +547,7 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
     out.mkdir()
     result = runtime.decide(out)
     assert result["broker_writes"] == 0 and not any(m != "GET" for m, _, _ in calls)
-    clock[0] = datetime(2026, 10, 19, 13, 30, tzinfo=UTC)
+    clock[0] = datetime(2026, 10, 20, 13, 30, tzinfo=UTC)
     mono[0] = 1900
     runtime.observe(tmp_path / "opening", opening=True)
     before = runtime.store.load()
@@ -578,7 +576,7 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
     reserved_before = sum(
         p["amount"] for r in current["snapshot"]["pending"].values() for p in r["remaining_funding"]
     )
-    clock[0] = datetime(2026, 10, 19, 14, 0, tzinfo=UTC)
+    clock[0] = datetime(2026, 10, 20, 14, 0, tzinfo=UTC)
     mono[0] = 3700
     runtime.current_phase = "cancel"
     out = tmp_path / "cancel"
@@ -595,7 +593,7 @@ def test_complete_offline_orchestration_no_network(tmp_path, monkeypatch, route)
         )
         == reserved_before
     )
-    clock[0] = datetime(2026, 10, 19, 20, 5, tzinfo=UTC)
+    clock[0] = datetime(2026, 10, 20, 20, 5, tzinfo=UTC)
     mono[0] = 25600
     runtime.current_phase = "reconcile"
     out = tmp_path / "postclose"
@@ -723,6 +721,8 @@ def test_existing_global_kill_and_local_stop_refuse_before_state_or_transport(tm
     r.directory = tmp_path / "own"
     r.directory.mkdir()
     r.read_guard = lambda: None
+    r.auth = {}
+    r.capture_storage = None
     set_paper_kill_switch(
         tmp_path, enabled=True, reason="invented safety fixture", updated_by="test"
     )

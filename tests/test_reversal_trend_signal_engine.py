@@ -190,6 +190,7 @@ def _full_window_bars() -> pd.DataFrame:
 
 
 @pytestmark_archive
+@pytest.mark.research_snapshot
 def test_bootstrap_absorbs_history_with_zero_signals(_full_window_bars: pd.DataFrame) -> None:
     spec = _reversal_trend_spec()
     engine = ReversalTrendSignalEngine()
@@ -206,6 +207,7 @@ def test_bootstrap_absorbs_history_with_zero_signals(_full_window_bars: pd.DataF
 
 
 @pytestmark_archive
+@pytest.mark.research_snapshot
 def test_idempotent_recall_is_a_harmless_no_op(_full_window_bars: pd.DataFrame) -> None:
     spec = _reversal_trend_spec()
     engine = ReversalTrendSignalEngine()
@@ -226,6 +228,7 @@ def test_idempotent_recall_is_a_harmless_no_op(_full_window_bars: pd.DataFrame) 
 
 
 @pytestmark_archive
+@pytest.mark.research_snapshot
 def test_state_replay_equivalence_chunked_vs_single_bootstrap(
     _full_window_bars: pd.DataFrame,
 ) -> None:
@@ -276,6 +279,7 @@ def test_state_replay_equivalence_chunked_vs_single_bootstrap(
 
 
 @pytestmark_archive
+@pytest.mark.research_snapshot
 def test_pending_position_matches_full_window_admission(_full_window_bars: pd.DataFrame) -> None:
     """A bars_panel truncated to strictly inside a real trade's holding
     window must report that trade as "open" with the exact same entry

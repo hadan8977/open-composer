@@ -1,0 +1,23 @@
+{
+  "status": "Legacy reporting compatibility only; new research uses research/workflow.json.",
+  "archived_configuration": "docs/archive/agent-materials/config/research-agent-roles.json",
+  "roles": {
+    "reporting": {
+      "provider": "codex/gpt-6-astra",
+      "settings": {
+        "modeId": "full-access",
+        "thinkingOptionId": "xhigh"
+      },
+      "responsibility": "Report verified existing artifacts through the existing single hub and mail route; no new experiments or substituted final decisions.",
+      "prompts": [
+        "prompts/owner-daily-weekly-writer.zh.md",
+        "prompts/owner-report-dispatch.zh.md",
+        "prompts/owner-report-hub.zh.md"
+      ],
+      "runtime_route_dependencies": [
+        "config/owner-reporting.json",
+        "config/autonomous-report-target.json"
+      ]
+    }
+  }
+}

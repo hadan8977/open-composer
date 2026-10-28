@@ -1,7 +1,7 @@
 """Tests of the v1.2 production target generator (``open_composer.book_paper.v12_targets``).
 
-The parity tests read the research snapshot (``data/research/equity_book``) and skip when it is
-absent.  The reference is the account simulator of ``scripts/book_v12_account.py`` run through the
+The optional integrations require ``--research-snapshots`` and the retained snapshot
+(``data/research/equity_book``). The reference is ``scripts/book_v12_account.py`` through the
 full-history ``realism_ladder_book_ls.Context`` (own price matrices, stateful monthly M1 sources),
 so the generator's window loader and stateless tranche recomputation are checked against the
 backtest's own path."""
@@ -175,6 +175,7 @@ def _reference(date_s: str, variant: str):
 
 
 @needs_data
+@pytest.mark.research_snapshot
 @pytest.mark.parametrize(("variant", "date_s"), PARITY_CASES)
 def test_generator_target_shares_equal_the_account_simulator(variant, date_s):
     ref = _reference(date_s, variant)
@@ -211,6 +212,7 @@ def test_generator_target_shares_equal_the_account_simulator(variant, date_s):
 
 
 @needs_data
+@pytest.mark.research_snapshot
 def test_parity_dates_include_high_vix_decision_dates():
     vix = pd.read_csv(v12.default_vix_dir(SNAPSHOT) / "VIXCLS.csv", na_values=["."])
     vix["observation_date"] = pd.to_datetime(vix["observation_date"])
@@ -220,6 +222,7 @@ def test_parity_dates_include_high_vix_decision_dates():
 
 
 @needs_data
+@pytest.mark.research_snapshot
 def test_written_target_files_round_trip_through_the_engine_loader(tmp_path):
     targets = v12.build_v12_targets("2026-09-10", variant=VARIANT, logged_at_utc=STAMP)
     for target in targets.values():
@@ -316,6 +319,7 @@ def test_driver_lock_is_exclusive(tmp_path):
 
 
 @needs_data
+@pytest.mark.research_snapshot
 def test_cli_targets_summary_exit_codes(tmp_path):
     from typer.testing import CliRunner
 

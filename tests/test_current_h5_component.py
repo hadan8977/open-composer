@@ -192,7 +192,7 @@ def test_same_native_gate_requires_exact_selected_task_and_scope(tmp_path, monke
         active=True,
         phase="decision",
         invocation_id="invented-one",
-        whole_route_bytes=23068672,
+        whole_route_bytes=94044160,
         protected_normal_bytes=10918819017,
         terminal_bytes=65536,
         authority={"invented": "authority"},
@@ -200,7 +200,12 @@ def test_same_native_gate_requires_exact_selected_task_and_scope(tmp_path, monke
         code_bindings=code,
         not_before="2026-10-19T00:00:00Z",
         expires_at="2026-10-19T20:10:00Z",
-        capacity_receipt={},
+        capacity_receipt={
+            "sha256": "cc8d60c8f3b39fabcfd1c6987baa025d7810a6df345222dbf9c8325243fbbede"
+        },
+        concurrent_SIP_capacity={"invented": "SIP"},
+        concurrent_CASH_capacity={"invented": "CASH"},
+        current_normal_forecast={"invented": "normal"},
         owned_roots=[],
         native_acceptance={"invented": "native"},
     )
@@ -210,11 +215,24 @@ def test_same_native_gate_requires_exact_selected_task_and_scope(tmp_path, monke
         scope="CURRENT_VALIDATION_NATIVE_V1",
         job_scope={k: v for k, v in job.items() if k not in excluded},
     )
-    auth = dict(task_id=task, code_bindings=code, ledger_root=str(slot(tmp_path, task)[0]))
+    auth = dict(
+        task_id=task,
+        code_bindings=code,
+        ledger_root=str(slot(tmp_path, task)[0]),
+        authorized_at=job["not_before"],
+        expires_at=job["expires_at"],
+    )
     namespace.update(
         bound_bytes=lambda root, b: json.dumps(
             native if b == job["native_acceptance"] else job
         ).encode(),
+        # The gate checks the clock again after admission work. Both readings
+        # belong to the same invented invocation, never the host's current date.
+        datetime=type(
+            "FixtureClock",
+            (),
+            {"now": staticmethod(lambda tz: datetime(2026, 10, 19, 6, tzinfo=UTC))},
+        ),
         load_authority=lambda *a: auth,
         capacity=lambda *a: {"invented": True},
         kernel_evidence=lambda: {"invented": True},
@@ -236,7 +254,7 @@ def test_h5_existing_decision_quantity_path_is_no_write_rehearsal(tmp_path):
     r.auth = dict(
         capital_usd=10000, authorized_at="2026-10-19T00:00:00Z", expires_at="2026-11-14T00:00:00Z"
     )
-    r.clock = lambda: datetime(2026, 10, 19, 6, tzinfo=UTC)
+    r.clock = lambda: datetime(2026, 10, 20, 6, tzinfo=UTC)
     r.directory = tmp_path
     r.receive_science = lambda: h5.normalize_received(invented())
     r.initialize = lambda package: None

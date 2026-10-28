@@ -120,7 +120,7 @@ def test_conflicting_activity_owner_refuses():
         (1000000, 5000, "changed", False),
     ],
 )
-def test_combined_reservations_and_other_head(funds, gross, other_head, allowed):
+def test_combined_reservations_and_other_head(tmp_path, funds, gross, other_head, allowed):
     state = books()
     for b in state.values():
         b["snapshot"]["pending"] = {
@@ -132,7 +132,10 @@ def test_combined_reservations_and_other_head(funds, gross, other_head, allowed)
                 remaining_funding=[dict(source="cash", amount=200)],
             )
         }
-    p = Partition.__new__(Partition)
+    from tests.test_current_validation_authority import authority
+
+    _, auth = authority(tmp_path, BASE)
+    p = Partition(tmp_path, auth["partition"])
     p.books = lambda: state
     obs = dict(
         account_marked_value=gross,

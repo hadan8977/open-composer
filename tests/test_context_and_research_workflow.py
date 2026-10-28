@@ -16,6 +16,7 @@ from open_composer.engines.scanner_engine import run_scan
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research import draft_strategy_from_idea, optimize_strategy
 from open_composer.research.alternative_data_evidence import build_alternative_data_evidence
+from open_composer.research.optimizer import _candidate_specs
 from open_composer.research.short_risk import build_short_risk_report
 
 
@@ -194,7 +195,9 @@ def test_alpaca_cache_strategy_meets_target_thresholds(
         "feed": "iex",
     }
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
-    preregister_iteration_dossier(spec_path, candidate_count=9)
+    # Register the optimizer's exact versions before execution, not nine copies
+    # of the source strategy under a quantity-only fixture contract.
+    preregister_iteration_dossier(spec_path, candidate_count=9, candidate_factory=_candidate_specs)
 
     result = optimize_strategy(
         spec_path,

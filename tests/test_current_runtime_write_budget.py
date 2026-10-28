@@ -144,7 +144,7 @@ def test_checkpoint_default_economics_and_bytes_match_current_production(tmp_pat
 
 
 def journal_arguments(tmp_path):
-    cid = f"{NAMESPACE}-1019-buy-AAPL"
+    cid = f"{NAMESPACE}-{DAY:%m%d}-buy-AAPL"
     reservation = dict(side="buy", symbol="AAPL", quantity=2, filled=0, limit_price=10.0)
     request = dict(
         client_order_id=cid,
@@ -154,8 +154,8 @@ def journal_arguments(tmp_path):
         type="limit",
         time_in_force="day",
         limit_price=10.0,
-        execution_day="2026-10-19",
-        reference_day="2026-10-16",
+        execution_day=DAY.isoformat(),
+        reference_day="2026-10-19",
         reference_price=10.009,
         reference_valid=True,
         reservation=reservation,
@@ -174,7 +174,7 @@ def journal_arguments(tmp_path):
         execution_day=DAY,
         authorized_at=datetime(2026, 10, 19, tzinfo=UTC),
         expires_at=datetime(2026, 11, 14, tzinfo=UTC),
-        clock=lambda: datetime(2026, 10, 19, 13, 40, tzinfo=UTC),
+        clock=lambda: datetime(2026, 10, 20, 13, 40, tzinfo=UTC),
         revalidate=lambda r: None,
         submit=lambda r: calls.append(r) or {"large_reply": "x" * 100000},
     )
@@ -277,11 +277,13 @@ def test_shared_slot_registry_refuses_before_any_publication(tmp_path):
         ValidationAccountPartition,
         slot,
     )
+    from tests.test_current_validation_authority import authority
 
+    _, invented = authority(tmp_path, BASE)
     p = ValidationAccountPartition.__new__(ValidationAccountPartition)
     p.root, p.binding, p.directory, p.held = (
         tmp_path,
-        {"invented": True},
+        invented["partition"],
         tmp_path / "registry",
         True,
     )

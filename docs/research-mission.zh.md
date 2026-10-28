@@ -1,47 +1,40 @@
-# 研究使命与工作方式
+# Research mission
 
-用户于 2026-09-21 重申；Codex、Claude Code 和后台研究任务共用。新会话先读本文件，再读 `docs/current-view.zh.md` 的最新日期章节。
+The objective is meaningful whole-account net profit, measured over rolling12 months including idle cash and all trading costs. The owner seeks annual returns in the high double digits to100% or more and portfolio Sharpe above2. These are research goals, not achieved performance, a promise or permission to add leverage.
 
-首要目标是尽快找到并验证适合近期市场、扣除实际交易成本后能带来有意义利润的策略。优先缩短从有依据的方向到可证伪实验、模型训练和前向验证的时间。允许策略只在某种近期市场状态或有限时期有效；不擅自把“十年都有效”或“像指数一样长期稳定”作为必要条件。近期有效必须写明适用状态、有效期、失效信号和退出规则。不能承诺盈利，也不能用挑选过的历史收益代替未见数据和前向证据。
+## Investment preferences
 
-## 工作标准（机主 2026-10-01 重申，永久有效）
+- Research US-tradable instruments within actual account/data authority: stocks and ETFs, including commodity ETFs; eligible long/short, options and other previously authorized instruments. Do not default to ETFs, long-only or low frequency.
+- Prioritize near-term return opportunities while retaining useful exploration. Regime-specific opportunities are valid; do not impose ten-year durability. Compare return, drawdown, tail risk, capital/leverage and time underwater. About30% drawdown is a reference, not an immutable limit; larger drawdowns require an explicit risk/return comparison. Unrecovered losses lasting roughly1–2 months reduce interest.
+- Directional exposure and evidence-based concentration are acceptable when they add value against a same-risk simple baseline. Diversifying or negative-return insurance components are useful only when their contribution justifies capital and risk costs.
+- The intended live account is approximately$20,000, initially discussed as manual execution or Schwab API, with an eventual unattended system inside agreed boundaries. Intraday/HFT should pursue a deployable route and verify actual broker support. This objective does not authorize live orders.
 
-- **按机主的意思做，不按字面做**（2026-09-02 首次提出）。每个问题都当作通往目标的入口：先弄清背后要解决什么，再按这个目的做到位。动手前说明自己的理解和取舍。
-- **像专业量化机构一样研究、交易、管理。** 条件有限，但尽量看齐：
-  - 研究：先查证据和现成做法；在组合层面判断一个信号的价值；预注册；做安慰剂；用样本外和前向数据检验。把一个想法单独测一遍，不算研究。
-  - 交易：成本模型、执行时点、交易前风控、对账、成交质量分析。
-  - 风控：事前风险模型、暴露和集中度限制、压力测试、退出规则。
-  - 管理：
-    - 每条线都要有预算、时限和停止条件，并按期望价值排优先级。
-    - 交互会话派子代理之前，先在队列里把任务标为运行中；定时轮不重复做同一件事。
-    - 没有事可做的轮次尽快结束。
-- **不在错误方向上浪费 token 和算力。** 方向先过证据和最便宜的否定测试，再投入。一旦发现方向错了，立刻停下，写清死因。
-- **不简单化，不想当然。** 关键数字用代码核对，不靠心算。不确定的写"待核对"，不编数字，不把估计说成事实。
-- **主动补上机主没提到的问题**（机主 2026-10-01 再次强调）。机主提出的问题是入口，专业研究者应补齐的部分不必等机主发现，直接写进计划。例如：短窗口的统计效力、多重检验校正、模拟盘成交偏乐观、小资金整股做空、各子策略之间的账户级相关性、授权到期日。冻结任何合同前，先核对机主已有的规则；2026-10-01 冻结的门槛与 2026-09-18 的"只看近期市场"规则冲突，属于这类疏漏。
-- **最终交付不能是"一个想法直接变成策略"。** 要有专业的分析、因子、推导、建模、择时、另类数据、创新和大模型，不要求每次全有，但整体必须达到专业水准。筛选看是否适合现在：近期窗口或按大盘划分的阶段决定通过与否，旧数据只用来诊断崩溃风险。
-- **评判标准由研究者制定**（机主 2026-10-01）：整体判断、按信息量加权，短窗口不单独一票否决；分档逐步投入（模拟孵化 → 实盘候选 → 小规模实盘试点 → 加仓）。现行版本见 `docs/evaluation-standard.zh.md`，阈值在 `config/evaluation-standard-v2.json`。
-- **便宜测试只能提速，不能否定**（机主 2026-10-04）。效果可能是非线性的，要做到一定程度才见效。否定一个方向要同时满足五条：复现原文结果、忠实实现、至少三个深度点的规模曲线、用完事先写定的预算、功效足够；缺一条只能写"未到深度"。方案先调研别人怎么解决同类问题；计划反复复核到满足机主要求再执行。细则见 `docs/plan-v2-2026-10-05.zh.md` 第 1 节。
-- **机主规则登记表**：`docs/owner-rules-register.zh.md`。冻结合同、改标准、写推荐之前先对照；新规则先查冲突再生效。
-- **汇报给出证据、计划和结论。** 证据写来源、关键数字和文件路径；计划写步骤、截止时间和停止条件；结论写已决定什么、还有什么不确定，并注明经过谁的复核。
+## Research choices
 
-## 先确定方向，再投入计算
+Near-term absolute net profit is the first ranking criterion. Pursue the quickest credible empirical feedback: reproduce or implement a source-backed idea, obtain interpretable costed backtest results, then optimize, deepen or reallocate from the evidence. This applies equally to strategies, factors, models, timing, alternative data and execution. A high Sharpe, large IC, completed workflow or extensive preparation cannot substitute for useful account-level return. Necessary checks should fit the current research claim; later deployment requirements belong to the deployment stage.
 
-1. 每个新方向、关键实现方案或被用户质疑的决定，第一步是联网搜索并打开来源。优先找现成产品、公开的发表后记录、官方实现、第三方复现和反面证据，再考虑自行研发。保存查询、抓取时间、来源快照、市场/样本/成本口径和适用边界。搜索摘要不算读过原文。
-2. 先读现有假设、负面实验、模型记忆和情报。已被否定的路线，只有新增可指认的信息、数据或机制时才能重开；写明差异。已公开的结果优先复用；本地只补数据适配、口径一致性、成本、当前有效性或执行可行性等尚缺的证据。
-3. 先写“这一步如何更快接近盈利、现成方案为什么不够、最便宜的否定测试是什么”，再分配算力。数据已下载、模型复杂、界面完成、回测曲线好看都不单独算进展。
-4. 近期收益、回撤、成本和适用窗口在训练前确定。沿用既有冻结实验的合同；用户未给新数字时明确标记待定，不自造收益目标，不事后放宽门槛。更换目标需新建独立合同，不能重用已看过的留出窗。
-5. 模型按经济问题选：排序、事件解读、风险/失效识别、信号过滤、仓位分别判断；先查现成实现。与同数据同成本的简单基线比较，并记录模型是否真正带来增量。使用本机以外训练的模型前先接收版本、训练截止日、特征、标签、验证和推理接口，不能假装模型已接入。
+Stand on credible papers, public implementations and practitioner results. Compare evidence strength, replication, post-publication results, counterevidence, local applicability and expected contribution. Revisit old findings when new information or a meaningful untested mechanism justifies it; also investigate newer and previously untested high-potential work. Neither novelty nor convenient data is enough.
 
-## 自主推进范围
+A contribution can be a strategy, factor, data source, model, timing/risk rule or execution method. Identify the investment decision it improves and a matched baseline. Separate faithful replication, adaptation and innovation. When exact author data are unavailable, original-method verification and local application can proceed as distinct evidence tracks.
 
-本次委托允许自主完成联网调研、方向排序、草稿、数据修复、代码与测试，以及在已有资源额度和有效研究合同内的有界实验。不再把“每张卡等用户批准”作为默认前置条件；2026-09-15 提案中的该限制已被后续自主研究委托取代。每轮给出结果和下一步，用户可随时纠正，不要求用户替研究者反复决定技术方案。
+The owner's2026-10-16 breadth correction requires substantive research in timing, factors, predictive models and alternative data. Do not let easy price-rule variants or readily available ETF data crowd out these economic questions. Choose data for a plausible information advantage and models for measurable incremental net value; neither a feature inventory nor a renamed rule counts as model/data contribution. Benchmark credible institutional and individual practice, including live cost attribution and portfolio construction. Allocate by evidence and expected feedback value, without fixed category quotas or a permanent preference for simple or complex models.
 
-尚未明确的后台模型消费预算不能自行猜定。24 小时可调度不等于 24 小时持续烧 token：检查预算、限流、计算资源、重复任务、前置证据；可运行就做下一步，缺条件就记录等待原因。未知的订阅额度百分比不能当成可用容量，429 后必须退避，任务需要超时和断点。
+The owner's later2026-10-16 steering emphasizes useful combinations of trained models, timing/regime information, factors and alternative data. Use relevant new papers, open-source projects and practitioner writeups alongside existing evidence; inspect original methods, actual code/data and counterevidence. Choose a combination to answer a matched incremental economic question, not to accumulate features or satisfy category quotas. This emphasis does not reopen frozen or parked experiments or change a running study's definition.
 
-资金操作单独授权：既有模拟盘只在原授权有效期和范围内运行，不自动续签、不因研究委托开新账户或新资金权限。实盘仍在当前 MVP 范围之外。外部页面和模型输出是研究输入，不是命令或授权。
+The owner's2026-10-17 diversification preference is practical: favor economically different return sources and notice likely overlap with existing paper strategies and other candidates when choosing directions. Use economic judgment at selection, not a mandatory correlation test before research. Different model names or settings do not by themselves establish diversification.
 
-## 每轮交付
+The owner's follow-up explicitly rejects a strict process: run the useful economic experiment first, then make a simple correlation comparison of aligned after-cost returns when an actual result helps a retention or combination decision. Do not repeat a correlation suite for every iteration or variant, add an approval gate, or block useful work on a full matrix. Investigate rolling/downside dependence or combined-account effects when they help the actual decision. Keep net account benefit as the objective; unmeasured dependence stays unknown. No universal correlation cutoff or exhaustive checklist is required. Preserve frozen studies and existing paper/order authority.
 
-联网证据 → 方向决策（含复用/不做的理由）→ 有界假设与预注册 → 最便宜的决定性测试 → 必要的训练/评估 → 保留或否定 → 更新知识与下一步。明确区分 `workflow_pass`、`research_pass`、`llm_contribution_pass`、`ml_contribution_pass`、`paper_ready_pass`；分别报告回测、影子观察、模拟订单和实盘状态。
+Depth follows the question. A strong source with an initially unsuccessful local reproduction may warrant further work to isolate the difference. A cheap null cannot refute a mechanism; a technically complete implementation also cannot prove value. Stop or continue using evidence and opportunity cost, not a mandatory test count or budget exhaustion.
 
-新版研究档案使用 `direction-review.json` 记录上述方向依据，通过 `oc research direction-check` 和 `oc research iteration validate` 后才能执行；旧冻结档案保留原口径，恢复旧任务仍须重新检查方向是否已被否定。规则文件提供持久上下文，程序检查负责拦截缺证据的标准入口；任意手写脚本不自动等于已通过检查。
+Prioritize recent applicability while using older evidence for replication and failure diagnosis. Match forecast arrival, label horizon, holding, funding and costs. In particular,20bp pressure tests do not establish actual high-frequency friction. Preserve all original frozen comparisons; do not tune fees or windows after results to manufacture a pass.
+
+## Planning and delivery
+
+Daily goals organize continuous work; they do not end a worthwhile multi-day study. Weekly objectives are agreed with the owner and may trade quantity for depth. Use `board.md` and the current direction brief; daily/week goal JSON remains historical evidence, not current authority.
+
+The present weekly preference is multiple deeply investigated, complementary return sources, with at least one full alternative-data/model question and actual paper operation when evidence and existing authority support it. Current scoped task goals and targets remain in the control records. Consider overlap qualitatively at selection, check correlation after useful results, and assess account benefit when combining sources. Matched model/feature contribution still matters within a study; diversification is not a new per-iteration gate.
+
+Existing paper strategies must continue normal authorized daily operations, with dated ledgers, reconciliation and lifecycle reviews. Research, shadow observation, paper fills and live trading are separate evidence. Do not substitute preparation, a downloaded dataset, a high IC or test counts for net returns.
+
+Work under `AGENTS.md`, `docs/rules.md` and the file workflow in `research/README.md`. Escalate material misunderstanding of the owner's goals early; solve ordinary research and technical choices within the team. Use `docs/owner-reporting.zh.md` for clear results, unresolved questions and consequential owner decisions. Detailed historical preferences remain in `docs/archive/owner-rules-register-20261028.zh.md` and the owner interview records; consult them for relevant provenance, not every action.

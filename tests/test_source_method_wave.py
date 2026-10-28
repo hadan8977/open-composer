@@ -1,22 +1,21 @@
 """Offline fixtures against frozen reader artifacts, never a paper activation test.
 
-Set OC_SOURCE_REFERENCE_ROOT to the repository retaining those accepted artifacts.
+Versioned readers use private bound metadata; no external research tree is required.
 No credentials, quote fetches, model fits, orders or account snapshots are used.
 """
 
 import copy
 import hashlib
 import json
-import os
 import socket
 from datetime import UTC, datetime
-from pathlib import Path
 
 import pytest
 
 from open_composer.intraday_runner.source_method_bindings import bound_bytes, source_module
 from open_composer.intraday_runner.source_method_wave import prepare_wave
 from open_composer.intraday_runner.source_reservations import SourceReservations
+from tests.source_method_fixtures import source_reference
 
 
 def seal(commit):
@@ -26,16 +25,13 @@ def seal(commit):
 
 
 @pytest.fixture
-def args(monkeypatch):
+def args(monkeypatch, tmp_path):
     def deny(*a, **kw):
         raise AssertionError("No network in source-method rehearsal")
 
     monkeypatch.setattr(socket.socket, "connect", deny)
     monkeypatch.setattr(socket.socket, "connect_ex", deny)
-    root = os.environ.get("OC_SOURCE_REFERENCE_ROOT")
-    if root is None:
-        pytest.skip("requires explicitly supplied frozen research reader artifacts")
-    root = Path(root)
+    root = source_reference(tmp_path / "reference")
     cash = source_module(root, "cash").CashState
     meta = json.loads(
         (

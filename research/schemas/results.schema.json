@@ -1,0 +1,115 @@
+{
+  "additionalProperties": false,
+  "description": "Engine-produced summary. Structural validity is not scientific acceptance.",
+  "properties": {
+    "direction": {
+      "title": "Direction",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "financial",
+        "diagnostic"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "engine": {
+      "minLength": 1,
+      "title": "Engine",
+      "type": "string"
+    },
+    "source_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Source Artifacts",
+      "type": "array"
+    },
+    "data_and_exposure": {
+      "minLength": 1,
+      "title": "Data And Exposure",
+      "type": "string"
+    },
+    "costs": {
+      "minLength": 1,
+      "title": "Costs",
+      "type": "string"
+    },
+    "baseline": {
+      "minLength": 1,
+      "title": "Baseline",
+      "type": "string"
+    },
+    "n_trials": {
+      "minimum": 0,
+      "title": "N Trials",
+      "type": "integer"
+    },
+    "net_profit_usd": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Net Profit Usd"
+    },
+    "baseline_net_profit_usd": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Baseline Net Profit Usd"
+    },
+    "dsr": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Dsr"
+    },
+    "dsr_note": {
+      "minLength": 1,
+      "title": "Dsr Note",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "direction",
+    "kind",
+    "engine",
+    "source_artifacts",
+    "data_and_exposure",
+    "costs",
+    "baseline",
+    "n_trials",
+    "net_profit_usd",
+    "baseline_net_profit_usd",
+    "dsr",
+    "dsr_note",
+    "limitations"
+  ],
+  "title": "Results",
+  "type": "object"
+}

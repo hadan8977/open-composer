@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import json
-import os
-import shutil
-import subprocess
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.research.control import update_research_control
-from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
+from open_composer.research.parameter_sweep import (
+    _candidate_from_params,
+    _parameter_combinations,
+    parse_sweep_parameters,
+    run_parameter_sweep,
+)
 from open_composer.research.research_brief import init_research_brief
 
 
@@ -136,7 +137,15 @@ def test_parameter_sweep_cli_refreshes_research_control_memory(
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
-    preregister_iteration_dossier(spec_path, candidate_count=2)
+    parameters = parse_sweep_parameters(["risk.take_profit_pct=1.5,2.0"])
+    preregister_iteration_dossier(
+        spec_path,
+        candidate_count=2,
+        candidate_factory=lambda source: [
+            _candidate_from_params(source, params, index, sample_workspace)[0]
+            for index, params in enumerate(_parameter_combinations(parameters), start=1)
+        ],
+    )
     init_research_brief(spec_path, sample_workspace, search_budget=2)
 
     result = CliRunner().invoke(
@@ -196,48 +205,11 @@ def test_research_control_cli_writes_state_and_memory(sample_workspace: Path, mo
     ).exists()
 
 
-def test_claude_prompt_hook_injects_memory_from_real_paths(
-    sample_workspace: Path,
-    repo_root: Path,
-) -> None:
-    bash = shutil.which("bash")
-    if bash is None:
-        pytest.skip("bash is not available in this Windows test environment")
-
-    memory_dir = sample_workspace / "reports" / "research" / "control"
-    memory_dir.mkdir(parents=True, exist_ok=True)
-    memory_path = memory_dir / "fixture_pullback_15m-memory.md"
-    memory_path.write_text(
-        "# Research Memory: fixture_pullback_15m\n- Next: avoid repeated stop loss grid\n",
-        encoding="utf-8",
-    )
-    verify_dir = sample_workspace / "reports" / "harness" / "verify"
-    verify_dir.mkdir(parents=True, exist_ok=True)
-    (verify_dir / "fixture_pullback_15m.json").write_text(
-        json.dumps({"strategy_name": "fixture_pullback_15m", "overall": "warning"}),
-        encoding="utf-8",
-    )
-
-    env = dict(os.environ)
-    env["OC_ROOT"] = str(sample_workspace)
-    completed = subprocess.run(
-        [bash, str(repo_root / ".claude" / "hooks" / "UserPromptSubmit-harness-context.sh")],
-        input=json.dumps(
-            {
-                "prompt": (
-                    "optimize strategy_specs/drafts/fixture_pullback_15m.yaml with a bounded sweep"
-                )
-            }
-        ),
-        text=True,
-        capture_output=True,
-        check=True,
-        env=env,
-    )
-
-    payload = json.loads(completed.stdout)
-    assert payload["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
-    context = payload["hookSpecificOutput"]["additionalContext"]
-    assert "Research memory for 'fixture_pullback_15m'" in context
-    assert "avoid repeated stop loss grid" in context
-    assert "Last harness verify for 'fixture_pullback_15m': warning" in context
+def test_claude_shared_entry_keeps_legacy_prompt_hook_archived(repo_root: Path) -> None:
+    hook = Path(".claude/hooks/UserPromptSubmit-harness-context.sh")
+    assert not (repo_root / hook).exists()
+    assert (repo_root / "docs/archive/agent-materials" / hook).is_file()
+    settings = json.loads((repo_root / ".claude/settings.json").read_text())
+    assert not settings.get("hooks", {}).get("UserPromptSubmit")
+    assert "@AGENTS.md" in (repo_root / "CLAUDE.md").read_text().splitlines()
+    assert (repo_root / "research/README.md").is_file()

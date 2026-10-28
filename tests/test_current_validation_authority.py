@@ -19,7 +19,7 @@ from open_composer.intraday_runner.validation_account_partition import (
 )
 
 
-def authority(root, task, *, three=False, six=False):
+def authority(root, task, *, three=False, six=False, current_day=False, monkeypatch=None):
     def put(name, value):
         path = root / (name + ".json")
         path.write_text(json.dumps(value))
@@ -89,6 +89,19 @@ def authority(root, task, *, three=False, six=False):
         model=put("model-fixture", {}),
         scientific_acceptance=put("science-fixture", {}),
     )
+    if current_day:
+        from open_composer.intraday_runner import current_initialization_episode as episode
+
+        assert monkeypatch is not None
+        current_owner = put("current-owner-fixture", dict(invented=True))
+        selection = put("current-selection-fixture", dict(owner_directive=current_owner))
+        monkeypatch.setattr(episode, "MAIN_SHA", selection["sha256"])
+        monkeypatch.setattr(episode, "OWNER_SHA", current_owner["sha256"])
+        fields.update(
+            application_day=episode.DAY,
+            reference_day=episode.REFERENCE,
+            current_day_selection=selection,
+        )
     validation = put(
         "validation-fixture",
         dict(
@@ -109,10 +122,16 @@ def authority(root, task, *, three=False, six=False):
         paper_validation=validation,
         scientific_consumer=consumer,
     )
+    if current_day:
+        accepted.update(
+            application_day=fields["application_day"], reference_day=fields["reference_day"]
+        )
     review = put(
         "review-fixture",
         dict(
             accepted_current_runtime=True,
+            accepted_current_day_continuation=current_day,
+            current_day_selection=fields.get("current_day_selection"),
             reviewer="66ad4b54-ec62-400b-9a03-a29682cf58e6",
             account_hash=ACCOUNT,
             accepted_trial_bindings={task: accepted},
@@ -142,8 +161,8 @@ def authority(root, task, *, three=False, six=False):
 
 
 @pytest.mark.parametrize("task", [BASE, H5])
-def test_scoped_economic_exception_does_not_require_profit(task, tmp_path):
-    put, value = authority(tmp_path, task)
+def test_scoped_economic_exception_does_not_require_profit(task, tmp_path, monkeypatch):
+    put, value = authority(tmp_path, task, current_day=True, monkeypatch=monkeypatch)
     actual = load_authority(tmp_path, put("auth", value), datetime(2026, 10, 19, 5, tzinfo=UTC))
     assert actual == value and actual["capital_usd"] == 10000
 
@@ -161,8 +180,8 @@ def test_scoped_economic_exception_does_not_require_profit(task, tmp_path):
         ("ledger_root", "/tmp/other-book"),
     ],
 )
-def test_account_capital_identity_isolation_refuses(tmp_path, key, value):
-    put, auth = authority(tmp_path, BASE)
+def test_account_capital_identity_isolation_refuses(tmp_path, key, value, monkeypatch):
+    put, auth = authority(tmp_path, BASE, current_day=True, monkeypatch=monkeypatch)
     original = copy.deepcopy(auth)
     auth[key] = value
     with pytest.raises(ValueError):
@@ -170,8 +189,8 @@ def test_account_capital_identity_isolation_refuses(tmp_path, key, value):
     assert original[key] != value
 
 
-def test_validation_byte_drift_and_expiry_refuse(tmp_path):
-    put, auth = authority(tmp_path, BASE)
+def test_validation_byte_drift_and_expiry_refuse(tmp_path, monkeypatch):
+    put, auth = authority(tmp_path, BASE, current_day=True, monkeypatch=monkeypatch)
     a = put("auth", auth)
     with pytest.raises(ValueError, match="expired"):
         load_authority(tmp_path, a, datetime(2026, 11, 14, tzinfo=UTC))
@@ -233,8 +252,8 @@ def test_actual_market_clock_not_calendar_only(open_flag, age, ok):
 
 
 @pytest.mark.parametrize("task,cap", [(BASE, 10000), (H5, 6000), (LSTM, 4000)])
-def test_three_scopes_exact_caps_no_economic_pass(tmp_path, task, cap):
-    put, value = authority(tmp_path, task, three=True)
+def test_three_scopes_exact_caps_no_economic_pass(tmp_path, task, cap, monkeypatch):
+    put, value = authority(tmp_path, task, three=True, current_day=True, monkeypatch=monkeypatch)
     assert (
         load_authority(tmp_path, put("auth-three", value), datetime(2026, 10, 19, 9, tzinfo=UTC))[
             "capital_usd"
@@ -246,8 +265,10 @@ def test_three_scopes_exact_caps_no_economic_pass(tmp_path, task, cap):
         load_authority(tmp_path, put("wrong-cap", value), datetime(2026, 10, 19, 9, tzinfo=UTC))
 
 
-def test_BASE_prior_validation_partition_is_preserved_only_for_bound_successor(tmp_path):
-    put, old = authority(tmp_path, BASE)
+def test_BASE_prior_validation_partition_is_preserved_only_for_bound_successor(
+    tmp_path, monkeypatch
+):
+    put, old = authority(tmp_path, BASE, current_day=True, monkeypatch=monkeypatch)
     old_validation = old["paper_validation"]
     prior_partition = put(
         "old-partition-retained", json.loads((tmp_path / "partition.json").read_text())
@@ -256,7 +277,7 @@ def test_BASE_prior_validation_partition_is_preserved_only_for_bound_successor(t
     saved = json.loads((tmp_path / "validation-fixture.json").read_text())
     saved["partition"] = prior_partition
     old_validation = put("old-validation-retained", saved)
-    put, new = authority(tmp_path, BASE, three=True)
+    put, new = authority(tmp_path, BASE, three=True, current_day=True, monkeypatch=monkeypatch)
     part = json.loads((tmp_path / "partition.json").read_text())
     part["prior_partition"] = prior_partition
     new["partition"] = put("new-partition", part)
@@ -278,8 +299,8 @@ def test_BASE_prior_validation_partition_is_preserved_only_for_bound_successor(t
 
 
 @pytest.mark.parametrize("task", [BASE, H5, LSTM])
-def test_twenty_thousand_actual_scope_each_requires_bound_admission(tmp_path, task):
-    put, value = authority(tmp_path, task, six=True)
+def test_twenty_thousand_actual_scope_each_requires_bound_admission(tmp_path, task, monkeypatch):
+    put, value = authority(tmp_path, task, six=True, current_day=True, monkeypatch=monkeypatch)
     actual = load_authority(tmp_path, put("auth", value), datetime(2026, 10, 19, 10, tzinfo=UTC))
     assert actual["capital_usd"] == 20000
     value["capital_usd"] = 20001

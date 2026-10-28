@@ -101,28 +101,34 @@ def test_runtime_selects_state_and_never_hides_missing_input(monkeypatch, tmp_pa
     r = runtime.CurrentInitializationRuntime.__new__(runtime.CurrentInitializationRuntime)
     r.task = component.STATE
     r.root = tmp_path
-    r.auth = {}
+    r.auth = {"task_id": component.STATE}
     r.read_guard = lambda: None
     r.clock = lambda: datetime(2026, 10, 19, 11, tzinfo=UTC)
     marker = {"exact_new_policy": True}
-    monkeypatch.setattr(component, "receive", lambda *a, **k: marker)
+    from open_composer.intraday_runner import current_initialization_episode as episode
+
+    def receive(root, auth, *, clock):
+        assert root == tmp_path and auth == r.auth and clock is r.clock
+        return marker
+
+    monkeypatch.setattr(episode, "receive", receive)
     assert r.receive_science() is marker
 
     def missing(*a, **k):
         raise ValueError("missing actual input")
 
-    monkeypatch.setattr(component, "receive", missing)
+    monkeypatch.setattr(episode, "receive", missing)
     with pytest.raises(ValueError):
         r.receive_science()
 
 
 @pytest.mark.parametrize("task", ["CROSS-ASSET-LSTM-PAPER-VALIDATION-20261019", component.STATE])
-def test_actual_runtime_constructor_receives_selected_namespace(tmp_path, task):
+def test_actual_runtime_constructor_receives_selected_namespace(tmp_path, task, monkeypatch):
     from open_composer.intraday_runner.current_initialization_dispatch import CurrentDispatchJournal
     from open_composer.intraday_runner.validation_account_partition import slot
     from tests.test_current_validation_authority import authority
 
-    put, auth = authority(tmp_path, task, six=True)
+    put, auth = authority(tmp_path, task, six=True, current_day=True, monkeypatch=monkeypatch)
     r = runtime.CurrentInitializationRuntime(
         tmp_path,
         put("auth", auth),
