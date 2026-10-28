@@ -191,7 +191,7 @@ def test_directory_barrier_failure_and_symlink_alias_no_checkpoint(case, monkeyp
     alias = tmp_path / "alias"
     alias.symlink_to(target, target_is_directory=True)
     bad = mod.SourceStateCheckpoint(alias, account_hash=ACCOUNT, sleeve_id="dia-base")
-    with pytest.raises(ValueError, match="nonsymlink"):
+    with pytest.raises(ValueError, match="checkpoint lock ancestor alias"):
         bad.commit(snap(state), expected_head_sha256=None)
     assert not list(target.iterdir())
 

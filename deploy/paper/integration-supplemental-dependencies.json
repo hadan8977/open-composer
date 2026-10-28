@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "worktree": "/root/codex-test/oc-restructure-paper-20261028",
+  "live_root": "/root/codex-test/open-composer",
+  "base_integration_manifest": "deploy/paper/integration-files.json",
+  "apply_order": "Apply this supplemental list after the original migration list; it supersedes the four deployment paths below.",
+  "files": [
+    "deploy/paper/README-six-migration.md",
+    "deploy/paper/integration-supplemental-dependencies.json",
+    "deploy/paper/runtime/environment.json",
+    "deploy/paper/runtime/requirements-service.txt",
+    "deploy/paper/runtime/verify_runtime.py",
+    "open_composer/adapters/broker/alpaca_exchange_compat.py",
+    "open_composer/book_paper/accounts.py",
+    "open_composer/capabilities/evaluator.py",
+    "open_composer/capabilities/native_fixtures.py",
+    "tests/test_alpaca_exchange_compat.py"
+  ],
+  "supersedes_original_candidate_hashes": [
+    "deploy/paper/runtime/environment.json",
+    "deploy/paper/runtime/requirements-service.txt",
+    "deploy/paper/runtime/verify_runtime.py",
+    "deploy/paper/README-six-migration.md"
+  ],
+  "actual_root_sha256": {
+    "open_composer/book_paper/accounts.py": "d058f2676964c2d700eea02162b4bf9a70121f54dfca9cffbf34fc1e935ff850",
+    "open_composer/adapters/broker/alpaca_exchange_compat.py": "92b1a9af78ca7e5ce12ed9c3a5452d993299feef5ece9c5ed78314ce04f29d77",
+    "open_composer/capabilities/evaluator.py": "cffd7c1910faa0858cb7751f21e9818a3e506b75124b125f20ed6109cf093f24",
+    "open_composer/capabilities/native_fixtures.py": "45d4a058a570560b11174573b3531d88e07c4dee4e51df8b8f1ee926808ac892",
+    "tests/test_alpaca_exchange_compat.py": "d242659d8499bee4c1f3ffdce7752087874286ea4afc7c47990e10aaf8e099c9",
+    "deploy/paper/runtime/environment.json": "2638af92caacb677dab13cbdb77d526ac06e9be42bc701e2c72c0fef3915aecb",
+    "deploy/paper/runtime/requirements-service.txt": "4756c7e2e5412f7eef0d84fe251b03150d4ee1767823e4a0a75dc708075a1827",
+    "deploy/paper/runtime/verify_runtime.py": "816389a580d631779044da5c401e3ae3095fc0faadc516c20d194f4bcd15c971",
+    "deploy/paper/README-six-migration.md": "a10c82a9a19113b1db724a72a788a7ec1d2d25e2f3db16e147254b82d4ddd757"
+  },
+  "candidate_sha256": {
+    "open_composer/book_paper/accounts.py": "d058f2676964c2d700eea02162b4bf9a70121f54dfca9cffbf34fc1e935ff850",
+    "open_composer/adapters/broker/alpaca_exchange_compat.py": "92b1a9af78ca7e5ce12ed9c3a5452d993299feef5ece9c5ed78314ce04f29d77",
+    "open_composer/capabilities/evaluator.py": "cffd7c1910faa0858cb7751f21e9818a3e506b75124b125f20ed6109cf093f24",
+    "open_composer/capabilities/native_fixtures.py": "45d4a058a570560b11174573b3531d88e07c4dee4e51df8b8f1ee926808ac892",
+    "tests/test_alpaca_exchange_compat.py": "d242659d8499bee4c1f3ffdce7752087874286ea4afc7c47990e10aaf8e099c9",
+    "deploy/paper/runtime/environment.json": "2a77d7b3bb3e09cacd73b8c756602cc7df27432c9181f4acec792c1bbcf4b910",
+    "deploy/paper/runtime/requirements-service.txt": "5e8fc02f9614308001cd8a9b44243068ebc6ec47de85e1b6dfffc2882f0c4a24",
+    "deploy/paper/runtime/verify_runtime.py": "46ed03ee1a8ce6e841eb54e33ef948aadab8514a7d51568d71894e033c06a7d3",
+    "deploy/paper/README-six-migration.md": "8970f4f74d4dd73bc95de39ffc2d693c75e46fce81675e259e4a327067514e1e"
+  },
+  "source_snapshot_paths": [
+    "open_composer/book_paper/accounts.py",
+    "open_composer/adapters/broker/alpaca_exchange_compat.py",
+    "open_composer/capabilities/evaluator.py",
+    "open_composer/capabilities/native_fixtures.py",
+    "tests/test_alpaca_exchange_compat.py"
+  ],
+  "source_snapshot_rule": "These four production code files and the compatibility test exactly match the actual root bytes at review. No contributor implementation is rewritten.",
+  "dependency_reasons": {
+    "open_composer/book_paper/accounts.py": "Current make_trading_client selects the narrow TXSE-compatible response client.",
+    "open_composer/adapters/broker/alpaca_exchange_compat.py": "Retain existing SDK validation and paper read-response TXSE support; no order write override.",
+    "open_composer/capabilities/evaluator.py": "Current eager capability-package imports require native fixture validation symbols.",
+    "open_composer/capabilities/native_fixtures.py": "Current release-repaired strict native fixture implementation, supplied by the root tree.",
+    "tests/test_alpaca_exchange_compat.py": "Existing private-fixture response-model regression coverage, copied without alteration."
+  },
+  "numeric_reader_audit": {
+    "new_service_pins": {
+      "duckdb": "1.5.5",
+      "pyarrow": "24.0.0"
+    },
+    "already_pinned_service": [
+      "numpy==2.4.4",
+      "pandas==2.3.3",
+      "scipy==1.17.1"
+    ],
+    "service_import_probes": [
+      "duckdb",
+      "numpy",
+      "pandas",
+      "pyarrow.parquet"
+    ],
+    "parquet_paths": [
+      "six/produce_targets.py: accepted ETF close/open matrices",
+      "frozen next_current_input/current_input/current_source and h5_input Parquet support",
+      "adapters/data/sip_parquet.py eager reader import"
+    ],
+    "numpy_paths": "Saved npz readers and causal feature arrays use the already pinned NumPy.",
+    "h5_path": "Current formation inference extracts scalar_predictions/allocate and reads gzip JSON trees; it does not call the archived LightGBM infer_current_decision lifecycle.",
+    "inference_environment": "Unchanged: /usr/bin/python3.12, Torch 2.13.0+cu130, NumPy 2.5.2. No Parquet reader is used by lstm_infer.py.",
+    "no_additional_exercised_numeric_reader_distribution_found": true,
+    "excluded_optional_ecosystem": [
+      "LightGBM fitting and archived prediction lifecycle",
+      "HDF5/PyTables readers",
+      "optional research engines",
+      "cloud storage readers"
+    ]
+  },
+  "verification": {
+    "ruff": "pass",
+    "actual_service_metadata_and_numeric_reader_imports": "pass",
+    "actual_inference_metadata": "pass",
+    "pytest": "not launched; main session owns the running full verification",
+    "environment_install_or_restart": false,
+    "broker_or_market_data_calls": 0
+  }
+}

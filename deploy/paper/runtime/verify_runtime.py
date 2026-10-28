@@ -3,6 +3,7 @@
 import argparse
 import ast
 import hashlib
+import importlib
 import importlib.metadata
 import json
 import platform
@@ -30,6 +31,20 @@ def verify(root, environment):
                 errors.append("package version differs: " + name)
         except importlib.metadata.PackageNotFoundError:
             errors.append("package missing: " + name)
+    readers = []
+    for module, distribution in expected.get("numeric_readers", {}).items():
+        if distribution not in expected["packages"]:
+            errors.append("numeric reader is not version pinned: " + module)
+            continue
+        try:
+            # Import the local reader implementation without reading a dataset,
+            # loading a model, or constructing a network/broker client.
+            importlib.import_module(module)
+            readers.append(module)
+        except Exception as error:
+            errors.append(
+                "numeric reader unavailable: " + module + " (" + type(error).__name__ + ")"
+            )
     if environment == "inference":
         try:
             path = Path(importlib.metadata.distribution("torch").locate_file("torch/version.py"))
@@ -49,7 +64,13 @@ def verify(root, environment):
             body = (package / row["package_path"]).read_bytes()
             if len(body) != row["bytes"] or hashlib.sha256(body).hexdigest() != row["sha256"]:
                 errors.append("frozen source differs: " + row["package_path"])
-    return dict(environment=environment, verified=not errors, errors=errors, broker_calls=0)
+    return dict(
+        environment=environment,
+        verified=not errors,
+        errors=errors,
+        numeric_readers_verified=readers,
+        broker_calls=0,
+    )
 
 
 def main():

@@ -29,7 +29,8 @@ excluded from automatic formatting and are checked by their byte hashes.
 
 `runtime/environment.json` records the actual service Python 3.11.15 and inference
 `/usr/bin/python3.12` 3.12.3, executable digests, complete relevant dependency
-closures, and Torch build `2.13.0+cu130` with its CUDA and git build identities.
+closures, DuckDB 1.5.5 and PyArrow 24.0.0 for the active numeric readers, and Torch
+build `2.13.0+cu130` with its CUDA and git build identities.
 `runtime/requirements-service.txt` and `runtime/requirements-inference.txt` pin
 those installed distributions. The Torch distribution version is `2.13.0`;
 its separate build tag is verified explicitly. Installing a different build with
@@ -41,8 +42,10 @@ versions and the uv-managed service interpreter location are in the manifest.
 Keep the two environments separate. Do not recreate or sync a healthy running
 environment during integration.
 
-From the live checkout, these commands only read metadata and source files; they
-do not import Torch, load credentials, fetch data or construct a broker client:
+From the live checkout, these commands read metadata and source files. The service
+check also imports the pinned DuckDB, NumPy, pandas and PyArrow Parquet readers
+to catch missing native reader implementations. It reads no dataset or model;
+neither check imports Torch, loads credentials, fetches data or constructs a broker client:
 
 ```bash
 .venv/bin/python deploy/paper/runtime/verify_runtime.py --environment service
@@ -53,6 +56,13 @@ do not import Torch, load credentials, fetch data or construct a broker client:
 Both interpreter checks also run as systemd `ExecStartPre` checks. A mismatched
 binary or dependency prevents restart, and an absent relocated ledger prevents
 the service from initializing fresh capital.
+
+The reader audit follows the current service and its finite input producer.
+Saved arrays use NumPy; Parquet reads use PyArrow; H5 uses retained scalar tree
+evaluation and gzip/JSON state. The inactive LightGBM fitting/prediction lifecycle,
+HDF5 readers, optional research engines and cloud storage readers are outside
+this deployment lock. Saved LSTM checkpoints remain in the separately pinned
+Torch/NumPy inference environment.
 
 ## Coordinated integration
 

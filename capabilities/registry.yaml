@@ -1,5 +1,62 @@
 version: 1
 capabilities:
+  - id: market.retained_strategy_operating_nav_units
+    kind: market
+    data_shape: saved_operating_nav_receipt_v1
+    status: trial
+    provider: accepted_local_source_account_ledgers
+    use_for: [conditional_portfolio_allocation_research]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/portfolio-dynamic-allocation-increment-20261026/input-reception.json
+    min_score: 1.0
+    caveats:
+      - fixed S1 S2 S3 C2 BASE and H5 saved operating-NAV indices; all source history and prior trials remain seen
+      - hypothetical fractional NAV units and same-close redemption are not physical shares or broker execution evidence
+      - BASE index retains its fixed whole-share account and unpriced rights; no homogeneity or total-wealth claim
+      - original source-specific costs leverage survivorship and restatement limitations remain; outer unit fees are additional hypothetical costs
+      - no promotion paper readiness new data acquisition or source-account replay authority
+      - generic OHLCV fixture scoring does not validate this receipt format; exact saved-unit input reception is required separately
+
+  - id: events.fed_scheduled_statement_dates
+    kind: event
+    status: trial
+    provider: federal_reserve_official_archives
+    use_for: [conditional_market_component_research]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/day-goal-20261013/primary-return-breadth/calendar-events.jsonl
+    min_score: 0.95
+    caveats:
+      - historical archives establish dates and statement links, not every original publication timestamp or advance calendar vintage
+      - actual fetched_at and first_seen_at are current acquisition receipts; fixture visible_at does not certify historical replay availability
+      - conditional replay uses declared next-session-close activation while phase remains anchored to actual scheduled meeting date
+      - no calendar or fixture pass permits promotion, paper execution, or causal Fed policy claims
+
+  - id: market.dm_author_deciles
+    kind: market
+    data_shape: dm_author_decile_archive_v1
+    status: trial
+    provider: daniel_moskowitz_author_archive
+    use_for: [published_portfolio_method_research]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [daily, monthly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/day-goal-20261013/equity-role/sources/dm-published-portfolios-201402.tar.gz
+    min_score: 0.95
+    caveats:
+      - published all-firm decile returns are gross historical portfolio series, not tradable stock bars
+      - daily-to-monthly reconstruction differs from the separately published monthly returns
+      - no historical stock identity, holdings, borrow, costs, or paper execution readiness
+
   - id: market.sample_ohlcv
     kind: market
     status: approved
@@ -30,6 +87,48 @@ capabilities:
     min_score: 0.85
     caveats:
       - free IEX feed is not consolidated full-market SIP data
+
+  - id: market.alpaca_historical_trades
+    kind: market
+    status: trial
+    provider: alpaca
+    use_for: [backtest, execution_research]
+    reliability: conditional_provider_history
+    default_mode: live_with_cache
+    data_shape: vendor_stock_trade_v1
+    supported_timeframes: [tick]
+    paper_ready_timeframes: []
+    strict_behavior: fail_closed_for_missing_identity_timestamp_units_or_conditions
+    fixture: data/fixtures/capabilities/alpaca_historical_trades.jsonl
+    env: [ALPACA_API_KEY_ID, ALPACA_API_SECRET_KEY]
+    min_score: 1.0
+    caveats:
+      - synthetic fixture checks raw schema only; actual scoped SIP receipt and input QA are separate
+      - historical event timestamps do not certify received_at or historical first availability
+      - quote-rule trade signing is inferred pressure, not full-depth order flow or guaranteed fill
+      - retain pagination, conditions, corrections and missingness; no bars or IEX substitution
+      - research-only; no private account, paper or production readiness certificate
+
+  - id: market.alpaca_historical_quotes
+    kind: market
+    status: trial
+    provider: alpaca
+    use_for: [backtest, execution_research]
+    reliability: conditional_provider_history
+    default_mode: live_with_cache
+    data_shape: vendor_stock_quote_v1
+    supported_timeframes: [tick]
+    paper_ready_timeframes: []
+    strict_behavior: fail_closed_for_missing_identity_timestamp_units_or_side_state
+    fixture: data/fixtures/capabilities/alpaca_historical_quotes.jsonl
+    env: [ALPACA_API_KEY_ID, ALPACA_API_SECRET_KEY]
+    min_score: 1.0
+    caveats:
+      - synthetic fixture checks schema only; actual scoped SIP reception and input QA are separate
+      - vendor historical best quote is not order arrival, broker acknowledgment, depth or guaranteed fill
+      - REST sizes are round lots before 2025-11-03 and shares afterward; lot normalization needs supported units
+      - retain latest invalid or withdrawn states, pagination and exact timestamps; do not fall back to bars or IEX
+      - research-only; no historical PIT, private account, paper or production readiness certificate
 
   - id: market.longbridge_bars
     kind: market
@@ -165,7 +264,8 @@ capabilities:
     feature_builder: scripts/build_sec_13d_features.py
     caveats:
       - visibility = the <ACCEPTANCE-DATETIME> in the filing header; a filing accepted after that session's close is visible only on the next session, and the card's entry is the session after visibility
-      - EDGAR disseminates filings accepted by 17:30 ET on the same business day, which is after every market close, so the close-based visibility rule here is never more aggressive than EDGAR's own cutoff
+      - Schedule 13D/G same-day filing-date cutoff was 17:30 ET before 2024-02-05 and is 22:00 ET from that date under FR2023-22678 II.A.5; this is not a dissemination-latency timestamp
+      - the legacy close-based acceptance-to-session mapping is retained; acceptance, public availability, retrieval and computation clocks are distinct, and received archive/header bytes do not certify historical first-seen PIT or activist novelty
       - Date Filed in the quarterly index has no time of day and cannot separate a 09:45 ET filing from a 16:40 ET one; it is used only for the 13G family, which is not document-fetched and is flagged visible_confidence=filing_date_only
       - EDGAR renamed the form types on 2024-12-18 (SC 13D -> SCHEDULE 13D); both spellings are normalized and form_type_raw keeps the original, otherwise every 2025+ amendment parses as a new filing
       - the filer of a Schedule 13D is the activist, not the issuer; the issuer must come from the header SUBJECT COMPANY block, never from the first CIK in the file
@@ -227,6 +327,28 @@ capabilities:
       - observation dates are periods, not release timestamps; live records are forward-only from collector fetch time
       - the current observations endpoint is a latest snapshot, is revision-prone, and supplies no historical vintage identity
       - use and redistribution rights can vary by underlying FRED series and must be checked separately
+
+  - id: macro.fred_md_vintage
+    kind: macro
+    status: trial
+    provider: federal_reserve_st_louis_public_fred_md
+    use_for: [historical_macro_information, monthly_allocation_research]
+    reliability: conditional_historical_vintage
+    default_mode: offline
+    strict_behavior: research_only
+    supported_timeframes: [daily, monthly]
+    paper_ready_timeframes: []
+    fixture: data/fixtures/capabilities/fred_md_vintage.jsonl
+    env: []
+    min_score: 0.9
+    caveats:
+      - fixture rows validate packet shape only and are not macro observations or return evidence
+      - only INDPRO UNRATE and CPIAUCSL are received for the assigned research; no all-series factor model is implied
+      - vintage identity and observation month differ from exact historical publication time
+      - published_at can be unknown; the accepted method must explicitly declare any conditional historical availability bound
+      - currently served historical vintages can contain retrospective source corrections; fetched_at is the actual current reception clock
+      - never use the latest FRED observations endpoint or later vintages to backfill historical features
+      - series rights and original release timing must be reviewed for each use; no deployment or first-seen PIT certification
 
   - id: macro.cftc_cot
     kind: macro
@@ -365,6 +487,52 @@ capabilities:
       - options chains are research-only until provider coverage, greeks, spreads, and broker rules are verified
       - options strategies do not enter automatic paper order flow in this MVP
 
+  - id: market.french_ff3_monthly_current_vintage
+    kind: market
+    data_shape: ff3_monthly_decimal_v1
+    status: trial
+    provider: kenneth_french_official_library
+    use_for: [conditional_factor_model_research]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [monthly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/return-line-replenishment-20261016/common-factor-residual-momentum-20261017/ff3-selected-monthly.csv
+    source_urls:
+      archive: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip
+      definitions: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library/f-f_factors.html
+    caveats:
+      - current-vintage original FF3 monthly factor portfolios and RF; not the different FF5 SMB definition
+      - historic publication timestamps and local first-seen vintages are unknown; an assumed release lag supports conditional research only
+      - monthly RF is a regression input, not permission to accrue the account cash rate
+      - no generic executable market-bar provider or fixture-based paper readiness is certified
+      - actual source bytes, percentage units, factor clock and task input bindings require independent reception
+      - fixture is the immutable accepted monthly four-factor-vector input in decimal return units, not OHLC bars; the generic market-bar fixture evaluator does not validate this schema
+
+  - id: market.french_ff3_annual_archives
+    kind: market
+    data_shape: ff3_monthly_decimal_v1
+    status: trial
+    provider: kenneth_french_official_library
+    use_for: [factor_source_version_sensitivity]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [monthly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: reports/research/program/return-line-replenishment-20261016/factor-vintage-sensitivity-20261017/sources/ff3-july-2023-selected.csv
+    source_urls:
+      archives: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_factors_archive.html
+      definitions: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+    caveats:
+      - official annual July data cuts released in August are not monthly first-seen vintages
+      - conservative next-month usability and current fetch identity require actual task reception
+      - archive-overlap perturbation keeps uncovered current-vintage cells unchanged and unverified
+      - original FF3 four-column vector includes RF; no substitution of FF5 SMB or account cash interest
+      - no historical PIT, executable annual-update policy, physical fill or paper-readiness claim
+      - fixture is the immutable accepted July 2023 selected four-factor-vector input in decimal return units, not all archive coverage or OHLC bars; the generic market-bar fixture evaluator does not validate this schema
+
   - id: reference.sec_sic_industry
     kind: event
     status: trial
@@ -388,3 +556,119 @@ capabilities:
       - the symbol-to-CIK link dates come from data/raw/sec_ma/cik_symbol_history.parquet and can start later than the price history of a renamed ticker; use lookup_sic_row and its date_verified flag
       - reused tickers can map to the wrong company outside verified link dates
       - "research_only: sample and fixture rows are not paper-ready market evidence"
+
+  - id: macro.fed_gsw_curve
+    kind: macro
+    status: trial
+    provider: federal_reserve_official_GSW
+    use_for: [conditional_bond_expectations_research]
+    reliability: medium
+    default_mode: offline
+    fixture: data/fixtures/capabilities/fed_gsw_curve.jsonl
+    env: []
+    min_score: 0.95
+    supported_timeframes: [quarterly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    source_urls: ["https://www.federalreserve.gov/data/nominal-yield-curve.htm"]
+    caveats:
+      - invented fixture verifies schema only; actual received values require task-specific input acceptance
+      - current-vintage observations and retrospective corrections are not historical PIT delivery
+      - explicit release or conditional lag must precede decisions and complete label maturity must precede fits
+      - no executable ETF prices, physical shareholder entitlement, orders or paper readiness supplied by this source
+
+  - id: macro.philadelphia_spf_individual
+    kind: macro
+    status: trial
+    provider: philadelphia_fed_SPF
+    use_for: [conditional_bond_expectations_research]
+    reliability: medium
+    default_mode: offline
+    fixture: data/fixtures/capabilities/philadelphia_spf_individual.jsonl
+    env: []
+    min_score: 0.95
+    supported_timeframes: [quarterly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    source_urls: ["https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/individual-forecasts"]
+    caveats:
+      - invented fixture verifies schema only; actual received values require task-specific input acceptance
+      - current-vintage observations and retrospective corrections are not historical PIT delivery
+      - explicit release or conditional lag must precede decisions and complete label maturity must precede fits
+      - no executable ETF prices, physical shareholder entitlement, orders or paper readiness supplied by this source
+
+  - id: reference.sec_disclosed_common_shares
+    kind: event
+    status: trial
+    provider: sec
+    use_for: [conditional_disclosed_share_turnover_research]
+    reliability: medium
+    default_mode: offline
+    fixture: data/fixtures/capabilities/sec_disclosed_common_shares.jsonl
+    env: [SEC_USER_AGENT]
+    min_score: 0.95
+    supported_timeframes: [monthly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    source_urls:
+      companyfacts: https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json
+      submissions: https://data.sec.gov/submissions/CIK{cik:010d}.json
+      api_definition: https://www.sec.gov/search-filings/edgar-application-programming-interfaces
+    caveats:
+      - invented fixture verifies event schema only, not actual count or class support
+      - instant common shares are not float, authorized shares or weighted-average diluted EPS shares
+      - CIK and nondimensional companyfacts alone do not identify the traded common class
+      - actual count instant, filing availability, same-class filing witness and split basis need task-specific acceptance
+      - current-vintage corrections and reconstructed clocks are not historical first-seen PIT certificates
+      - sparse disclosed counts do not reconstruct subsequent issuance, repurchases or mergers
+      - no price, physical shareholder entitlement, execution capacity, orders or paper readiness is supplied
+
+  - id: reference.sec_annual_common_claims
+    kind: event
+    status: trial
+    provider: sec
+    use_for: [conditional_quarterly_valuation_information_research]
+    reliability: medium
+    default_mode: offline
+    fixture: data/fixtures/capabilities/sec_annual_common_claims.jsonl
+    env: [SEC_USER_AGENT]
+    min_score: 0.95
+    supported_timeframes: [quarterly]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    source_urls:
+      companyfacts: https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json
+      api_definition: https://www.sec.gov/search-filings/edgar-application-programming-interfaces
+    caveats:
+      - invented event fixture verifies schema only, not annual income or economic common-pool scope
+      - only source-matched annual common-basic USD and consolidated assets are eligible for task QA
+      - a cover same-class count does not alone certify all residual common market value
+      - positive dated capital-pool links, numerator attribution, actual count instant and split units require input acceptance
+      - current-vintage restatements and reconstructed next-session visibility are not first-seen PIT delivery
+      - no generic net income, book-value, diluted weighted-share or ADV market-cap substitution is supplied
+      - no prices, executable shareholder entitlements, order authority, physical fills or paper readiness are certified
+
+
+  - id: news.alpaca_archive_conditional_v1
+    kind: news
+    status: trial
+    provider: alpaca_benzinga_received_archive
+    use_for: [conditional_headline_return_information_research]
+    reliability: conditional_current_archive
+    default_mode: offline
+    fixture: data/fixtures/capabilities/alpaca_archive_conditional_v1.jsonl
+    env: []
+    min_score: 1.0
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    historical_first_seen_certified: false
+    conditional_research_clock: max_recorded_created_updated_plus15minutes
+    caveats:
+      - invented normal EventRecord fixture validates shape only, never historical delivery or market readiness
+      - safe visible_at remains actual fetch; the separate conditional_visible_at is an explicit research assumption
+      - recorded cache clocks may include missing-update fallback and naive-UTC localization; original symbol arity is unknown
+      - one received edition per ID is not historical revision completeness; actual fetch is audit only, not an earlier research regressor
+      - this capability cannot establish historical PIT Alpha, source replication, physical execution or paper readiness
+      - model license does not license Benzinga redistribution; existing private internal research scope only
+      - news.alpaca forward_only_fail_closed and all other existing contracts remain unchanged

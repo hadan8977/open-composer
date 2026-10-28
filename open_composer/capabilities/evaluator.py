@@ -6,6 +6,10 @@ from pathlib import Path
 import pandas as pd
 
 from open_composer.adapters.data.sample import normalize_ohlcv
+from open_composer.capabilities.native_fixtures import (
+    NATIVE_MARKET_SHAPES,
+    evaluate_native_market_fixture,
+)
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.capability import Capability, CapabilityEvaluation
 from open_composer.models.event import EventRecord
@@ -44,7 +48,21 @@ def _evaluate_capability(root: Path, capability: Capability) -> CapabilityEvalua
         )
 
     data_shape = str((capability.model_extra or {}).get("data_shape") or "")
-    if capability.kind == "market" and data_shape == "paired_eod_index_v1":
+    if capability.kind == "market" and data_shape in NATIVE_MARKET_SHAPES:
+        records, native_scores, native_issues = evaluate_native_market_fixture(
+            root, path, data_shape
+        )
+        score_parts.extend(native_scores)
+        issues.extend(native_issues)
+    elif capability.kind == "market" and data_shape == "vendor_stock_quote_v1":
+        records, quote_score_parts, quote_issues = _evaluate_stock_quote_fixture(path)
+        score_parts.extend(quote_score_parts)
+        issues.extend(quote_issues)
+    elif capability.kind == "market" and data_shape == "vendor_stock_trade_v1":
+        records, trade_scores, trade_issues = _evaluate_stock_trade_fixture(path)
+        score_parts.extend(trade_scores)
+        issues.extend(trade_issues)
+    elif capability.kind == "market" and data_shape == "paired_eod_index_v1":
         records, paired_score_parts, paired_issues = _evaluate_paired_index_fixture(path)
         score_parts.extend(paired_score_parts)
         issues.extend(paired_issues)
@@ -91,6 +109,68 @@ def _evaluate_capability(root: Path, capability: Capability) -> CapabilityEvalua
         passed=passed,
         issues=issues,
     )
+
+
+def _evaluate_stock_trade_fixture(path: Path) -> tuple[int, list[float], list[str]]:
+    """Raw tape schema only; fixture validity does not certify trade signing."""
+    import json
+
+    required = {"symbol", "t", "p", "s", "x", "c", "z", "i"}
+    valid, issues = 0, []
+    for line_number, text in enumerate(path.read_text().splitlines(), 1):
+        if not text.strip():
+            continue
+        try:
+            row = json.loads(text)
+            assert isinstance(row, dict) and required <= row.keys(), "missing trade fields"
+            assert isinstance(row["symbol"], str) and row["symbol"], "missing symbol"
+            assert pd.Timestamp(row["t"]).tzinfo is not None, "missing timestamp timezone"
+            assert type(row["p"]) in [int, float] and math.isfinite(row["p"]) and row["p"] > 0, (
+                "invalid raw price"
+            )
+            assert type(row["s"]) is int and row["s"] > 0, "invalid raw size"
+            assert row["z"] in ["A", "B", "C"], "missing or unsupported tape"
+            assert isinstance(row["x"], str) and row["x"], "missing venue"
+            assert type(row["i"]) is int and row["i"] >= 0, "missing trade identity"
+            assert isinstance(row["c"], list) and all(isinstance(c, str) and c for c in row["c"]), (
+                "invalid conditions"
+            )
+            valid += 1
+        except (AssertionError, ValueError, TypeError, KeyError) as exc:
+            issues.append(f"line {line_number}: {exc}")
+    return valid, [1.0 if valid else 0.0, 0.0 if issues else 1.0], issues
+
+
+def _evaluate_stock_quote_fixture(path: Path) -> tuple[int, list[float], list[str]]:
+    """Raw vendor schema only; zero/withdrawn quotes are not fill eligibility."""
+    import json
+
+    required = {"symbol", "t", "bp", "ap", "bs", "as", "bx", "ax", "c", "z"}
+    valid, issues = 0, []
+    for line_number, text in enumerate(path.read_text().splitlines(), 1):
+        if not text.strip():
+            continue
+        try:
+            row = json.loads(text)
+            assert isinstance(row, dict) and required <= row.keys(), "missing quote fields"
+            assert isinstance(row["symbol"], str) and row["symbol"], "missing symbol"
+            stamp = pd.Timestamp(row["t"])
+            assert stamp.tzinfo is not None, "missing timestamp timezone"
+            for key in ["bp", "ap"]:
+                assert (
+                    type(row[key]) in [int, float] and math.isfinite(row[key]) and row[key] >= 0
+                ), "invalid raw price"
+            assert all(type(row[k]) is int and row[k] >= 0 for k in ["bs", "as"]), (
+                "invalid raw size"
+            )
+            assert row["z"] in ["A", "B", "C"], "missing or unsupported tape"
+            assert all(isinstance(row[k], str) and row[k] for k in ["bx", "ax"]), "missing venue"
+            assert isinstance(row["c"], list) and len(row["c"]) in [1, 2], "invalid conditions"
+            assert all(isinstance(c, str) and c for c in row["c"]), "invalid condition code"
+            valid += 1
+        except (AssertionError, ValueError, TypeError, KeyError) as exc:
+            issues.append(f"line {line_number}: {exc}")
+    return valid, [1.0 if valid else 0.0, 0.0 if issues else 1.0], issues
 
 
 def _evaluate_paired_index_fixture(path: Path) -> tuple[int, list[float], list[str]]:

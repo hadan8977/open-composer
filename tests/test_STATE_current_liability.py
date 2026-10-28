@@ -446,9 +446,7 @@ def test_actual_SDK_request_tail_gets_timeout_zero_retries_then_restores(monkeyp
     # Actual installed methods; no SDK client constructor or network transport.
     client._request = MethodType(RESTClient._request, client)
     client._one_request = MethodType(RESTClient._one_request, client)
-    runtime = SimpleNamespace(
-        client=client, call=lambda *a: client._request("GET", "/clock")
-    )
+    runtime = SimpleNamespace(client=client, call=lambda *a: client._request("GET", "/clock"))
     if status == 200:
         assert module.bounded_call(runtime, "get_clock", (), lambda: 60) == {"private": True}
     else:
