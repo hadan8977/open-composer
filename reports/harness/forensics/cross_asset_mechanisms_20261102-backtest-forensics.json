@@ -1,0 +1,46 @@
+{
+  "strategy_name": "cross_asset_mechanisms_20261102",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 52,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "pbo": 0.17142857142857143,
+  "dsr": 0.7569103262027619,
+  "statistical_methods": {
+    "dsr": {
+      "selected": "A4",
+      "n_trials_known_lower_bound": 52,
+      "sessions": 575,
+      "benchmark": "aligned BIL close-to-close",
+      "daily_mean_excess": 0.0013459417694266505,
+      "daily_std_excess_ddof1": 0.010779783276069668,
+      "annual_excess_sharpe": 1.9820586981460244,
+      "sample_skew_bias_corrected": 0.0818057213274665,
+      "sample_pearson_kurtosis_bias_corrected": 6.348729629120681,
+      "hac_lag": 21,
+      "hac_inflation_floor_one": 1.0,
+      "hac_effective_sessions": 575.0,
+      "dsr": 0.7569103262027619,
+      "native_estimator": "campaign_statistics.deflated_sharpe_probability; min(iid,HAC21) expected-maximum benchmark",
+      "dispersion_assumption": "Native null-standard-normal maximum at known trial count, sample moments; no dispersion estimated from survivors",
+      "limitations": "Unknown broader S3 selection/failed-start inventory and seen development mean conditional DSR is not promotion evidence"
+    },
+    "pbo_artifact": "research/cross_asset_mechanisms_20261102/runs/mechanisms-20261102-1/worker/evidence/pbo.json"
+  },
+  "sample_data_caveats": [
+    "All windows previously seen; development selection only",
+    "2026 contaminated reference",
+    "Unknown broader ancestry; no full historical trial-return matrix",
+    "Fractional share accounting; capacity/whole-share execution untested",
+    "Two stress fixed-development-k controls each record two price-unavailable frozen trade attempts; development primary accounts have none."
+  ],
+  "trade_count": 240,
+  "trade_session_count": 36,
+  "trading_days": 575,
+  "capacity_assessment": "No new volume/auction/capacity claim. $20k native fractional-share ledger only; inspect actual saved order sizes before deployment work.",
+  "short_sample": false,
+  "conclusion": "warning",
+  "notes": "Clock fixture and saved-account identities pass; original K1 pass/K2 fail unchanged. No new promotion threshold or paper authorization. Fresh Lead independently reconstructed all 301 saved share/cash accounts, 48 paired cost views, DSR and CSCV from raw receipts; see research/cross_asset_mechanisms_20261102/runs/mechanisms-20261102-1/lead/raw-audit.json and lead/review.zh.md. Conditional development result received; timing attribution remains unresolved."
+}
