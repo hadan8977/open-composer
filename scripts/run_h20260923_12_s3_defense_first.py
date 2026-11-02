@@ -146,20 +146,17 @@ def expanded(
     return parts.fillna(0.0)
 
 
-def simulate(
-    weights: pd.DataFrame, leg_open: pd.DataFrame, leg_close: pd.DataFrame, cost_bps: float
-) -> tuple[pd.Series, pd.Series]:
-    """Same accounting as the salvage engine: yesterday's weights earn the
-    overnight leg, today's the open-to-close leg, sum|dw| pays the cost."""
-    cols = list(weights.columns)
-    wb = weights.to_numpy(dtype=float)
-    lo = leg_open[cols].to_numpy(dtype=float)
-    lc = leg_close[cols].to_numpy(dtype=float)
-    prev = np.vstack([np.zeros((1, wb.shape[1])), wb[:-1]])
-    gross = (prev * lo).sum(axis=1) + (wb * lc).sum(axis=1)
-    turnover = np.abs(wb - prev).sum(axis=1)
-    rets = gross - turnover * cost_bps / 10_000.0
-    return pd.Series(rets, index=weights.index), pd.Series(turnover, index=weights.index)
+def simulate(weights, leg_open, leg_close, cost_bps):
+    from open_composer.lab.accounting import simulate_effective
+
+    return simulate_effective(
+        weights.to_numpy(dtype=float),
+        list(weights.columns),
+        leg_open,
+        leg_close,
+        cost_bps,
+        index=weights.index,
+    )
 
 
 def window_mask(index: pd.DatetimeIndex, window: tuple[str, str]) -> np.ndarray:

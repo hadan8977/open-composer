@@ -1,4 +1,4 @@
-"""Provider-neutral research adapters; execution stays in the existing engines."""
+"""Shared research accounting, cumulative trials and native-engine adapters."""
 
 from open_composer.lab.adapters import book_engine, screen_engine, screen_variants, spec_engine
 from open_composer.lab.batch import Variant, run_batch

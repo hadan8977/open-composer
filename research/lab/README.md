@@ -1,8 +1,40 @@
-# Shared numerical research adapters
+# Shared numerical research
 
-`open_composer.lab` connects existing numerical engines to the provider-neutral
-`open_composer.research.agent_workflow.Results` contract. It adds no simulator,
-broker, data refresh, provider call, scheduler, or promotion decision.
+`open_composer.lab` owns the shared ETF return/cost ledger, cumulative trials,
+batch results and metrics. Share/cash daily books and intrabar StrategySpec fills
+retain their existing native engines: those are different accounting models.
+Frozen scientific sources remain evidence, not templates for new private engines.
+
+The original `scripts/screen_batch.py` now calls `lab.screening.run_screen_batch`.
+The salvage, defense, volatility brake, tranching and two/three-sleeve combination
+paths call `lab.accounting` for actual returns, turnover, cost and weight drift.
+The source's sum/dot reduction order, initial cash fee, next-open timing and linear
+return-leg convention are preserved. Results include per-offset turnover and
+10/20 bp costs beside the return paths. This is calculation reuse, not just export.
+
+The independent cross-asset scope review found that the historical sleeve-combination
+formula applies new allocation weights to whole-session returns, including the
+pre-fill overnight move. Its combination statistics are historical diagnostics.
+New contribution studies must use `book_engine` with combined asset targets, so
+old holdings earn overnight returns before the next-open fill. Preserving old
+arithmetic does not certify that legacy execution convention.
+
+```bash
+scripts/run_capped.sh --mem 400M --wait-min 0 -- .venv/bin/python scripts/screen_batch.py \
+  --batch <accepted_module> --iteration <accepted_iteration> \
+  --direction <economic_direction> --run-id <unique_batch>
+```
+
+The original manifest still defines accepted candidates. Outputs now live under
+`research/<direction>/batches/<run-id>/`, including the native leaderboard and
+returns file; old reports are never overwritten. Keep the same direction across
+related batches. A retained old leaderboard imports its documented trial count
+once; unknown earlier searches remain a limitation, never a fabricated zero.
+Every actual new start, including failed candidates, enters the same TrialLedger.
+DSR in the new leaderboard uses the final cumulative inventory and exact candidate
+calendar. Native evaluation-time DSR/count remain separately labeled in evidence.
+The default iteration direction is for compatibility; supply the established
+economic direction when another batch belongs to it.
 
 ## Entry points
 
@@ -114,7 +146,9 @@ is created by this API.
 
 ## DSR and numerical meaning
 
-`DSRConfig` selects the existing estimator explicitly:
+`DSRConfig` selects the existing estimator explicitly. `run_batch` also accepts a
+callable from EngineResult to DSRConfig when candidates have different observed
+calendars; the final cumulative trial count is applied by the writer:
 
 | Method | Inputs and preserved meaning |
 | --- | --- |

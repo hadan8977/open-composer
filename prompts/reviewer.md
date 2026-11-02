@@ -10,4 +10,4 @@ Separate economic rejection, invalidating defects and later deployment needs.
 Return accept/revise/blocked with grouped material findings and the affected scope.
 Do not add per-file receipts, repeat full validation or turn one weak negative
 into rejection of the whole mechanism. Never author or accept your own result.
-Preparation and tests are not research yield. Include failed work in cost review.
+Include failed work in cost review.

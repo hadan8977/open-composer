@@ -1,125 +1,67 @@
 # Research workflow
 
-Use one finite worker for a complete economic question, including preparation,
-implementation, variants, ordinary repairs and interpretation. A fresh Lead reads
-actual results and chooses the next economic task. Default: worker -> Lead.
-Independent review joins at the requested scientific or final-result boundary;
-do not turn each preparation step into a new round.
+One finite worker owns a complete economic question: preparation, implementation,
+informative variants, repairs and interpretation. A fresh Lead inspects raw costed
+results and dispatches the next question. Scope, stopping and startup rules live in
+`AGENTS.md`; roles in `workflow.json`. Numerical evidence is provider-neutral;
+only Codex transport is implemented. Claude A/B requires owner instruction.
 
-Pure Codex bindings live in `workflow.json`. Briefs, numerical results, trial
-ledgers and decisions are provider-neutral. Claude can replace roles after a
-transport adapter is implemented and verified; A/B remains off.
-
-## Run
+## Run and recover
 
 ```bash
-.venv/bin/python scripts/research_round.py preview
 .venv/bin/python scripts/research_round.py init <direction>
-.venv/bin/python scripts/research_round.py run <direction> --run-id <unique-id> \
-  --timeout-seconds <wall-clock-envelope> --review reuse --follow
+.venv/bin/python scripts/research_round.py run <direction> --run-id <id> \
+  --timeout-seconds <finite-envelope> --review reuse --follow
+.venv/bin/python scripts/research_round.py resume <direction> --run-id <id> \
+  --timeout-seconds <finite-envelope> --follow
 ```
 
 Each direction holds a brief <=1000 bytes, `decisions.tsv`, engine-written
-`results.json`, native evidence and immutable run snapshots. Reference existing
-scientific contracts. Reuse `open_composer.lab` and the [shared adapters](lab/README.md);
-count all selectable starts and preserve seen-data exposure. A failed recipe does
-not refute a mechanism; explain the next distinguishing change or stopping reason.
-Use 20–50 materially distinct variants as a direction-level investment reference,
-with mechanism families and informative batches. Planned variants are not executed
-trials. A concrete mechanism/opportunity-cost reason may stop earlier; a plateau
-calls for a changed method, not cosmetic parameter combinations.
+`results.json`, native evidence and run snapshots. The worker returns `Reply`;
+numerical code writes `Results`. Schemas live in `schemas/`. Reuse the
+[shared calculation and batch entry points](lab/README.md).
 
-`--review reuse` uses accepted scope and the independent Lead's actual checks.
-Use `plan` for a new hypothesis or material scientific definition, `result` for
-decisive independent result/paper review, or `both`. Compatibility flags
-`--review-plan` and `--review-result` remain available. A new directory, ordinary
-repair or routine variant inside accepted scope does not itself require plan
-review. Existing native scientific/input/model acceptances remain applicable.
+`--review reuse` uses accepted scope and fresh Lead checks. Use `plan` for new or
+material science, `result` for required separate decisive-result/paper reception,
+or `both`. A new directory or same-semantics repair needs no new economic review.
+Retain native contracts without multiplying ordinary preparation into peer rounds.
 
-The Lead's `next_review` selects the next brief's review boundary. `--follow`
-consumes concrete continue/repair/branch and park-with-next briefs, including
-another direction under `research/`. Park with another task retires only that
-branch; park without a next brief ends the series. Genuine blocks, checkpoints,
-pauses, process failures, exhausted quota and caller deadlines preserve recovery
-state. No standing agent, quota manager, polling or new scheduler is created.
+Lead supplies concrete `next_brief` and `next_review`. `--follow` consumes continue,
+repair, branch and park-with-next decisions across `research/` directions inside
+the invocation's time envelope. Park without another brief ends the series.
+No standing coordinator, scheduler or agent message chain is created.
 
-Installed research authority, existing memory admission and capped execution
-apply to actual starts. Research permission never creates broker, device or paid
-provider authority. Keep paper and real-money decisions separate.
+On interruption, inspect `run.json`, saved process identities, events and native
+checkpoints. Resume the original session and useful jobs; local exit does not
+prove remote termination. Locks reject duplicate drivers. Completed phases are
+reused; changed upstream results get a fresh downstream Lead. Reconcile actual
+jobs before closing a checkpoint. Preserve quota exhaustion, provider faults,
+owner pauses and resource failures as their actual causes.
 
-## Results and efficiency
+Capacity failures allow two bounded waits/retries in the known session. Quota and
+authentication failures do not. Malformed Reply allows one correction from saved
+artifacts only, without numerical work. These repairs retain failed-attempt logs;
+manual recovery remains manual. Already-running drivers do not hot-load changes.
 
-Agents return `Reply`; numerical code writes `Results` with original artifacts.
-Schemas live in `schemas/`. Optional `counts` separates executed economic comparisons,
-financial accounts, model fits, variants, paper candidates and diagnostic steps.
-Populate from actual engine/fit/trial evidence; `counts_artifact` references the
-existing engine JSON carrying these counts. Missing counts stay unknown.
-Code, tests, transport and environment success are not economic conclusions.
-Even a completed engine comparison can later be rejected. Board execution counts
-do not count accepted conclusions: confirm those through existing independent
-result reception. Automatic accepted-conclusion totals remain unknown.
+## Results
 
-The runner summarizes phase usage in `run.json` and the compact board row,
-including Lead and failed/interrupted attempts. Retries retain their original
-runs: assess total task cost, not only a successful last attempt. Input tokens
-already include cached tokens. Missing usage remains unknown. Lead reads one
-shared-account snapshot with `scripts/research_usage.py`; completion refreshes
-token totals without another quota query. Account percentages are pacing context,
-not project-attributed cost or dollars.
+The done-when is the complete economic comparison. Model work includes fitted
+weights, predictions and matched costed accounts where applicable. Record dollar
+profit, risks, costs, all selectable starts and seen-window status. A checkpoint
+states completed and remaining work; preparation cannot finish the question.
 
-Done-when refers to the whole economic comparison. Model tasks include optimized
-weights, predictions and matched costed accounts where relevant. Checkpoints name
-completed work and remaining computation; preparation alone does not finish a
-study. Assess throughput over actual research days, showing task depth, failed
-work and owner interventions.
+Optional engine `counts` distinguish comparisons, accounts, fits, variants and
+paper candidates. `counts_artifact` points to their actual source. Tests, fixtures,
+transport success and saved-result imports are not economic conclusions. Missing
+counts or usage stay unknown. An executed comparison may still be rejected.
 
-## Recovery and handover
+The runner records all-phase research token/time, including failed attempts and
+Lead, and one current board row per round. Cached input is already included in
+input tokens. Lead reads `scripts/research_usage.py --run <Run>` once for shared
+account pacing; account percentages are not project cost. Use ordinary research
+results to assess throughput, excluding one-time restructuring and its checks.
+No extra efficiency acceptance gate or payback study is needed.
 
-Inspect `run.json`, process identities, event logs and native checkpoints. Record
-the actual cause: quota exhaustion, provider fault, owner pause, timeout or an
-input/resource defect. Oct 28 stopped because quota was exhausted per the owner;
-a handoff record alone does not diagnose that cause.
-
-Resume the original failed model session and existing numerical jobs when viable.
-Local process exit does not prove remote termination. Reconcile unfinished work
-before a new start; never replay accepted roots merely to recreate a reply. Use
-`closed_after_recovery` only after reconciling actual jobs and outputs. Ordinary
-recovery reuses scientific acceptance. Old quota-manager prose is not authority.
-
-The same runner resumes a saved round or its original series:
-
-```bash
-.venv/bin/python scripts/research_round.py resume <direction> --run-id <round-id> \
-  --timeout-seconds <wall-clock-envelope>
-.venv/bin/python scripts/research_round.py resume <original-direction> --run-id <series-id> \
-  --timeout-seconds <wall-clock-envelope> --follow
-```
-
-Each explicit invocation has one finite time envelope. Series ids, recorded rounds,
-briefs and review selection are retained. A live local phase or series lock refuses
-another driver. A failed phase resumes its saved provider/model/session; completed
-phases are reused, and a changed worker gets a fresh downstream Lead. The resumed
-session reconciles actual remote jobs before new numerical work. Old checkpoints
-remain in history with links to the resolving phase and actual result/Lead files;
-unresolved checkpoints still block follow. Completing a round before a series
-update does not cause the worker or Lead to run again. Recovery creates no timer,
-standing agent or automatic provider substitution.
-
-Within that envelope, an explicit provider-capacity failure gets at most two
-30-second waits and retries in the same known session/model. Quota/authentication
-failures are not retried this way. A malformed Reply gets one correction in the
-same session, restricted to existing artifact paths; this cannot repair missing
-engine evidence or launch numerical jobs. That restriction survives a capacity
-failure during correction. Each attempt keeps its logs and cause. The board
-replaces the run's current row; attempt history stays in run files. A manually
-initiated recovery remains manual even if its subsequent stages proceed unaided.
-
-Future Claude integration supplies command construction, reply/event normalization
-and its usage reader. Financial evidence and checkpoints do not change with the
-provider. Retain real account authorization and paid/provider limits.
-
-Use existing affected formatting/lint/checks for code changes. Do not create a new
-test suite or run full release checks for each experiment. Production releases
-retain applicable `make verify-paper` checks; historical snapshot checks remain
-available when that code changes. One pytest process at a time; avoid competing
-with a heavy financial/model job on this shared host.
+Use affected checks for an identified code/science/accounting defect. Paper
+releases retain their worktree, review and integration requirements. Resource,
+provider and order authority come from `docs/rules.md` and the actual authorization.

@@ -17,6 +17,7 @@ from open_composer.lab.ledger import TrialLedger
 from open_composer.lab.metrics import DSRConfig, dsr_summary, return_metrics
 from open_composer.lab.models import EngineResult, Experiment
 from open_composer.research.agent_workflow import (
+    Counts,
     Results,
     direction_lock,
     identifier,
@@ -70,7 +71,7 @@ def run_batch(
     experiment: Experiment,
     batch_id: str,
     variants: Sequence[Variant],
-    dsr_config: DSRConfig | None = None,
+    dsr_config: DSRConfig | Callable[[EngineResult], DSRConfig] | None = None,
     selected_id: str | None = None,
 ) -> BatchResult:
     """Run only with installed research authority. No provider, broker or parallel jobs.
@@ -176,10 +177,13 @@ def run_batch(
                 failures[variant.id] = str(exc)
         snapshot = folder / "trials.snapshot.jsonl"
         n_trials = ledger.snapshot(snapshot)
+        counts = Counts(variants=sum(v.counts_as_trial for v in variants))
+        batch_path = folder / "batch.json"
         results = {}
         for candidate_id, (output, sources) in outputs.items():
             trial_folder = folder / candidate_id
-            statistic = dsr_summary(output.net_returns, n_trials=n_trials, config=dsr_config)
+            config = dsr_config(output) if callable(dsr_config) else dsr_config
+            statistic = dsr_summary(output.net_returns, n_trials=n_trials, config=config)
             metrics = (
                 return_metrics(output.net_returns, output.initial_equity_usd)
                 if output.net_returns is not None
@@ -192,6 +196,7 @@ def run_batch(
                 *sources,
                 str(snapshot.relative_to(root)),
                 str(metrics_path.relative_to(root)),
+                str(batch_path.relative_to(root)),
             ]
             limitations = [*experiment.limitations, *output.limitations]
             if output.net_returns is not None and len(output.net_returns) < 252:
@@ -210,14 +215,17 @@ def run_batch(
                 dsr=statistic["dsr"],
                 dsr_note=json.dumps(statistic, ensure_ascii=False, allow_nan=False),
                 limitations=limitations,
+                counts=counts,
+                counts_artifact=str(batch_path.relative_to(root)),
             )
             path = trial_folder / "results.json"
             write_evidence(path, result.model_dump())
             results[candidate_id] = path
         write_evidence(
-            folder / "batch.json",
+            batch_path,
             {
                 "n_trials": n_trials,
+                "counts": counts.model_dump(),
                 "results": {key: str(path.relative_to(root)) for key, path in results.items()},
                 "failures": failures,
             },

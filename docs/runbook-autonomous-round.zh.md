@@ -1,6 +1,6 @@
 # Autonomous research: compatibility runbook
 
-The old alternating lead/execution research schedules are retired. Do not restart them or use their old model, lock, pause or per-round quota rules. Current work uses [Complete-task research](task-owned-research.zh.md), current role configuration and actual task authority. Historical instructions remain in the consolidation before snapshot.
+The old alternating lead/execution research schedules are retired. Do not restart them or use their old model, lock, pause or per-round quota rules. Current work uses [Research workflow](../research/README.md), current role configuration and actual task authority. Historical instructions remain in the consolidation before snapshot.
 
 ## 1. Start or continue a task
 

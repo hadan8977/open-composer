@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from open_composer.engines.backtest_engine import backtest_frame
+from open_composer.lab.accounting import turnover_cost
 from open_composer.lab.metrics import session_returns
 from open_composer.lab.models import EngineResult
 from open_composer.models.strategy_spec import StrategySpec
@@ -191,11 +192,12 @@ def screen_engine(
     of its native judged-offset return series, not a forecast or new simulator.
     """
     _, lane = screen_modules(root)
-    native = lane.evaluate_candidate(candidate, n_trials=n_trials, **panel)
+    native = lane.evaluate_candidate(candidate, n_trials=n_trials, include_accounting=True, **panel)
     if native.get("skipped"):
         raise ValueError(native["skip_reason"])
     primary = native.pop("_returns_net10_by_offset")
     stress = native.pop("_returns_net20_by_offset")
+    turnover = native.pop("_turnover_by_offset")
     offset = native["judged"]["anchor"]["offset"]
     start = native["per_window"]["anchor"]["actual_start"]
     end = lane.WINDOWS["anchor"][1]
@@ -203,6 +205,15 @@ def screen_engine(
     ledger = pd.DataFrame(
         {f"net10_offset_{key}": values for key, values in primary.items()}
         | {f"net20_offset_{key}": values for key, values in stress.items()}
+        | {f"turnover_offset_{key}": values for key, values in turnover.items()}
+        | {
+            f"cost10_offset_{key}": turnover_cost(values, lane.COST_BPS_PRIMARY)
+            for key, values in turnover.items()
+        }
+        | {
+            f"cost20_offset_{key}": turnover_cost(values, lane.COST_BPS_STRESS)
+            for key, values in turnover.items()
+        }
     )
     return EngineResult(
         engine="screen_lane.evaluate_candidate",
@@ -221,6 +232,9 @@ def screen_engine(
         },
         limitations=[
             "Frozen ETF long-only screen assumptions; no universal daily engine claim",
+            "Legacy sleeve combination applies new allocation to whole-session returns; "
+            "its next-open combination statistics require clock correction. "
+            "Use book_engine asset-level targets for new contribution studies.",
             "Source holdout is contaminated and reference-only",
             "Native source DSR retains its evaluation count; summary records cumulative count",
         ],

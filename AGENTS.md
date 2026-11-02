@@ -11,6 +11,7 @@ Complete lean instructions, research loop, shared engines and production migrati
 
 Startup <=8 KB: this file, docs/rules.md, control.json, role, brief <=1000 bytes,
 latest board row <=400. Evidence on demand.
+Role bindings: research/workflow.json.
 
 One worker completes an economic question: prepare, implement, batch, repair and
 interpret. Fresh Lead checks raw numbers and dispatches next work.

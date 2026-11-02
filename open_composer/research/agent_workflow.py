@@ -32,7 +32,9 @@ class Reply(BaseModel):
     decision: Literal["accept", "revise", "continue", "repair", "branch", "park", "none"]
     results: str | None
     next_brief: str | None
-    checkpoint: str | None
+    checkpoint: str | None = Field(
+        description="Unresolved blocker evidence; null for a completed review or result."
+    )
     next_review: Literal["reuse", "plan", "result", "both"] = "reuse"
 
 
@@ -488,10 +490,22 @@ def latest_phase(state: dict, kind: str) -> str | None:
     return names[-1] if names else None
 
 
+def phase_checkpoint(name: str, phase: dict) -> bool:
+    # Some reviewers use the path for their completed acceptance report. Their
+    # explicit acceptance resolves the review, while raw Reply remains preserved.
+    if (
+        phase_kind(name) in ("plan_review", "reviewer")
+        and phase.get("status") == "complete"
+        and phase.get("decision") == "accept"
+    ):
+        return False
+    return bool(phase.get("checkpoint") or phase.get("status") == "blocked")
+
+
 def has_checkpoint(state: dict) -> bool:
     phases = state.get("phases", {})
     for name, phase in phases.items():
-        if not (phase.get("checkpoint") or phase.get("status") == "blocked"):
+        if not phase_checkpoint(name, phase):
             continue
         target = phase.get("resolved_by", "")
         resolved = phases.get(target, {})
@@ -500,7 +514,7 @@ def has_checkpoint(state: dict) -> bool:
             target != name
             and phase_kind(target) == phase_kind(name)
             and resolved.get("status") == "complete"
-            and not resolved.get("checkpoint")
+            and not phase_checkpoint(target, resolved)
             and evidence
         ):
             return True
@@ -556,7 +570,7 @@ def resolve_prior_checkpoints(root: Path, run: Path, state: dict) -> None:
         if current is None:
             continue
         phase = state["phases"][current]
-        if phase.get("status") != "complete" or phase.get("checkpoint"):
+        if phase.get("status") != "complete" or phase_checkpoint(current, phase):
             continue
         evidence = [str(phase_reply(root, run, current, phase).relative_to(root))]
         if kind == "worker":
@@ -569,7 +583,7 @@ def resolve_prior_checkpoints(root: Path, run: Path, state: dict) -> None:
             continue
         for name, prior in state["phases"].items():
             if name != current and phase_kind(name) == kind:
-                if prior.get("checkpoint") or prior.get("status") == "blocked":
+                if phase_checkpoint(name, prior):
                     prior["resolved_by"] = current
                     prior["resolution"] = {
                         "evidence": evidence,
@@ -737,7 +751,7 @@ def run_round(
                     changed_upstream = True
                 reusable = (
                     prior.get("status") == "complete"
-                    and not prior.get("checkpoint")
+                    and not phase_checkpoint(prior_name or kind, prior)
                     and prior.get("exit_code") == 0
                 )
                 if kind == "plan_review":

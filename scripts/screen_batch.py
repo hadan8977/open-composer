@@ -41,6 +41,8 @@ ENGINE_SOURCES = [
     "scripts/run_h20260927_01_sleeve_combination.py",
     "scripts/run_h20260928_01_s3_rebalance_tranching.py",
     "scripts/screen_lane.py",
+    "open_composer/lab/accounting.py",
+    "open_composer/lab/screening.py",
 ]
 
 SELF_CHECK_TOLERANCE = 0.005
@@ -180,76 +182,19 @@ def calendar_anchor_problems(close, candidates: list[lane.ScreenCandidate]) -> l
     return problems
 
 
-def run_batch(batch_name: str, *, iteration: str | None, smoke: bool) -> Path:
-    module = load_batch_module(batch_name)
-    candidates = candidates_from_module(module)
-    ids = [c.id for c in candidates]
-    if len(ids) != len(set(ids)):
-        raise SystemExit(f"duplicate candidate ids in batch {batch_name}: {ids}")
+def run_batch(
+    batch_name: str,
+    *,
+    iteration: str | None,
+    smoke: bool,
+    direction: str | None = None,
+    batch_id: str | None = None,
+) -> Path:
+    from open_composer.lab.screening import run_screen_batch
 
-    if smoke:
-        out_dir = SCREENS_DIR / "smoke"
-    else:
-        if not iteration:
-            raise SystemExit("--iteration is required to run a real (non-smoke) batch")
-        load_manifest_guard(ITERATIONS_DIR / iteration, ids)
-        out_dir = SCREENS_DIR / batch_name
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    close, _open, leg_open, leg_close, rf = lane.load_batch_panel(
-        candidates, getattr(module, "extend_panel", None)
+    return run_screen_batch(
+        ROOT, batch_name, iteration=iteration, smoke=smoke, direction=direction, batch_id=batch_id
     )
-    problems = calendar_anchor_problems(close, candidates)
-    if problems:
-        raise SystemExit("calendar-anchor check failed:\n" + "\n".join(problems))
-    shy_ret = (close[lane.CASH] / close[lane.CASH].shift(1) - 1.0).fillna(0.0)
-    s3_ret10, _s3_turn10 = lane.s3_incumbent(close, leg_open, leg_close, lane.COST_BPS_PRIMARY)
-
-    n_trials = len(candidates)
-    results: list[dict] = []
-    returns_cols: dict[str, pd.Series] = {}
-    for c in candidates:
-        r = lane.evaluate_candidate(
-            c,
-            close=close,
-            leg_open=leg_open,
-            leg_close=leg_close,
-            rf=rf,
-            shy_ret=shy_ret,
-            s3_ret10=s3_ret10,
-            n_trials=n_trials,
-        )
-        if not r["skipped"]:
-            for o, ser in r.pop("_returns_net10_by_offset").items():
-                returns_cols[f"{c.id}__o{o:02d}__net10"] = ser
-            for o, ser in r.pop("_returns_net20_by_offset").items():
-                returns_cols[f"{c.id}__o{o:02d}__net20"] = ser
-        results.append(r)
-        print(f"  {c.id} done", flush=True)
-
-    leaderboard = {
-        "batch": batch_name,
-        "generated_at": pd.Timestamp.now(tz="UTC").isoformat(),
-        "git_commit": git_commit(),
-        "engine_source_files": ENGINE_SOURCES,
-        "cost_bps_primary": lane.COST_BPS_PRIMARY,
-        "cost_bps_stress": lane.COST_BPS_STRESS,
-        "windows": {k: list(v) for k, v in lane.WINDOWS.items()},
-        "contaminated_windows": sorted(lane.CONTAMINATED_WINDOWS),
-        "n_trials": n_trials,
-        "smoke": smoke,
-        "iteration": iteration,
-        "candidates": results,
-    }
-    (out_dir / "leaderboard.json").write_text(
-        json.dumps(leaderboard, indent=2, default=float), encoding="utf-8"
-    )
-    (out_dir / "leaderboard.md").write_text(render_leaderboard_md(leaderboard), encoding="utf-8")
-    if returns_cols:
-        pd.DataFrame(returns_cols).to_parquet(out_dir / "returns.parquet")
-    else:  # pragma: no cover - only when every candidate was skipped
-        pd.DataFrame().to_parquet(out_dir / "returns.parquet")
-    return out_dir
 
 
 def self_check() -> int:
@@ -342,6 +287,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch", help="module name under scripts/screen_batches/")
     ap.add_argument("--iteration", help="iteration id with a matching candidate-manifest.json")
+    ap.add_argument(
+        "--direction", help="Shared cumulative research direction; defaults to iteration"
+    )
+    ap.add_argument("--run-id", help="Unique batch id; defaults to batch module name")
     ap.add_argument("--smoke", action="store_true", help="skip the manifest guard")
     ap.add_argument("--self-check", action="store_true", dest="self_check")
     args = ap.parse_args(argv)
@@ -352,7 +301,13 @@ def main(argv: list[str] | None = None) -> int:
     if not args.batch:
         raise SystemExit("--batch is required unless --self-check is given")
 
-    out_dir = run_batch(args.batch, iteration=args.iteration, smoke=args.smoke)
+    out_dir = run_batch(
+        args.batch,
+        iteration=args.iteration,
+        smoke=args.smoke,
+        direction=args.direction,
+        batch_id=args.run_id,
+    )
     print(f"wrote {out_dir}")
     return 0
 

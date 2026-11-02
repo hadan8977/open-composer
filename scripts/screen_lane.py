@@ -364,20 +364,10 @@ def combine_two_sleeves(
         total = sum(inv.values())
         return np.array([inv[k] / total for k in keys])
 
-    port_ret = np.zeros(n)
-    turnover = np.zeros(n)
-    w_prev = weight_fn(-1)
-    for i in range(n):
-        if i in rebal_effective:
-            target = weight_fn(i - 1)
-            turnover[i] = float(np.abs(target - w_prev).sum())
-            w_prev = target
-        day_ret = float(np.dot(w_prev, r[i]))
-        port_ret[i] = day_ret - turnover[i] * combo_cost_bps / 10_000.0
-        grown = w_prev * (1.0 + r[i])
-        total = float(grown.sum())
-        w_prev = grown / total if total != 0.0 else w_prev
-    return pd.Series(port_ret, index=index), pd.Series(turnover, index=index)
+    from open_composer.lab.accounting import drift_ledger
+
+    ledger = drift_ledger(r, index, rebal_effective, weight_fn, combo_cost_bps)
+    return ledger["net"].rename(None), ledger["turnover"].rename(None)
 
 
 def diversifier_edge_for_offset(
@@ -466,6 +456,7 @@ def evaluate_candidate(
     shy_ret: pd.Series,
     s3_ret10: pd.Series,
     n_trials: int,
+    include_accounting: bool = False,
 ) -> dict[str, object]:
     """Full per-candidate result: per-offset/per-window metrics and gates,
     min/median/max across offsets, the diversifier test against S3, S3
@@ -495,6 +486,7 @@ def evaluate_candidate(
 
     ret10_by_offset: dict[int, pd.Series] = {}
     ret20_by_offset: dict[int, pd.Series] = {}
+    turnover_by_offset: dict[int, pd.Series] = {}
     per_window: dict[str, dict[str, object]] = {}
     for wname in WINDOWS:
         per_window[wname] = {"offsets": {}, "actual_start": None}
@@ -508,6 +500,8 @@ def evaluate_candidate(
         )
         ret10_by_offset[offset] = ret10
         ret20_by_offset[offset] = ret20
+        if include_accounting:
+            turnover_by_offset[offset] = turn10
         for wname, window in WINDOWS.items():
             metrics_dict, start = evaluate_offset_window(
                 ret10, turn10, ret20, turn20, rf, window, first_valid
@@ -570,4 +564,6 @@ def evaluate_candidate(
 
     result["_returns_net10_by_offset"] = ret10_by_offset
     result["_returns_net20_by_offset"] = ret20_by_offset
+    if include_accounting:
+        result["_turnover_by_offset"] = turnover_by_offset
     return result

@@ -180,20 +180,16 @@ def combine_portfolio(
     signal_positions = np.flatnonzero(flags)
     rebal_effective = {int(i) + 1 for i in signal_positions if i + 1 < n}
 
-    port_ret = np.zeros(n)
-    turnover = np.zeros(n)
-    w_prev = np.array([weights_dict_to_arr(weight_fn(rets_np, -1), keys)]).flatten()
-    for i in range(n):
-        if i in rebal_effective:
-            target = weights_dict_to_arr(weight_fn(rets_np, i - 1), keys)
-            turnover[i] = float(np.abs(target - w_prev).sum())
-            w_prev = target
-        day_ret = float(np.dot(w_prev, r[i]))
-        port_ret[i] = day_ret - turnover[i] * combo_cost_bps / 10_000.0
-        grown = w_prev * (1.0 + r[i])
-        total = float(grown.sum())
-        w_prev = grown / total if total != 0.0 else w_prev
-    return pd.Series(port_ret, index=index), pd.Series(turnover, index=index)
+    from open_composer.lab.accounting import drift_ledger
+
+    ledger = drift_ledger(
+        r,
+        index,
+        rebal_effective,
+        lambda asof: weights_dict_to_arr(weight_fn(rets_np, asof), keys),
+        combo_cost_bps,
+    )
+    return ledger["net"].rename(None), ledger["turnover"].rename(None)
 
 
 def weights_dict_to_arr(d: dict[str, float], keys: tuple[str, ...]) -> np.ndarray:
