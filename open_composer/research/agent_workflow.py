@@ -16,7 +16,7 @@ import signal
 import subprocess
 import time
 from contextlib import contextmanager, nullcontext, suppress
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -304,10 +304,25 @@ def efficiency(root: Path, state: dict) -> dict:
                 counts = result.counts.model_dump()
         except (OSError, ValueError, TypeError) as exc:
             counts_error = type(exc).__name__
+    wall_to_lead = None
+    lead = state.get("phases", {}).get(latest_phase(state, "lead"), {})
+    if lead.get("status") == "complete":
+        try:
+            received = datetime.fromisoformat(lead["started"]) + timedelta(
+                seconds=lead["elapsed_seconds"]
+            )
+            seconds = (received - datetime.fromisoformat(state["started"])).total_seconds()
+            wall_to_lead = seconds if seconds >= 0 else None
+        except (KeyError, TypeError, ValueError, OverflowError):
+            pass
     return {
         "counts_validation_error": counts_error,
         "tokens": completed_tokens(state),
         "elapsed_seconds": state.get("elapsed_seconds"),
+        "wall_seconds_to_lead": wall_to_lead,
+        "time_scope": "elapsed_seconds sums active driver invocations; wall_seconds_to_lead "
+        "includes gaps and detached computation until the latest completed Lead. "
+        "A completed Lead response does not itself establish an accepted economic result.",
         "counts": counts,
         "accepted_economic_conclusions": None,
         "counts_scope": "Explicit engine execution counts, including comparisons later rejected. "
@@ -425,9 +440,12 @@ def finalize_metrics(root: Path, run: Path, state: dict) -> None:
     decision = state["phases"].get(lead_phase, {}).get("decision", state["status"])
     elapsed = metrics["elapsed_seconds"]
     duration = "?" if elapsed is None else f"{elapsed:.0f}"
+    wall = metrics["wall_seconds_to_lead"]
+    wall_text = "?" if wall is None else f"{wall:.0f}"
     line = (
         f"| {state['run_id']} | {state['direction']} | {decision} "
-        f"executed E/A/F/V/P/D={count_text} tok={token_text} s={duration} | "
+        f"executed E/A/F/V/P/D={count_text} tok={token_text} active_s={duration} "
+        f"wall_s={wall_text} | "
         f"{run.relative_to(root)}/run.json |\n"
     )
     update_board(root, line, f"{run.relative_to(root)}/run.json")
