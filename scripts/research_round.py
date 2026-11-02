@@ -44,6 +44,15 @@ def main() -> int:
         action="store_true",
         help="Follow concrete authorized briefs across directions within the timeout",
     )
+    recover = sub.add_parser("resume", help="Resume saved phases and the original research series")
+    recover.add_argument("direction")
+    recover.add_argument(
+        "--run-id", required=True, help="Original round id, or series id with --follow"
+    )
+    recover.add_argument("--timeout-seconds", required=True, type=float)
+    recover.add_argument(
+        "--follow", action="store_true", help="Resume the original series and continue"
+    )
     sub.add_parser("preview")
     sub.add_parser("schemas")
     args = parser.parse_args()
@@ -78,8 +87,11 @@ def main() -> int:
             args.direction,
             args.run_id,
             args.timeout_seconds,
-            review_plan=args.review_plan or args.review in ("plan", "both"),
-            review_result=args.review_result or args.review in ("result", "both"),
+            review_plan=getattr(args, "review_plan", False)
+            or getattr(args, "review", "reuse") in ("plan", "both"),
+            review_result=getattr(args, "review_result", False)
+            or getattr(args, "review", "reuse") in ("result", "both"),
+            resume=args.command == "resume",
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

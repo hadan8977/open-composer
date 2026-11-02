@@ -82,6 +82,25 @@ before a new start; never replay accepted roots merely to recreate a reply. Use
 `closed_after_recovery` only after reconciling actual jobs and outputs. Ordinary
 recovery reuses scientific acceptance. Old quota-manager prose is not authority.
 
+The same runner resumes a saved round or its original series:
+
+```bash
+.venv/bin/python scripts/research_round.py resume <direction> --run-id <round-id> \
+  --timeout-seconds <wall-clock-envelope>
+.venv/bin/python scripts/research_round.py resume <original-direction> --run-id <series-id> \
+  --timeout-seconds <wall-clock-envelope> --follow
+```
+
+Each explicit invocation has one finite time envelope. Series ids, recorded rounds,
+briefs and review selection are retained. A live local phase or series lock refuses
+another driver. A failed phase resumes its saved provider/model/session; completed
+phases are reused, and a changed worker gets a fresh downstream Lead. The resumed
+session reconciles actual remote jobs before new numerical work. Old checkpoints
+remain in history with links to the resolving phase and actual result/Lead files;
+unresolved checkpoints still block follow. Completing a round before a series
+update does not cause the worker or Lead to run again. Recovery creates no timer,
+standing agent or automatic provider substitution.
+
 Future Claude integration supplies command construction, reply/event normalization
 and its usage reader. Financial evidence and checkpoints do not change with the
 provider. Retain real account authorization and paid/provider limits.

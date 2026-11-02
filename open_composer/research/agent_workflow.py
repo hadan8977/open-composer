@@ -128,19 +128,21 @@ def require_research(root: Path) -> None:
             raise ValueError("Legacy research hold remains active; reconcile authority first")
 
 
-def codex_command(root: Path, role: dict, output: Path, schema: Path) -> list[str]:
+def codex_command(
+    root: Path, role: dict, output: Path, schema: Path, *, session: str | None = None
+) -> list[str]:
     """Only this boundary is provider-specific; Claude is not enabled implicitly."""
     if role["provider"] != "codex":
         raise ValueError("Only Codex is implemented; add and verify a provider adapter first")
+    prefix = (
+        ["codex", "exec", "resume", "--dangerously-bypass-approvals-and-sandbox"]
+        if session
+        else ["codex", "exec", "--cd", str(root), "--sandbox", "danger-full-access"]
+    )
     return [
-        "codex",
-        "exec",
-        "--cd",
-        str(root),
+        *prefix,
         "--model",
         role["model"],
-        "--sandbox",
-        "danger-full-access",
         "-c",
         'approval_policy="never"',
         "-c",
@@ -150,6 +152,7 @@ def codex_command(root: Path, role: dict, output: Path, schema: Path) -> list[st
         str(schema),
         "--output-last-message",
         str(output),
+        *([session] if session else []),
         "-",
     ]
 
@@ -237,6 +240,7 @@ def token_values(usage: dict | None) -> dict:
 def completed_tokens(state: dict) -> dict:
     """All attempted phases, including Lead; observed partial usage is a lower bound."""
     phases, totals, missing, unfinished = {}, {}, [], []
+    sessions, repeated = {}, set()
     for name, phase in state.get("phases", {}).items():
         if not isinstance(phase, dict):
             continue
@@ -248,9 +252,16 @@ def completed_tokens(state: dict) -> dict:
             phase.get("exit_code") is None and phase.get("status") not in ("complete", "blocked")
         ):
             unfinished.append(name)
+        identity = phase.get("session") or name
+        if identity in sessions:
+            repeated.add(identity)
+        observed = sessions.setdefault(identity, {})
         for key, count in tokens.items():
+            observed[key] = max(observed.get(key, 0), count)
+    for observed in sessions.values():
+        for key, count in observed.items():
             totals[key] = totals.get(key, 0) + count
-    complete = bool(phases) and not missing and not unfinished
+    complete = bool(phases) and not missing and not unfinished and not repeated
     observed_total = (
         totals.get("input_tokens", 0) + totals.get("output_tokens", 0)
         if "input_tokens" in totals or "output_tokens" in totals
@@ -264,15 +275,18 @@ def completed_tokens(state: dict) -> dict:
         "total_tokens": observed_total if complete else None,
         "phases_with_missing_fields": missing,
         "unfinished_phases": unfinished,
+        "sessions_with_multiple_records": sorted(repeated),
         "complete": complete,
         "scope": "All attempts, including Lead, failed and interrupted phases. Cached input is "
-        "part of input. Gaps make observed totals a lower bound, not a full total.",
+        "part of input. Gaps and repeated-session fieldwise maxima make observed totals a "
+        "lower bound, not a full total.",
     }
 
 
 def efficiency(root: Path, state: dict) -> dict:
     counts = Counts().model_dump()
-    snapshot = state.get("phases", {}).get("worker", {}).get("results_snapshot")
+    worker = state.get("latest_worker_phase", "worker")
+    snapshot = state.get("phases", {}).get(worker, {}).get("results_snapshot")
     counts_error = None
     if snapshot:
         try:
@@ -303,7 +317,7 @@ def summarize_runs(root: Path) -> dict:
         state = json.loads(path.read_text())
         # Old interrupted runs can have usable events absent from their final run.json.
         for phase_name, phase in state.get("phases", {}).items():
-            folder = path.parent / phase_name
+            folder = phase_folder(path.parent, phase_name, phase)
             if (folder / "events.jsonl").exists():
                 observed = read_events(folder)
                 for key, value in observed.items():
@@ -324,7 +338,8 @@ def summarize_runs(root: Path) -> dict:
                     sessions[key][field] = max(sessions[key].get(field, 0), value)
             else:
                 sessions[key] = tokens
-        snapshot = state.get("phases", {}).get("worker", {}).get("results_snapshot")
+        worker = state.get("latest_worker_phase", "worker")
+        snapshot = state.get("phases", {}).get(worker, {}).get("results_snapshot")
         evidence = None
         if snapshot and local_path(root, snapshot).is_file():
             evidence = json.loads(local_path(root, snapshot).read_text()).get("counts_artifact")
@@ -397,7 +412,8 @@ def finalize_metrics(root: Path, run: Path, state: dict) -> None:
     if tokens is not None and not token_summary["complete"]:
         token_text += "+?"
     count_text = "/".join("?" if n is None else str(n) for n in counts.values())
-    decision = state["phases"].get("lead", {}).get("decision", state["status"])
+    lead_phase = state.get("latest_lead_phase", "lead")
+    decision = state["phases"].get(lead_phase, {}).get("decision", state["status"])
     elapsed = metrics["elapsed_seconds"]
     duration = "?" if elapsed is None else f"{elapsed:.0f}"
     line = (
@@ -420,18 +436,133 @@ def direction_lock(path: Path):
         yield
 
 
+def phase_kind(name: str) -> str:
+    return name.split("_resume_", 1)[0]
+
+
+def latest_phase(state: dict, kind: str) -> str | None:
+    names = [name for name in state.get("phases", {}) if phase_kind(name) == kind]
+    return names[-1] if names else None
+
+
+def has_checkpoint(state: dict) -> bool:
+    phases = state.get("phases", {})
+    for name, phase in phases.items():
+        if not (phase.get("checkpoint") or phase.get("status") == "blocked"):
+            continue
+        target = phase.get("resolved_by", "")
+        resolved = phases.get(target, {})
+        evidence = phase.get("resolution", {}).get("evidence")
+        if not (
+            target != name
+            and phase_kind(target) == phase_kind(name)
+            and resolved.get("status") == "complete"
+            and not resolved.get("checkpoint")
+            and evidence
+        ):
+            return True
+    return False
+
+
+def phase_folder(run: Path, name: str, phase: dict) -> Path:
+    # The first Martin recovery used worker/resume-N. Preserve those logs too.
+    nested = run / name.replace("worker_resume_", "worker/resume-")
+    return run / phase["folder"] if phase.get("folder") else nested
+
+
+def phase_reply(root: Path, run: Path, name: str, phase: dict) -> Path:
+    path = phase_folder(run, name, phase) / "reply.json"
+    if not path.exists() and name.startswith("worker_resume_"):
+        # Legacy task-local resume wrote one current reply into worker/.
+        path = run / "worker/reply.json"
+    reply = Reply.model_validate_json(path.read_text())
+    if any(
+        phase.get(key, "reuse" if key == "next_review" else None) != value
+        for key, value in reply.model_dump().items()
+    ):
+        raise ValueError(f"Saved phase reply no longer matches: {name}")
+    validate_reply(root, reply, phase_kind(name), run.parent.parent.name)
+    return path
+
+
+def require_local_stopped(run: Path, state: dict) -> None:
+    for name, phase in state.get("phases", {}).items():
+        path = phase_folder(run, name, phase) / "process.json"
+        if not path.exists():
+            continue
+        pid = int(json.loads(path.read_text())["pid"])
+        try:
+            os.killpg(pid, 0)
+        except ProcessLookupError:
+            continue
+        raise ValueError(f"Local phase process group is still present: {name}, pid={pid}")
+
+
+def resolve_prior_checkpoints(root: Path, run: Path, state: dict) -> None:
+    """Retain each old block and bind its resolution to received role outputs."""
+    lead_name = latest_phase(state, "lead")
+    lead = state["phases"].get(lead_name, {})
+    if (
+        state.get("status") != "round_finished"
+        or lead.get("status") != "complete"
+        or lead.get("checkpoint")
+    ):
+        return
+    for kind in ("plan_review", "worker", "reviewer", "lead"):
+        current = latest_phase(state, kind)
+        if current is None:
+            continue
+        phase = state["phases"][current]
+        if phase.get("status") != "complete" or phase.get("checkpoint"):
+            continue
+        evidence = [str(phase_reply(root, run, current, phase).relative_to(root))]
+        if kind == "worker":
+            if not phase.get("results"):
+                continue
+            validate_results(root, phase["results"], state["direction"])
+            evidence.append(phase["results"])
+        evidence.append(str(phase_reply(root, run, lead_name, lead).relative_to(root)))
+        if not all(local_path(root, name).is_file() for name in evidence):
+            continue
+        for name, prior in state["phases"].items():
+            if name != current and phase_kind(name) == kind:
+                if prior.get("checkpoint") or prior.get("status") == "blocked":
+                    prior["resolved_by"] = current
+                    prior["resolution"] = {
+                        "evidence": evidence,
+                        "at_utc": datetime.now(UTC).isoformat(),
+                        "reason": "Same-task recovery and independent Lead report no remaining "
+                        "checkpoint",
+                    }
+
+
 def require_resolved_runs(task: Path) -> None:
     """A released lock is not proof that an interrupted job has stopped."""
     for path in (task / "runs").glob("*/run.json"):
         state = json.loads(path.read_text())
-        phases = state.get("phases", {})
         # A local return code cannot establish whether a remote job is still live.
         unresolved = state.get("status") in ("running", "interrupted_or_failed")
-        checkpoint = any(
-            phase.get("checkpoint") or phase.get("status") == "blocked" for phase in phases.values()
-        )
+        checkpoint = has_checkpoint(state)
         if (unresolved or checkpoint) and state.get("status") != "closed_after_recovery":
             raise ValueError(f"Reconcile unfinished job/checkpoint before a new start: {path}")
+
+
+def validate_reply(root: Path, reply: Reply, kind: str, direction: str) -> None:
+    if reply.checkpoint is not None and not local_path(root, reply.checkpoint).is_file():
+        raise ValueError("Claimed checkpoint does not exist")
+    if reply.next_brief is not None:
+        next_path = local_path(root, reply.next_brief)
+        if not next_path.is_file() or not 0 < next_path.stat().st_size <= 1000:
+            raise ValueError("Next brief is missing or oversized")
+    if reply.results is not None:
+        validate_results(root, reply.results, direction)
+    if kind == "worker" and reply.status == "complete" and reply.results is None:
+        raise ValueError("A completed worker must point to engine results")
+    if kind == "lead" and reply.status == "complete":
+        if reply.decision not in ("continue", "repair", "branch", "park"):
+            raise ValueError("Lead must choose continue/repair/branch/park")
+        if reply.decision != "park" and reply.next_brief is None:
+            raise ValueError("Continuing work requires a concrete next brief")
 
 
 def run_round(
@@ -445,6 +576,7 @@ def run_round(
     execute_fn=execute,
     brief_name: str | None = None,
     _locked: bool = False,
+    resume: bool = False,
 ) -> dict:
     root = root.resolve()
     identifier(direction)
@@ -452,34 +584,70 @@ def run_round(
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("A positive wall-clock timeout is required")
     task = local_path(root, f"research/{direction}")
-    brief = local_path(root, brief_name) if brief_name else task / "brief.md"
+    run = local_path(root, f"research/{direction}/runs/{run_id}")
+    brief = (
+        run / "brief.md"
+        if resume
+        else local_path(root, brief_name)
+        if brief_name
+        else task / "brief.md"
+    )
     if not brief.is_file() or not 0 < brief.stat().st_size <= 1000:
         raise ValueError("A non-empty brief of at most 1000 bytes is required")
     require_research(root)
     config = json.loads((root / "research/workflow.json").read_text())
-    phases = (
-        (["plan_review"] if review_plan else [])
-        + ["worker"]
-        + (["reviewer"] if review_result else [])
-        + ["lead"]
-    )
-    run = local_path(root, f"research/{direction}/runs/{run_id}")
     with nullcontext() if _locked else direction_lock(task / ".round.lock"):
-        require_resolved_runs(task)
-        run.mkdir(parents=True, exist_ok=False)
-        snapshot = run / "brief.md"
-        snapshot.write_bytes(brief.read_bytes())
-        brief = snapshot
         started = time.monotonic()
-        state = {
-            "direction": direction,
-            "run_id": run_id,
-            "status": "running",
-            "started": datetime.now(UTC).isoformat(),
-            "review_plan": review_plan,
-            "review_result": review_result,
-            "phases": {},
-        }
+        if resume:
+            state = json.loads((run / "run.json").read_text())
+            if state["direction"] != direction or state["run_id"] != run_id:
+                raise ValueError("Saved run identity does not match")
+            require_local_stopped(run, state)
+            attempt = len(list(run.glob("before-resume-*.json"))) + 1
+            archive = run / f"before-resume-{attempt}.json"
+            with archive.open("x") as output:
+                json.dump(state, output, ensure_ascii=False, indent=2)
+            for name, prior in state["phases"].items():
+                observed = read_events(phase_folder(run, name, prior))
+                identities = {
+                    identity
+                    for identity in (
+                        prior.get("session"),
+                        prior.get("resumes_session"),
+                        observed.get("session"),
+                    )
+                    if identity
+                }
+                if len(identities) > 1:
+                    raise ValueError(f"Saved session conflicts with original event log: {name}")
+                prior.update({key: value for key, value in observed.items() if value is not None})
+            review_plan, review_result = state["review_plan"], state["review_result"]
+            previous_elapsed = state.get("elapsed_seconds", 0)
+            state.update(status="running", active_phase=None)
+            state.pop("finished", None)
+            state.pop("error", None)
+        else:
+            require_resolved_runs(task)
+            run.mkdir(parents=True, exist_ok=False)
+            snapshot = run / "brief.md"
+            snapshot.write_bytes(brief.read_bytes())
+            brief = snapshot
+            previous_elapsed = 0
+            state = {
+                "direction": direction,
+                "run_id": run_id,
+                "status": "running",
+                "started": datetime.now(UTC).isoformat(),
+                "review_plan": review_plan,
+                "review_result": review_result,
+                "phases": {},
+            }
+        phases = (
+            (["plan_review"] if review_plan else [])
+            + ["worker"]
+            + (["reviewer"] if review_result else [])
+            + ["lead"]
+        )
         write_json(run / "run.json", state)
         deadline = time.monotonic() + timeout
         schema = run / "reply.schema.json"
@@ -490,24 +658,76 @@ def run_round(
         write_json(schema, dispatch_schema)
         try:
             worker_blocked = False
-            for phase in phases:
-                if phase == "reviewer" and worker_blocked:
+            changed_upstream = False
+            upstream = []
+            for kind in phases:
+                if kind == "reviewer" and worker_blocked:
+                    continue
+                prior_name = latest_phase(state, kind)
+                prior = state["phases"].get(prior_name, {})
+                # Dict order is retained in saved JSON, including legacy runs.
+                # A completed upstream retry invalidates an older downstream
+                # phase even if the driver died before creating its replacement.
+                order = list(state["phases"])
+                if prior and (
+                    any(order.index(name) > order.index(prior_name) for name in upstream)
+                    or ("depends_on" in prior and prior["depends_on"] != upstream)
+                ):
+                    changed_upstream = True
+                reusable = (
+                    prior.get("status") == "complete"
+                    and not prior.get("checkpoint")
+                    and prior.get("exit_code") == 0
+                )
+                if kind == "plan_review":
+                    reusable = reusable and prior.get("decision") == "accept"
+                if resume and reusable and not changed_upstream:
+                    phase_reply(root, run, prior_name, prior)
+                    if kind == "worker" and not prior.get("results_snapshot"):
+                        snapshot = phase_folder(run, prior_name, prior) / "results.json"
+                        with snapshot.open("xb") as output:
+                            output.write(local_path(root, prior["results"]).read_bytes())
+                        prior["results_snapshot"] = str(snapshot.relative_to(root))
+                    if kind in ("worker", "lead"):
+                        state[f"latest_{kind}_phase"] = prior_name
+                    upstream.append(prior_name)
                     continue
                 require_research(root)
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError("Round deadline reached; preserve existing job state")
-                role_name = "reviewer" if phase == "plan_review" else phase
-                role = config["roles"][role_name]
+                role_name = "reviewer" if kind == "plan_review" else kind
+                role = prior.get("requested_runtime", config["roles"][role_name])
+                session_to_resume = (
+                    (prior.get("session") or prior.get("resumes_session"))
+                    if prior and not changed_upstream
+                    else None
+                )
+                if prior and not changed_upstream and not session_to_resume:
+                    old_folder = phase_folder(run, prior_name, prior)
+                    if (old_folder / "process.json").exists():
+                        raise ValueError(
+                            "Original session is unknown; reconcile its transport before retry"
+                        )
+                phase = kind
+                if prior:
+                    number = 1
+                    while f"{kind}_resume_{number}" in state["phases"]:
+                        number += 1
+                    phase = f"{kind}_resume_{number}"
                 folder = run / phase
                 folder.mkdir()
                 output = folder / "reply.json"
-                command = codex_command(root, role, output, schema)
+                command = codex_command(root, role, output, schema, session=session_to_resume)
                 state["active_phase"] = phase
                 state["phases"][phase] = {
                     "requested_runtime": role,
                     "status": "starting",
                     "started": datetime.now(UTC).isoformat(),
+                    "folder": folder.name,
+                    "resumes_phase": prior_name if session_to_resume else None,
+                    "resumes_session": session_to_resume,
+                    "depends_on": list(upstream),
                 }
                 phase_started = time.monotonic()
                 write_json(run / "run.json", state)
@@ -518,6 +738,15 @@ def run_round(
                     "research/schemas/results.schema.json. Preserve authority, native gates, "
                     "paper and schedules. Return the reply schema.\n"
                 )
+                if resume:
+                    dispatch = (
+                        f"\nPhase: {phase}\nBrief: {brief.relative_to(root)}\n"
+                        f"Run: {run.relative_to(root)}\n"
+                        "Resume saved task/session. Read run.json; reconcile native/remote jobs "
+                        "and checkpoints first. Reuse outputs; no replay/provider swap. Keep "
+                        "unresolved checkpoints. Return Reply; engine schema: "
+                        "research/schemas/results.schema.json.\n"
+                    )
                 if len(dispatch.encode()) > 500:
                     raise ValueError("Dispatch exceeds the startup envelope")
                 prompt = local_path(root, role["prompt"]).read_text() + dispatch
@@ -550,10 +779,12 @@ def run_round(
                     if (folder / "events.jsonl").exists():
                         state["phases"][phase].update(read_events(folder))
                 session = state["phases"][phase].get("session")
+                if session_to_resume and session != session_to_resume:
+                    raise ValueError("Recovery did not return the original session")
                 if session and any(
                     prior.get("session") == session
                     for name, prior in state["phases"].items()
-                    if name != phase
+                    if name != phase and (phase_kind(name) != kind or not session_to_resume)
                 ):
                     raise ValueError("Worker, Lead and review phases require independent sessions")
                 write_json(run / "run.json", state)
@@ -562,42 +793,32 @@ def run_round(
                 reply = Reply.model_validate_json(output.read_text())
                 state["phases"][phase]["checkpoint"] = reply.checkpoint
                 write_json(run / "run.json", state)
-                if (
-                    reply.checkpoint is not None
-                    and not local_path(root, reply.checkpoint).is_file()
-                ):
-                    raise ValueError("Claimed checkpoint does not exist")
-                if reply.next_brief is not None:
-                    next_path = local_path(root, reply.next_brief)
-                    if not next_path.is_file() or not 0 < next_path.stat().st_size <= 1000:
-                        raise ValueError("Next brief is missing or oversized")
-                if reply.results is not None:
-                    validate_results(root, reply.results, direction)
-                    if phase == "worker":
-                        snapshot = folder / "results.json"
-                        snapshot.write_bytes(local_path(root, reply.results).read_bytes())
-                        state["phases"][phase]["results_snapshot"] = str(snapshot.relative_to(root))
-                if phase == "worker" and reply.status == "complete" and reply.results is None:
-                    raise ValueError("A completed worker must point to engine results")
-                if phase == "lead" and reply.status == "complete":
-                    if reply.decision not in ("continue", "repair", "branch", "park"):
-                        raise ValueError("Lead must choose continue/repair/branch/park")
-                    if reply.decision != "park" and reply.next_brief is None:
-                        raise ValueError("Continuing work requires a concrete next brief")
+                validate_reply(root, reply, kind, direction)
+                if kind == "worker" and reply.results is not None:
+                    snapshot = folder / "results.json"
+                    snapshot.write_bytes(local_path(root, reply.results).read_bytes())
+                    state["phases"][phase]["results_snapshot"] = str(snapshot.relative_to(root))
                 state["phases"][phase].update(reply.model_dump())
+                if kind in ("worker", "lead"):
+                    state[f"latest_{kind}_phase"] = phase
+                state["active_phase"] = None
                 write_json(run / "run.json", state)
-                if phase == "plan_review" and (
+                if kind == "plan_review" and (
                     reply.status != "complete" or reply.decision != "accept"
                 ):
                     state["status"] = "scope_needs_revision"
                     break
-                if phase == "worker":
+                if kind == "worker":
                     worker_blocked = reply.status == "blocked"
+                upstream.append(phase)
+                changed_upstream = True
             else:
                 state["status"] = "round_finished"
             state["finished"] = datetime.now(UTC).isoformat()
             state["active_phase"] = None
-            state["elapsed_seconds"] = time.monotonic() - started
+            if resume:
+                resolve_prior_checkpoints(root, run, state)
+            state["elapsed_seconds"] = previous_elapsed + time.monotonic() - started
             finalize_metrics(root, run, state)
             return state
         except BaseException as exc:
@@ -610,7 +831,7 @@ def run_round(
             if active:
                 state["phases"][active]["status"] = "interrupted_or_failed"
                 state["phases"][active]["usage_incomplete"] = True
-            state["elapsed_seconds"] = time.monotonic() - started
+            state["elapsed_seconds"] = previous_elapsed + time.monotonic() - started
             finalize_metrics(root, run, state)
             raise
 
@@ -624,6 +845,63 @@ def run_series(
     review_plan: bool = False,
     review_result: bool = False,
     execute_fn=execute,
+    resume: bool = False,
+) -> dict:
+    root = root.resolve()
+    identifier(direction)
+    identifier(run_id)
+    runs = local_path(root, f"research/{direction}/runs")
+    require_research(root)
+    runs.mkdir(exist_ok=True)
+    with direction_lock(runs / f"{run_id}-series.lock"):
+        return _run_series(
+            root,
+            direction,
+            run_id,
+            timeout,
+            review_plan=review_plan,
+            review_result=review_result,
+            execute_fn=execute_fn,
+            resume=resume,
+        )
+
+
+def prepare_pending_round(
+    root: Path, saved_run: Path, pending: dict, original: str
+) -> tuple[str, bool, bool]:
+    """Called under the direction lock; retain any provably unstarted partial."""
+    if pending.get("run") != original:
+        raise ValueError("Unstarted round lacks its original pending dispatch")
+    brief = pending["brief"]
+    if local_path(root, brief).read_text() != pending["brief_text"]:
+        raise ValueError("Pending brief changed before its first launch")
+    folder = saved_run.parent
+    if folder.exists():
+        if any(
+            p.name not in ("brief.md", "run.json.tmp") or not p.is_file() or p.is_symlink()
+            for p in folder.iterdir()
+        ):
+            raise ValueError("Unstarted round has unexplained artifacts; reconcile first")
+        snapshot = folder / "brief.md"
+        if snapshot.exists() and snapshot.read_text() != pending["brief_text"]:
+            raise ValueError("Partial round brief differs from its pending dispatch")
+        temporary = folder / "run.json.tmp"
+        if temporary.exists() and json.loads(temporary.read_text()).get("phases") != {}:
+            raise ValueError("Partial state does not establish an unstarted round")
+        folder.rename(folder.with_name(f"{folder.name}-unstarted-{time.time_ns()}"))
+    return brief, pending["review_plan"], pending["review_result"]
+
+
+def _run_series(
+    root: Path,
+    direction: str,
+    run_id: str,
+    timeout: float,
+    *,
+    review_plan: bool = False,
+    review_result: bool = False,
+    execute_fn=execute,
+    resume: bool = False,
 ) -> dict:
     """Follow concrete authorized briefs across directions until a real stop.
 
@@ -640,9 +918,29 @@ def run_series(
     runs = task / "runs"
     runs.mkdir(exist_ok=True)
     record = runs / f"{run_id}-series.json"
-    with record.open("x") as output:
-        output.write("{}\n")
-    series = {"status": "running", "rounds": [], "next_brief": None}
+    existing_run = None
+    if resume:
+        series = json.loads(record.read_text())
+        existing_run = series.get("active_round")
+        if existing_run and "/" not in existing_run:
+            existing_run = f"research/{direction}/runs/{existing_run}/run.json"
+        if not existing_run and series.get("rounds"):
+            existing_run = series["rounds"][-1]
+        if not existing_run:
+            raise ValueError("Series has no saved round to resume")
+        saved_path = local_path(root, existing_run)
+        if saved_path.exists():
+            with direction_lock(saved_path.parent.parent.parent / ".round.lock"):
+                require_local_stopped(saved_path.parent, json.loads(saved_path.read_text()))
+        archive = record.with_name(f"{record.stem}-resume-{time.time_ns()}.json")
+        with archive.open("x") as output:
+            json.dump(series, output, ensure_ascii=False, indent=2)
+        series.update(status="running")
+        series.pop("error", None)
+    else:
+        with record.open("x") as output:
+            output.write("{}\n")
+        series = {"status": "running", "rounds": [], "next_brief": None}
     deadline = time.monotonic() + timeout
     brief_name = None
     try:
@@ -651,28 +949,60 @@ def run_series(
             if remaining <= 0:
                 series["status"] = "deadline_checkpoint"
                 break
-            number = len(series["rounds"]) + 1
-            name = f"{run_id}-{number}"
-            series["active_round"] = f"research/{direction}/runs/{name}/run.json"
-            # Record attempts before launch so a failed final round is never dropped.
-            series["rounds"].append(series["active_round"])
+            recovering = existing_run is not None
+            pending_recovery = False
+            if recovering:
+                parts = local_path(root, existing_run).relative_to(root).parts
+                if len(parts) != 5 or parts[0] != "research" or parts[2] != "runs":
+                    raise ValueError("Series recovery needs an original research run")
+                direction, name = identifier(parts[1]), identifier(parts[3])
+                series["active_round"] = existing_run
+                saved_run = local_path(root, existing_run)
+                pending_recovery = not saved_run.exists()
+            else:
+                number = len(series["rounds"]) + 1
+                name = f"{run_id}-{number}"
+                series["active_round"] = f"research/{direction}/runs/{name}/run.json"
+                pending_brief = brief_name or f"research/{direction}/brief.md"
+                series["pending_dispatch"] = {
+                    "run": series["active_round"],
+                    "brief": pending_brief,
+                    "brief_text": local_path(root, pending_brief).read_text(),
+                    "review_plan": review_plan,
+                    "review_result": review_result,
+                }
+            # Keep the same series and record attempts before launch.
+            if series["active_round"] not in series["rounds"]:
+                series["rounds"].append(series["active_round"])
             write_json(record, series)
-            result = run_round(
-                root,
-                direction,
-                name,
-                remaining,
-                review_plan=review_plan,
-                review_result=review_result,
-                execute_fn=execute_fn,
-                brief_name=brief_name,
+            lock = (
+                direction_lock(local_path(root, f"research/{direction}/.round.lock"))
+                if pending_recovery
+                else nullcontext()
             )
-            lead = result["phases"].get("lead", {})
+            with lock:
+                if pending_recovery and not saved_run.exists():
+                    pending = series.get("pending_dispatch", {})
+                    brief_name, review_plan, review_result = prepare_pending_round(
+                        root, saved_run, pending, existing_run
+                    )
+                    recovering = False
+                result = run_round(
+                    root,
+                    direction,
+                    name,
+                    deadline - time.monotonic(),
+                    review_plan=review_plan,
+                    review_result=review_result,
+                    execute_fn=execute_fn,
+                    brief_name=brief_name,
+                    resume=recovering,
+                    _locked=pending_recovery,
+                )
+            existing_run = None
+            lead = result["phases"].get(latest_phase(result, "lead"), {})
             series["next_brief"] = lead.get("next_brief")
-            if any(
-                phase.get("checkpoint") or phase.get("status") == "blocked"
-                for phase in result["phases"].values()
-            ):
+            if has_checkpoint(result):
                 series["status"] = "blocked_checkpoint"
                 break
             if lead.get("status") != "complete" or not lead.get("next_brief"):
