@@ -41,6 +41,9 @@ def test_dsr_methods_reuse_their_distinct_native_definitions():
     assert a["dsr"] != pytest.approx(b["dsr"])
     assert a["parameters"]["n_eff"] == 3
     assert b["n_trials"] == 8
+    reloaded = returns.copy()
+    reloaded.index = reloaded.index.as_unit("us")
+    assert dsr_summary(reloaded, n_trials=8, config=campaign)["dsr"] == pytest.approx(b["dsr"])
 
 
 @pytest.mark.parametrize("method", ["scorecard_v2", "campaign_statistics"])

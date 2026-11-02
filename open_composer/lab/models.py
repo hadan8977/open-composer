@@ -14,6 +14,9 @@ def checked_series(values: pd.Series) -> pd.Series:
     series = values.astype(float).copy()
     if not isinstance(series.index, pd.DatetimeIndex):
         raise ValueError("Returns need an explicit DatetimeIndex")
+    # Parquet/CSV readers can return us/ns indices for the same instants. Keep
+    # timezone and dates, while avoiding false calendar mismatches after readback.
+    series.index = series.index.as_unit("ns")
     if series.empty or series.index.has_duplicates or not series.index.is_monotonic_increasing:
         raise ValueError("Returns need nonempty, unique, increasing timestamps")
     if not np.isfinite(series.to_numpy()).all():
