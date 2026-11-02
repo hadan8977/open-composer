@@ -5,6 +5,7 @@ informative variants, repairs and interpretation. A fresh Lead inspects raw cost
 results and dispatches the next question. Scope, stopping and startup rules live in
 `AGENTS.md`; roles in `workflow.json`. Numerical evidence is provider-neutral;
 only Codex transport is implemented. Claude A/B requires owner instruction.
+Read `control.json` for current switches; source authorizations prevail.
 
 ## Run and recover
 
@@ -16,7 +17,7 @@ only Codex transport is implemented. Claude A/B requires owner instruction.
   --timeout-seconds <finite-envelope> --follow
 ```
 
-Each direction holds a brief <=1000 bytes, `decisions.tsv`, engine-written
+Each direction holds `brief.md` <=1000 bytes, `decisions.tsv`, engine-written
 `results.json`, native evidence and run snapshots. The worker returns `Reply`;
 numerical code writes `Results`. Schemas live in `schemas/`. Reuse the
 [shared calculation and batch entry points](lab/README.md).
