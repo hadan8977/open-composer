@@ -491,15 +491,14 @@ def latest_phase(state: dict, kind: str) -> str | None:
 
 
 def phase_checkpoint(name: str, phase: dict) -> bool:
-    # Some reviewers use the path for their completed acceptance report. Their
-    # explicit acceptance resolves the review, while raw Reply remains preserved.
-    if (
-        phase_kind(name) in ("plan_review", "reviewer")
-        and phase.get("status") == "complete"
-        and phase.get("decision") == "accept"
-    ):
-        return False
-    return bool(phase.get("checkpoint") or phase.get("status") == "blocked")
+    # Legacy replies also put completed reports in this field. A successfully
+    # validated complete Reply is authoritative about completion; the path stays
+    # as evidence. Blocked, interrupted and invalid replies still block recovery.
+    if phase_kind(name) in ("plan_review", "reviewer") and phase.get("status") == "complete":
+        return phase.get("decision") != "accept"
+    return phase.get("status") == "blocked" or bool(
+        phase.get("checkpoint") and phase.get("status") != "complete"
+    )
 
 
 def has_checkpoint(state: dict) -> bool:
@@ -562,7 +561,7 @@ def resolve_prior_checkpoints(root: Path, run: Path, state: dict) -> None:
     if (
         state.get("status") != "round_finished"
         or lead.get("status") != "complete"
-        or lead.get("checkpoint")
+        or phase_checkpoint(lead_name or "lead", lead)
     ):
         return
     for kind in ("plan_review", "worker", "reviewer", "lead"):

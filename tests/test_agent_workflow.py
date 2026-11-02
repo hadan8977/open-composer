@@ -274,7 +274,8 @@ def test_series_does_not_relaunch_a_blocked_worker(root):
     assert calls == ["worker", "lead"] and result["status"] == "blocked_checkpoint"
 
 
-def test_completed_review_report_does_not_block_series(root):
+@pytest.mark.parametrize("role", ["plan_review", "worker", "lead"])
+def test_completed_report_does_not_block_series(root, role):
     report = root / "research/example/review.md"
     report.write_text("Accept scope; completed independent review.")
     calls = []
@@ -287,16 +288,19 @@ def test_completed_review_report_does_not_block_series(root):
         execute_fn=fake_agent(
             calls,
             {
-                "plan_review": {"decision": "accept", "checkpoint": "research/example/review.md"},
+                role: {"checkpoint": "research/example/review.md"},
             },
         ),
     )
     assert calls == ["plan_review", "worker", "lead"]
     assert result["status"] == "decision_handoff"
     state = json.loads((root / result["rounds"][0]).read_text())
-    assert state["phases"]["plan_review"]["checkpoint"] == "research/example/review.md"
-    state["phases"]["plan_review"]["status"] = "blocked"
+    assert state["phases"][role]["checkpoint"] == "research/example/review.md"
+    state["phases"][role]["status"] = "blocked"
     assert agent_workflow.has_checkpoint(state)
+    if role == "plan_review":
+        state["phases"][role].update(status="complete", decision="revise", checkpoint=None)
+        assert agent_workflow.has_checkpoint(state)
 
 
 @pytest.mark.parametrize("status", ["running", "interrupted_or_failed"])
