@@ -41,3 +41,10 @@ capacity/reply corrections. It will not hot-load them. Continue useful work in
 this original series; mark the recovery code as not yet live-tested until a
 natural new driver invocation records its source version. Never restart a live
 numerical task to manufacture an acceptance interval.
+
+Owner clarification on efficiency: use the existing plan's final efficiency
+section for the next 3–5 real briefs. Fix the economic question/quality criterion
+before work; report one nonduplicate accepted decision, all-role token costs and
+gaps, time, rework and actual rescue. Match task depth and starting assets before
+claiming improvement. Keep one-time restructuring costs visible. Do not launch
+a separate benchmark, duplicate experiments, telemetry platform or review chain.
