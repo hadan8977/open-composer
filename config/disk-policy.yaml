@@ -46,6 +46,7 @@ protected:
   - /root/.paseo
   - /root/codex-test/open-composer/data/research/equity_book   # hash-guarded research snapshot
   - /root/codex-test/open-composer/data/live/equity_book       # live book data root
+  - /root/codex-test/open-composer/data/live/backup-refresh    # verified Drive pointer containers
   - /root/codex-test/open-composer/data/sip/daily              # SIP daily archive
   - /root/codex-test/open-composer/data/sec                    # another session's work
   - /root/codex-test/open-composer/data/options                # option chain recorder: irreplaceable daily snapshots (T-20261005-33)
@@ -71,7 +72,7 @@ caches:
     path: /var/log/journal
     command: ["journalctl", "--vacuum-size=300M"]
   - name: tmp-old
-    path: /tmp
+    path: /tmp/open-composer-scratch  # only disposable project scratch, never other projects
     max_age_days: 7     # newest mtime inside the entry must be older than this
     keep_patterns:      # never removed by age
       - "claude-*"
@@ -99,7 +100,7 @@ caches:
       - "*.db"
 
 backups:
-  # explicit entries first (lead decisions), then generic patterns
+  # Only explicitly retired entries. Suspicious unregistered names are report-only.
   - path: data/live/backup-20261001
     owner: T-20261001-21 (done 2026-10-02 01:26)
     expired: true
@@ -118,10 +119,6 @@ backups:
   - path: data/live/failed-sip-daily-20261002
     owner: T-20261002-01 (failed repair attempt kept for diagnosis)
     hold_task: T-20261002-01
-  - glob: "data/**/backup-*"
-  - glob: "data/**/*_backup_*"
-  - glob: "data/**/failed-*"
-  - glob: "data/**/_*_tmp"
 
 warm:
   # emergency only; the current and previous calendar year are never touched

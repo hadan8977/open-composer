@@ -32,6 +32,16 @@ broker, data refresh, provider call, scheduler, or promotion decision.
   ledger and observed session returns. Compound returns must reconcile to account
   equity. The wrapper does not infer a return series from closed-trade PnL.
 
+The current Martin reception adapter is
+`research/martin_model_completion_20261102/lab_bridge.py`. It imports complete
+saved native accounts, cash bridges and mark flags without a replay; an H/R
+identity reuse requires its existing independent receipt. Such an import is an
+accounting view, not a new experiment. Its known S/T selectable subset does not
+convert the historical account-start floor into independent trials. Unknown
+history and missing physical return paths leave DSR unavailable. The next actual
+variant batch must use the same trial ledger; importing alone does not satisfy
+the restructuring's real batch acceptance.
+
 `BacktestArtifacts.equity_curve` and `NautilusBacktestArtifacts.equity_curve`
 expose the account marks already computed by their engines, including initial
 equity. The additive fields default to empty lists for constructor compatibility.

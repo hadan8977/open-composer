@@ -3,6 +3,7 @@ Question and investment decision:
 Primary method/code and counterevidence:
 Data, lawful information arrival and development/evaluation windows:
 Baseline, capital, costs and success criterion:
+Direction investment: 20–50 distinct variants reference; batches, mechanism and stop reason:
 Next distinguishing variants and why each could change the decision:
 Existing engine and result paths:
 Accepted scientific scope/contract, or require plan review before execution:

@@ -7,6 +7,7 @@ engines and scientific contracts remain responsible for numerical evidence.
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import json
 import math
 import os
@@ -21,6 +22,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+WORKFLOW_SOURCE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
 
 class Reply(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -31,6 +34,10 @@ class Reply(BaseModel):
     next_brief: str | None
     checkpoint: str | None
     next_review: Literal["reuse", "plan", "result", "both"] = "reuse"
+
+
+class ReplyFormatError(ValueError):
+    """A correctable reply contract issue, not a failed engine/evidence validation."""
 
 
 class Counts(BaseModel):
@@ -421,9 +428,45 @@ def finalize_metrics(root: Path, run: Path, state: dict) -> None:
         f"executed E/A/F/V/P/D={count_text} tok={token_text} s={duration} | "
         f"{run.relative_to(root)}/run.json |\n"
     )
-    with (root / "board.md").open("a") as board:
+    update_board(root, line, f"{run.relative_to(root)}/run.json")
+
+
+def update_board(root: Path, line: str, evidence: str) -> None:
+    """One current row per run; immutable attempts remain in its run directory."""
+    with (root / "board.md").open("a+") as board:
         fcntl.flock(board, fcntl.LOCK_EX)
-        board.write(line)
+        board.seek(0)
+        rows = board.readlines()
+        rows = [row for row in rows if row.rstrip().split(" | ")[-1] != evidence + " |"]
+        board.seek(0)
+        board.truncate()
+        board.write("".join(rows) + line)
+
+
+def capacity_failure(folder: Path) -> bool:
+    """Retry explicit transient provider capacity only, never quota/auth/general errors."""
+    messages = []
+    path = folder / "events.jsonl"
+    if path.exists():
+        with path.open() as events:
+            for line in events:
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(event, dict) and event.get("type") in ("error", "turn.failed"):
+                    messages = [json.dumps(event)]
+    path = folder / "stderr.log"
+    if not messages and path.exists():
+        with path.open("rb") as stream:
+            stream.seek(max(0, path.stat().st_size - 8000))
+            messages.append(stream.read().decode(errors="replace"))
+    message = "\n".join(messages).lower()
+    if any(
+        word in message for word in ("quota", "usage limit", "insufficient_quota", "unauthorized")
+    ):
+        return False
+    return any(word in message for word in ("at capacity", "overloaded", "server_overloaded"))
 
 
 @contextmanager
@@ -547,22 +590,33 @@ def require_resolved_runs(task: Path) -> None:
             raise ValueError(f"Reconcile unfinished job/checkpoint before a new start: {path}")
 
 
+def reply_file(root: Path, name: str) -> Path:
+    try:
+        path = local_path(root, name)
+        if not path.is_file():
+            raise ValueError("file does not exist")
+        return path
+    except (OSError, ValueError) as exc:
+        raise ReplyFormatError("Reply field must name one existing repository file") from exc
+
+
 def validate_reply(root: Path, reply: Reply, kind: str, direction: str) -> None:
-    if reply.checkpoint is not None and not local_path(root, reply.checkpoint).is_file():
-        raise ValueError("Claimed checkpoint does not exist")
+    if reply.checkpoint is not None:
+        reply_file(root, reply.checkpoint)
     if reply.next_brief is not None:
-        next_path = local_path(root, reply.next_brief)
-        if not next_path.is_file() or not 0 < next_path.stat().st_size <= 1000:
-            raise ValueError("Next brief is missing or oversized")
+        next_path = reply_file(root, reply.next_brief)
+        if not 0 < next_path.stat().st_size <= 1000:
+            raise ReplyFormatError("Next brief is missing or oversized")
     if reply.results is not None:
+        reply_file(root, reply.results)
         validate_results(root, reply.results, direction)
     if kind == "worker" and reply.status == "complete" and reply.results is None:
-        raise ValueError("A completed worker must point to engine results")
+        raise ReplyFormatError("A completed worker must point to engine results")
     if kind == "lead" and reply.status == "complete":
         if reply.decision not in ("continue", "repair", "branch", "park"):
-            raise ValueError("Lead must choose continue/repair/branch/park")
+            raise ReplyFormatError("Lead must choose continue/repair/branch/park")
         if reply.decision != "park" and reply.next_brief is None:
-            raise ValueError("Continuing work requires a concrete next brief")
+            raise ReplyFormatError("Continuing work requires a concrete next brief")
 
 
 def run_round(
@@ -648,6 +702,13 @@ def run_round(
             + (["reviewer"] if review_result else [])
             + ["lead"]
         )
+        state.setdefault("driver_invocations", []).append(
+            {
+                "started": datetime.now(UTC).isoformat(),
+                "workflow_source_sha256": WORKFLOW_SOURCE_SHA256,
+                "explicit_resume": resume,
+            }
+        )
         write_json(run / "run.json", state)
         deadline = time.monotonic() + timeout
         schema = run / "reply.schema.json"
@@ -692,117 +753,169 @@ def run_round(
                         state[f"latest_{kind}_phase"] = prior_name
                     upstream.append(prior_name)
                     continue
-                require_research(root)
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise TimeoutError("Round deadline reached; preserve existing job state")
-                role_name = "reviewer" if kind == "plan_review" else kind
-                role = prior.get("requested_runtime", config["roles"][role_name])
-                session_to_resume = (
-                    (prior.get("session") or prior.get("resumes_session"))
-                    if prior and not changed_upstream
-                    else None
+                recovery_reason = None
+                capacity_retries = 0
+                reply_repaired = any(
+                    phase_kind(name) == kind and phase.get("automatic_recovery") == "reply_only"
+                    for name, phase in state["phases"].items()
                 )
-                if prior and not changed_upstream and not session_to_resume:
-                    old_folder = phase_folder(run, prior_name, prior)
-                    if (old_folder / "process.json").exists():
-                        raise ValueError(
-                            "Original session is unknown; reconcile its transport before retry"
-                        )
-                phase = kind
-                if prior:
-                    number = 1
-                    while f"{kind}_resume_{number}" in state["phases"]:
-                        number += 1
-                    phase = f"{kind}_resume_{number}"
-                folder = run / phase
-                folder.mkdir()
-                output = folder / "reply.json"
-                command = codex_command(root, role, output, schema, session=session_to_resume)
-                state["active_phase"] = phase
-                state["phases"][phase] = {
-                    "requested_runtime": role,
-                    "status": "starting",
-                    "started": datetime.now(UTC).isoformat(),
-                    "folder": folder.name,
-                    "resumes_phase": prior_name if session_to_resume else None,
-                    "resumes_session": session_to_resume,
-                    "depends_on": list(upstream),
-                }
-                phase_started = time.monotonic()
-                write_json(run / "run.json", state)
-                dispatch = (
-                    f"\nDirection: {direction}\nPhase: {phase}\n"
-                    f"Brief: {brief.relative_to(root)}\nRun: {run.relative_to(root)}\n"
-                    "Read the brief and earlier replies. Engine schema: "
-                    "research/schemas/results.schema.json. Preserve authority, native gates, "
-                    "paper and schedules. Return the reply schema.\n"
-                )
-                if resume:
-                    dispatch = (
-                        f"\nPhase: {phase}\nBrief: {brief.relative_to(root)}\n"
-                        f"Run: {run.relative_to(root)}\n"
-                        "Resume saved task/session. Read run.json; reconcile native/remote jobs "
-                        "and checkpoints first. Reuse outputs; no replay/provider swap. Keep "
-                        "unresolved checkpoints. Return Reply; engine schema: "
-                        "research/schemas/results.schema.json.\n"
+                while True:
+                    require_research(root)
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise TimeoutError("Round deadline reached; preserve existing job state")
+                    role_name = "reviewer" if kind == "plan_review" else kind
+                    role = prior.get("requested_runtime", config["roles"][role_name])
+                    session_to_resume = (
+                        (prior.get("session") or prior.get("resumes_session"))
+                        if prior and not changed_upstream
+                        else None
                     )
-                if len(dispatch.encode()) > 500:
-                    raise ValueError("Dispatch exceeds the startup envelope")
-                prompt = local_path(root, role["prompt"]).read_text() + dispatch
-                admission = [
-                    "python3",
-                    str(root / "scripts/memory_budget.py"),
-                    "admit",
-                    "--kind",
-                    "agent",
-                ]
-                if execute_fn is execute:
-                    subprocess.run(admission, check=True, cwd=root, timeout=30)
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise TimeoutError("Round deadline reached during admission")
-                wrapped = [
-                    str(root / "scripts/run_capped.sh"),
-                    "--mem",
-                    config["agent_memory"],
-                    "--wait-min",
-                    "0",
-                    "--",
-                    *command,
-                ]
-                try:
-                    transport = execute_fn(wrapped, prompt, folder, remaining)
-                    state["phases"][phase].update(transport)
-                finally:
-                    state["phases"][phase]["elapsed_seconds"] = time.monotonic() - phase_started
-                    if (folder / "events.jsonl").exists():
-                        state["phases"][phase].update(read_events(folder))
-                session = state["phases"][phase].get("session")
-                if session_to_resume and session != session_to_resume:
-                    raise ValueError("Recovery did not return the original session")
-                if session and any(
-                    prior.get("session") == session
-                    for name, prior in state["phases"].items()
-                    if name != phase and (phase_kind(name) != kind or not session_to_resume)
-                ):
-                    raise ValueError("Worker, Lead and review phases require independent sessions")
-                write_json(run / "run.json", state)
-                if transport["exit_code"]:
-                    raise RuntimeError(f"Agent exited {transport['exit_code']}; inspect {folder}")
-                reply = Reply.model_validate_json(output.read_text())
-                state["phases"][phase]["checkpoint"] = reply.checkpoint
-                write_json(run / "run.json", state)
-                validate_reply(root, reply, kind, direction)
-                if kind == "worker" and reply.results is not None:
-                    snapshot = folder / "results.json"
-                    snapshot.write_bytes(local_path(root, reply.results).read_bytes())
-                    state["phases"][phase]["results_snapshot"] = str(snapshot.relative_to(root))
-                state["phases"][phase].update(reply.model_dump())
-                if kind in ("worker", "lead"):
-                    state[f"latest_{kind}_phase"] = phase
-                state["active_phase"] = None
-                write_json(run / "run.json", state)
+                    if prior and not changed_upstream and not session_to_resume:
+                        old_folder = phase_folder(run, prior_name, prior)
+                        if (old_folder / "process.json").exists():
+                            raise ValueError(
+                                "Original session is unknown; reconcile its transport before retry"
+                            )
+                    phase = kind
+                    if prior:
+                        number = 1
+                        while f"{kind}_resume_{number}" in state["phases"]:
+                            number += 1
+                        phase = f"{kind}_resume_{number}"
+                    folder = run / phase
+                    folder.mkdir()
+                    output = folder / "reply.json"
+                    command = codex_command(root, role, output, schema, session=session_to_resume)
+                    state["active_phase"] = phase
+                    state["phases"][phase] = {
+                        "requested_runtime": role,
+                        "status": "starting",
+                        "started": datetime.now(UTC).isoformat(),
+                        "folder": folder.name,
+                        "resumes_phase": prior_name if session_to_resume else None,
+                        "resumes_session": session_to_resume,
+                        "depends_on": list(upstream),
+                        "automatic_recovery": recovery_reason,
+                    }
+                    phase_started = time.monotonic()
+                    write_json(run / "run.json", state)
+                    dispatch = (
+                        f"\nDirection: {direction}\nPhase: {phase}\n"
+                        f"Brief: {brief.relative_to(root)}\nRun: {run.relative_to(root)}\n"
+                        "Read the brief and earlier replies. Engine schema: "
+                        "research/schemas/results.schema.json. Preserve authority, native gates, "
+                        "paper and schedules. Return the reply schema.\n"
+                    )
+                    if resume or recovery_reason:
+                        dispatch = (
+                            f"\nPhase: {phase}\nBrief: {brief.relative_to(root)}\n"
+                            f"Run: {run.relative_to(root)}\n"
+                            "Resume saved task/session. Read run.json; reconcile jobs "
+                            "and checkpoints first. Reuse outputs; no replay/provider swap. Keep "
+                            "unresolved checkpoints. Return Reply; engine schema: "
+                            "research/schemas/results.schema.json.\n"
+                        )
+                    if recovery_reason == "reply_only":
+                        error_note = (
+                            str(prior.get("error", "")).encode()[:80].decode(errors="ignore")
+                        )
+                        dispatch = (
+                            f"\nRun: {run.relative_to(root)}\nBrief: brief.md (inside Run)\n"
+                            "Correct Reply only: existing file paths or null. No numerical work, "
+                            "evidence edits or job launches. Missing valid results means blocked. "
+                            f"Validation: {error_note}\n"
+                        )
+                    if len(dispatch.encode()) > 500:
+                        raise ValueError("Dispatch exceeds the startup envelope")
+                    prompt = local_path(root, role["prompt"]).read_text() + dispatch
+                    admission = [
+                        "python3",
+                        str(root / "scripts/memory_budget.py"),
+                        "admit",
+                        "--kind",
+                        "agent",
+                    ]
+                    if execute_fn is execute:
+                        subprocess.run(admission, check=True, cwd=root, timeout=30)
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise TimeoutError("Round deadline reached during admission")
+                    wrapped = [
+                        str(root / "scripts/run_capped.sh"),
+                        "--mem",
+                        config["agent_memory"],
+                        "--wait-min",
+                        "0",
+                        "--",
+                        *command,
+                    ]
+                    try:
+                        transport = execute_fn(wrapped, prompt, folder, remaining)
+                        state["phases"][phase].update(transport)
+                    finally:
+                        state["phases"][phase]["elapsed_seconds"] = time.monotonic() - phase_started
+                        if (folder / "events.jsonl").exists():
+                            state["phases"][phase].update(read_events(folder))
+                    session = state["phases"][phase].get("session")
+                    if session_to_resume and session != session_to_resume:
+                        raise ValueError("Recovery did not return the original session")
+                    if session and any(
+                        prior.get("session") == session
+                        for name, prior in state["phases"].items()
+                        if name != phase and (phase_kind(name) != kind or not session_to_resume)
+                    ):
+                        raise ValueError(
+                            "Worker, Lead and review phases require independent sessions"
+                        )
+                    write_json(run / "run.json", state)
+                    if transport["exit_code"]:
+                        failure = f"Agent exited {transport['exit_code']}; inspect {folder}"
+                        state["phases"][phase].update(status="interrupted_or_failed", error=failure)
+                        if (
+                            session
+                            and capacity_failure(folder)
+                            and capacity_retries < 2
+                            and deadline - time.monotonic() > 30
+                        ):
+                            state["phases"][phase]["recovery_cause"] = "provider_capacity"
+                            write_json(run / "run.json", state)
+                            capacity_retries += 1
+                            if recovery_reason != "reply_only":
+                                recovery_reason = "provider_capacity"
+                            prior_name, prior = phase, state["phases"][phase]
+                            changed_upstream = False
+                            time.sleep(30)
+                            continue
+                        raise RuntimeError(failure)
+                    try:
+                        try:
+                            reply = Reply.model_validate_json(output.read_text())
+                        except (OSError, ValueError) as exc:
+                            raise ReplyFormatError(str(exc)) from exc
+                        state["phases"][phase]["checkpoint"] = reply.checkpoint
+                        write_json(run / "run.json", state)
+                        validate_reply(root, reply, kind, direction)
+                    except ReplyFormatError as exc:
+                        state["phases"][phase].update(status="invalid_reply", error=str(exc))
+                        write_json(run / "run.json", state)
+                        if not session or reply_repaired or deadline - time.monotonic() <= 0:
+                            raise
+                        reply_repaired = True
+                        recovery_reason = "reply_only"
+                        prior_name, prior = phase, state["phases"][phase]
+                        changed_upstream = False
+                        continue
+                    if kind == "worker" and reply.results is not None:
+                        snapshot = folder / "results.json"
+                        snapshot.write_bytes(local_path(root, reply.results).read_bytes())
+                        state["phases"][phase]["results_snapshot"] = str(snapshot.relative_to(root))
+                    state["phases"][phase].update(reply.model_dump())
+                    if kind in ("worker", "lead"):
+                        state[f"latest_{kind}_phase"] = phase
+                    state["active_phase"] = None
+                    write_json(run / "run.json", state)
+                    break
                 if kind == "plan_review" and (
                     reply.status != "complete" or reply.decision != "accept"
                 ):
@@ -816,8 +929,7 @@ def run_round(
                 state["status"] = "round_finished"
             state["finished"] = datetime.now(UTC).isoformat()
             state["active_phase"] = None
-            if resume:
-                resolve_prior_checkpoints(root, run, state)
+            resolve_prior_checkpoints(root, run, state)
             state["elapsed_seconds"] = previous_elapsed + time.monotonic() - started
             finalize_metrics(root, run, state)
             return state

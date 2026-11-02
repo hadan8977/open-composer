@@ -81,11 +81,12 @@ def fake_agent(calls, replies=None, after=None):
             "next_brief": None,
             "checkpoint": None,
         }
-        reply.update((replies or {}).get(phase, {}))
+        reply.update((replies or {}).get(agent_workflow.phase_kind(phase), {}))
         save(folder / "reply.json", reply)
         if after:
             after(phase)
-        return {"session": f"fixture-{phase}", "usage": {"input_tokens": 3}, "exit_code": 0}
+        session = command[-2] if "resume" in command else f"fixture-{phase}"
+        return {"session": session, "usage": {"input_tokens": 3}, "exit_code": 0}
 
     return run
 

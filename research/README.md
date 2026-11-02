@@ -24,6 +24,10 @@ Each direction holds a brief <=1000 bytes, `decisions.tsv`, engine-written
 scientific contracts. Reuse `open_composer.lab` and the [shared adapters](lab/README.md);
 count all selectable starts and preserve seen-data exposure. A failed recipe does
 not refute a mechanism; explain the next distinguishing change or stopping reason.
+Use 20–50 materially distinct variants as a direction-level investment reference,
+with mechanism families and informative batches. Planned variants are not executed
+trials. A concrete mechanism/opportunity-cost reason may stop earlier; a plateau
+calls for a changed method, not cosmetic parameter combinations.
 
 `--review reuse` uses accepted scope and the independent Lead's actual checks.
 Use `plan` for a new hypothesis or material scientific definition, `result` for
@@ -100,6 +104,15 @@ remain in history with links to the resolving phase and actual result/Lead files
 unresolved checkpoints still block follow. Completing a round before a series
 update does not cause the worker or Lead to run again. Recovery creates no timer,
 standing agent or automatic provider substitution.
+
+Within that envelope, an explicit provider-capacity failure gets at most two
+30-second waits and retries in the same known session/model. Quota/authentication
+failures are not retried this way. A malformed Reply gets one correction in the
+same session, restricted to existing artifact paths; this cannot repair missing
+engine evidence or launch numerical jobs. That restriction survives a capacity
+failure during correction. Each attempt keeps its logs and cause. The board
+replaces the run's current row; attempt history stays in run files. A manually
+initiated recovery remains manual even if its subsequent stages proceed unaided.
 
 Future Claude integration supplies command construction, reply/event normalization
 and its usage reader. Financial evidence and checkpoints do not change with the
