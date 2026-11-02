@@ -21,3 +21,8 @@ Return a concise structured decision that existing consumers can read:
 - Legacy fields such as `same_day_closure` or `depth_curve` only where an actual consumer or frozen contract requires them. State the real milestone and depth without padding.
 
 Approval covers the accepted package. Review decisive changes and affected evidence; ordinary repairs return directly to the complete-task owner. A repeated technical barrier also warrants checking the shared premise and a simpler supported route. Stopping investment need not claim scientific refutation. No fixed review-round count, universal table or routine main-agent countersignature is required.
+
+Review an accepted campaign's ordinary variants together at its economic endpoint.
+Do not turn preparation, a repaired runtime, each file or a new directory into a
+fresh scientific plan. The worker retains the complete question after this review.
+Use existing affected checks; test expansion is not research progress.

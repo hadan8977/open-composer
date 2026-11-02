@@ -34,9 +34,15 @@ def main() -> int:
     run.add_argument("direction")
     run.add_argument("--run-id", required=True)
     run.add_argument("--timeout-seconds", required=True, type=float)
-    run.add_argument("--review-plan", action="store_true")
+    run.add_argument("--review", choices=("reuse", "plan", "result", "both"), default="reuse")
+    run.add_argument("--review-plan", action="store_true", help="Also review the plan before work")
     run.add_argument(
-        "--follow", action="store_true", help="Follow same-direction decisions within the timeout"
+        "--review-result", action="store_true", help="Also review the completed result"
+    )
+    run.add_argument(
+        "--follow",
+        action="store_true",
+        help="Follow concrete authorized briefs across directions within the timeout",
     )
     sub.add_parser("preview")
     sub.add_parser("schemas")
@@ -68,7 +74,12 @@ def main() -> int:
     else:
         runner = run_series if args.follow else run_round
         result = runner(
-            ROOT, args.direction, args.run_id, args.timeout_seconds, review_plan=args.review_plan
+            ROOT,
+            args.direction,
+            args.run_id,
+            args.timeout_seconds,
+            review_plan=args.review_plan or args.review in ("plan", "both"),
+            review_result=args.review_result or args.review in ("result", "both"),
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

@@ -90,18 +90,31 @@ def fake_agent(calls, replies=None, after=None):
     return run
 
 
-def test_finite_round_uses_neutral_files_and_separate_sessions(root):
+@pytest.mark.parametrize("review_plan,review_result", [(False, False), (True, True)])
+def test_finite_round_uses_neutral_files_and_separate_sessions(root, review_plan, review_result):
     calls = []
-    state = run_round(root, "example", "r1", 10, execute_fn=fake_agent(calls))
-    assert calls == ["worker", "reviewer", "lead"]
+    state = run_round(
+        root,
+        "example",
+        "r1",
+        10,
+        review_plan=review_plan,
+        review_result=review_result,
+        execute_fn=fake_agent(calls),
+    )
+    expected = ["plan_review", "worker", "reviewer", "lead"] if review_plan else ["worker", "lead"]
+    assert calls == expected
     assert state["status"] == "round_finished"
-    assert state["phases"]["worker"]["session"] != state["phases"]["reviewer"]["session"]
+    assert state["phases"]["worker"]["session"] != state["phases"]["lead"]["session"]
     assert state["phases"]["worker"]["requested_runtime"]["provider"] == "codex"
     assert "research/example/runs/r1/run.json" in (root / "board.md").read_text()
     assert len((root / "board.md").read_bytes()) <= 400
     with pytest.raises(FileExistsError):
         run_round(root, "example", "r1", 10, execute_fn=fake_agent(calls))
-    assert len(calls) == 3
+    assert len(calls) == len(expected)
+    assert state["efficiency"]["tokens"]["observed_total_tokens"] == 3 * len(expected)
+    assert state["efficiency"]["tokens"]["total_tokens"] is None
+    assert state["efficiency"]["counts"]["economic_comparisons"] is None
 
 
 @pytest.mark.parametrize(
@@ -212,22 +225,32 @@ def test_lead_cannot_finish_with_empty_continuation(root):
 def test_series_follows_concrete_repair_without_fixed_variant_count(root):
     calls = []
     save(root / "research/example/checkpoint.json", {"fixture": True})
-    (root / "research/example/next.md").write_text("Test the next distinguishing fixture.")
+    (root / "research/next_direction").mkdir()
+    (root / "research/next_direction/next.md").write_text("Continue the accepted scope elsewhere.")
+    next_result = json.loads((root / "research/example/results.json").read_text())
+    next_result["direction"] = "next_direction"
+    save(root / "research/next_direction/results.json", next_result)
 
     def run(command, prompt, folder, timeout):
         number = folder.parent.name.rsplit("-", 1)[1]
         replies = (
-            {"lead": {"decision": "repair", "next_brief": "research/example/next.md"}}
+            {"lead": {"decision": "park", "next_brief": "research/next_direction/next.md"}}
             if number == "1"
-            else {}
+            else {
+                phase: {"results": "research/next_direction/results.json"}
+                for phase in ("worker", "lead")
+            }
         )
         return fake_agent(calls, replies)(command, prompt, folder, timeout)
 
     result = run_series(root, "example", "series", 10, execute_fn=run)
-    assert calls == ["worker", "reviewer", "lead"] * 2
+    assert calls == ["worker", "lead"] * 2
     assert len(result["rounds"]) == 2 and result["status"] == "decision_handoff"
     first = root / "research/example/runs/series-1"
-    assert (first / "brief.md").read_text() != (root / "research/example/next.md").read_text()
+    assert (first / "brief.md").read_text() != (
+        root / "research/next_direction/next.md"
+    ).read_text()
+    assert result["rounds"][1].startswith("research/next_direction/")
     assert (first / "worker/results.json").is_file()
 
 

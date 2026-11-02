@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import fcntl
 import json
+import math
 import os
 import re
 import signal
@@ -29,6 +30,19 @@ class Reply(BaseModel):
     results: str | None
     next_brief: str | None
     checkpoint: str | None
+    next_review: Literal["reuse", "plan", "result", "both"] = "reuse"
+
+
+class Counts(BaseModel):
+    """Engine execution counts, not accepted conclusions; omitted counts are unknown."""
+
+    model_config = ConfigDict(extra="forbid")
+    economic_comparisons: int | None = Field(default=None, ge=0, strict=True)
+    financial_accounts: int | None = Field(default=None, ge=0, strict=True)
+    model_fits: int | None = Field(default=None, ge=0, strict=True)
+    variants: int | None = Field(default=None, ge=0, strict=True)
+    paper_candidates: int | None = Field(default=None, ge=0, strict=True)
+    diagnostic_steps: int | None = Field(default=None, ge=0, strict=True)
 
 
 class Results(BaseModel):
@@ -48,6 +62,8 @@ class Results(BaseModel):
     dsr: float | None = Field(ge=0, le=1)
     dsr_note: str = Field(min_length=1)
     limitations: list[str]
+    counts: Counts | None = None
+    counts_artifact: str | None = None
 
     @model_validator(mode="after")
     def financial_evidence(self):
@@ -84,6 +100,18 @@ def validate_results(root: Path, name: str, direction: str) -> Results:
         source = local_path(root, artifact)
         if source == path or not source.is_file():
             raise ValueError(f"Missing independent engine artifact: {artifact}")
+    if result.counts is not None:
+        if result.counts_artifact not in result.source_artifacts:
+            raise ValueError("Counts require a named independent engine source artifact")
+        source = json.loads(local_path(root, result.counts_artifact).read_text())
+        if not isinstance(source, dict):
+            raise ValueError("Count artifact must contain a counts object")
+        if Counts.model_validate(source.get("counts")).model_dump() != result.counts.model_dump():
+            raise ValueError("Counts must match the engine artifact's counts object")
+        if result.counts.economic_comparisons and (
+            result.kind != "financial" or result.baseline_net_profit_usd is None
+        ):
+            raise ValueError("Economic comparisons require costed financial and baseline results")
     return result
 
 
@@ -158,18 +186,228 @@ def execute(command: list[str], prompt: str, folder: Path, timeout: float) -> di
                 os.killpg(process.pid, signal.SIGKILL)
             process.wait()
             raise
-    usage, session = None, None
-    with (folder / "events.jsonl").open() as events:
-        for line in events:
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if event.get("type") == "turn.completed":
-                usage = event.get("usage")
-            elif event.get("type") == "thread.started":
-                session = event.get("thread_id")
-    return {"session": session, "usage": usage, "exit_code": process.returncode}
+    return {**read_events(folder), "exit_code": process.returncode}
+
+
+TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens")
+
+
+def read_events(folder: Path) -> dict:
+    """Read successful turns even if the transport later failed or was interrupted."""
+    usage, session, incomplete, missing = None, None, False, False
+    events_path = folder / "events.jsonl"
+    if events_path.exists():
+        with events_path.open() as events:
+            for line in events:
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(event, dict):
+                    continue
+                if event.get("type") == "thread.started":
+                    session = event.get("thread_id")
+                elif event.get("type") == "turn.started":
+                    incomplete = True
+                elif event.get("type") == "turn.completed":
+                    incomplete = False
+                    observed = token_values(event.get("usage"))
+                    missing = missing or len(observed) != len(TOKEN_FIELDS)
+                    if observed:
+                        usage = usage or {}
+                        for key, count in observed.items():
+                            usage[key] = usage.get(key, 0) + count
+    result = {"session": session, "usage": usage}
+    if incomplete or missing:
+        result["usage_incomplete"] = True
+    return result
+
+
+def token_values(usage: dict | None) -> dict:
+    return {
+        key: usage[key]
+        for key in TOKEN_FIELDS
+        if isinstance(usage, dict)
+        and isinstance(usage.get(key), int)
+        and not isinstance(usage[key], bool)
+        and usage[key] >= 0
+    }
+
+
+def completed_tokens(state: dict) -> dict:
+    """All attempted phases, including Lead; observed partial usage is a lower bound."""
+    phases, totals, missing, unfinished = {}, {}, [], []
+    for name, phase in state.get("phases", {}).items():
+        if not isinstance(phase, dict):
+            continue
+        tokens = token_values(phase.get("usage"))
+        phases[name] = tokens
+        if len(tokens) != len(TOKEN_FIELDS):
+            missing.append(name)
+        if phase.get("usage_incomplete") or (
+            phase.get("exit_code") is None and phase.get("status") not in ("complete", "blocked")
+        ):
+            unfinished.append(name)
+        for key, count in tokens.items():
+            totals[key] = totals.get(key, 0) + count
+    complete = bool(phases) and not missing and not unfinished
+    observed_total = (
+        totals.get("input_tokens", 0) + totals.get("output_tokens", 0)
+        if "input_tokens" in totals or "output_tokens" in totals
+        else None
+    )
+    return {
+        "source": "run.json all-phase usage events",
+        "by_phase": phases,
+        "observed_totals": totals,
+        "observed_total_tokens": observed_total,
+        "total_tokens": observed_total if complete else None,
+        "phases_with_missing_fields": missing,
+        "unfinished_phases": unfinished,
+        "complete": complete,
+        "scope": "All attempts, including Lead, failed and interrupted phases. Cached input is "
+        "part of input. Gaps make observed totals a lower bound, not a full total.",
+    }
+
+
+def efficiency(root: Path, state: dict) -> dict:
+    counts = Counts().model_dump()
+    snapshot = state.get("phases", {}).get("worker", {}).get("results_snapshot")
+    counts_error = None
+    if snapshot:
+        try:
+            result = validate_results(root, snapshot, state["direction"])
+            if result.counts is not None:
+                counts = result.counts.model_dump()
+        except (OSError, ValueError, TypeError) as exc:
+            counts_error = type(exc).__name__
+    return {
+        "counts_validation_error": counts_error,
+        "tokens": completed_tokens(state),
+        "elapsed_seconds": state.get("elapsed_seconds"),
+        "counts": counts,
+        "accepted_economic_conclusions": None,
+        "counts_scope": "Explicit engine execution counts, including comparisons later rejected. "
+        "Accepted economic conclusions require the existing independent result reception and are "
+        "not inferred automatically. Unknown is not zero; execution is not profitability or "
+        "paper readiness.",
+    }
+
+
+def summarize_runs(root: Path) -> dict:
+    """Read saved attempts, including failed runs and retries; never read account limits."""
+    rows, totals, sessions, duplicate_sessions = [], {}, {}, set()
+    count_totals, count_unknown, seen_counts = {}, {}, set()
+    elapsed, elapsed_unknown, gaps = 0.0, 0, []
+    for path in sorted((root / "research").glob("*/runs/*/run.json")):
+        state = json.loads(path.read_text())
+        # Old interrupted runs can have usable events absent from their final run.json.
+        for phase_name, phase in state.get("phases", {}).items():
+            folder = path.parent / phase_name
+            if (folder / "events.jsonl").exists():
+                observed = read_events(folder)
+                for key, value in observed.items():
+                    if value is not None:
+                        phase[key] = value
+        metrics = efficiency(root, state)
+        name = str(path.relative_to(root))
+        if not metrics["tokens"]["complete"]:
+            gaps.append(name)
+        for phase_name, phase in state.get("phases", {}).items():
+            key = phase.get("session") or f"{name}/{phase_name}"
+            tokens = token_values(phase.get("usage"))
+            if key in sessions:
+                # Historical records may repeat a resumed session's cumulative usage.
+                # Without turn identities, max is a conservative observed lower bound.
+                duplicate_sessions.add(key)
+                for field, value in tokens.items():
+                    sessions[key][field] = max(sessions[key].get(field, 0), value)
+            else:
+                sessions[key] = tokens
+        snapshot = state.get("phases", {}).get("worker", {}).get("results_snapshot")
+        evidence = None
+        if snapshot and local_path(root, snapshot).is_file():
+            evidence = json.loads(local_path(root, snapshot).read_text()).get("counts_artifact")
+        duplicate_counts = evidence is not None and evidence in seen_counts
+        if evidence is not None:
+            seen_counts.add(evidence)
+        for field, value in metrics["counts"].items():
+            if value is None or duplicate_counts:
+                count_unknown[field] = count_unknown.get(field, 0) + 1
+            else:
+                count_totals[field] = count_totals.get(field, 0) + value
+        seconds = metrics["elapsed_seconds"]
+        if seconds is None:
+            elapsed_unknown += 1
+        else:
+            elapsed += seconds
+        rows.append({"run": name, "status": state.get("status"), "efficiency": metrics})
+    for tokens in sessions.values():
+        for field, value in tokens.items():
+            totals[field] = totals.get(field, 0) + value
+    observed_total = (
+        totals.get("input_tokens", 0) + totals.get("output_tokens", 0)
+        if "input_tokens" in totals or "output_tokens" in totals
+        else None
+    )
+    return {
+        "run_count": len(rows),
+        "tokens": {
+            "observed_totals": totals,
+            "observed_total_tokens": observed_total,
+            "total_tokens": observed_total if not gaps and not duplicate_sessions else None,
+            "runs_with_gaps": gaps,
+            "sessions_with_multiple_records": sorted(duplicate_sessions),
+        },
+        "counts": {
+            field: {
+                "observed": count_totals.get(field),
+                "runs_unknown": count_unknown.get(field, 0),
+            }
+            for field in Counts.model_fields
+        },
+        "elapsed_seconds": {
+            "observed": elapsed if len(rows) > elapsed_unknown else None,
+            "runs_unknown": elapsed_unknown,
+        },
+        "accepted_economic_conclusions": None,
+        "scope": "All saved runs including failures/retries. Missing usage and repeated sessions "
+        "make totals lower bounds; repeated sessions use fieldwise maxima to avoid counting a "
+        "cumulative record twice. Reused count artifacts are not counted twice. Cached tokens are "
+        "already input. Comparisons count execution, not accepted conclusions; consult existing "
+        "independent reception. Account percentages are not project cost.",
+        "by_run": rows,
+    }
+
+
+def finalize_metrics(root: Path, run: Path, state: dict) -> None:
+    state["efficiency"] = efficiency(root, state)
+    write_json(run / "run.json", state)
+    # Account observation stays immutable; only recompute the local token projection.
+    usage_path = run / "usage.json"
+    if usage_path.exists():
+        usage = json.loads(usage_path.read_text())
+        usage["completed_phase_tokens"] = state["efficiency"]["tokens"]
+        write_json(usage_path, usage)
+    metrics = state["efficiency"]
+    counts = metrics["counts"]
+    token_summary = metrics["tokens"]
+    tokens = token_summary["observed_total_tokens"]
+    token_text = "?" if tokens is None else str(tokens)
+    if tokens is not None and not token_summary["complete"]:
+        token_text += "+?"
+    count_text = "/".join("?" if n is None else str(n) for n in counts.values())
+    decision = state["phases"].get("lead", {}).get("decision", state["status"])
+    elapsed = metrics["elapsed_seconds"]
+    duration = "?" if elapsed is None else f"{elapsed:.0f}"
+    line = (
+        f"| {state['run_id']} | {state['direction']} | {decision} "
+        f"executed E/A/F/V/P/D={count_text} tok={token_text} s={duration} | "
+        f"{run.relative_to(root)}/run.json |\n"
+    )
+    with (root / "board.md").open("a") as board:
+        fcntl.flock(board, fcntl.LOCK_EX)
+        board.write(line)
 
 
 @contextmanager
@@ -189,7 +427,9 @@ def require_resolved_runs(task: Path) -> None:
         phases = state.get("phases", {})
         # A local return code cannot establish whether a remote job is still live.
         unresolved = state.get("status") in ("running", "interrupted_or_failed")
-        checkpoint = phases.get("worker", {}).get("checkpoint")
+        checkpoint = any(
+            phase.get("checkpoint") or phase.get("status") == "blocked" for phase in phases.values()
+        )
         if (unresolved or checkpoint) and state.get("status") != "closed_after_recovery":
             raise ValueError(f"Reconcile unfinished job/checkpoint before a new start: {path}")
 
@@ -201,6 +441,7 @@ def run_round(
     timeout: float,
     *,
     review_plan: bool = False,
+    review_result: bool = False,
     execute_fn=execute,
     brief_name: str | None = None,
     _locked: bool = False,
@@ -208,7 +449,7 @@ def run_round(
     root = root.resolve()
     identifier(direction)
     identifier(run_id)
-    if timeout <= 0:
+    if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("A positive wall-clock timeout is required")
     task = local_path(root, f"research/{direction}")
     brief = local_path(root, brief_name) if brief_name else task / "brief.md"
@@ -216,7 +457,12 @@ def run_round(
         raise ValueError("A non-empty brief of at most 1000 bytes is required")
     require_research(root)
     config = json.loads((root / "research/workflow.json").read_text())
-    phases = (["plan_review"] if review_plan else []) + ["worker", "reviewer", "lead"]
+    phases = (
+        (["plan_review"] if review_plan else [])
+        + ["worker"]
+        + (["reviewer"] if review_result else [])
+        + ["lead"]
+    )
     run = local_path(root, f"research/{direction}/runs/{run_id}")
     with nullcontext() if _locked else direction_lock(task / ".round.lock"):
         require_resolved_runs(task)
@@ -224,11 +470,24 @@ def run_round(
         snapshot = run / "brief.md"
         snapshot.write_bytes(brief.read_bytes())
         brief = snapshot
-        state = {"direction": direction, "run_id": run_id, "status": "running", "phases": {}}
+        started = time.monotonic()
+        state = {
+            "direction": direction,
+            "run_id": run_id,
+            "status": "running",
+            "started": datetime.now(UTC).isoformat(),
+            "review_plan": review_plan,
+            "review_result": review_result,
+            "phases": {},
+        }
         write_json(run / "run.json", state)
         deadline = time.monotonic() + timeout
         schema = run / "reply.schema.json"
-        write_json(schema, Reply.model_json_schema())
+        dispatch_schema = Reply.model_json_schema()
+        # Strict provider output requires all keys; old saved replies still parse.
+        dispatch_schema["required"] = list(dispatch_schema["properties"])
+        dispatch_schema["properties"]["next_review"].pop("default", None)
+        write_json(schema, dispatch_schema)
         try:
             worker_blocked = False
             for phase in phases:
@@ -245,7 +504,12 @@ def run_round(
                 output = folder / "reply.json"
                 command = codex_command(root, role, output, schema)
                 state["active_phase"] = phase
-                state["phases"][phase] = {"requested_runtime": role, "status": "starting"}
+                state["phases"][phase] = {
+                    "requested_runtime": role,
+                    "status": "starting",
+                    "started": datetime.now(UTC).isoformat(),
+                }
+                phase_started = time.monotonic()
                 write_json(run / "run.json", state)
                 dispatch = (
                     f"\nDirection: {direction}\nPhase: {phase}\n"
@@ -278,8 +542,20 @@ def run_round(
                     "--",
                     *command,
                 ]
-                transport = execute_fn(wrapped, prompt, folder, remaining)
-                state["phases"][phase].update(transport)
+                try:
+                    transport = execute_fn(wrapped, prompt, folder, remaining)
+                    state["phases"][phase].update(transport)
+                finally:
+                    state["phases"][phase]["elapsed_seconds"] = time.monotonic() - phase_started
+                    if (folder / "events.jsonl").exists():
+                        state["phases"][phase].update(read_events(folder))
+                session = state["phases"][phase].get("session")
+                if session and any(
+                    prior.get("session") == session
+                    for name, prior in state["phases"].items()
+                    if name != phase
+                ):
+                    raise ValueError("Worker, Lead and review phases require independent sessions")
                 write_json(run / "run.json", state)
                 if transport["exit_code"]:
                     raise RuntimeError(f"Agent exited {transport['exit_code']}; inspect {folder}")
@@ -321,16 +597,8 @@ def run_round(
                 state["status"] = "round_finished"
             state["finished"] = datetime.now(UTC).isoformat()
             state["active_phase"] = None
-            write_json(run / "run.json", state)
-            lead = state["phases"].get("lead")
-            if lead:
-                # Board is a compact index. Full evidence/usage stays in this run.
-                with (root / "board.md").open("a") as board:
-                    fcntl.flock(board, fcntl.LOCK_EX)
-                    board.write(
-                        f"| {run_id} | {direction} | {lead['decision']} | "
-                        f"{run.relative_to(root)}/run.json |\n"
-                    )
+            state["elapsed_seconds"] = time.monotonic() - started
+            finalize_metrics(root, run, state)
             return state
         except BaseException as exc:
             state.update(
@@ -338,7 +606,12 @@ def run_round(
                 error=str(exc),
                 finished=datetime.now(UTC).isoformat(),
             )
-            write_json(run / "run.json", state)
+            active = state.get("active_phase")
+            if active:
+                state["phases"][active]["status"] = "interrupted_or_failed"
+                state["phases"][active]["usage_incomplete"] = True
+            state["elapsed_seconds"] = time.monotonic() - started
+            finalize_metrics(root, run, state)
             raise
 
 
@@ -349,71 +622,75 @@ def run_series(
     timeout: float,
     *,
     review_plan: bool = False,
+    review_result: bool = False,
     execute_fn=execute,
 ) -> dict:
-    """Follow same-direction continue/repair decisions within one caller deadline.
+    """Follow concrete authorized briefs across directions until a real stop.
 
-    A branch, blocker, pause, failure or exhausted wall-clock envelope returns a
-    durable handoff. No timer, automatic retry or owner-question loop is created.
+    Review selection follows scientific scope, not directory identity. Checkpoints,
+    blockers, pauses and transport failures stop without replaying existing jobs.
     """
     root = root.resolve()
     identifier(direction)
     identifier(run_id)
-    if len(run_id) > 40 or timeout <= 0:
+    if len(run_id) > 40 or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("Series needs a run id <=40 characters and a positive timeout")
     require_research(root)
     task = local_path(root, f"research/{direction}")
-    with direction_lock(task / ".round.lock"):
-        runs = task / "runs"
-        runs.mkdir(exist_ok=True)
-        record = runs / f"{run_id}-series.json"
-        with record.open("x") as output:
-            output.write("{}\n")
-        series = {"status": "running", "rounds": [], "next_brief": None}
-        deadline = time.monotonic() + timeout
-        brief_name = None
-        try:
-            while True:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    series["status"] = "deadline_checkpoint"
-                    break
-                number = len(series["rounds"]) + 1
-                name = f"{run_id}-{number}"
-                series["active_round"] = name
-                write_json(record, series)
-                result = run_round(
-                    root,
-                    direction,
-                    name,
-                    remaining,
-                    review_plan=review_plan and number == 1,
-                    execute_fn=execute_fn,
-                    brief_name=brief_name,
-                    _locked=True,
-                )
-                series["rounds"].append(str((runs / name / "run.json").relative_to(root)))
-                lead = result["phases"].get("lead", {})
-                series["next_brief"] = lead.get("next_brief")
-                worker = result["phases"].get("worker", {})
-                if worker.get("checkpoint") or worker.get("status") == "blocked":
-                    series["status"] = "blocked_checkpoint"
-                    break
-                if lead.get("status") != "complete" or lead.get("decision") not in (
-                    "continue",
-                    "repair",
-                ):
-                    series["status"] = "decision_handoff"
-                    break
-                brief_name = lead["next_brief"]
-                if not local_path(root, brief_name).is_relative_to(task):
-                    series["status"] = "new_direction_handoff"
-                    break
-                write_json(record, series)
-            series["active_round"] = None
+    runs = task / "runs"
+    runs.mkdir(exist_ok=True)
+    record = runs / f"{run_id}-series.json"
+    with record.open("x") as output:
+        output.write("{}\n")
+    series = {"status": "running", "rounds": [], "next_brief": None}
+    deadline = time.monotonic() + timeout
+    brief_name = None
+    try:
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                series["status"] = "deadline_checkpoint"
+                break
+            number = len(series["rounds"]) + 1
+            name = f"{run_id}-{number}"
+            series["active_round"] = f"research/{direction}/runs/{name}/run.json"
+            # Record attempts before launch so a failed final round is never dropped.
+            series["rounds"].append(series["active_round"])
             write_json(record, series)
-            return series
-        except BaseException as exc:
-            series.update(status="interrupted_or_failed", error=str(exc))
+            result = run_round(
+                root,
+                direction,
+                name,
+                remaining,
+                review_plan=review_plan,
+                review_result=review_result,
+                execute_fn=execute_fn,
+                brief_name=brief_name,
+            )
+            lead = result["phases"].get("lead", {})
+            series["next_brief"] = lead.get("next_brief")
+            if any(
+                phase.get("checkpoint") or phase.get("status") == "blocked"
+                for phase in result["phases"].values()
+            ):
+                series["status"] = "blocked_checkpoint"
+                break
+            if lead.get("status") != "complete" or not lead.get("next_brief"):
+                series["status"] = "decision_handoff"
+                break
+            brief_name = lead["next_brief"]
+            parts = local_path(root, brief_name).relative_to(root).parts
+            if len(parts) < 3 or parts[0] != "research":
+                raise ValueError("Next brief must belong to research/<direction>/")
+            direction = identifier(parts[1])
+            review = lead.get("next_review", "reuse")
+            review_plan, review_result = review in ("plan", "both"), review in ("result", "both")
+            series["next_review"] = review
             write_json(record, series)
-            raise
+        series["active_round"] = None
+        write_json(record, series)
+        return series
+    except BaseException as exc:
+        series.update(status="interrupted_or_failed", error=str(exc))
+        write_json(record, series)
+        raise

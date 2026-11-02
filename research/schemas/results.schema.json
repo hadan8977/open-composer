@@ -1,4 +1,92 @@
 {
+  "$defs": {
+    "Counts": {
+      "additionalProperties": false,
+      "description": "Engine counts for this task only; omitted counts remain unknown.",
+      "properties": {
+        "economic_comparisons": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Economic Comparisons"
+        },
+        "financial_accounts": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Financial Accounts"
+        },
+        "model_fits": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Fits"
+        },
+        "variants": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Variants"
+        },
+        "paper_candidates": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paper Candidates"
+        },
+        "diagnostic_steps": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Diagnostic Steps"
+        }
+      },
+      "title": "Counts",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "description": "Engine-produced summary. Structural validity is not scientific acceptance.",
   "properties": {
@@ -93,6 +181,29 @@
       },
       "title": "Limitations",
       "type": "array"
+    },
+    "counts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Counts"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "counts_artifact": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Counts Artifact"
     }
   },
   "required": [

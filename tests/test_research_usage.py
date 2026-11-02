@@ -49,7 +49,7 @@ def run_folder(tmp_path):
     return root, folder
 
 
-def test_one_immutable_snapshot_has_truthful_separate_usage(run_folder):
+def test_account_snapshot_is_immutable_while_all_phase_tokens_refresh(run_folder):
     root, folder = run_folder
     before = (root / "control.json").read_bytes()
     calls = []
@@ -65,16 +65,29 @@ def test_one_immutable_snapshot_has_truthful_separate_usage(run_folder):
     assert "Shared authenticated account" in result["account_usage"]["scope"]
     tokens = result["completed_phase_tokens"]
     assert tokens["observed_totals"] == {
-        "input_tokens": 10,
+        "input_tokens": 109,
         "cached_input_tokens": 3,
         "output_tokens": 4,
     }
-    assert tokens["phases_with_missing_fields"] == ["reviewer"]
-    assert "lead" not in tokens["by_phase"]
+    assert tokens["phases_with_missing_fields"] == ["reviewer", "lead"]
+    assert "lead" in tokens["by_phase"]
+    assert tokens["unfinished_phases"] == ["lead"]
+    assert tokens["total_tokens"] is None
     assert result["authority_changed"] is False and result["automatic_stop"] is False
     assert usage.record_usage(root, folder, reader=reader) == result
     assert calls == [20] and (folder / "usage.json").read_bytes() == body
     assert (root / "control.json").read_bytes() == before
+    state = json.loads((folder / "run.json").read_text())
+    state["phases"]["lead"].update(
+        status="complete",
+        exit_code=0,
+        usage={"input_tokens": 100, "cached_input_tokens": 20, "output_tokens": 10},
+    )
+    (folder / "run.json").write_text(json.dumps(state))
+    refreshed = usage.record_usage(root, folder, reader=reader)
+    assert calls == [20] and refreshed["account_usage"] == result["account_usage"]
+    assert refreshed["completed_phase_tokens"]["observed_total_tokens"] == 124
+    assert refreshed["completed_phase_tokens"]["phases_with_missing_fields"] == ["reviewer"]
 
 
 def test_unavailable_reading_is_saved_and_not_retried(run_folder):

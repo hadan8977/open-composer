@@ -14,13 +14,19 @@ import os
 import selectors
 import signal
 import subprocess
+import sys
 import time
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens")
+sys.path.insert(0, str(ROOT))
+
+from open_composer.research.agent_workflow import (  # noqa: E402
+    completed_tokens,
+    summarize_runs,
+)
 
 
 def now() -> str:
@@ -150,37 +156,6 @@ def read_account_limits(timeout: float = 20, *, popen=None) -> dict:
                     stream.close()
 
 
-def completed_tokens(state: dict) -> dict:
-    phases, totals, missing = {}, {}, []
-    for name, phase in state.get("phases", {}).items():
-        if not isinstance(phase, dict) or (
-            phase.get("exit_code") is None and phase.get("status") not in ("complete", "blocked")
-        ):
-            continue
-        usage = phase.get("usage")
-        tokens = {
-            key: usage[key]
-            for key in TOKEN_FIELDS
-            if isinstance(usage, dict)
-            and isinstance(usage.get(key), int)
-            and not isinstance(usage[key], bool)
-            and usage[key] >= 0
-        }
-        phases[name] = tokens
-        if len(tokens) != len(TOKEN_FIELDS):
-            missing.append(name)
-        for key, count in tokens.items():
-            totals[key] = totals.get(key, 0) + count
-    return {
-        "source": "run.json completed-phase usage events",
-        "by_phase": phases,
-        "observed_totals": totals,
-        "phases_with_missing_fields": missing,
-        "scope": "Completed phases in this round only; ongoing lead and other sessions excluded. "
-        "Cached input is part of input, not an additional token total. Missing usage is unknown.",
-    }
-
-
 def existing_run(root: Path, folder: Path) -> tuple[Path, dict]:
     root, folder = root.resolve(), (root / folder).resolve()
     if not folder.is_relative_to(root):
@@ -195,7 +170,7 @@ def existing_run(root: Path, folder: Path) -> tuple[Path, dict]:
 
 
 def record_usage(root: Path, folder: Path, *, reader=None, timeout: float = 20) -> dict:
-    """Reuse an immutable snapshot, including an unavailable/interrupted reading."""
+    """Reuse the account snapshot; refresh local tokens without another account read."""
     folder, state = existing_run(root, folder)
     with (folder / ".usage.lock").open("a") as lock:
         try:
@@ -204,7 +179,14 @@ def record_usage(root: Path, folder: Path, *, reader=None, timeout: float = 20) 
             raise ValueError("Usage measurement already running for this round") from exc
         snapshot = folder / "usage.json"
         if snapshot.exists():
-            return json.loads(snapshot.read_text())
+            report = json.loads(snapshot.read_text())
+            tokens = completed_tokens(state)
+            if report.get("completed_phase_tokens") != tokens:
+                report["completed_phase_tokens"] = tokens
+                temporary = folder / "usage.json.tmp"
+                temporary.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
+                temporary.replace(snapshot)
+            return report
         attempt = folder / "usage-attempt.json"
         report = {
             "schema_version": 1,
@@ -251,10 +233,17 @@ def main() -> int:
 
     signal.signal(signal.SIGTERM, interrupted)
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", required=True, type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--run", type=Path)
+    source.add_argument("--summary", action="store_true", help="Summarize all saved runs; no RPC")
     parser.add_argument("--timeout-seconds", type=float, default=20)
     args = parser.parse_args()
-    print(json.dumps(record_usage(ROOT, args.run, timeout=args.timeout_seconds), indent=2))
+    result = (
+        summarize_runs(ROOT)
+        if args.summary
+        else record_usage(ROOT, args.run, timeout=args.timeout_seconds)
+    )
+    print(json.dumps(result, indent=2))
     return 0
 
 
