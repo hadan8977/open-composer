@@ -976,3 +976,144 @@ def test_actual_assembly_to_dependency_with_capital_wrapper(tmp_path, monkeypatc
                 rows[-1]["name"] = "BASE"
             with pytest.raises(AssertionError):
                 native.receive_current_dependencies(bad, {})
+
+
+def test_november_model_pair_changes_at_formation_and_remains_held(
+    previous, tiny_features, tmp_path, monkeypatch
+):
+    """Real consumer/receiver paths with invented states; no fit or market source."""
+    from datetime import date
+
+    from open_composer.market_sessions import us_equity_session_dates
+    from open_composer.paper_runtime.six import h5_monthly
+
+    root = tmp_path / "november"
+    root.mkdir()
+    source = dump(
+        root / "current-source.json",
+        dict(
+            reference_day="2026-11-06",
+            application_day="2026-11-09",
+            captured_at="2026-11-09T00:30:00+00:00",
+            private_fixture=True,
+        ),
+    )
+    dump(root / "action-lineage-QA.json", dict(current_source=source))
+    dump(
+        root / "current-h5-support.json",
+        dict(source=source, reference_day="2026-11-06", application_day="2026-11-09"),
+    )
+    monthly_row = dump(
+        tmp_path / "monthly.json",
+        dict(completed_at="2026-11-03T08:00:00+00:00", private_fixture=True),
+    )
+    models = [
+        dict(path="private-November-" + arm, sha256="fixture", bytes=0)
+        for arm in ["STOCK", "STATE"]
+    ]
+    november_states = tiny_states()
+    # Distinct November scores establish that daily consumption uses the new pair.
+    november_states["STATE"]["tree_dump"]["tree_info"][0]["tree_structure"]["leaf_value"] = -0.02
+    monkeypatch.setattr(f, "states", lambda value: tiny_states())
+    monkeypatch.setattr(
+        h5_monthly,
+        "current",
+        lambda observation, **kw: (
+            monthly_row,
+            dict(cutoff="2026-10-30", models=[dict(state=r) for r in models]),
+            november_states,
+        ),
+    )
+    features = copy.deepcopy(tiny_features)
+    features.update(
+        reference_day="2026-11-06",
+        support_sessions=[
+            d.isoformat() for d in us_equity_session_dates(date(2026, 9, 30), date(2026, 11, 6))
+        ],
+    )
+    calls = []
+
+    def received_features(*args, **kwargs):
+        calls.append("features")
+        return copy.deepcopy(features)
+
+    monkeypatch.setattr(f, "feature_input", received_features)
+    current = dict(current_eligible=features["eligible"])
+    formed = f.h5_decision(
+        previous,
+        current,
+        {},
+        [],
+        "2026-11-06",
+        "2026-11-09",
+        write=dump,
+        root=root,
+        now=lambda: "2026-11-09T01:00:00+00:00",
+    )
+    assert formed["model_epoch"] == "2026-11" and formed["allocation"]["K"] == 0
+    assert formed["is_fresh_prediction"] and formed["portfolio_action"] == "rebalance"
+    forecast = f.load(formed["signal_forecast"]["path"])
+    assert forecast["models"] == models and forecast["monthly_models"] == monthly_row
+    assert forecast["model_cutoff"] == "2026-10-30" and forecast["new_fits"] == 0
+    target = dict(
+        formed,
+        policy="H5",
+        reference_day="2026-11-06",
+        application_day="2026-11-09",
+        source=source,
+        symbols=[],
+        weights=[],
+        K=0,
+    )
+    f.receive_h5_instruction(root, target)
+    private_runtime = tmp_path / "runtime"
+    dump(private_runtime / "targets/H5.json", target)
+    monkeypatch.setattr(f, "runtime_root", lambda root: private_runtime)
+    held = f.h5_decision(
+        previous,
+        current,
+        {},
+        [],
+        "2026-11-09",
+        "2026-11-10",
+        write=dump,
+        root=root,
+        now=lambda: "2026-11-10T01:00:00+00:00",
+    )
+    assert held["model_epoch"] == "2026-11" and held["allocation"] == formed["allocation"]
+    assert not held["is_fresh_prediction"] and held["portfolio_action"] == "hold"
+    assert calls == ["features"]
+    # Later genuine formations continue requesting the complete connected prefix.
+    for ref, app in [("2026-11-13", "2026-11-16"), ("2026-11-20", "2026-11-23")]:
+        contract = f.source_contract(ref, app)
+        assert contract["formation_due"] and contract["raw_support_start"] == "2026-09-30"
+        menu = f.request_menu(f.load(producer.N / "next-session-source-plan-M1.json"), contract)
+        assert (
+            next(r for g, r in menu if (g, r["key"]) == ("core", "raw-bars"))["params"]["start"]
+            == "2026-09-30T00:00:00Z"
+        )
+    wrong = dict(forecast, models=previous["historical_model_provenance"]["adopted"]["states"])
+    with pytest.raises(f.FormationDependency, match="Foreign H5 formation models"):
+        f.origin(dump(root / "wrong-old-models.json", wrong))
+    late_row = dump(tmp_path / "not-yet-fit.json", dict(completed_at="2026-11-10T00:00:00+00:00"))
+    monkeypatch.setattr(
+        h5_monthly,
+        "current",
+        lambda observation, **kw: (
+            late_row,
+            dict(cutoff="2026-10-30", models=[dict(state=r) for r in models]),
+            november_states,
+        ),
+    )
+    with pytest.raises(f.FormationDependency, match="precedes actual monthly-model"):
+        f.origin(dump(root / "too-late-model.json", dict(forecast, monthly_models=late_row)))
+
+
+def test_h5_monthly_date_domain_is_not_an_october_fallback(tmp_path):
+    from open_composer.paper_runtime.six import h5_monthly
+
+    for day in ["2026-10-30", "2026-11-05", "2026-12-01"]:
+        with pytest.raises(AssertionError, match="Unreceived H5 observation month"):
+            h5_monthly.current(day, root=tmp_path)
+    with pytest.raises(FileNotFoundError):
+        h5_monthly.current("2026-11-06", root=tmp_path)

@@ -146,15 +146,19 @@ def origin(row=None):
     require(signal["symbols"] == receive_previous()["symbols"], "H5 episode roster differs")
     if Path(row["path"]) != T / "inference/H5/output.json":
         previous = receive_previous()
+        model_rows, learned, cutoff, monthly_receipt = formation_models(previous, day)
+        require(signal["models"] == model_rows, "Foreign H5 formation models")
         require(
-            signal["models"] == previous["historical_model_provenance"]["adopted"]["states"],
-            "Foreign H5 formation models",
-        )
-        require(
-            signal["model_epoch"] == day[:7] == "2026-10"
-            and signal["model_cutoff"] == "2026-09-30",
+            signal["model_epoch"] == day[:7] and signal["model_cutoff"] == cutoff,
             "Unsupported H5 model month/cutoff",
         )
+        if monthly_receipt is not None:
+            require(signal.get("monthly_models") == monthly_receipt, "Foreign H5 monthly receipt")
+            require(
+                datetime.fromisoformat(load(checked(monthly_receipt))["completed_at"])
+                <= datetime.fromisoformat(signal["computed_started_at"]),
+                "H5 formation precedes actual monthly-model completion",
+            )
         captured = load(checked(signal["source"]))
         features = load(checked(signal["input"]))
         require(
@@ -199,7 +203,7 @@ def origin(row=None):
             "H5 computation precedes source completion",
         )
         # Saved-only scalar verification: no feature builder, fit or prediction API.
-        scores, allocation = infer(features, states(previous))
+        scores, allocation = infer(features, learned)
         require(set(signal["scores"]) == set(scores), "H5 original score arms differ")
         for arm in scores:
             received = signal["scores"][arm]
@@ -250,7 +254,9 @@ def source_contract(reference_day, application_day, origin_row=None):
         # Current BASE daily eligibility continues from the received October
         # monthly prefix, not from the old September seed or just two last days.
         raw_start = min(raw_start, "2026-10-30")
-    if due and p["latest"][:7] == "2026-10":
+    if due and p["latest"][:7] in ["2026-10", "2026-11"]:
+        # The accepted H5 connected-return feature window starts at Sep30.
+        # A November model changes the training fold, not this source bridge.
         raw_start = "2026-09-30"
     return dict(
         reference_day=reference_day,
@@ -319,6 +325,26 @@ def states(previous):
         )
         result[arm] = value
     return result
+
+
+def formation_models(previous, observation):
+    """Select genuine states for the observation month, preserving old origins."""
+    if observation[:7] == "2026-10":
+        return (
+            previous["historical_model_provenance"]["adopted"]["states"],
+            states(previous),
+            "2026-09-30",
+            None,
+        )
+    from open_composer.paper_runtime.six.h5_monthly import current
+
+    try:
+        receipt, result, learned = current(observation, root=REPO)
+        return [r["state"] for r in result["models"]], learned, result["cutoff"], receipt
+    except (AssertionError, KeyError, ValueError, FileNotFoundError) as error:
+        raise FormationDependency(
+            "H5 next-month model is not genuinely received: " + str(error)
+        ) from error
 
 
 def feature_input(previous, raw, events, reference_day):
@@ -455,12 +481,18 @@ def h5_decision(
             latest == reference_day,
             "Missed H5 formation needs exact saved formation evidence; never infer at a later close",
         )
-        require(
-            latest[:7] == "2026-10",
-            "H5 next-month model is not received; no new fit or October-model extension",
-        )
         formation_plan(previous)
+        try:
+            model_rows, learned, cutoff, monthly_receipt = formation_models(previous, latest)
+        except FileNotFoundError as error:
+            raise FormationDependency("Retained H5 model/input artifact is missing") from error
         started = now()
+        if monthly_receipt is not None:
+            require(
+                datetime.fromisoformat(load(checked(monthly_receipt))["completed_at"])
+                <= datetime.fromisoformat(started),
+                "H5 formation precedes actual monthly-model completion",
+            )
         features = feature_input(previous, raw, events, latest)
         features.update(
             source=binding(root / "current-source.json"),
@@ -468,10 +500,6 @@ def h5_decision(
             current_controls=binding(root / "current-h5-support.json"),
         )
         input_row = write(root / "H5-formation-input.json", features)
-        try:
-            learned = states(previous)
-        except FileNotFoundError as error:
-            raise FormationDependency("Retained H5 model/input artifact is missing") from error
         scores, allocation = infer(features, learned)
         forecast = dict(
             policy="H5",
@@ -483,14 +511,16 @@ def h5_decision(
             reference_day=latest,
             input=input_row,
             source=binding(root / "current-source.json"),
-            models=previous["historical_model_provenance"]["adopted"]["states"],
-            model_epoch="2026-10",
-            model_cutoff="2026-09-30",
+            models=model_rows,
+            model_epoch=latest[:7],
+            model_cutoff=cutoff,
             computed_started_at=started,
             computed_completed_at=now(),
             original_formula=True,
             new_fits=0,
         )
+        if monthly_receipt is not None:
+            forecast["monthly_models"] = monthly_receipt
         row = write(root / "H5-formation-forecast.json", forecast)
         old = forecast
         observed = latest
@@ -515,7 +545,7 @@ def h5_decision(
         is_fresh_prediction=fresh,
         portfolio_action="rebalance" if fresh else "hold",
         phase=p,
-        model_epoch="2026-10",
+        model_epoch=old.get("model_epoch", "2026-10"),
         current_unit_support_received=True,
     )
 
@@ -553,14 +583,11 @@ def receive_h5_instruction(root, target):
     if target["is_fresh_prediction"]:
         assert observed == target["reference_day"] and target["portfolio_action"] == "rebalance"
         assert Path(row["path"]) == Path(root) / "H5-formation-forecast.json"
-        assert (
-            signal["source"] == target["source"]
-            and signal["models"] == previous["historical_model_provenance"]["adopted"]["states"]
-        )
-        assert (
-            signal["model_epoch"] == observed[:7] == "2026-10"
-            and signal["model_cutoff"] == "2026-09-30"
-        )
+        models, _, cutoff, monthly_receipt = formation_models(previous, observed)
+        assert signal["source"] == target["source"] and signal["models"] == models
+        assert signal["model_epoch"] == observed[:7] and signal["model_cutoff"] == cutoff
+        if monthly_receipt is not None:
+            assert signal["monthly_models"] == monthly_receipt
         features = load(checked(signal["input"]))
         assert Path(signal["input"]["path"]) == Path(root) / "H5-formation-input.json"
         assert (
