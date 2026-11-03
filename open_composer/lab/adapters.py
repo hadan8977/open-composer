@@ -141,9 +141,12 @@ def book_engine(
         return None if date in excluded else decide(date, state)
 
     result = run_book(PricePanel.from_frames(clean_open, clean_close), clean_decide, config)
-    native_config = {k: v for k, v in asdict(config).items() if k not in ("cost_fn", "trade_attrs")}
+    native_config = {k: v for k, v in asdict(config).items()
+                     if k not in ("cost_fn", "trade_attrs", "trade_funding", "trade_observer")}
     native_config["cost_fn"] = "native flat_cost" if config.cost_fn is None else "custom callable"
     native_config["trade_attrs"] = config.trade_attrs is not None
+    native_config["trade_funding"] = config.trade_funding is not None
+    native_config["trade_observer"] = config.trade_observer is not None
     return EngineResult(
         engine="equity_book.run_book",
         initial_equity_usd=config.initial_equity,

@@ -1,0 +1,120 @@
+{
+  "recent_start": "2024-01-08",
+  "recent_end": "2026-09-15",
+  "sessions": 674,
+  "old_685_claim": "incorrect: actual frozen calendar is 674, no model-missing dates removed",
+  "symbols_loaded": 647,
+  "date_symbol_order": "meta.json, original sorted order; price panel mapped by labels",
+  "saved_scores": {
+    "ridge": {
+      "sha256": "3d902e34ca04c5488720af598641b0a3e30500e79856b79503f3977be55c79b9",
+      "source": "data/research/t22_results2/ml/ridge_U500_H5.npy",
+      "shape": [
+        2692,
+        7556
+      ],
+      "finite_daily_min": 351,
+      "finite_daily_max": 387,
+      "years": [
+        {
+          "year": 2024,
+          "last_training_feature_date": "2023-12-21",
+          "last_label_end_open": "2024-01-02",
+          "first_prediction_decision_close": "2024-01-02",
+          "log": "[00:57:09] ridge 2024: fit on 680904 rows in 0s"
+        },
+        {
+          "year": 2025,
+          "last_training_feature_date": "2024-12-23",
+          "last_label_end_open": "2025-01-02",
+          "first_prediction_decision_close": "2025-01-02",
+          "log": "[00:57:10] ridge 2025: fit on 775911 rows in 0s"
+        },
+        {
+          "year": 2026,
+          "last_training_feature_date": "2025-12-23",
+          "last_label_end_open": "2026-01-02",
+          "first_prediction_decision_close": "2026-01-02",
+          "log": "[00:57:11] ridge 2026: fit on 870091 rows in 0s"
+        }
+      ],
+      "provenance": "Original phase2 score bytes, sorted Store dates/symbols and native builder plus annual logs; fitted weights not archived; historical fit is simulated at annual first-open cutoff, not an actual historical live fit"
+    },
+    "lgbm": {
+      "sha256": "8f417fe834c7f8f237b45e4453605f125d5cb76d107d2edca19bab1bb47030f9",
+      "source": "data/research/t22_results2/ml/lgbm_U500_H5.npy",
+      "shape": [
+        2692,
+        7556
+      ],
+      "finite_daily_min": 351,
+      "finite_daily_max": 387,
+      "years": [
+        {
+          "year": 2024,
+          "last_training_feature_date": "2023-12-21",
+          "last_label_end_open": "2024-01-02",
+          "first_prediction_decision_close": "2024-01-02",
+          "log": "[00:57:46] lgbm 2024: fit on 680904 rows in 6s"
+        },
+        {
+          "year": 2025,
+          "last_training_feature_date": "2024-12-23",
+          "last_label_end_open": "2025-01-02",
+          "first_prediction_decision_close": "2025-01-02",
+          "log": "[00:57:55] lgbm 2025: fit on 775911 rows in 8s"
+        },
+        {
+          "year": 2026,
+          "last_training_feature_date": "2025-12-23",
+          "last_label_end_open": "2026-01-02",
+          "first_prediction_decision_close": "2026-01-02",
+          "log": "[00:58:05] lgbm 2026: fit on 870091 rows in 9s"
+        }
+      ],
+      "provenance": "Original phase2 score bytes, sorted Store dates/symbols and native builder plus annual logs; fitted weights not archived; historical fit is simulated at annual first-open cutoff, not an actual historical live fit"
+    }
+  },
+  "news": [
+    {
+      "year": 2024,
+      "source_rows": 199398,
+      "visible_by_close_rows": 199398,
+      "store_rows": 199398
+    },
+    {
+      "year": 2025,
+      "source_rows": 196573,
+      "visible_by_close_rows": 196573,
+      "store_rows": 196573
+    },
+    {
+      "year": 2026,
+      "source_rows": 136096,
+      "visible_by_close_rows": 136096,
+      "store_rows": 136096
+    }
+  ],
+  "selected": {
+    "cell_id": "R_U500_ind_L21_none_H5_open",
+    "universe": 500,
+    "resid": "ind",
+    "L": 21,
+    "H": 5,
+    "net": -0.5433088776671453,
+    "gross": 0.15920176449784182,
+    "top3": [
+      "R_U1000_ind_L21_none_H5_open",
+      "R_U500_ind_L21_none_H5_open",
+      "R_U500_ind_L21_none_H1_open"
+    ]
+  },
+  "rights": "Conditional native adjusted economic units; permanent identity, entitlement cash and PIT corporate-action certification unavailable; no broker share or realized slippage claim",
+  "cash_credit": "Native unswept cash earns zero; no TBILL ETF target",
+  "hygiene": "hygiene.json",
+  "causal_limitations": [
+    "Labels cross-sectionally clipped on completed forward outcomes before annual fitting; inherited convention unchanged",
+    "Feature definitions and annual rows inherited, no refit or single-feature algorithm/news attribution",
+    "Panel snapshot already used historical hygiene; membership/identity not independently certified"
+  ]
+}

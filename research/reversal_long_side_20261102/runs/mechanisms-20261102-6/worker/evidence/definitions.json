@@ -1,0 +1,96 @@
+{
+  "arms": [
+    "LGBM_LONG",
+    "RIDGE_LONG",
+    "RULE_LONG",
+    "LIQUID100",
+    "SPY",
+    "CASH"
+  ],
+  "capital_each": 20000.0,
+  "cost_multipliers": [
+    1,
+    2
+  ],
+  "calendar": [
+    "2024-01-08",
+    "2026-09-15"
+  ],
+  "n_sessions": 674,
+  "target_filter": "abs(weight)*fixed initial 20000>=100; risk scale first, filter once, no order minimum or renormalization",
+  "cash_credit": 0,
+  "funding": "Fixed sales, common buy coefficient, 64 bisections feasible lower endpoint; pure native variable costs; original financing rate retained",
+  "matching": {
+    "method": "Same native funded cash-mixture bracket/root procedure, adapted to known target-filter support discontinuities",
+    "segments": [
+      [
+        0.0,
+        0.499999999
+      ],
+      [
+        0.5,
+        0.624999999
+      ],
+      [
+        0.625,
+        0.8333333323333334
+      ],
+      [
+        0.8333333333333334,
+        1.0
+      ]
+    ],
+    "nodes_per_continuous_segment": 5,
+    "jump_points": [
+      0.5,
+      0.625,
+      0.8333333333333334
+    ],
+    "xtol": 1e-10,
+    "max_vol_gap": 1e-06,
+    "root_choice": "smallest valid bracketed root; scale down only to lower unscaled volatility; all roots recorded; jump crossing is unmatched, never interpolate profits",
+    "costs": "recompute actual independent path per scale; identical controls reused"
+  },
+  "uncertainty": {
+    "contrasts": [
+      [
+        "LGBM_LONG",
+        "RULE_LONG"
+      ],
+      [
+        "LGBM_LONG",
+        "LIQUID100"
+      ],
+      [
+        "LGBM_LONG",
+        "SPY"
+      ],
+      [
+        "RIDGE_LONG",
+        "RULE_LONG"
+      ],
+      [
+        "RIDGE_LONG",
+        "LIQUID100"
+      ],
+      [
+        "RIDGE_LONG",
+        "SPY"
+      ]
+    ],
+    "circular_block": 63,
+    "draws": 1999,
+    "seed": 20261102,
+    "family": "six paired daily rate contrasts per cost; common index matrix across both dependent costs",
+    "interval": "simultaneous centered maxT, fixed block bootstrap standard error; annualized daily arithmetic mean difference",
+    "HAC": 5
+  },
+  "excluded_trigger_dates": [],
+  "limits": [
+    "Seen 2024-01-08..2026-09-15 window, 674 sessions, inherited model/universe selection and incomplete historical trials",
+    "Conditional native adjusted economic units, no certified physical entitlement/PIT permanent identity or broker fractional execution",
+    "Open spread snapshot 09:35-09:45, year-calibrated; modeled costs, not realized opening fills",
+    "No new model fits, no threshold/window/universe/score search; news and algorithm effects not separately identified",
+    "Ex-post funded volatility matching is descriptive; target-filter jumps may prevent matching"
+  ]
+}

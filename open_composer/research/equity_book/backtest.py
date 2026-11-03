@@ -104,6 +104,10 @@ class BookConfig:
     signal_dates: Sequence[pd.Timestamp] | None = None  # overrides freq/offset
     trade_attrs: TradeAttrs | None = None  # (decision_date, symbols) -> frame indexed by symbol
     snapshots: bool = True
+    # Opt-in execution policy. Cost functions passed to it must be pure: probes
+    # are not executions. Legacy books do not use either hook.
+    trade_funding: Callable | None = None
+    trade_observer: Callable | None = None
 
 
 @dataclass
@@ -336,12 +340,25 @@ def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = No
                     if c not in tdf.columns:
                         tdf[c] = att[c].to_numpy()
             st = make_state(i, e_pre, decision)
+            if cfg.trade_funding is not None:
+                adjusted = cfg.trade_funding(tdf.copy(), st, cost_fn)
+                if not adjusted.index.equals(tdf.index) or not adjusted["symbol"].equals(tdf["symbol"]):
+                    raise ValueError("Funding hook cannot change order identities")
+                actual = adjusted["dollar_trade"].to_numpy("float64")
+                if not np.isfinite(actual).all():
+                    raise ValueError("Nonfinite funded orders")
+                tdf = adjusted
+                trades[nz] = actual
+                target = h + trades
+                turnover = float(np.abs(actual).sum() / e_pre) if e_pre else 0.0
             res = cost_fn(tdf, st)
             if isinstance(res, Mapping):
                 for k, v in res.items():
                     comps[k if k in comps else "spread"] += float(v)
             else:
                 comps["spread"] += float(res)
+            if cfg.trade_observer is not None:
+                cfg.trade_observer(tdf, st, comps.copy())
         h = target
         return turnover, float(sum(comps.values())), comps
 
