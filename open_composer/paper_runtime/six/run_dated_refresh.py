@@ -94,6 +94,19 @@ def receive_source_inventory(output, *, now):
     from open_composer.market_sessions import us_equity_session_dates
 
     output = Path(output).resolve()
+    reuse = output / "source-reuse.json"
+    if reuse.exists():
+        receipt = json.loads(reuse.read_text())
+        original = Path(receipt["original_directory"]).resolve()
+        assert original == (RUNS / now.date().isoformat()).resolve() and original != output
+        assert receipt["source"] == binding(original / "current-source.json")
+        assert receipt["failed_attempt"] == binding(original / "refresh-exit.json")
+        failed = json.loads((original / "refresh-exit.json").read_text())
+        assert failed["status"] == "blocked_preserved_no_replay"
+        assert failed["targets_published"] is False and failed["model_fits"] == 0
+        assert failed["stages"][0]["phase"] == "source" and failed["stages"][0]["exit_code"] == 0
+        assert (output / "current-source.json").read_bytes() == (original / "current-source.json").read_bytes()
+        return receive_source_inventory(original, now=now)
     source = json.loads((output / "current-source.json").read_text())
     clock = receive_clock(source["application_day"], source["reference_day"], now=now)
     assert source["prior_reference_day"] == clock["prior_reference_day"]

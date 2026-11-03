@@ -492,31 +492,27 @@ def prepare(root):
     prior_root, prior_target, oldsource = active_baseline()
     oldobj = pages(oldsource)
     oldtail = bars(oldobj["core", "adjusted-tail"])
-    basis = {}
-    for s in syms:
-        k = adjusted[s, "2026-09-30"]["c"] / float(cl.loc[pd.Timestamp("2026-09-30"), s])
-        oldk = oldtail[s, "2026-09-30"]["c"] / float(cl.loc[pd.Timestamp("2026-09-30"), s])
-        assert k > 0
-        errors = []
-        for key, r in oldtail.items():
-            if key[0] == s:
-                assert key in adjusted
-                for f in ["o", "c"]:
-                    errors.append(abs((adjusted[key][f] / k) / (r[f] / oldk) - 1))
-        assert max(errors) <= 1e-7, "Nonuniform LSTM accepted-tail basis revision"
-        assert np.isclose(
-            adjusted[s, "2026-09-30"]["o"] / k,
-            float(op.loc[pd.Timestamp("2026-09-30"), s]),
-            rtol=1e-7,
-            atol=1e-8,
-        )
-        basis[s] = dict(multiplier=k, compared_OC_cells=len(errors), max_relative_error=max(errors))
-        for (name, day), r in adjusted.items():
-            if name == s and "2026-10-01" <= day <= ref:
-                cl.loc[pd.Timestamp(day), s] = r["c"] / k
-                op.loc[pd.Timestamp(day), s] = r["o"] / k
-    cl = cl.sort_index()
-    op = op.reindex(cl.index)
+    from open_composer.paper_runtime.six.adjusted_history import append_adjusted_history, cash_actions
+
+    prior_qa = load(prior_root / "lstm-input-QA.json")
+    old_scales = {s: float(prior_qa["basis"][s]["multiplier"]) for s in syms}
+    if "canonical_close" in prior_qa:
+        prior_cl = pd.read_parquet(checked(prior_qa["canonical_close"]))[syms]
+        prior_op = pd.read_parquet(checked(prior_qa["canonical_open"]))[syms]
+        assert np.array_equal(prior_cl.loc[cl.index], cl)
+        assert np.array_equal(prior_op.loc[op.index], op)
+        cl, op = prior_cl, prior_op
+    else:
+        for (symbol, day), row in oldtail.items():
+            if symbol in syms and "2026-10-01" <= day <= oldsource["reference_day"]:
+                cl.loc[pd.Timestamp(day), symbol] = row["c"] / old_scales[symbol]
+                op.loc[pd.Timestamp(day), symbol] = row["o"] / old_scales[symbol]
+        cl, op = cl.sort_index(), op.sort_index()
+    op, cl, scales, revision = append_adjusted_history(
+        op, cl, oldtail, adjusted, old_scales, cash_actions(obj["core", "actions"]),
+        prior_reference=oldsource["reference_day"], reference=ref,
+    )
+    basis = {s: dict(multiplier=scales[s], **revision[s]) for s in syms}
     cc, oo, lqa = sanitize_price_matrices(cl, op)
     assert not lqa.breaks and np.array_equal(cc, cl) and np.array_equal(oo, op)
     methoddir = P / "return-line-replenishment-20261016/direct-position-learning-20261016"
@@ -549,11 +545,15 @@ def prepare(root):
         "Retain changed prior prefix; no inference"
     )
     np.savez_compressed(root / "current-lstm-sequence.npz", features=x, vol=vol)
+    cl.to_parquet(root / "LSTM-canonical-close.parquet")
+    op.to_parquet(root / "LSTM-canonical-open.parquet")
     save(
         root / "lstm-input-QA.json",
         dict(
             sequence=bind(root / "current-lstm-sequence.npz"),
             prior_sequence=bind(prior_root / "current-lstm-sequence.npz"),
+            canonical_close=bind(root / "LSTM-canonical-close.parquet"),
+            canonical_open=bind(root / "LSTM-canonical-open.parquet"),
             full_sequence_rows=len(x),
             annual_sessions=len(expected),
             burnin_sessions=63,
@@ -574,34 +574,37 @@ def prepare(root):
     ss = plan["symbols"]
     assert set(ar) == {(s, d.isoformat()) for s in ss for d in dates}
     oldar = bars(oldobj["ETF", "adjusted-history"])
-    changes = [
-        dict(symbol=s, day=d, field=f, old=r[f], current=ar[s, d][f])
-        for (s, d), r in oldar.items()
-        for f in ["o", "c"]
-        if np.float64(r[f]).tobytes() != np.float64(ar[s, d][f]).tobytes()
-    ]
-    save(
-        root / "ETF-basis-QA.json",
-        dict(
-            prior_OC_cells_compared=len(oldar) * 2,
-            changes=changes,
-            changed_cells=len(changes),
-            tolerance_used=False,
-            first_session=dates[0].isoformat(),
-            last_session=dates[-1].isoformat(),
-            sessions=len(dates),
-            symbols=ss,
-        ),
+    prior_etf_qa = load(prior_root / "ETF-basis-QA.json")
+    if "canonical_close" in prior_etf_qa:
+        ec = pd.read_parquet(checked(prior_etf_qa["canonical_close"]))
+        eo = pd.read_parquet(checked(prior_etf_qa["canonical_open"]))
+        etf_scales = prior_etf_qa["divisors"]
+    else:
+        accepted_panel = pd.DataFrame([
+            dict(symbol=s, trade_date=pd.Timestamp(d), open=r["o"], close=r["c"])
+            for (s, d), r in oldar.items()
+        ])
+        ec = accepted_panel.pivot(index="trade_date", columns="symbol", values="close")
+        eo = accepted_panel.pivot(index="trade_date", columns="symbol", values="open")
+        etf_scales = {s: 1.0 for s in ec.columns}
+    eo, ec, etf_scales, etf_revision = append_adjusted_history(
+        eo, ec, oldar, ar, etf_scales, cash_actions(obj["ETF", "actions"]),
+        prior_reference=oldsource["reference_day"], reference=ref,
     )
-    assert not changes, "Changed full ETF prefix; retained source, no scaling/reGET"
-    panel = pd.DataFrame(
-        [
-            dict(symbol=s, trade_date=date.fromisoformat(d), open=r["o"], close=r["c"])
-            for (s, d), r in ar.items()
-        ]
-    )
-    ec = panel.pivot(index="trade_date", columns="symbol", values="close")
-    eo = panel.pivot(index="trade_date", columns="symbol", values="open")
+    ec.to_parquet(root / "ETF-canonical-close.parquet")
+    eo.to_parquet(root / "ETF-canonical-open.parquet")
+    save(root / "ETF-basis-QA.json", dict(
+        canonical_close=bind(root / "ETF-canonical-close.parquet"),
+        canonical_open=bind(root / "ETF-canonical-open.parquet"),
+        divisors=etf_scales, source_revision=etf_revision,
+        prior_OC_cells_compared=len(oldar) * 2, prior_canonical_cells_replaced=0,
+        first_session=dates[0].isoformat(), last_session=dates[-1].isoformat(),
+        sessions=len(dates), symbols=ss,
+    ))
+    panel = pd.DataFrame([
+        dict(symbol=s, trade_date=d.date(), open=float(eo.loc[d, s]), close=float(ec.loc[d, s]))
+        for s in ec.columns for d in ec.index
+    ])
     ecl, eop, eqa = sanitize_price_matrices(ec, eo)
     assert (
         not eqa.breaks
