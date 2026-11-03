@@ -6,6 +6,7 @@ results and dispatches the next question. Scope, stopping and startup rules live
 `AGENTS.md`; roles in `workflow.json`. Numerical evidence is provider-neutral;
 only Codex transport is implemented. Claude A/B requires owner instruction.
 Read `control.json` for current switches; source authorizations prevail.
+Astra xhigh makes important direction decisions; Sol high executes and reviews.
 
 ## Run and recover
 
@@ -38,6 +39,15 @@ prove remote termination. Locks reject duplicate drivers. Completed phases are
 reused; changed upstream results get a fresh downstream Lead. Reconcile actual
 jobs before closing a checkpoint. Preserve quota exhaustion, provider faults,
 owner pauses and resource failures as their actual causes.
+
+Worker waits for useful numerical jobs and completes interpretation in its finite
+envelope. A blocked worker stops this run before Lead; resume the same run/session
+after reconciling its jobs. Waiting and resource checkpoints do not dispatch Lead.
+Only a necessary material-science decision routes a blocked worker to Lead:
+`decision=branch/revise`, a concrete `next_brief`, and `next_review=plan/both`.
+Normal completed results still receive fresh Lead and any required result review.
+New invocations, including resumed sessions, use installed role effort while
+retaining the original provider/model. Running processes keep their launch settings.
 
 Capacity failures allow two bounded waits/retries in the known session. Quota and
 authentication failures do not. Malformed Reply allows one correction from saved

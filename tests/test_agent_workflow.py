@@ -148,17 +148,43 @@ def test_rejected_new_scope_never_reaches_worker(root):
     assert state["status"] == "scope_needs_revision" and calls == ["plan_review"]
 
 
-def test_blocked_worker_goes_directly_to_lead(root):
+@pytest.mark.parametrize("science_decision", [False, True])
+def test_blocked_worker_only_reaches_lead_for_material_science(root, science_decision):
+    (root / "research/example/next.md").write_text("Decide the changed economic scope.")
+    worker = {"status": "blocked", "results": None}
+    if science_decision:
+        worker.update(
+            decision="revise", next_brief="research/example/next.md", next_review="plan"
+        )
     calls = []
     state = run_round(
         root,
         "example",
         "r1",
         10,
+        execute_fn=fake_agent(calls, {"worker": worker}),
+    )
+    assert calls == (["worker", "lead"] if science_decision else ["worker"])
+    assert state["status"] == ("round_finished" if science_decision else "worker_checkpoint")
+    assert state["phases"]["worker"]["status"] == "blocked"
+
+
+def test_checkpoint_resume_keeps_worker_session_and_applies_current_effort(root):
+    calls = []
+    state = run_round(
+        root, "example", "r1", 10,
         execute_fn=fake_agent(calls, {"worker": {"status": "blocked", "results": None}}),
     )
-    assert calls == ["worker", "lead"]
-    assert state["phases"]["worker"]["status"] == "blocked"
+    state["phases"]["worker"]["requested_runtime"]["effort"] = "xhigh"
+    save(root / "research/example/runs/r1/run.json", state)
+    resumed = run_round(root, "example", "r1", 10, resume=True, execute_fn=fake_agent(calls))
+    assert calls == ["worker", "worker_resume_1", "lead"]
+    worker = resumed["phases"]["worker_resume_1"]
+    assert worker["session"] == worker["resumes_session"] == "fixture-worker"
+    assert worker["requested_runtime"]["effort"] == "high"
+    assert resumed["phases"]["worker"]["requested_runtime"]["effort"] == "xhigh"
+    assert resumed["phases"]["worker"]["resolved_by"] == "worker_resume_1"
+    assert resumed["status"] == "round_finished"
 
 
 def test_missing_raw_evidence_cannot_reach_result_review(root):
@@ -271,7 +297,7 @@ def test_series_does_not_relaunch_a_blocked_worker(root):
             },
         ),
     )
-    assert calls == ["worker", "lead"] and result["status"] == "blocked_checkpoint"
+    assert calls == ["worker"] and result["status"] == "blocked_checkpoint"
 
 
 @pytest.mark.parametrize("role", ["plan_review", "worker", "lead"])

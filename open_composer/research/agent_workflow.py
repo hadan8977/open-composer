@@ -796,7 +796,10 @@ def run_round(
                     if remaining <= 0:
                         raise TimeoutError("Round deadline reached; preserve existing job state")
                     role_name = "reviewer" if kind == "plan_review" else kind
-                    role = prior.get("requested_runtime", config["roles"][role_name])
+                    # Resume the original provider/model/session, but apply the
+                    # installed effort to each new invocation, including recovery.
+                    role = dict(prior.get("requested_runtime", config["roles"][role_name]))
+                    role["effort"] = config["roles"][role_name]["effort"]
                     session_to_resume = (
                         (prior.get("session") or prior.get("resumes_session"))
                         if prior and not changed_upstream
@@ -954,6 +957,16 @@ def run_round(
                     break
                 if kind == "worker":
                     worker_blocked = reply.status == "blocked"
+                    if worker_blocked and not (
+                        reply.decision in ("branch", "revise")
+                        and reply.next_brief is not None
+                        and reply.next_review in ("plan", "both")
+                    ):
+                        # Waiting, transport and resource checkpoints stay in
+                        # this run/session. Lead needs an economic result or an
+                        # explicit material-science decision, not a status round.
+                        state["status"] = "worker_checkpoint"
+                        break
                 upstream.append(phase)
                 changed_upstream = True
             else:
