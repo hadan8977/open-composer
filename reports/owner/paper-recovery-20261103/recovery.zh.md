@@ -58,3 +58,5 @@ ETF的连续补算沿用原规则、每边10bp费用：行业轮动+69.29美元�
 详细逐日实账、所有补算、压力费用和历史策略盘点见[完整收益报告](performance.zh.md)。恢复及核数凭据见[daily-restoration.json](daily-restoration.json)、[独立原始账户核算](independent-raw-reconciliation.json)、[本次改期授权记录](owner-date-exception.json)。研究与整体改造状态见[项目进度](../../../docs/restructure-progress.zh.md)。
 
 本次数据更新误建了一套额外环境，未把其未发布候选当成恢复结果；后续已固定主仓原解释器。仅清理本任务新增且已闲置的环境及缓存，缓存实际回收1,513,533,440字节，原环境、旧缓存、原始数据和失败证据保留。详见本目录task-cache-clean-reception.json。
+
+旧SEC财务下载包已上传现有Drive并经rclone核验零差异；10:31 UTC将原缓存入口切到已核验的新下载包，回收旧副本约1.41GB。主仓旧财务表、本次新财务表及研究结果保持，后续每日共用一个可更新下载缓存。见[缓存实际接收](quant1-sec-cache-integration.json)。
