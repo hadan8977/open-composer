@@ -1,0 +1,48 @@
+{
+  "accessed_at_utc": "2026-11-03T06:45:00Z",
+  "question": "Received momentum benchmark value at SPY volatility; actual-fill P&L timing attribution",
+  "primary_source": {
+    "title": "A tug of war: Overnight versus intraday expected returns",
+    "authors": ["Dong Lou", "Christopher Polk", "Spyros Skouras"],
+    "year": 2019,
+    "doi": "10.1016/j.jfineco.2019.03.011",
+    "url": "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf",
+    "access": "Full 22-page author-hosted final article opened; abstract and introduction on pp.192-194 inspected.",
+    "claim": "Historical strategy returns can accrue differently overnight and intraday. This motivates decomposing an existing account's dollars into native price legs.",
+    "limitations": "The article does not establish the net profitability, auction realizability or investor-attention cause of the present conditional liquid-stock long-only books. Its introduction explicitly cautions that trading costs weaken implementable profits.",
+    "adaptation": "Only actual holdings and original fills are attributed. No timing predictor, night-only policy or paper replication is requested."
+  },
+  "local_execution_counterevidence": {
+    "direction": "dir:overnight_return_persistence_auction",
+    "evidence": [
+      "reports/research/iterations/t20260929_35_overnight_persistence/results.json",
+      "reports/research/iterations/t20260930_14_overnight_persistence_12m/decision-record.md",
+      "reports/research/iterations/t20260930_14_overnight_persistence_12m/results.json"
+    ],
+    "received_limit": "A prior overnight-persistence recipe failed its official-opening-price execution gate; a first-print overnight component is not an attainable auction return. The original reopening condition and seen windows remain unchanged.",
+    "effect_on_scope": "No isolated overnight account or reopening of the old auction recipe; decompose original traded paths only."
+  },
+  "other_prior_exposure": [
+    {
+      "path": "reports/research/program/return-line-replenishment-20261016/information-discreteness-cohort-transfer-20261017/result.md",
+      "received_limit": "Fixed learned-ID applicability on DIA28 did not beat ordinary momentum; original32 result and failed fixed FIP remain. No third ID cohort/model/factor/window rescue."
+    },
+    {
+      "path": "reports/research/harvest/directions.jsonl",
+      "entry": "dir:composite_momentum_quality_v1",
+      "received_limit": "52-week-high/volatility/MAX composites already evaluated; not new hypotheses in this task."
+    },
+    {
+      "path": "research/peer_earnings_increment_20261103/runs/mechanisms-20261102-7/worker/evidence/trial-reconciliation.json",
+      "received_limit": "Known floor 26 registered configurations/policies, incomplete broader selection history, frozen event-covered mask and seen calendar."
+    }
+  ],
+  "selection": "Post-result finite opportunity-cost question. The plain M controls had higher full-window raw dollars but far higher risk and weaker recent dollars than the raw ranking suggests. Same-risk SPY comparison can change further allocation without another factor search.",
+  "discarded_source_probe": {
+    "title": "Frog in the Pan: Continuous Information and Momentum",
+    "authors": ["Zhi Da", "Umit G. Gurun", "Mitch Warachka"],
+    "url": "https://academicweb.nd.edu/~zda/Frog.pdf",
+    "access": "Author-hosted 48-page paper opened. Chapman full-text endpoint returned 403, retained as failed access. Local ID exposure then established that this was not an untested new question.",
+    "effect": "No FIP experiment, new feature or policy authorized."
+  }
+}

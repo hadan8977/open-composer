@@ -16,3 +16,4 @@
 | model-completion-20261102-1 | martin_model_completion_20261102 | branch executed E/A/F/V/P/D=1/4/2/4/0/65 tok=100940055+? active_s=24785 wall_s=58594 | research/martin_model_completion_20261102/runs/model-completion-20261102-1/run.json |
 | model-completion-20261102-2 | martin_tail_targets_20261103 | continue executed E/A/F/V/P/D=?/?/?/?/?/? tok=9022693 active_s=1429 wall_s=? | research/martin_tail_targets_20261103/runs/model-completion-20261102-2/run.json |
 | mechanisms-20261102-6 | reversal_long_side_20261102 | park executed E/A/F/V/P/D=12/86/0/4/0/20 tok=34474928+? active_s=4350 wall_s=21092 | research/reversal_long_side_20261102/runs/mechanisms-20261102-6/run.json |
+| mechanisms-20261102-7 | peer_earnings_increment_20261103 | park 接收恢复；ME−MP同风险−$4819/−$4079/−$3551/−$3824；E/A/F/V/P=20/141/0/14/0；tok≥1645291+?；原CLI失败保留；下一题已派未启动 | research/peer_earnings_increment_20261103/runs/mechanisms-20261102-7/lead_recovery/decision.json |

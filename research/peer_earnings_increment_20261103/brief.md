@@ -1,6 +1,6 @@
 # Do peer earnings reactions add net dollars beyond prices?
-After plan acceptance, complete scope.md as one task: bind saved SEC timestamps,
-industry identities and prices; test six fixed information roles at two holding
+After plan acceptance, complete scope.md as one task: bind SEC timestamps,
+industry identities and prices; test seven fixed information roles at two holding
 clocks in independent $20k long/cash books, with native 1x/2x costs and matched
 controls. The question is event information beyond industry prices and own
 momentum, not a revival of the retired reversal mapping. Preserve old signal-library
