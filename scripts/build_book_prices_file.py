@@ -45,8 +45,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from open_composer.market_sessions import us_equity_session_close  # noqa: E402
+
 NEW_YORK = ZoneInfo("America/New_York")
-SNAPSHOT_TIME_ET = (15, 45)
 SNAPSHOT_FALLBACK_MINUTES = 10
 SCHEMA_VERSION = 1
 SIP_ROOT = ROOT / "data/sip"
@@ -195,8 +196,10 @@ def ny_day_bounds_utc(day: date) -> tuple[datetime, datetime]:
 
 
 def snapshot_time_utc(day: date) -> datetime:
-    hour, minute = SNAPSHOT_TIME_ET
-    return datetime(day.year, day.month, day.day, hour, minute, tzinfo=NEW_YORK).astimezone(UTC)
+    close = us_equity_session_close(day)
+    if close is None:
+        raise ValueError(f"{day} is not a US equity session")
+    return (datetime.combine(day, close, tzinfo=NEW_YORK) - timedelta(minutes=15)).astimezone(UTC)
 
 
 # --------------------------------------------------------------------------------------
@@ -220,7 +223,7 @@ def official_closes(
 def snapshot_closes(
     sip_root: Path, symbols: Sequence[str], day: date
 ) -> tuple[dict[str, float], dict[str, dict[str, Any]], list[str]]:
-    """Close of the bar covering 15:44-15:45 ET; fallback to the latest bar ending within 10 min."""
+    """Bar ending 15 minutes before session close; allow the existing 10-minute fallback."""
     cut = snapshot_time_utc(day)
     window_start = cut - timedelta(minutes=SNAPSHOT_FALLBACK_MINUTES + 1)  # oldest label 15:34
     # bars are labelled by start time: bar label L covers [L, L + 1 min); the bar ending at the
@@ -334,10 +337,11 @@ def build_prices(
         "execution_date": execution_date.isoformat(),
         "built_at_utc": utc_now_text(now),
         "price_basis": PRICE_BASIS,
+        "snapshot_at_utc": snapshot_time_utc(execution_date).isoformat(),
         "snapshot_rule": (
-            "close of the minute bar labelled 15:44 ET (bars are labelled by start time); "
-            f"fallback: latest earlier bar ending within {SNAPSHOT_FALLBACK_MINUTES} minutes of "
-            "15:45 ET, listed in snapshot_fallback"
+            "close of the minute bar ending 15 minutes before the exchange close; "
+            f"fallback: latest earlier bar ending within {SNAPSHOT_FALLBACK_MINUTES} minutes; "
+            "snapshot_1545 retains its legacy field name"
         ),
         "official_close": {s: close[s] for s in symbols if s in close},
         "snapshot_1545": {s: snapshot[s] for s in symbols if s in snapshot},

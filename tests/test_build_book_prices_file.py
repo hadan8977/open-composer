@@ -357,3 +357,16 @@ def test_driver_reconcile_exit_codes(tmp_path, monkeypatch):
         record.write_text("{}")
     assert driver.main(driver_args(tmp_path, sip)) == 0
     assert called == []
+
+
+def test_half_day_snapshot_uses_bar_before_1245_and_ignores_later_bars(tmp_path):
+    day = date(2026, 11, 27)
+    sip = tmp_path / "sip"
+    write_shard(
+        sip / "minute/2026/11/shard-0000.parquet",
+        minute_rows("AAA", day, {(12, 44): 12.44, (12, 45): 12.45, (15, 44): 15.44}),
+    )
+    assert bp.snapshot_time_utc(day) == datetime(2026, 11, 27, 17, 45, tzinfo=UTC)
+    prices, fallback, _ = bp.snapshot_closes(sip, ["AAA"], day)
+    assert prices == {"AAA": 12.44}
+    assert fallback == {}

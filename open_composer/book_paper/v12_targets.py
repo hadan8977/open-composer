@@ -295,8 +295,23 @@ def _first_month_positions(ctx: V12Context, p: int, o: int) -> list[int]:
     return list(range(q, p + 1, bv.N_TRANCHES))
 
 
+def _equity_basis(value: float | None) -> float:
+    """Retain the frozen basis by default; permit an explicit downward capital allocation."""
+    equity = bv.EQUITY if value is None else float(value)
+    if not math.isfinite(equity) or not 0 < equity <= bv.EQUITY:
+        raise TargetRefused(f"equity basis must be positive and at most {bv.EQUITY:g}")
+    return equity
+
+
 def compute_tranche(
-    ctx: V12Context, variant: str, o: int, p: int, *, p_d: int, fill_lookahead: bool
+    ctx: V12Context,
+    variant: str,
+    o: int,
+    p: int,
+    *,
+    p_d: int,
+    fill_lookahead: bool,
+    equity_basis: float | None = None,
 ) -> TrancheState:
     """Weights and virtual shares of tranche ``o`` at decision position ``p`` (<= ``p_d``)."""
     _ensure_repo_on_path()
@@ -333,7 +348,7 @@ def compute_tranche(
         raise TargetRefused(f"SPY close missing at {px.dates[p].date()}")
     k1 = bv.f1_k_eff(tt.vscale, tt.h_unit)
     k2 = bv.f2_k2_eff(tt.vscale, tt.h_unit)
-    e = bv.EQUITY
+    e = _equity_basis(equity_basis)
     return TrancheState(
         o=o,
         p=p,
@@ -413,8 +428,10 @@ def _net_book(
     close_d: np.ndarray,
     spy_d: float,
     tbill: tuple[str, float],
+    *,
+    equity_basis: float | None = None,
 ) -> FormBook:
-    e = bv.EQUITY
+    e = _equity_basis(equity_basis)
     core_shares = bv.F2_CORE * e / spy_d if form == "F2" else 0.0
 
     def book_at(scale: float):
@@ -496,9 +513,10 @@ def build_target_file(
     ind: pd.Series,
     size: pd.Series,
     beta_d: pd.Series,
+    equity_basis: float | None = None,
 ) -> BookTarget:
     px = ctx.px
-    e = bv.EQUITY
+    e = _equity_basis(equity_basis)
     t_d = px.dates[p_d]
     spy_d = float(px.spy_c[p_d])
     # every name with a non-zero virtual position keeps its exact weight (a half share rounds to
@@ -579,10 +597,12 @@ def build_v12_bundle(
     context: V12Context | None = None,
     logged_at_utc: str | None = None,
     fill_lookahead: bool = False,
+    equity_basis: float | None = None,
 ) -> V12Bundle:
     """Both targets of ``decision_date`` plus the intermediate books (for tests and the replay)."""
     if variant not in VARIANTS:
         raise TargetRefused(f"variant must be one of {VARIANTS}, got {variant!r}")
+    equity_basis = _equity_basis(equity_basis)
     t_d = pd.Timestamp(decision_date)
     ctx = context or V12Context.open(data_root, first_date=t_d, last_date=t_d)
     px = ctx.px
@@ -592,7 +612,9 @@ def build_v12_bundle(
     if p_d < ctx.first_pos or p_d > ctx.last_pos:
         raise TargetRefused("decision date outside the loaded window")
     tranches = [
-        compute_tranche(ctx, variant, o, p, p_d=p_d, fill_lookahead=fill_lookahead)
+        compute_tranche(
+            ctx, variant, o, p, p_d=p_d, fill_lookahead=fill_lookahead, equity_basis=equity_basis
+        )
         for o, p in enumerate(tranche_positions(p_d))
     ]
     close_d = np.asarray(px.C[p_d], dtype="float64")
@@ -610,7 +632,14 @@ def build_v12_bundle(
         virt = np.where(priced, virt, 0.0)
         hedge = sum(t.hedge1 if form == "F1" else t.hedge2 for t in tranches)
         books[form] = _net_book(
-            form, virt, float(hedge), _effective_beta(tranches, form), close_d, spy_d, tbill
+            form,
+            virt,
+            float(hedge),
+            _effective_beta(tranches, form),
+            close_d,
+            spy_d,
+            tbill,
+            equity_basis=equity_basis,
         )
     attrs = ctx.panel.at(t_d)
     ind = ctx.sig.at(t_d)["ind_code"]
@@ -630,6 +659,7 @@ def build_v12_bundle(
             ind=ind,
             size=size,
             beta_d=beta_d,
+            equity_basis=equity_basis,
         )
         for form in ("F1", "F2")
     }
@@ -659,6 +689,7 @@ def build_v12_targets(
     context: V12Context | None = None,
     logged_at_utc: str | None = None,
     fill_lookahead: bool = False,
+    equity_basis: float | None = None,
 ) -> dict[str, BookTarget]:
     """``{"quant1": F1, "quant2": F2}`` schema-2 targets of ``decision_date`` (see module doc)."""
     return build_v12_bundle(
@@ -668,6 +699,7 @@ def build_v12_targets(
         context=context,
         logged_at_utc=logged_at_utc,
         fill_lookahead=fill_lookahead,
+        equity_basis=equity_basis,
     ).targets
 
 

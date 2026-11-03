@@ -70,6 +70,9 @@ LIVE_ROOT = ROOT / "data/live/equity_book"
 LOG_FILE = ROOT / "logs/book_v12_daily.log"
 LOCK_FILE = ROOT / "logs/book_v12_daily.lock"
 SUBMIT_ENV = "OC_BOOK_V12_SUBMIT"
+# Existing owner authorization: t20261002_book_v12/paper-start-checklist.md section 1.
+# This is the normal book route's permission end, not an automatic renewal or exit order.
+PAPER_AUTHORIZATION_END = date(2026, 12, 31)
 EXIT_FRESH, EXIT_REFUSED, EXIT_SUBMIT_OFF, EXIT_COMMAND, EXIT_LOCKED = 2, 3, 4, 5, 6
 log = logging.getLogger("book_v12_daily")
 
@@ -95,6 +98,7 @@ def run_targets(
     variant: str | None,
     *,
     now: datetime | None = None,
+    equity_basis: float | None = None,
 ) -> int:
     if not (data_root / "panel/_calendar.parquet").exists():
         log.error("data root %s has no calendar: not fresh", data_root)
@@ -110,12 +114,21 @@ def run_targets(
         return EXIT_FRESH
     paths = {a: target_path(root, a, day) for a in BOOK_ACCOUNTS}
     if all(p.exists() for p in paths.values()):
+        if equity_basis is not None and any(
+            load_target_file(p).equity_basis != equity_basis for p in paths.values()
+        ):
+            log.error("logged targets use another equity basis; retained unchanged")
+            return EXIT_REFUSED
         log.info("targets of %s already logged: nothing to do", day)
         return 0
     try:
         chosen = variant or v12.primary_variant()
         bundle = v12.build_v12_bundle(
-            day, variant=chosen, data_root=data_root, logged_at_utc=now_utc_text()
+            day,
+            variant=chosen,
+            data_root=data_root,
+            logged_at_utc=now_utc_text(),
+            **({"equity_basis": equity_basis} if equity_basis is not None else {}),
         )
         for target in bundle.targets.values():
             info = v12.summarize_target(target)
@@ -145,6 +158,7 @@ def run_plans(
     accounts: tuple[str, ...] = BOOK_ACCOUNTS,
     execution_date: date | None = None,
     now: datetime | None = None,
+    equity_basis: float | None = None,
 ) -> int:
     """Plan (and with ``submit`` submit) each of ``accounts``.  10-06 (C1006-ACCT): only quant1
     trades the v1.2 book; the submit cron passes ``--accounts quant1`` and quant2 keeps the
@@ -152,6 +166,9 @@ def run_plans(
     observed = now or datetime.now(UTC)
     today = observed.astimezone(NEW_YORK).date()
     execution = execution_date or today
+    if submit and execution > PAPER_AUTHORIZATION_END:
+        log.error("book submission authorization ended %s", PAPER_AUTHORIZATION_END)
+        return EXIT_SUBMIT_OFF
     completed = latest_completed_us_equity_session(observed)
     if us_equity_session_close(execution) is None:
         log.error("execution date %s is not a market session", execution)
@@ -187,6 +204,14 @@ def run_plans(
             log.error("no target file for %s on %s", account, decision)
             return EXIT_REFUSED
         target = load_target_file(path)
+        if equity_basis is not None and target.equity_basis != equity_basis:
+            log.error(
+                "target %s basis %s differs from requested %s",
+                path,
+                target.equity_basis,
+                equity_basis,
+            )
+            return EXIT_REFUSED
         if target.decision_date != decision or target.execution_date != execution:
             log.error(
                 "target %s dates do not match decision %s / execution %s", path, decision, execution
@@ -320,12 +345,23 @@ def main(argv: list[str] | None = None) -> int:
         default=",".join(BOOK_ACCOUNTS),
         help="--plan/--submit/--reconcile: comma separated book accounts (default: all)",
     )
+    ap.add_argument(
+        "--equity-basis",
+        type=float,
+        default=None,
+        help="explicit downward capital allocation; existing targets must match",
+    )
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
     ap.add_argument("--root", default=str(ROOT), help="project root (tests)")
     ap.add_argument("--lock-file", default=str(LOCK_FILE))
     ap.add_argument("--log-file", default=str(LOG_FILE))
     args = ap.parse_args(argv)
+    if args.equity_basis is not None:
+        try:
+            v12._equity_basis(args.equity_basis)
+        except v12.TargetRefused as exc:
+            ap.error(str(exc))
     accounts = tuple(a for a in args.accounts.split(",") if a)
     unknown = [a for a in accounts if a not in BOOK_ACCOUNTS]
     if not accounts or unknown:
@@ -345,7 +381,9 @@ def main(argv: list[str] | None = None) -> int:
         root = Path(args.root)
         if args.targets:
             data_root = Path(args.data_root) if args.data_root else LIVE_ROOT
-            return run_targets(root, data_root, decision, args.variant)
+            return run_targets(
+                root, data_root, decision, args.variant, equity_basis=args.equity_basis
+            )
         if args.reconcile:
             day = (
                 date.fromisoformat(args.execution_date)
@@ -360,6 +398,7 @@ def main(argv: list[str] | None = None) -> int:
             submit=args.submit,
             tif_mode=args.tif_mode,
             accounts=accounts,
+            equity_basis=args.equity_basis,
             execution_date=date.fromisoformat(args.execution_date) if args.execution_date else None,
         )
 

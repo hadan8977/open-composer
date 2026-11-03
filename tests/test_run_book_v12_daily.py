@@ -184,3 +184,58 @@ def test_early_close_and_holiday_completed_session():
     assert driver.latest_completed_us_equity_session(
         datetime(2026, 11, 26, 23, tzinfo=UTC)
     ) == date(2026, 11, 25)
+
+
+def test_normal_submit_rejects_expired_book_permission_before_any_lookup(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        driver, "latest_target_path", lambda *a: pytest.fail("expired target lookup")
+    )
+    monkeypatch.setattr(
+        driver.subprocess, "run", lambda *a, **k: pytest.fail("expired broker call")
+    )
+    result = driver.run_plans(
+        tmp_path,
+        None,
+        submit=True,
+        accounts=("quant1",),
+        now=datetime(2027, 1, 4, 18, tzinfo=UTC),
+    )
+    assert result == driver.EXIT_SUBMIT_OFF
+
+
+@pytest.mark.parametrize(
+    "submit,now",
+    [(True, datetime(2026, 12, 31, 18, tzinfo=UTC)), (False, datetime(2027, 1, 4, 18, tzinfo=UTC))],
+)
+def test_expiry_is_inclusive_and_does_not_disable_readonly_planning(
+    monkeypatch, tmp_path, submit, now
+):
+    # The missing target refuses this fixture, not the expiry gate. No subprocess.
+    monkeypatch.setattr(driver, "latest_target_path", lambda *a: None)
+    monkeypatch.setattr(driver.subprocess, "run", lambda *a, **k: pytest.fail("no target"))
+    assert (
+        driver.run_plans(tmp_path, None, submit=submit, accounts=("quant1",), now=now)
+        == driver.EXIT_REFUSED
+    )
+
+
+def test_capital_mismatch_refused_before_broker_call(monkeypatch, tmp_path):
+    monkeypatch.setattr(driver, "target_path", lambda *args: Path(__file__))
+    monkeypatch.setattr(
+        driver,
+        "load_target_file",
+        lambda *args: SimpleNamespace(
+            decision_date=date(2026, 10, 6),
+            execution_date=date(2026, 10, 7),
+            equity_basis=1000000.0,
+        ),
+    )
+    monkeypatch.setattr(
+        driver.subprocess, "run", lambda *a, **k: pytest.fail("mismatched broker call")
+    )
+    assert (
+        driver.run_plans(
+            tmp_path, date(2026, 10, 6), submit=False, accounts=("quant1",), equity_basis=300000.0
+        )
+        == driver.EXIT_REFUSED
+    )

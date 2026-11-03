@@ -335,3 +335,32 @@ def test_cli_targets_summary_exit_codes(tmp_path):
     )
     assert ok.exit_code == 0, ok.output
     assert "summary only" in ok.output and "quant1" in ok.output and "quant2" in ok.output
+
+
+def test_reduced_basis_preserves_fractional_exposure_before_whole_share_rounding():
+    close = np.array([50.0, 20.0])
+    base = v12._net_book(
+        "F1", np.array([4000.0, -10000.0]), 300.0, np.ones(2), close, 500.0, ("SGOV", 100.0)
+    )
+    small = v12._net_book(
+        "F1",
+        np.array([1200.0, -3000.0]),
+        90.0,
+        np.ones(2),
+        close,
+        500.0,
+        ("SGOV", 100.0),
+        equity_basis=300000.0,
+    )
+    assert small.long_frac == pytest.approx(base.long_frac)
+    assert small.short_frac == pytest.approx(base.short_frac)
+    assert small.stock_shares.tolist() == [1200, -3000]
+    assert small.tbill_shares == round_half_away(small.tbill_fraction * 300000.0 / 100.0)
+
+
+@pytest.mark.parametrize("basis", [0, -1, float("nan"), float("inf"), 1000001])
+def test_invalid_or_expanded_basis_refused_before_opening_data(basis):
+    with pytest.raises(v12.TargetRefused, match="equity basis"):
+        v12.build_v12_bundle(
+            "2026-11-02", variant="M0_U3000", data_root="/nonexistent", equity_basis=basis
+        )
