@@ -220,6 +220,7 @@ def load_adv_shares(year: int, symbols: set[str]) -> pd.DataFrame:
         return pd.DataFrame(columns=["symbol", "trade_date", "adv_shares_63"])
     frame = pd.read_parquet(path, columns=["symbol", "trade_date", "close", "dollar_adv_63"])
     frame = frame.loc[frame["symbol"].isin(symbols)]
+    frame["trade_date"] = pd.to_datetime(frame["trade_date"])
     close = frame["close"].where(frame["close"] > 0)
     frame["adv_shares_63"] = frame["dollar_adv_63"] / close
     return frame[["symbol", "trade_date", "adv_shares_63"]]
