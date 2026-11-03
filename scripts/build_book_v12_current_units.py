@@ -983,6 +983,78 @@ def release_successful_native_stage(view, name, day):
     return released
 
 
+def parquet_last_date(path, column):
+    """Read a scalar cutoff without retaining a historical feature frame."""
+    import pyarrow.compute as pc
+    import pyarrow.parquet as pq
+
+    values = [
+        pc.max(batch.column(0)).as_py()
+        for batch in pq.ParquetFile(path).iter_batches(
+            batch_size=8192, columns=[column], use_threads=False
+        )
+    ]
+    return max(value for value in values if value is not None)
+
+
+def compose_short_volume_prefix(old_path, built, dest, date_column):
+    """The original old + fresh[date > cutoff] expression, bounded by one batch.
+
+    Read back every written row group against its original input before atomic
+    publication. No feature calculation, source refresh or historical rewrite.
+    """
+    import pandas as pd
+    import pyarrow as pa
+    import pyarrow.compute as pc
+    import pyarrow.parquet as pq
+
+    before = {str(p): digest(p) for p in (old_path, built)}
+    old_file, fresh_file = pq.ParquetFile(old_path), pq.ParquetFile(built)
+    schema = old_file.schema_arrow
+    if not schema.equals(fresh_file.schema_arrow, check_metadata=False):
+        raise ValueError("short-volume native feature schema changed; retain inputs")
+    cut = parquet_last_date(old_path, date_column)
+    temporary = dest.with_suffix(".composed.tmp")
+    if temporary.exists():
+        raise ValueError("prior short-volume composition retained; reconcile before reuse")
+
+    def chunks():
+        for batch in old_file.iter_batches(batch_size=8192, use_threads=False):
+            yield pa.Table.from_batches([batch]), "old"
+        for batch in fresh_file.iter_batches(batch_size=8192, use_threads=False):
+            table = pa.Table.from_batches([batch])
+            table = table.filter(pc.greater(table[date_column], pa.scalar(cut)))
+            if table.num_rows:
+                yield table, "tail"
+
+    rows = {"old": 0, "tail": 0}
+    with pq.ParquetWriter(temporary, schema, compression="snappy") as writer:
+        for table, kind in chunks():
+            writer.write_table(table, row_group_size=8192)
+            rows[kind] += table.num_rows
+    received = pq.ParquetFile(temporary)
+    groups = 0
+    for group, (expected, _) in enumerate(chunks()):
+        actual = received.read_row_group(group, use_threads=False)
+        pd.testing.assert_frame_equal(
+            expected.to_pandas().reset_index(drop=True),
+            actual.to_pandas().reset_index(drop=True),
+            check_exact=True,
+        )
+        groups += 1
+    if received.num_row_groups != groups or received.metadata.num_rows != sum(rows.values()):
+        raise ValueError("short-volume composition row count differs")
+    if before != {str(p): digest(p) for p in (old_path, built)}:
+        raise ValueError("short-volume input changed during composition")
+    os.replace(temporary, dest)
+    return {
+        "input_sha256": before, "old_rows": rows["old"], "new_rows": rows["tail"],
+        "old_facts_frozen_through": str(cut), "row_groups_verified_exactly": groups,
+        "batch_rows": 8192, "all_rows_read_back": True,
+        "expression": "old + fresh.loc[fresh[date_column] > old[date_column].max(), old.columns]",
+    }
+
+
 def dependencies(view, source, name, day):
     """Normal provider refreshes and original feature builders, in private outputs."""
     import pandas as pd
@@ -1061,7 +1133,10 @@ def dependencies(view, source, name, day):
     old_path = source / "data/features" / table.output.format(year=day.year)
     cut = None
     old = None
-    if old_path.exists() and name not in ("sec_fundamentals_facts", "nsi"):
+    stream_old = old_path.exists() and name == "short_volume_broad"
+    if stream_old:
+        cut = pd.Timestamp(parquet_last_date(old_path, table.date_col))
+    elif old_path.exists() and name not in ("sec_fundamentals_facts", "nsi"):
         old = pd.read_parquet(old_path)
         cut = pd.to_datetime(old[table.date_col]).max()
     values = {
@@ -1120,7 +1195,11 @@ def dependencies(view, source, name, day):
     )
     if not built.exists():
         raise ValueError(f"original builder emitted no {name} output")
-    if old is not None:
+    streaming_composition = None
+    if stream_old:
+        dest = view / "data/features" / table.output.format(year=day.year)
+        streaming_composition = compose_short_volume_prefix(old_path, built, dest, table.date_col)
+    elif old is not None:
         fresh = pd.read_parquet(built)
         price_repair = []
         if name == "short_interest":
@@ -1188,6 +1267,7 @@ def dependencies(view, source, name, day):
         "old_facts_frozen_through": str(cut) if cut is not None else None,
         "private_writable_paths": detached,
         "native_prior_year_copies": prior_outputs,
+        "streaming_prefix_composition": streaming_composition,
         "nsi_note": "price-derived NSI is recomputed from the coherent current source"
         if name == "nsi"
         else None,
