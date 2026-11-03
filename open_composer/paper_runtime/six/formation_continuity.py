@@ -246,6 +246,10 @@ def source_contract(reference_day, application_day, origin_row=None):
     if application_day[:7] == "2026-10":
         # Original BASE bridge is anchored at Oct19, not at the preceding daily packet.
         raw_start = min(raw_start, "2026-10-19")
+    elif application_day[:7] == "2026-11":
+        # Current BASE daily eligibility continues from the received October
+        # monthly prefix, not from the old September seed or just two last days.
+        raw_start = min(raw_start, "2026-10-30")
     if due and p["latest"][:7] == "2026-10":
         raw_start = "2026-09-30"
     return dict(
@@ -287,10 +291,18 @@ def request_menu(plan, contract):
 
 
 def monthly_base_supported(application_day):
-    require(
-        application_day[:7] == "2026-10",
-        "BASE requires a genuinely received November monthly design/model; October scores cannot be held forever",
-    )
+    if application_day[:7] == "2026-10":
+        return None
+    from open_composer.paper_runtime.six.monthly_base_model import receive_current_model
+
+    try:
+        forecast_binding, _ = receive_current_model(root=REPO, application_day=application_day)
+        return forecast_binding
+    except (AssertionError, KeyError, ValueError, FileNotFoundError) as error:
+        raise FormationDependency(
+            "BASE requires a genuinely received November monthly design/model; "
+            "October scores cannot be held forever: " + str(error)
+        ) from error
 
 
 def states(previous):

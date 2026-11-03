@@ -273,11 +273,21 @@ def prepare_core(root, source, obj, control, previous, normalized, raw, marks, b
     b = None
     h = None
     oldbase = load(T / "inference/BASE/output.json")
+    base_symbols = oldbase["symbols"]
     try:
-        monthly_base_supported(app)
-        current = dated(ni.base_input, prev, ref, app, namespace={"data": proxy})(
-            control, {}, {"raw-bars": base_pages, "actions": obj["core", "actions"]}, previous
-        )
+        monthly_forecast = monthly_base_supported(app)
+        if monthly_forecast is None:
+            current = dated(ni.base_input, prev, ref, app, namespace={"data": proxy})(
+                control, {}, {"raw-bars": base_pages, "actions": obj["core", "actions"]}, previous
+            )
+        else:
+            from open_composer.paper_runtime.six.monthly_base_model import daily_controls
+
+            current = daily_controls(
+                monthly_forecast, root=REPO, reference_day=ref, control=control,
+                raw_objects=obj["core", "raw-bars"],
+                action_objects=obj["core", "actions"],
+            )
         current = clean(current)
         current.update(reference_day=ref, application_day=app)
         current["current_daily_eligible"] = [
@@ -290,26 +300,82 @@ def prepare_core(root, source, obj, control, previous, normalized, raw, marks, b
                 current["formation_eligible"], current["current_daily_eligible"], strict=True
             )
         ]
-        base = dated(data.BASE_adoption, prev, ref, app, adoption=True)(
-            previous["BASE"][0], oldbase, current
-        )
+        if monthly_forecast is None:
+            base = dated(data.BASE_adoption, prev, ref, app, adoption=True)(
+                previous["BASE"][0], oldbase, current
+            )
+            origin = dict(
+                held_model_origin=bind(T / "inference/BASE/output.json"),
+                held_signal_observation="2026-10-19",
+                held_signal_application="2026-10-20",
+                original_computed_at=oldbase["computed_completed_at"],
+            )
+        else:
+            from open_composer.paper_runtime.six.monthly_base_model import current_instruction
+
+            instruction = current_instruction(
+                monthly_forecast,
+                root=REPO,
+                application_day=app,
+                current_daily_eligible=current["current_daily_eligible"],
+            )
+            assert instruction["symbols"] == current["symbols"]
+            base_symbols = instruction["symbols"]
+            base = dict(allocation=dict(weights=instruction["weights"]))
+            # The held monthly design lives in the newly sealed packet. Retain
+            # only current daily controls here, never relabel the old design.
+            current = dict(
+                reference_day=ref,
+                application_day=app,
+                source=bind(root / "current-source.json"),
+                symbols=base_symbols,
+                monthly_forecast=monthly_forecast,
+                formation_eligible=[
+                    bool(v)
+                    for v in load(checked(monthly_forecast))["eligible"]
+                ],
+                current_daily_eligible=current["current_daily_eligible"],
+                eligible=instruction["eligible"],
+                raw_reference_marks=current["raw_reference_marks"],
+                current_actions=current["current_actions"],
+            )
+            origin = {
+                key: instruction[key]
+                for key in [
+                    "held_model_origin", "held_signal_observation",
+                    "held_signal_application", "original_computed_at",
+                    "owner_date_exception", "new_fit_count",
+                    "is_fresh_prediction", "historical_timely_source_claim",
+                ]
+            }
+            prior_base = load(runtime_root(REPO) / "targets/BASE.json")
+            origin["new_monthly_model_adoption"] = (
+                prior_base.get("held_model_origin") != monthly_forecast
+            )
+            if origin["new_monthly_model_adoption"]:
+                # A genuine monthly event still rebalances when its roster and
+                # weights match the previous month; daily repeats then hold.
+                origin["portfolio_action"] = "rebalance"
         save(root / "current-base-input.json", current)
+        if monthly_forecast is not None:
+            origin["monthly_current_input"] = bind(root / "current-base-input.json")
         b = target(
             root,
             "BASE",
-            oldbase["symbols"],
+            base_symbols,
             base["allocation"]["weights"],
             marks,
             source,
             ref,
             app,
-            held_model_origin=bind(T / "inference/BASE/output.json"),
-            held_signal_observation="2026-10-19",
-            held_signal_application="2026-10-20",
-            original_computed_at=oldbase["computed_completed_at"],
-            allocation_intent="complete_unfulfilled_initial_allocation_only_after_operating_prefix_acceptance",
+            **origin,
+            allocation_intent=(
+                "original_monthly_BASE_with_current_daily_eligibility"
+                if monthly_forecast is not None
+                else "complete_unfulfilled_initial_allocation_only_after_operating_prefix_acceptance"
+            ),
         )
-    except (FormationDependency, AssertionError, KeyError, FileNotFoundError) as error:
+    except (ValueError, AssertionError, KeyError, FileNotFoundError) as error:
         blocked["BASE"] = "BASE current method/input dependency: " + str(error)
     try:
         hcurrent = ni.h5_input(control, previous)
@@ -353,10 +419,15 @@ def prepare_core(root, source, obj, control, previous, normalized, raw, marks, b
     except FormationDependency as error:
         blocked["H5"] = str(error)
     if b is not None and h is not None:
+        monthly_event = (
+            dict(portfolio_action="rebalance", new_monthly_model_adoption=True)
+            if b.get("new_monthly_model_adoption")
+            else {}
+        )
         target(
             root,
             "BASE_STATE_BUDGET",
-            oldbase["symbols"],
+            base_symbols,
             [w * h["K"] / 5 for w in base["allocation"]["weights"]],
             marks,
             source,
@@ -370,6 +441,7 @@ def prepare_core(root, source, obj, control, previous, normalized, raw, marks, b
             ),
             cash_cause="causal_H5_K_scaling_of_current_BASE",
             allocation_intent="complete_unfulfilled_initial_allocation_only_after_operating_prefix_acceptance",
+            **monthly_event,
         )
     else:
         blocked["BASE_STATE_BUDGET"] = (

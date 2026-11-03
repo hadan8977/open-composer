@@ -335,7 +335,11 @@ def receive_packet(output, *, now):
         # Existing pure target/whole-six-cent receiver; no service construction or tick.
         SixPaperService.target_books(None, policy, target, now)
         if policy in {"BASE", "BASE_STATE_BUDGET"}:
-            monthly_base_supported(source["application_day"])
+            monthly_forecast = monthly_base_supported(source["application_day"])
+            if policy == "BASE" and monthly_forecast is not None:
+                from open_composer.paper_runtime.six.monthly_base_model import receive_target
+
+                receive_target(output, target, root=REPO, now=now)
         if policy == "H5":
             receive_h5_instruction(output, target)
         if policy in {"MULTI_EQUAL", "MULTI_HIERARCHICAL"}:
@@ -344,7 +348,11 @@ def receive_packet(output, *, now):
                 if isinstance(target["children"], list)
                 else target["children"]
             )
-            monthly_base_supported(source["application_day"])
+            monthly_forecast = monthly_base_supported(source["application_day"])
+            if monthly_forecast is not None:
+                from open_composer.paper_runtime.six.monthly_base_model import receive_target
+
+                receive_target(output, _children["BASE"], root=REPO, now=now)
         received[policy] = path.read_bytes()
         targets[policy] = target
     receive_current_dependencies(targets, result["targets"])
