@@ -2,6 +2,10 @@
 
 Goal: deep, profitable research; more costed results/token/day, less supervision.
 Pure Codex first; Claude later. A/B needs owner instruction.
+Priorities: short-term/Martin strategies, useful factor combinations, trained
+models, causal regimes/dynamic allocation and regime-conditioned exits.
+Astra makes important decisions; Sol high executes/reviews. Before choosing next
+work, read current priorities in docs/research-mission.zh.md.
 
 Owner instructions prevail. Restructure from Claude's report and
 docs/handoff-2026-10-28-restructure.md. Old Codex plans/claims are not authority.

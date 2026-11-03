@@ -2,6 +2,18 @@
 
 The objective is meaningful whole-account net profit, measured over rolling12 months including idle cash and all trading costs. The owner seeks annual returns in the high double digits to100% or more and portfolio Sharpe above2. These are research goals, not achieved performance, a promise or permission to add leverage.
 
+## Current priorities (2026-11-03)
+
+Prioritize effective short-term/Martin strategies, economically useful factor combinations, trained models, causal market-regime identification and dynamic allocation, including regime-conditioned profit taking and stop losses. Keep research quality and native evidence gates; reduce tests and handoffs to affected needs. Astra makes important decisions and chooses directions; Sol high owns execution and review through the installed workflow.
+
+The current economic order is:
+
+1. Preserve the existing Martin funded-continuation question and its running jobs.
+2. Complete the already-dispatched `momentum_benchmark_attribution_20261103` finite risk-matched reception. This receives existing accounts and decides whether the price factor merits later regime/allocation research; it creates no new strategy.
+3. For the next Martin question, propose freezing entry rules and comparing regime-conditioned holding, reduction and exit. Do not repeat the completed removal of the 20-day limit, fixed staged exits or mechanical EMA studies. Freeze and review the new scope before dependent computation.
+
+This ordering preserves current study definitions, funding, source rights, seen/frozen samples and trial exposure; it does not restart jobs or change paper authority.
+
 ## Investment preferences
 
 - Research US-tradable instruments within actual account/data authority: stocks and ETFs, including commodity ETFs; eligible long/short, options and other previously authorized instruments. Do not default to ETFs, long-only or low frequency.
