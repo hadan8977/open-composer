@@ -86,15 +86,18 @@ these requirements after seeing returns.
 
 Compute cross-sectional percentile ranks on the identical covered recipient set
 at each decision. Equal values use average ranks; final selection ties use symbol.
-All signals have the published continuation sign. Six roles:
+All signals have the published continuation sign. Seven fixed roles (affected
+review correction on 2026-11-03, before any dependent economic accounts):
 
 1. E: mean reaction excess return of the eligible peer events above.
 2. P: equally weighted five-session excess return of all eligible same-industry
    peers excluding the recipient, whether or not they had an earnings event.
 3. M: the recipient's standard 252-to-21-session own momentum.
 4. ME: equal average of E and M percentile ranks.
-5. L: decision-time ADV ranking on exactly the same recipient set.
-6. MX: M combined equally with a deterministic permutation of E. Sort present
+5. MP: equal average of P and M percentile ranks, using exactly the same coverage,
+   ranks, ties, slots, weights, clocks and funding as ME; this is the joint price control.
+6. L: decision-time ADV ranking on exactly the same recipient set.
+7. MX: M combined equally with a deterministic permutation of E. Sort present
    FF48 group codes and rotate their E values by one group at each decision;
    preserve the recipient set and missing mask. One group means the placebo is
    uninformative, reported as such. No seed or permutation selection.
@@ -110,8 +113,8 @@ does not establish a zero event effect. Report the cash/coverage contribution.
 Each role chooses up to 20 highest-ranked recipients, each at fixed 1/20 target
 weight; absent slots remain cash. Evaluate two fixed non-overlapping rebalance
 clocks, every 5 and every 20 exchange sessions starting at the 2024-01-05 close.
-Hold targets between decisions; do not select an offset. These are 12 allocation
-policies, not 12 independent hypotheses. Add independently funded SPY buy/hold
+Hold targets between decisions; do not select an offset. These are 14 allocation
+policies, not 14 independent hypotheses. Add independently funded SPY buy/hold
 and idle-cash accounts as opportunity-cost references, shared across clocks.
 
 Each policy and each cost setting starts with $20,000 and at most 1x long gross.
@@ -130,32 +133,33 @@ bisections, no negative cash or cost waiver. Default production code is untouche
 
 ## Comparisons and stopping
 
-Primary within each clock/cost: ME-M, E-P, E-L and ME-MX. Report every arm,
+Primary within each clock/cost: ME-MP, ME-M, E-P, E-L and ME-MX.
+ME-MP is the decisive event-information increment beyond the joint price control. Report every arm,
 1x/2x full-window and trailing-250-session net dollars, actual fees, turnover,
 cash, beta, drawdown, recovery, concentration, issuer/industry/year contributions,
 missing marks, entitlement bridges and order/ADV. Trailing dollars follow the
 same wealth path without recapitalization. Attribute any gross/cost difference
 as accounting, not causal alpha. Also report absolute SPY/cash opportunity costs.
 
-For ME-M only, use the existing independently funded cash-mixture volatility
+For ME-M and ME-MP, use the existing independently funded cash-mixture volatility
 matching method, scale down only, smallest feasible root, tolerance 1e-6 annual
 volatility. Freeze brackets before inspecting results; respect the target filter's
 scale discontinuity at 0.1. No root is unmatched, not an interpolated profit.
-These at most four pair matches are descriptive ex-post controls, not tradable
+These at most eight pair matches are descriptive ex-post controls, not tradable
 risk forecasts or another candidate search.
 
 Use one common 63-session circular bootstrap index matrix, 1,999 draws,
 seed 20261103. Center paired daily returns and use simultaneous maxT 95%
-intervals across all eight primary clock/contrast pairs per cost. Keep 1x/2x
+intervals across all ten primary clock/contrast pairs per cost. Keep 1x/2x
 dependent, intervals on mean daily rates, and the limited independent blocks
 visible. HAC5 is diagnostic. DSR/PBO stay N/A absent a defensible complete
 historical candidate distribution and actual selection experiment.
 
 The 20-50 distinct-variant direction reference is not a requirement to pad this
-finite information comparison. Twelve fixed role/clock policies cover the
+finite information comparison. Fourteen fixed role/clock policies cover the
 declared information controls and short/monthly transmission horizons; adding
 thresholds, name counts or seeds would change the question. Reconcile broader
-prior starts and register all twelve conservatively before evaluation; count
+prior starts and register all fourteen conservatively before evaluation; count
 benchmarks, cost sensitivities, root probes and failed accounts separately.
 Stop this task when all valid accounts and comparisons are received, or preserve
 an exact input checkpoint if a valid comparison is impossible. Weak results stop
