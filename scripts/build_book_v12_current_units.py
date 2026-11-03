@@ -929,6 +929,13 @@ def load_native(view, script):
     if script == "build_sec_xbrl_fundamentals":
         cache_root = Path(os.environ.get("OC_BOOK_SOURCE_CACHE_ROOT", str(ROOT)))
         module.ZIP_PATH = cache_root / "data/raw/sec_xbrl/companyfacts.zip"
+    if script == "collect_alpaca_news_packets":
+        # Imported functions resolve paths in their defining module, not in
+        # the CLI module whose Path globals were rebound above.
+        from open_composer.research.news import collector
+
+        collector.NEWS_PACKETS_ROOT = view / "data/features/news_packets"
+        collector.DAILY_ROOT = collector.NEWS_PACKETS_ROOT / "_daily"
     return module
 
 
