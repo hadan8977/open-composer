@@ -14,11 +14,10 @@ from the local SIP archives only (no network, no broker, nothing under ``data/``
   most recent earlier bar that ended within 10 minutes of 15:45 (labels 15:34-15:43), recorded in
   ``snapshot_fallback``; names with no such bar are in ``missing_snapshot``.
 
-Price basis: the archive is fetched with ``adjustment="all"`` (split and dividend adjusted history).
-On the evening of D no corporate action effective after D exists yet, so the adjusted close of D
-equals the raw print of D.  A later restatement of a symbol (``data/sip/daily/_restatements.jsonl``,
-``detected_at`` after D) means that symbol's D prices are no longer the raw print; such symbols are
-listed in ``restated_after_execution_date``.
+Price basis: the ordinary archive uses ``adjustment="all"`` and may already reflect actions
+effective after D. A dedicated physical-price source declares ``adjustment="raw"`` and binds
+the actual read files in an execution-date receipt. Later archive restatements are listed in
+``restated_after_execution_date``; that flag alone does not establish physical share units.
 
 Symbols: the union of target weights / core and hedge symbols and of plan orders and post-trade
 quantities (the plan file does not store pre-trade positions; fully sold names are in its orders).
@@ -30,6 +29,7 @@ symbols / unreadable inputs.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from collections.abc import Iterable, Sequence
@@ -53,9 +53,8 @@ SCHEMA_VERSION = 1
 SIP_ROOT = ROOT / "data/sip"
 EXIT_OK, EXIT_NOT_FRESH, EXIT_INPUTS = 0, 2, 3
 PRICE_BASIS = (
-    "alpaca sip adjustment=all (split+dividend adjusted history); built on the evening of the "
-    "execution date, so the adjusted close equals the raw print of that day unless the symbol is "
-    "listed in restated_after_execution_date"
+    "alpaca sip adjustment=all (split/dividend/spin-off adjusted history); "
+    "future-effective actions can already affect execution-date historical prices"
 )
 BAR_COLUMNS = ["symbol", "timestamp", "close"]
 
@@ -310,6 +309,34 @@ def utc_now_text(now: datetime | None = None) -> str:
     return (now or datetime.now(UTC)).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def source_price_basis(sip_root: Path, day: date, used_files: Sequence[str]) -> str:
+    """Label the dedicated raw source only after its actual files match the receipt."""
+    marker = Path(sip_root) / "price-basis.json"
+    if not marker.exists():
+        return PRICE_BASIS
+    declared = json.loads(marker.read_text())
+    if declared != {"schema_version": 1, "feed": "sip", "adjustment": "raw"}:
+        raise InputsError("unknown declared reconciliation price basis")
+    receipt_path = Path(sip_root) / "receipts" / f"{day}.json"
+    if not receipt_path.exists():
+        raise InputsError("raw execution-date source receipt is missing")
+    receipt = json.loads(receipt_path.read_text())
+    if (receipt.get("feed"), receipt.get("adjustment"), receipt.get("execution_date")) != (
+        "sip",
+        "raw",
+        str(day),
+    ):
+        raise InputsError("raw source receipt has a different date/feed/adjustment")
+    expected = {str(Path(sip_root) / r["path"]): r["sha256"] for r in receipt["outputs"]}
+    for filename in used_files:
+        path = Path(filename)
+        with path.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if expected.get(str(path)) != actual:
+            raise InputsError("raw execution-date source file changed or was not received")
+    return f"alpaca sip adjustment=raw; physical execution-day prices; receipt={receipt_path}"
+
+
 def build_prices(
     execution_date: date,
     symbols: Sequence[str],
@@ -336,7 +363,7 @@ def build_prices(
         "schema_version": SCHEMA_VERSION,
         "execution_date": execution_date.isoformat(),
         "built_at_utc": utc_now_text(now),
-        "price_basis": PRICE_BASIS,
+        "price_basis": source_price_basis(sip_root, execution_date, [*daily_files, *minute_files]),
         "snapshot_at_utc": snapshot_time_utc(execution_date).isoformat(),
         "snapshot_rule": (
             "close of the minute bar ending 15 minutes before the exchange close; "

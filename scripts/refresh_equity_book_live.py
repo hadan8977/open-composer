@@ -1158,11 +1158,11 @@ def run_monthly_table(table: Table, day: date, steps: Sequence[Step], runner: Ru
     root = (FEATURES / table.output).parent
     parts = sorted(root.glob("[0-9][0-9][0-9][0-9].parquet"))
     old_last = max((max(_dates_of(p, table.date_col)) for p in parts), default=None)
-    sessions: list[date] = []
-    for y in range((old_last or day).year, day.year + 1):
-        daily = FEATURES / f"daily_broad/{y}.parquet"
-        if daily.exists():
-            sessions += _dates_of(daily, "trade_date")
+    from open_composer.market_sessions import us_equity_session_dates
+
+    # The price partitions are refreshed after the monthly pool. Their old
+    # maximum date must not hide a month already closed by the explicit run day.
+    sessions = us_equity_session_dates(date((old_last or day).year, 1, 1), day)
     ends = new_month_ends(old_last, sessions)
     if not ends:
         log.info("%s: no new month end after %s: skipped", table.name, old_last)
@@ -1189,6 +1189,15 @@ def run_monthly_table(table: Table, day: date, steps: Sequence[Step], runner: Ru
             log.error("%s: builder wrote no %s partition", table.name, y)
             return EXIT_COMMAND
         staged = pl.read_parquet(built)
+        expected = {end for end in ends if end.year == y}
+        present = set(staged["month_end"].cast(pl.Date).drop_nulls().to_list())
+        if not expected <= present:
+            log.error(
+                "%s: source builder omitted completed month ends %s; nothing swapped",
+                table.name,
+                sorted(expected - present),
+            )
+            return EXIT_COMMAND
         old = pl.read_parquet(backups[y]) if y in backups else staged.head(0)
         out_dir = stage / "composed"
         out_dir.mkdir(exist_ok=True)

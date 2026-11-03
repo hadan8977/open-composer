@@ -291,7 +291,7 @@ def _monthly_setup(tmp_path: Path, monkeypatch) -> rf.Table:
     (feat / "universe").mkdir(parents=True)
     (feat / "daily_broad").mkdir(parents=True)
     _universe_frame(["2026-08-31"], ["A", "B"], 1.0).to_parquet(feat / "universe/2026.parquet")
-    dates = ["2026-08-31", "2026-09-30", "2026-10-01", "2026-10-02"]
+    dates = ["2026-08-31"]  # stale price table must not hide September's closed month
     pd.DataFrame({"trade_date": pd.to_datetime(dates), "symbol": "A"}).to_parquet(
         feat / "daily_broad/2026.parquet"
     )
@@ -667,3 +667,21 @@ def test_price_level_columns_use_two_zones_and_leave_restated_symbols_out(
     assert plain[plain.index("--cut") + 1] == "2026-10-02"
     assert "--exclude-symbols" not in plain
     assert [t.name for t in rf.UPSTREAM if t.values_follow] == ["short_interest"]
+
+
+def test_monthly_table_refuses_missing_expected_month_before_swap(tmp_path, monkeypatch):
+    table = _monthly_setup(tmp_path, monkeypatch)
+    out = rf.FEATURES / "universe/2026.parquet"
+    _universe_frame(["2026-09-30"], ["A", "B"], 1.0).to_parquet(out)
+    before = out.read_bytes()
+
+    def runner(argv, **kwargs):
+        stage = rf.STAGE_ROOT / "universe"
+        _universe_frame(["2026-09-30"], ["A", "B"], 9.0).to_parquet(stage / "2026.parquet")
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    steps = [
+        s for s in rf.build_plan(date(2026, 11, 2), tables=[table], stages=[]) if s.kind == "run"
+    ]
+    assert rf.run_upstream_table(table, date(2026, 11, 2), steps, runner) == rf.EXIT_COMMAND
+    assert out.read_bytes() == before

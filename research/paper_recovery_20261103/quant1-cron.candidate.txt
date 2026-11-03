@@ -1,0 +1,17 @@
+# Review candidate only; no row installed. Replace the corresponding paused rows once accepted.
+# Original quant1 scope, $300k allocation, original 2026-12-31 expiry. No extra scheduler.
+# Both original overnight slots move onto UTC execution day E. The code checks
+# E == next_session(latest_completed_session), including Monday after Friday.
+# Existing MAIN interpreter; original refresh lock and run_capped admission.
+# 00:30 receives raw sources only; 06:30 seals the target after NY after-hours ends.
+# Keep quant1 WT source+pending and all referenced context/evidence through 2026-12-31,
+# and while any live pointer/cron still references them. Production code is MAIN.
+30 0 * * 1-5 cd /root/codex-test/open-composer && nice -n 5 scripts/run_capped.sh --class research --mem 900M --wait-min 30 -- .venv/bin/python scripts/refresh_book_v12_current_units.py --prepare-only --source-root /root/codex-test/oc-paper-recovery-20261103 --equity-basis 300000 >> logs/refresh_equity_book_live.cron.log 2>&1
+30 6 * * 1-5 cd /root/codex-test/open-composer && nice -n 5 scripts/run_capped.sh --class research --mem 900M --wait-min 30 -- .venv/bin/python scripts/refresh_book_v12_current_units.py --source-root /root/codex-test/oc-paper-recovery-20261103 --equity-basis 300000 >> logs/refresh_equity_book_live.cron.log 2>&1
+30 15,16,18,19 * * 1-5 cd /root/codex-test/open-composer && .venv/bin/python scripts/book_v12_cron_clock.py plan && .venv/bin/python scripts/refresh_book_v12_current_units.py --check-ready --equity-basis 300000 && .venv/bin/python scripts/run_book_v12_daily.py --plan --accounts quant1 --equity-basis 300000 >> logs/book_v12_daily.cron.log 2>&1
+20 16,17,19,20 * * 1-5 cd /root/codex-test/open-composer && .venv/bin/python scripts/book_v12_cron_clock.py submit && .venv/bin/python scripts/refresh_book_v12_current_units.py --check-ready --equity-basis 300000 && OC_BOOK_V12_SUBMIT=1 .venv/bin/python scripts/run_book_v12_daily.py --submit --accounts quant1 --tif-mode market --equity-basis 300000 >> logs/book_v12_daily.cron.log 2>&1
+38 16,17,19,20 * * 1-5 cd /root/codex-test/open-composer && .venv/bin/python scripts/book_v12_cron_clock.py retry && .venv/bin/python scripts/refresh_book_v12_current_units.py --check-ready --equity-basis 300000 && [ ! -f "reports/paper/book/quant1/orders/$(TZ=America/New_York date +\%F).json" ] && flock -n logs/book_v12_daily.lock true && OC_BOOK_V12_SUBMIT=1 .venv/bin/python scripts/run_book_v12_daily.py --submit --accounts quant1 --tif-mode market --equity-basis 300000 >> logs/book_v12_daily.cron.log 2>&1
+0 22 * * 1-5 cd /root/codex-test/open-composer && nice -n 5 scripts/run_capped.sh --class research --mem 900M --wait-min 30 -- .venv/bin/python scripts/collect_book_v12_close_inputs.py --source-root /root/codex-test/oc-paper-recovery-20261103 --update-daily --equity-basis 300000 >> logs/update_sip_archive.cron.log 2>&1
+40 22 * * 1-5 cd /root/codex-test/open-composer && .venv/bin/python scripts/run_book_v12_daily.py --reconcile --accounts quant1 --sip-root /root/codex-test/oc-paper-recovery-20261103/data/sip_reconcile --equity-basis 300000 >> logs/book_v12_daily.cron.log 2>&1
+30 23 * * 1-5 cd /root/codex-test/open-composer && .venv/bin/python scripts/run_book_v12_daily.py --reconcile --accounts quant1 --sip-root /root/codex-test/oc-paper-recovery-20261103/data/sip_reconcile --equity-basis 300000 >> logs/book_v12_daily.cron.log 2>&1
+# Never activate while source/data units, space, current target or current plan are rejected.
