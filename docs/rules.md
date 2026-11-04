@@ -28,8 +28,11 @@ source authorizations prevail. Research pauses preserve separately allowed paper
 
 Use config/memory-budget.json and capped execution; reserve 500 MiB. Hadan uses
 Paseo only: fresh ready/usage_ok, C:\paseo, <50 GiB; respect pause/hard-off, no wake.
-Modal uses the existing $25/month free-credit ceiling and scripts/modal_budget.py
-check with actual CPU/RAM/GPU/timeout matching launch; retain unknown/failed costs.
+Use Modal by default when it can shorten compute-bound research. Within the
+existing $25/month free-credit ceiling, execute directly through the automatic
+scripts/modal_budget.py check with actual CPU/RAM/GPU/timeout matching launch.
+No extra per-job Lead approval, smaller discretionary cap or settlement gate;
+retain unknown/failed costs in the normal ledger without delaying useful work.
 New paid data/provider/budget needs owner authority. DS stays parked. Protect
 credentials, gdrive:vps-backup and rclone.conf; disk cleanup is separately scoped.
 
