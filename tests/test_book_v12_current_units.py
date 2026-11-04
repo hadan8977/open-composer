@@ -12,6 +12,27 @@ from scripts import build_book_v12_current_units as units
 from scripts import refresh_book_v12_current_units as refresh
 
 
+@pytest.mark.parametrize("same_inode", [True, False])
+def test_raw_reader_exchange_preserves_prior_attempt_and_cleans_own_same_inode_link(tmp_path, same_inode):
+    source = tmp_path / "new/shard-0000.parquet"
+    target = tmp_path / "view/shard-0000.parquet"
+    source.parent.mkdir()
+    target.parent.mkdir()
+    source.write_bytes(b"new received bytes")
+    if same_inode:
+        target.hardlink_to(source)
+    else:
+        target.write_bytes(b"old reader bytes")
+    retained = target.with_suffix(".source-next")
+    retained.hardlink_to(target)
+    before = (retained.stat().st_ino, retained.read_bytes())
+    units.replace_reader_link(source, target)
+    units.replace_reader_link(source, target)
+    assert source.samefile(target)
+    assert (retained.stat().st_ino, retained.read_bytes()) == before
+    assert not list(target.parent.glob(".source-next-*"))
+
+
 @pytest.mark.parametrize(
     "stamp,decision,execution",
     [

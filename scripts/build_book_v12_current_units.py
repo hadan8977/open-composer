@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -1856,6 +1857,39 @@ def native_partition_files(root, years, names):
     return [str(p) for p in dict.fromkeys(paths)]
 
 
+def replace_reader_link(source, target):
+    """Atomically replace a reader without colliding with prior attempt links.
+
+    rename(source, target) is a no-op when both names share an inode. A private
+    temporary directory removes its leftover link after that no-op as well.
+    Existing failed-attempt paths are never reused or removed here.
+    """
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".source-next-", dir=target.parent) as work:
+        temporary = Path(work) / target.name
+        os.link(source, temporary)
+        os.replace(temporary, target)
+
+
+def publish_incremental_daily_sources(view, new_source, results):
+    """Receive completed projections, then publish the actual raw reader links."""
+    old_meta = json.loads((view / "current-units-source.json").read_text())
+    new_meta = json.loads((new_source / "current-units-source.json").read_text())
+    old_paths = {item["path"] for item in old_meta["source_bindings"]}
+    new_paths = {item["path"] for item in new_meta["source_bindings"]}
+    for item in new_meta["source_bindings"]:
+        replace_reader_link(new_source / item["path"], view / item["path"])
+    for relative in old_paths - new_paths:
+        (view / relative).unlink()
+    (view / "current-units-source.json").write_bytes(
+        (new_source / "current-units-source.json").read_bytes()
+    )
+    (view / "current-units-known-actions-repair.json").write_bytes(
+        (new_source / "current-units-known-actions-repair.json").read_bytes()
+    )
+    (view / "current-units-incremental.json").write_text(json.dumps(results, indent=2) + "\n")
+
+
 def incremental_daily(view, new_source, declared, old_declared, day, *, resource_config=None):
     """Reuse complete years; update only actual changed names under native formulas."""
     import duckdb
@@ -2047,21 +2081,7 @@ def incremental_daily(view, new_source, declared, old_declared, day, *, resource
         )
     # Only now exchange the actual raw reader inodes. Existing source snapshots
     # and the first recovery's raw-before2025/accepted context remain untouched.
-    for item in new_meta["source_bindings"]:
-        target = view / item["path"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        tmp = target.with_suffix(".source-next")
-        os.link(new_source / item["path"], tmp)
-        os.replace(tmp, target)
-    for relative in set(old_map) - set(new_map):
-        (view / relative).unlink()
-    (view / "current-units-source.json").write_bytes(
-        (new_source / "current-units-source.json").read_bytes()
-    )
-    (view / "current-units-known-actions-repair.json").write_bytes(
-        (new_source / "current-units-known-actions-repair.json").read_bytes()
-    )
-    (view / "current-units-incremental.json").write_text(json.dumps(results, indent=2) + "\n")
+    publish_incremental_daily_sources(view, new_source, results)
     return results
 
 
