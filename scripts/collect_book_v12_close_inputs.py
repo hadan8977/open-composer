@@ -14,7 +14,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from open_composer.market_sessions import us_equity_session_close  # noqa: E402
 from scripts import build_book_prices_file as prices  # noqa: E402
+from scripts.fetch_sip_universe import _sip_safe_end  # noqa: E402
 
 
 def digest(path):
@@ -34,6 +35,30 @@ def source_windows(day):
     start, end = prices.ny_day_bounds_utc(day)
     cut = prices.snapshot_time_utc(day)
     return {"daily": (start, end), "minute": (cut - timedelta(minutes=11), cut)}
+
+
+def request_windows(day):
+    """Keep the original bars, bounding the daily request by existing SIP rights."""
+    windows = source_windows(day)
+    start, end = windows["daily"]
+    end = _sip_safe_end(end)
+    close = us_equity_session_close(day)
+    if close is None or end < datetime.combine(day, close, prices.NEW_YORK).astimezone(UTC):
+        raise ValueError("the full regular close is not yet outside the SIP embargo")
+    windows["daily"] = (start, end)
+    return windows
+
+
+def observation_directory(source, day, observed_at):
+    """Retain a failed observation and put its explicit continuation beside it."""
+    evidence = source / "data/book_close_inputs" / str(day)
+    receipt = source / "data/sip_reconcile/receipts" / f"{day}.json"
+    if receipt.exists():
+        raise ValueError("completed execution-date source observation retained")
+    if evidence.exists():
+        evidence = evidence / "attempts" / observed_at.strftime("%Y%m%dT%H%M%S%fZ")
+    evidence.mkdir(parents=True, exist_ok=False)
+    return evidence
 
 
 def real_source_rows(frame, start, end):
@@ -61,12 +86,13 @@ def run(args):
 
     load_dotenv(args.credentials_root / ".env", override=False)
     now = datetime.now(UTC)
-    day = now.date()
+    day = args.execution_date or now.astimezone(prices.NEW_YORK).date()
     close = us_equity_session_close(day)
     if close is None or now < datetime.combine(day, close, prices.NEW_YORK):
         raise ValueError("receive the actual completed execution day only")
     if args.equity_basis != 300000 or str(day) > "2026-12-31":
         raise ValueError("original quant1 scope is $300000 through 2026-12-31")
+    windows = request_windows(day)
     source = args.source_root.resolve()
     raw = source / "data/sip_reconcile"
     config = json.loads((ROOT / "config/equity-book-forward.json").read_text())
@@ -120,12 +146,7 @@ def run(args):
         names, origins = prices.collect_symbols([plan, target])
         account = read_account_state(make_trading_client("quant1"))
         names = sorted(set(names) | set(account.positions))
-        evidence = source / "data/book_close_inputs" / str(day)
-        if evidence.exists():
-            raise ValueError(
-                "original execution-date source observation retained; do not overwrite it"
-            )
-        evidence.mkdir(parents=True)
+        evidence = observation_directory(source, day, now)
         declaration = {
             "at_utc": now.isoformat(),
             "execution_date": str(day),
@@ -165,7 +186,7 @@ def run(args):
 
         client._session.hooks["response"] = [receive]
         outputs = []
-        for kind, (start, end) in source_windows(day).items():
+        for kind, (start, end) in windows.items():
             frames = []
             for i in range(0, len(names), 100):
                 req = StockBarsRequest(
@@ -210,7 +231,9 @@ def run(args):
             "outputs": outputs,
             "declared_sha256": digest(evidence / "declared.json"),
             "http_sha256": digest(evidence / "http.jsonl"),
-            "no_historical_backfill": True,
+            "no_historical_backfill": args.execution_date is None,
+            "explicit_execution_date_source_recovery": args.execution_date is not None,
+            "source_observation_directory": str(evidence),
             "broker_writes": 0,
             "native_code_root": str(ROOT),
         }
@@ -229,6 +252,8 @@ def main():
     parser.add_argument("--credentials-root", type=Path, default=ROOT)
     parser.add_argument("--equity-basis", type=float, required=True)
     parser.add_argument("--update-daily", action="store_true")
+    parser.add_argument("--execution-date", type=date.fromisoformat,
+                        help="Read-only recovery of an actual completed execution day; retain failed observations")
     run(parser.parse_args())
 
 

@@ -87,3 +87,32 @@ def test_missing_raw_receipt_cannot_fall_back_to_all_label(tmp_path):
     )
     with pytest.raises(prices.InputsError, match="missing"):
         prices.source_price_basis(tmp_path, date(2026, 11, 3), [])
+
+
+def test_delayed_sip_window_keeps_completed_day_and_exact_original_snapshot(monkeypatch):
+    day = date(2026, 11, 3)
+    safe_end = datetime(2026, 11, 3, 21, 44, tzinfo=UTC)
+    monkeypatch.setattr(receive, "_sip_safe_end", lambda end: min(end, safe_end))
+    windows = receive.request_windows(day)
+    assert windows["daily"] == (datetime(2026, 11, 3, 5, tzinfo=UTC), safe_end)
+    assert windows["minute"] == receive.source_windows(day)["minute"]
+    # A call just after close may not publish a partly received daily source.
+    monkeypatch.setattr(receive, "_sip_safe_end", lambda end: datetime(2026, 11, 3, 20, 59, tzinfo=UTC))
+    with pytest.raises(ValueError, match="full regular close"):
+        receive.request_windows(day)
+
+
+def test_failed_source_observation_survives_continuation_and_completed_source_is_immutable(tmp_path):
+    day = date(2026, 11, 3)
+    now = datetime(2026, 11, 4, 2, tzinfo=UTC)
+    failed = tmp_path / "data/book_close_inputs/2026-11-03"
+    failed.mkdir(parents=True)
+    receipt = failed / "http.jsonl"
+    receipt.write_text('{"status":403}\n')
+    resumed = receive.observation_directory(tmp_path, day, now)
+    assert resumed.parent == failed / "attempts" and receipt.read_text() == '{"status":403}\n'
+    completed = tmp_path / "data/sip_reconcile/receipts/2026-11-03.json"
+    completed.parent.mkdir(parents=True)
+    completed.write_text('{}')
+    with pytest.raises(ValueError, match="completed"):
+        receive.observation_directory(tmp_path, day, now + timedelta(seconds=1))
