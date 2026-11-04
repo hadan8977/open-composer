@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1450,6 +1451,108 @@ def panel(view, source, declared, day=None):
     )
 
 
+def identity_consumer(view, day):
+    """Isolate conflicted security identities without changing source history.
+
+    The working view retains its raw files, frozen cohorts and native outputs.
+    Only the separate alpha/risk/target reader omits unresolved identities.
+    """
+    policy_path = view / "current-units-identity-quarantine-policy.json"
+    if not policy_path.exists():
+        return view
+    policy = json.loads(policy_path.read_text())
+    if str(day) < policy["first_decision_day"]:
+        return view
+    names = sorted(set(policy["symbols"]))
+    if not names or any(not re.fullmatch(r"[A-Z0-9.\-]+", name) for name in names):
+        raise ValueError("invalid identity quarantine symbols")
+    # One working consumer, anchored at policy introduction; do not retain a
+    # second full price/panel/risk tree for every execution day.
+    consumer = view / "identity-consumers" / policy["first_decision_day"]
+    receipt_path = consumer / "current-units-identity-quarantine.json"
+    book = view / "data/live/equity_book"
+    inputs = sorted((book / "panel").glob("20*.parquet"))
+    inputs += sorted((book / "prices").glob("20*.parquet"))
+    bindings = [{"path": str(p), "sha256": digest(p)} for p in inputs]
+    if receipt_path.exists():
+        saved = json.loads(receipt_path.read_text())
+        if saved["decision_day"] > str(day):
+            raise ValueError("identity consumer cannot move backwards")
+        if saved["decision_day"] == str(day):
+            if saved["policy_sha256"] != digest(policy_path) or saved["source_bindings"] != bindings:
+                raise ValueError("same-day identity consumer source changed")
+            for item in saved["filtered_readers"]:
+                if digest(Path(item["path"])) != item["sha256"]:
+                    raise ValueError("accepted identity consumer changed")
+            return consumer
+        previous = consumer / "previous-receipts" / (saved["decision_day"] + ".json")
+        previous.parent.mkdir(exist_ok=True)
+        if not previous.exists():
+            previous.write_bytes(receipt_path.read_bytes())
+    consumer.mkdir(parents=True, exist_ok=True)
+    for group in ("features", "raw", "sip"):
+        target = consumer / "data" / group
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists():
+            target.symlink_to((view / "data" / group).resolve(), target_is_directory=True)
+    for p in view.glob("current-units-*.json"):
+        if p.name in ("current-units-ready.json", "current-units-risk-signals.json"):
+            continue
+        target = consumer / p.name
+        if not target.exists():
+            target.symlink_to(p.resolve())
+    destination = consumer / "data/live/equity_book"
+    # New risk/signal/theme outputs have private inodes. Retain only the
+    # original fixed signal selection and formation-IC metadata as inputs.
+    metadata = [book / "etf_daily.parquet"]
+    metadata += [p for p in (book / "panel").glob("*") if not p.stem.isdigit()]
+    metadata += [book / "signals/_alpha_columns.json"]
+    metadata += [book / "alpha/book_v1/formation_ic.parquet"]
+    for source in metadata:
+        if source.is_file():
+            target = destination / source.relative_to(book)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            replace_reader_link(source, target)
+    for group in ("risk", "signals", "alpha/book_v1"):
+        (destination / group).mkdir(parents=True, exist_ok=True)
+    import duckdb
+
+    con = duckdb.connect()
+    con.execute("SET memory_limit='180MB'")
+    con.execute("SET threads=1")
+    excluded = ",".join("'" + name + "'" for name in names)
+    predicate = f"symbol IS NULL OR symbol NOT IN ({excluded})"
+    rows = []
+    for source in inputs:
+        target = destination / source.relative_to(book)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_suffix(".identity-next.parquet")
+        if temporary.exists():
+            raise ValueError("prior incomplete identity reader retained: " + str(temporary))
+        con.execute(f"COPY (SELECT * FROM read_parquet('{source}') WHERE {predicate}) "
+                    f"TO '{temporary}' (FORMAT PARQUET)")
+        columns = [r[0] for r in con.execute(f"DESCRIBE SELECT * FROM read_parquet('{source}')").fetchall()]
+        quoted = ",".join('"' + c.replace('"', '""') + '"' for c in columns)
+        signature = f"count(*), bit_xor(hash({quoted}))"
+        before = con.execute(f"SELECT {signature} FROM read_parquet('{source}') WHERE {predicate}").fetchone()
+        after = con.execute(f"SELECT {signature} FROM read_parquet('{temporary}')").fetchone()
+        if before != after:
+            raise ValueError("identity filtering changed retained rows")
+        removed = con.execute(f"SELECT symbol,count(*) FROM read_parquet('{source}') "
+                              f"WHERE symbol IN ({excluded}) GROUP BY symbol").fetchall()
+        os.replace(temporary, target)
+        rows.append({"path": str(target), "sha256": digest(target),
+                     "retained_rows": after[0], "retained_row_hash64": after[1],
+                     "removed_rows": dict(removed)})
+    con.close()
+    receipt_path.write_text(json.dumps({"completed_at_utc": datetime.now(UTC).isoformat(),
+        "decision_day": str(day), "source_view": str(view), "consumer_view": str(consumer),
+        "excluded_symbols": names, "policy_sha256": digest(policy_path),
+        "source_bindings": bindings, "filtered_readers": rows,
+        "source_history_or_frozen_cohort_writes": 0}, indent=2) + "\n")
+    return consumer
+
+
 def risk_signals_themes(view, day):
     """Original 2017 risk initialization and original current M0 signal formulas."""
     import pandas as pd
@@ -2453,6 +2556,8 @@ def main():
             "dependency",
             "panel",
             "risk-signals",
+            "identity-consumer",
+            "incremental-daily",
             "physical",
             "bridge",
             "known-actions-repair",
@@ -2466,6 +2571,7 @@ def main():
     ap.add_argument("--day", type=date.fromisoformat, default=date(2026, 11, 2))
     ap.add_argument("--start", type=date.fromisoformat, default=date(2026, 10, 17))
     ap.add_argument("--table")
+    ap.add_argument("--previous-declared-symbols", type=Path)
     ap.add_argument("--native-script", choices=sorted(NATIVE_SCRIPTS))
     ap.add_argument("--native-args", nargs=argparse.REMAINDER, default=[])
     ap.add_argument("--years", type=int, nargs="+", default=list(range(2016, 2027)))
@@ -2488,6 +2594,13 @@ def main():
         panel(args.view_root, args.source_root, args.declared_symbols, args.day)
     if args.stage == "risk-signals":
         risk_signals_themes(args.view_root, args.day)
+    if args.stage == "identity-consumer":
+        print(identity_consumer(args.view_root, args.day), flush=True)
+    if args.stage == "incremental-daily":
+        limits = json.loads((args.credentials_root / "config/equity-book-forward.json").read_text())
+        limits["version_directory"] = "current-unit-admissions"
+        incremental_daily(args.view_root, args.source_root, args.declared_symbols,
+                          args.previous_declared_symbols, args.day, resource_config=limits)
     if args.stage == "physical":
         physical_sources(
             args.view_root, args.day, args.application_day, args.declared_symbols, args.start

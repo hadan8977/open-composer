@@ -12,6 +12,57 @@ from scripts import build_book_v12_current_units as units
 from scripts import refresh_book_v12_current_units as refresh
 
 
+def test_identity_consumer_excludes_conflict_before_risk_and_alpha_preserves_history(tmp_path):
+    book = tmp_path / "data/live/equity_book"
+    original = pd.DataFrame({"trade_date": pd.to_datetime(["2026-11-03"] * 3),
+                             "symbol": ["SUPN", "INDV", "AAPL"],
+                             "close": [28.15, 28.15, 100.0],
+                             "in_u3000": [True, True, True]})
+    before = {}
+    for group in ("panel", "prices"):
+        p = book / group / "2026.parquet"
+        p.parent.mkdir(parents=True)
+        original.to_parquet(p, index=False)
+        before[p] = units.digest(p)
+    (book / "signals").mkdir()
+    (book / "signals/_alpha_columns.json").write_text('{"kept": {}}')
+    (tmp_path / "data/features").mkdir()
+    (tmp_path / "current-units-identity-quarantine-policy.json").write_text(json.dumps(
+        {"symbols": ["SUPN"], "first_decision_day": "2026-11-03"}))
+    (tmp_path / "current-units-risk-signals.json").write_text('{"old": true}')
+    assert units.identity_consumer(tmp_path, date(2026, 11, 2)) == tmp_path
+    consumer = units.identity_consumer(tmp_path, date(2026, 11, 3))
+    for p, sha in before.items():
+        assert units.digest(p) == sha
+        output = consumer / p.relative_to(tmp_path)
+        pd.testing.assert_frame_equal(pd.read_parquet(output),
+                                      original.iloc[1:].reset_index(drop=True))
+    assert (consumer / "data/features").resolve() == tmp_path / "data/features"
+    assert not (consumer / "current-units-risk-signals.json").exists()
+    assert not list((consumer / "data/live/equity_book/risk").glob("*"))
+    assert units.identity_consumer(tmp_path, date(2026, 11, 3)) == consumer
+    (consumer / "current-units-risk-signals.json").write_text('{"new": true}')
+    assert json.loads((tmp_path / "current-units-risk-signals.json").read_text()) == {"old": True}
+    receipt = json.loads((consumer / "current-units-identity-quarantine.json").read_text())
+    assert [r["removed_rows"] for r in receipt["filtered_readers"]] == [{"SUPN": 1}] * 2
+    original.to_parquet(book / "panel/2026.parquet", index=False, compression="gzip")
+    with pytest.raises(ValueError, match="source changed"):
+        units.identity_consumer(tmp_path, date(2026, 11, 3))
+
+
+def test_native_stages_use_fresh_process_and_same_dates_and_credentials(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(refresh.subprocess, "run", lambda argv, **kw: calls.append((argv, kw)))
+    refresh.isolated_stage("risk-signals", tmp_path, tmp_path, date(2026, 11, 3),
+                           date(2026, 11, 4))
+    argv, kw = calls[0]
+    assert argv[argv.index("--stage") + 1] == "risk-signals"
+    assert argv[argv.index("--day") + 1] == "2026-11-03"
+    assert argv[argv.index("--application-day") + 1] == "2026-11-04"
+    assert argv[argv.index("--credentials-root") + 1] == str(refresh.ROOT)
+    assert kw == {"cwd": refresh.ROOT, "check": True}
+
+
 @pytest.mark.parametrize("same_inode", [True, False])
 def test_raw_reader_exchange_preserves_prior_attempt_and_cleans_own_same_inode_link(tmp_path, same_inode):
     source = tmp_path / "new/shard-0000.parquet"

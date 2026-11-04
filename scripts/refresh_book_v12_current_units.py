@@ -144,6 +144,17 @@ def publish_targets(view, day, equity):
     )
 
 
+def isolated_stage(stage, view, source, day, execution, declared=None, extra=()):
+    """Keep native allocator state inside one stage under the inherited cap."""
+    argv = [sys.executable, str(ROOT / "scripts/build_book_v12_current_units.py"),
+            "--stage", stage, "--view-root", str(view), "--source-root", str(source),
+            "--credentials-root", str(ROOT), "--day", str(day),
+            "--application-day", str(execution)]
+    if declared is not None:
+        argv += ["--declared-symbols", str(declared)]
+    subprocess.run([*argv, *extra], cwd=ROOT, check=True)
+
+
 def completed_bindings(view, day):
     """Bind the actual native reader outputs, not just a completion flag."""
     book = view / "data/live/equity_book"
@@ -154,6 +165,10 @@ def completed_bindings(view, day):
         view / "current-units-source.json",
         view / "current-units-execution-bridge.json",
     ]
+    for name in ("current-units-identity-quarantine-policy.json",
+                 "current-units-identity-quarantine.json"):
+        if (view / name).exists():
+            paths.append(view / name)
     for kind in ("prices", "panel"):
         paths.extend(sorted((book / kind).glob("20*.parquet")))
     for year in range(2024, day.year + 1):
@@ -378,7 +393,8 @@ def run(args):
                         decision,
                     )
                     units.endpoint_bridge(verification, decision, execution)
-                    publish_targets(frozen, decision, args.equity_basis)
+                    publish_targets(Path(previous.get("consumer_view_root", str(frozen))),
+                                    decision, args.equity_basis)
                 except Exception:
                     atomic_json(
                         pointer, {**previous, "status": "current_unit_revalidation_refused"}
@@ -433,9 +449,8 @@ def run(args):
             units.stage_raw_only(source, context, raw_next)
             declared = declare(source, view, raw_next)
             units.repair_known_execution_actions(raw_next, declared, decision)
-            units.incremental_daily(
-                view, raw_next, declared, old_declared, decision, resource_config=resource_config
-            )
+            isolated_stage("incremental-daily", view, raw_next, decision, execution, declared,
+                           ("--previous-declared-symbols", str(old_declared)))
             # Raw stage files now have their actual reader links in view; keep
             # source/action proofs, not a second entire market cache per day.
             shutil.rmtree(raw_next / "data")
@@ -496,7 +511,8 @@ def run(args):
                     table,
                     [view / "data/features" / spec.output.format(year=decision.year)],
                 )
-            units.dependencies(view, frozen, table, decision)
+            isolated_stage("dependency", view, frozen, decision, execution,
+                           extra=("--table", table))
         book = view / "data/live/equity_book"
         check_working_stage(
             view,
@@ -508,7 +524,13 @@ def run(args):
                 book / "etf_daily.parquet",
             ],
         )
-        units.panel(view, frozen, declared, day=decision)
+        isolated_stage("panel", view, frozen, decision, execution, declared)
+        isolated_stage("identity-consumer", view, frozen, decision, execution)
+        policy_path = view / "current-units-identity-quarantine-policy.json"
+        consumer = view
+        if policy_path.exists() and str(decision) >= json.loads(policy_path.read_text())["first_decision_day"]:
+            consumer = view / "identity-consumers" / json.loads(policy_path.read_text())["first_decision_day"]
+        book = consumer / "data/live/equity_book"
         check_working_stage(
             view,
             resource_config,
@@ -519,8 +541,8 @@ def run(args):
                 *(book / "alpha/book_v1").glob("themes_20*.parquet"),
             ],
         )
-        units.risk_signals_themes(view, decision)
-        units.native_run(view, ["scripts/fetch_vix_live.py"])
+        isolated_stage("risk-signals", consumer, consumer, decision, execution)
+        units.native_run(consumer, ["scripts/fetch_vix_live.py"])
         ready = {
             "completed_at_utc": datetime.now(UTC).isoformat(),
             "decision_day": str(decision),
@@ -528,15 +550,16 @@ def run(args):
             "equity_basis_usd": args.equity_basis,
             "code_root": str(ROOT),
             "view_root": str(view),
+            "consumer_view_root": str(consumer),
             "declared_symbols": str(declared),
             "execution_bridge_sha256": units.digest(view / "current-units-execution-bridge.json"),
             "risk_initialized_from": "2017-01-01",
             "training_runs": 0,
             "broker_writes": 0,
-            "consumer_bindings": completed_bindings(view, decision),
+            "consumer_bindings": completed_bindings(consumer, decision),
         }
         atomic_json(view / "current-units-ready.json", ready)
-        publish_targets(view, decision, args.equity_basis)
+        publish_targets(consumer, decision, args.equity_basis)
         atomic_json(
             pointer,
             {
