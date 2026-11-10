@@ -1,0 +1,65 @@
+{
+  "strategy_name": "peer_causal_execution_20261018",
+  "policy_id": "FROZEN_ORIGINAL32_PEER_PRICE_MARKET_SEQUENTIAL_SIP",
+  "order_style": "conditional_two_wave_vendor_bid_ask_size_reference",
+  "time_in_force": "one_scheduled_reference_attempt_then_expire",
+  "price_protection": "Close-committed whole maxima;09:35bid sale then09:40ask purchase with size/funding reductions only. No price guarantee or hindsight limit.",
+  "gap_filter": "No economic gap filter; unchanged default10xunitguard from priorcompletedclose.",
+  "spread_filter": "Require latestrawstatewithin5s/regularRbothsides/positiveunlockedbidask; no tightspread cutoff or older-valid fallback.",
+  "participation_cap": "One normalized displayed side size per name/wave per alternative; no replenishment, hidden depth or priority.",
+  "fallback_behavior": "Invalid/missing quote expires request, hold residue to next original21session intent; no retry or news/price/modelfallback. Unknownheldmark or unpricedlegalclaim means incomplete/intervalidentified, never fakecash.",
+  "tca_plan": {
+    "reference_prices": [
+      "committed_close",
+      "sell_bid_vendor_time_and_size",
+      "buy_ask_vendor_time_and_size",
+      "future_actual_arrival_fill_if_separately_authorized"
+    ],
+    "record_submitted_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "review_frequency": "Complete this one conditional ledger; no live monitoring/schedule is authorized."
+  },
+  "source_card_ids": [
+    "historical_SIP_quote_schema_units",
+    "pre_transition_NMS_standard_round_lot",
+    "UTP_size_representation_transition",
+    "quote_wave_not_broker_acknowledgment"
+  ],
+  "alternatives_compared": [
+    {
+      "style": "DAY market",
+      "price_protection": "None",
+      "fill_certainty": "Not guaranteed; venue/latency/spread may changeprice",
+      "complexity": "Can be queued afterclose; sequential actual sale acknowledgements matter",
+      "used": false
+    },
+    {
+      "style": "MOO market+OPG",
+      "price_protection": "None",
+      "fill_certainty": "Auction-only; unfilledcancel;9:28cutoff and accountcapabilitynotverified",
+      "complexity": "Primaryauction print/ordersupport absent, so not certified bydailyopen",
+      "used": false
+    },
+    {
+      "style": "LOO limit+OPG",
+      "price_protection": "Explicitlimit",
+      "fill_certainty": "Can remainunfilled; dailyhighlow cannot provequeuefill",
+      "complexity": "Needs limits/auctionqueueevidence absent; no newlimitparameter invented",
+      "used": false
+    }
+  ],
+  "naked_market_justification": "No broker DAYmarket recommendation or activation; one conditional timestamped bid/ask/size scenario at09:35sales/09:40buys.",
+  "non_paper_research_only": true,
+  "source_assessment": {
+    "path": "reports/research/program/week-close-resume-20261018/peer-causal-execution-20261018/protocol.json",
+    "bytes": 12152,
+    "sha256": "a0be8d5083830d8e15391b696d5f611f2e1282d47112fcb85a9ad040752e9f7f"
+  },
+  "additional_friction_bps_per_side": [
+    10,
+    20
+  ],
+  "actual_quantity_commit": "D16:05NY using Dobservedclose/actualNAV and same sealedweights; this intentionally advances originalD+1CLOSEexecution.",
+  "no_new_signal_or_order_style_search": true
+}

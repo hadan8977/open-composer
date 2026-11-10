@@ -57,6 +57,12 @@ class PaperTargetSatisfiedError(PaperOrderError):
 
 
 ALPACA_PAPER_ORIGIN = "https://paper-api.alpaca.markets"
+#: Bounded socket timeouts for every Alpaca Paper HTTP call. alpaca-py passes no
+#: timeout to ``requests``, so a peer that stops answering suspends the caller
+#: forever: the six-policy service sat on one dead connection from 2026-11-04
+#: 17:41 to 2026-11-09 and never ticked again. A timeout turns that into an
+#: ordinary error the caller can log, retry or exit on.
+PAPER_HTTP_TIMEOUT = (10.0, 30.0)
 _PAPER_CLIENT_VERIFICATION_TOKEN = object()
 _PAPER_BROKER_WRITE_TOKEN = object()
 _CONSUMED_WRITE_GUARDS: set[str] = set()
@@ -1476,7 +1482,23 @@ def _mark_verified_paper_client(client: Any, *, origin: str = ALPACA_PAPER_ORIGI
     client._open_composer_paper_verified = True
     client._open_composer_paper_origin = origin
     client._open_composer_paper_verification_token = _PAPER_CLIENT_VERIFICATION_TOKEN
+    _bound_paper_http_timeouts(client)
     return client
+
+
+def _bound_paper_http_timeouts(client: Any) -> None:
+    """Give the SDK session a default timeout; keep any explicit caller value."""
+    session = getattr(client, "_session", None)
+    request = getattr(session, "request", None)
+    if request is None or getattr(session, "_open_composer_timeout_bounded", False):
+        return
+
+    def bounded(method: str, url: str, **kwargs: Any) -> Any:
+        kwargs.setdefault("timeout", PAPER_HTTP_TIMEOUT)
+        return request(method, url, **kwargs)
+
+    session.request = bounded
+    session._open_composer_timeout_bounded = True
 
 
 def _is_verified_paper_client(client: Any) -> bool:

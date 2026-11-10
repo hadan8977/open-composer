@@ -12,6 +12,10 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import project_root
 from open_composer.engines.backtest_engine import backtest_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import (
+    NativeExecutionControl,
+    require_iteration_execution_gate,
+)
 from open_composer.research.metadata import workspace_relative_path
 from open_composer.storage import write_json
 
@@ -38,6 +42,8 @@ class BlindTestReport(BaseModel):
     strategy_path: str
     results: list[BlindTestResult]
     interpretation: str
+    selectable_candidate: Literal[False] = False
+    promotion_eligible: Literal[False] = False
 
 
 def run_blind_test(
@@ -48,15 +54,35 @@ def run_blind_test(
 ) -> BlindTestReport:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
-    frame = load_ohlcv_for_spec(spec, base)
-    results: list[BlindTestResult] = []
+    admission = require_iteration_execution_gate(
+        spec,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=spec.data.source != "sample",
+    )
+    controls = []
     for mode in ("real", "anonymous", "random_remap", "sector_preserved"):
         rewritten_spec, mapping = _rewrite_spec(spec, mode, seed=seed)
+        control = (
+            NativeExecutionControl(
+                source=spec, purpose="blind_test", parameters={"mode": mode, "seed": seed}
+            )
+            if admission is not None
+            else None
+        )
+        require_iteration_execution_gate(
+            rewritten_spec, base, enforce_unbound_design=True, native_control=control
+        )
+        controls.append((mode, rewritten_spec, mapping, control))
+    frame = load_ohlcv_for_spec(spec, base)
+    results: list[BlindTestResult] = []
+    for mode, rewritten_spec, mapping, control in controls:
         artifacts = backtest_frame(
             rewritten_spec,
             frame,
             root=base,
             run_id_value=f"blind-test-{spec.name}-{mode}",
+            native_control=control,
         )
         results.append(_build_result(mode, mapping, artifacts))
     real_digest = results[0].signal_digest

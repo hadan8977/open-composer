@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "timezone": "Asia/Shanghai",
+  "priority_weekdays": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "priority_start_hour": 9,
+  "priority_end_hour": 19,
+  "priority_interval_minutes": 15,
+  "other_interval_minutes": 60,
+  "probe_timeout_seconds": 20,
+  "freshness_seconds": 120,
+  "state_path": "reports/research/control/hadan-availability.json",
+  "event_path": "reports/research/control/hadan-availability-events.jsonl",
+  "lock_path": "reports/research/control/hadan-availability.lock",
+  "notes": "Mon-Fri09-19 Beijing is a probe priority window, not a readiness guarantee. Recovery requests coordination for currently authorized research, including training only when owner authorization permits it. This monitor never wakes, resumes, trains or dispatches; actual work requires a new remote preflight and task/resource admission."
+}

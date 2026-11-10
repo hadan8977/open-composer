@@ -151,6 +151,7 @@ class BookAccount:
     n_orders: int | None = None
     n_filled: int | None = None
     n_unfilled: int | None = None
+    pnl_basis: str = "旧全影子成本压力口径"
 
 
 @dataclass(frozen=True)
@@ -552,7 +553,7 @@ def _render_book(data: DigestData) -> list[str]:
         "quant1 跑 F1（市场中性多空 + 短债），100 万美元模拟资金，10-07 首单，"
         "10-12 前基数降到约 30 万；quant2 不跑 F2（机主 10-06 决定），10-09/10 起改做日内账户。",
         "",
-        "| 账户 | 最新目标 | 最新计划 | 最新对账 | 净值 | 当日净盈亏 | 订单（成交 / 未成交） |",
+        "| 账户 | 最新目标 | 最新计划 | 最新对账 | 净值 | 当日盈亏及口径 | 订单（成交 / 未成交） |",
         "|---|---|---|---|---|---|---|",
     ]
     for acct in data.book:
@@ -563,7 +564,7 @@ def _render_book(data: DigestData) -> list[str]:
         )
         pnl = "—"
         if acct.net_pnl is not None:
-            pnl = f"{money(acct.net_pnl)}（{pct(acct.net_return)}）"
+            pnl = f"{money(acct.net_pnl)}（{pct(acct.net_return)}；{acct.pnl_basis}）"
         lines.append(
             f"| {acct.account} | {acct.latest_target or '—'} | {acct.latest_plan or '—'} | "
             f"{acct.latest_daily or '尚无'} | {money(acct.equity)} | {pnl} | {orders} |"
@@ -920,8 +921,8 @@ def render_etf_table(data: DigestData) -> list[str]:
 
 def render_book_business(data: DigestData) -> list[str]:
     lines = [
-        "| 账户 | 做法 | 净值 | 最近一天盈亏 | 订单：成交 / 未成交 |",
-        "|---|---|---|---|---|",
+        "| 账户 | 账本日期 | 做法 | 净值 | 该日盈亏 | 订单：成交 / 未成交 |",
+        "|---|---|---|---|---|---|",
     ]
     start = BOOK_ACTIONS_START.isoformat()
     for acct in data.book:
@@ -931,9 +932,10 @@ def render_book_business(data: DigestData) -> list[str]:
         if trading and acct.n_orders is not None:
             orders = f"{acct.n_orders} 笔：{acct.n_filled} / {acct.n_unfilled}"
         if trading and acct.net_pnl is not None:
-            pnl = f"{money(acct.net_pnl)}（{pct(acct.net_return)}）"
+            pnl = f"{money(acct.net_pnl)}（{pct(acct.net_return)}；{acct.pnl_basis}）"
         lines.append(
-            f"| {account_name(acct.account)} | {ACCOUNT_RULES.get(acct.account, '—')} | "
+            f"| {account_name(acct.account)} | {acct.latest_daily or '尚无账本'} | "
+            f"{ACCOUNT_RULES.get(acct.account, '—')} | "
             f"{money(acct.equity)} | {pnl} | {orders} |"
         )
     actions = [a for a in data.book_actions]
@@ -1033,7 +1035,7 @@ def render_paper_section(data: DigestData) -> list[str]:
     lines = [f"实盘：{names or '没有'}。", ""]
     lines.extend(["### ETF 轮动策略（主模拟账户，每个 1.5 万美元）", ""])
     lines.extend(render_etf_table(data))
-    lines.extend(["", "### 股票多空组合（两个模拟账户，各 100 万美元）", ""])
+    lines.extend(["", "### 股票多空组合（按各账户实际账本日期）", ""])
     lines.extend(render_book_business(data))
     return lines
 
@@ -1096,17 +1098,36 @@ def render_digest(data: DigestData) -> str:
 
 
 def digest_subject(data: DigestData) -> str:
-    _, day_ret, week_ret = combined_returns(data.sleeves, data.sessions)
-    spy_day, spy_week = spy_returns(data.spy_closes, data.sessions)
     pending = len(owner_items(data))
     problems = len(problem_items(data))
     if data.kind == "weekly":
         head = f"[Open Composer] 周报 {iso_week_label(data.now)}"
-        money_part = f"ETF 策略近 5 日 {pct(week_ret)}，SPY {pct(spy_week)}"
     else:
         local = data.now.astimezone(BEIJING)
         head = f"[Open Composer] 日报 {local:%m-%d}（周{WEEKDAYS[local.weekday()]}）"
-        money_part = f"ETF 策略当日 {pct(day_ret)}，SPY {pct(spy_day)}"
+
+    periods = 5 if data.kind == "weekly" else 1
+    money_part = "ETF 策略收益数据不足"
+    if data.sleeves and len(data.sessions) > periods:
+        last = data.sessions[-1]
+        endpoints = (data.sessions[-1 - periods], last)
+        # nav_on carries earlier marks; a dated headline needs observed endpoints.
+        aligned = all(
+            day < row.start_session or day in dict(row.navs)
+            for row in data.sleeves
+            for day in endpoints
+        )
+        if aligned:
+            _, day_ret, week_ret = combined_returns(data.sleeves, data.sessions)
+            spy_day, spy_week = spy_returns(data.spy_closes, data.sessions)
+            if data.kind == "weekly":
+                money_part = (
+                    f"ETF 策略截至 {last} 近 5 个交易日 {pct(week_ret)}，SPY {pct(spy_week)}"
+                )
+            else:
+                money_part = f"ETF 策略 {last} 收益 {pct(day_ret)}，SPY {pct(spy_day)}"
+        else:
+            money_part = f"ETF 策略截至 {last} 估值数据不齐"
     tail = f"需要你决定 {pending}" + (f"｜问题 {problems}" if problems else "")
     return f"{head}｜{money_part}｜{tail}"
 
@@ -1230,6 +1251,19 @@ def collect_book(root: Path) -> tuple[BookAccount, ...]:
         record = _read_json(base / "daily" / f"{daily_stem}.json") if daily_stem else None
         pnl = (record or {}).get("pnl") or {}
         rec = (record or {}).get("reconciliation") or {}
+        ledgers = (record or {}).get("profit_ledgers") or {}
+        incremental = ledgers.get("broker_plus_incremental_model") or {}
+        if incremental.get("complete") is True and incremental.get("net_pnl") is not None:
+            shown_pnl = incremental["net_pnl"]
+            basis = "券商盈亏减已注明增量模型成本"
+        elif pnl.get("gross_pnl_broker") is not None:
+            shown_pnl = pnl["gross_pnl_broker"]
+            basis = "券商权益变动；流量及增量成本未核齐"
+        else:
+            shown_pnl = pnl.get("net_pnl")
+            basis = "旧全影子成本压力口径，非增量净收益"
+        prior_equity = pnl.get("last_equity")
+        shown_return = shown_pnl / prior_equity if shown_pnl is not None and prior_equity else None
         accounts.append(
             BookAccount(
                 account=account,
@@ -1237,11 +1271,12 @@ def collect_book(root: Path) -> tuple[BookAccount, ...]:
                 latest_plan=_latest_stem(base / "plans"),
                 latest_daily=daily_stem,
                 equity=pnl.get("equity"),
-                net_pnl=pnl.get("net_pnl"),
-                net_return=pnl.get("net_return"),
+                net_pnl=shown_pnl,
+                net_return=shown_return,
                 n_orders=rec.get("n_orders"),
                 n_filled=rec.get("n_filled"),
                 n_unfilled=rec.get("n_unfilled"),
+                pnl_basis=basis,
             )
         )
     return tuple(accounts)

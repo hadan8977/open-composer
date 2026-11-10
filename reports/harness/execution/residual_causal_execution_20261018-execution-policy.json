@@ -1,0 +1,36 @@
+{
+  "strategy_name": "residual_causal_execution_20261018",
+  "policy_id": "ORIGINAL_RESIDUAL_CAUSAL_SEQUENTIAL",
+  "chosen_style": "conditional_Dclose15_commit_D1sell0935_buy0940",
+  "fallback": "No trade on invalid/absent reference, expire partials until next original formation; no alternate wave",
+  "source_card_ids": [
+    "original_residual_alpha",
+    "historical_quote_units",
+    "cash_sale_funding"
+  ],
+  "alternatives_compared": [
+    {
+      "style": "Immutable original D1close conditional WHOLE",
+      "scope": "Accepted context; quantities used same execution close, not replayed"
+    },
+    {
+      "style": "Fixed causal Dclose15/sequential SIP waves",
+      "scope": "Six new funded accounts; quantity/timing/spread/display/funding bundle"
+    }
+  ],
+  "gap_spread_filters": "Exact accepted prior-only unit/default ratio guard; positive uncrossed regular latest quote in5seconds; no new threshold",
+  "participation_cap": "At most committed requests, own funded unlocked shares and one displayed side-size per name/wave; no accessible-liquidity certification",
+  "tca_plan": {
+    "reference_prices": [
+      "committed_Dclose",
+      "historical_sell_bid",
+      "historical_buy_ask",
+      "future_actual_arrival_fill_if_separately_authorized"
+    ],
+    "record_submitted_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "review_frequency": "No monitoring scheduled; any future separately authorized TCA must retain actual events"
+  },
+  "paper_ready": false
+}

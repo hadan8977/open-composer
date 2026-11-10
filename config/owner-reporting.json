@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authorized_at_utc": "2026-10-11T12:04:39.321946+00:00",
+  "owner_instruction": "每日每周，每整轮（2小时？）；重要阻塞及时报告并提请机主决定。",
+  "timezone": "Asia/Shanghai",
+  "report_agent_id": "69a24cc9-00ab-44f4-bbd0-e6c666196885",
+  "research_coordination_agent_id": "e2d3de38-e7ef-4cc8-9c6d-9944219e9432",
+  "cadence": {
+    "round": {
+      "cron": "5 */2 * * *",
+      "timezone": "UTC",
+      "scope": "过去约两小时已完成及进行中的整轮研究；不是每个subagent一条回执",
+      "schedule_id": "b211abe7"
+    },
+    "daily_and_weekly_chat": {
+      "cron": "0 1 * * *",
+      "timezone": "UTC",
+      "local_time": "每日09:00；周日为周报",
+      "schedule_id": "8a81c331"
+    },
+    "writer": {
+      "schedule_id": "e2572f80",
+      "cron": "5 0 * * *",
+      "timezone": "UTC",
+      "weekly_on_utc_sunday": true
+    },
+    "important_blockers": "discovery-time event; coalesce duplicate updates for same decision unless state materially changes"
+  },
+  "report_format": "docs/owner-reporting.zh.md section0.1 plus2026-10-11 amendment",
+  "mail_delivery": "existing01:00UTC cron preserved; no new email channel or forced resend",
+  "state": "reports/owner/reporting-state.json",
+  "reports": "reports/owner/updates",
+  "financial_or_training_authority_changed": false,
+  "updated_at_utc": "2026-10-27T02:01:45.708315+00:00",
+  "previous_report_agent_id": "730d8cb7-4cd5-4473-bd96-2b50ebba18c0",
+  "updated_reason": "Replaced closed hub and nonexistent workspace with actual existing persistent project workspace; original report cadence and authority unchanged",
+  "workspace_id": "/root/codex-test/open-composer",
+  "mail_resume_20261027": {
+    "authorization": {
+      "path": "reports/research/program/owner-mail-and-modal-resume-20261027/owner-authorization-and-Main-decision.json",
+      "bytes": 3527,
+      "sha256": "6db53451c535526c427431323b7f0119756c4b118b702630f4c1212dcb648d75"
+    },
+    "status": "existing_writer_and_mail_active",
+    "writer_schedule_id": "e2572f80",
+    "writer_next_UTC": "2026-10-28T00:05:00.000Z",
+    "mail_next_UTC": "2026-10-28T01:00:00+00:00",
+    "mail_owner_time": "2026-10-28 09:00",
+    "recipients_and_cadence_preserved": true,
+    "chat_round_schedules_remain_paused": true
+  }
+}

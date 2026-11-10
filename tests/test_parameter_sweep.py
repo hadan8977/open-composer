@@ -11,6 +11,8 @@ from open_composer.cli import app
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.kernel.workflow import search_space_from_spec
 from open_composer.research.parameter_sweep import (
+    _candidate_from_params,
+    _parameter_combinations,
     parse_sweep_parameters,
     run_parameter_sweep,
     sweep_parameters_from_spec,
@@ -239,7 +241,17 @@ def test_parameter_sweep_cli_writes_reports(
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
-    preregister_iteration_dossier(spec_path, candidate_count=4)
+    parameters = parse_sweep_parameters(
+        ["risk.take_profit_pct=1.5,2.0", "costs.commission_pct=0,0.01"]
+    )
+    preregister_iteration_dossier(
+        spec_path,
+        candidate_count=4,
+        candidate_factory=lambda source: [
+            _candidate_from_params(source, params, index, sample_workspace)[0]
+            for index, params in enumerate(_parameter_combinations(parameters), start=1)
+        ],
+    )
     init_research_brief(spec_path, sample_workspace, search_budget=4)
     runner = CliRunner()
 
@@ -261,7 +273,7 @@ def test_parameter_sweep_cli_writes_reports(
         catch_exceptions=False,
     )
 
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     assert "parameter sweep complete" in result.output
     assert (
         sample_workspace / "reports" / "research" / "fixture_pullback_15m-parameter-sweep.md"
@@ -311,7 +323,15 @@ def test_parameter_sweep_from_spec_uses_research_design(
         "selection_objective": "test_top_level_design",
     }
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
-    preregister_iteration_dossier(spec_path, candidate_count=3)
+    parameters = sweep_parameters_from_spec(spec_path, sample_workspace)
+    preregister_iteration_dossier(
+        spec_path,
+        candidate_count=3,
+        candidate_factory=lambda source: [
+            _candidate_from_params(source, params, index, sample_workspace)[0]
+            for index, params in enumerate(_parameter_combinations(parameters), start=1)
+        ],
+    )
     init_research_brief(spec_path, sample_workspace, search_budget=3)
 
     assert sweep_parameters_from_spec(spec_path, sample_workspace)["risk.stop_loss_pct"] == [
@@ -336,7 +356,7 @@ def test_parameter_sweep_from_spec_uses_research_design(
         catch_exceptions=False,
     )
 
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     payload = json.loads(
         (
             sample_workspace / "reports" / "research" / "fixture_pullback_15m-parameter-sweep.json"

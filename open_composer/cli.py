@@ -95,6 +95,8 @@ macro_app = typer.Typer(no_args_is_help=True)
 context_app = typer.Typer(no_args_is_help=True)
 strategy_app = typer.Typer(no_args_is_help=True)
 run_app = typer.Typer(no_args_is_help=True)
+remote_app = typer.Typer(no_args_is_help=True)
+windows_worker_app = typer.Typer(no_args_is_help=True)
 options_app = typer.Typer(no_args_is_help=True)
 feature_app = typer.Typer(no_args_is_help=True)
 deploy_app = typer.Typer(no_args_is_help=True)
@@ -112,6 +114,7 @@ research_campaign_app = typer.Typer(no_args_is_help=True)
 research_iteration_app = typer.Typer(no_args_is_help=True)
 research_knowledge_app = typer.Typer(no_args_is_help=True)
 research_directions_app = typer.Typer(no_args_is_help=True)
+research_trials_app = typer.Typer(no_args_is_help=True)
 console = Console()
 PDR_ML_GATE_DEFAULT_SPEC_PATH = Path(
     "strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml"
@@ -129,6 +132,8 @@ app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
 strategy_app.add_typer(research_brief_app, name="research-brief")
 app.add_typer(run_app, name="run")
+app.add_typer(remote_app, name="remote")
+remote_app.add_typer(windows_worker_app, name="windows-worker")
 app.add_typer(options_app, name="options")
 app.add_typer(feature_app, name="feature")
 app.add_typer(deploy_app, name="deploy")
@@ -146,6 +151,7 @@ research_app.add_typer(research_campaign_app, name="campaign")
 research_app.add_typer(research_iteration_app, name="iteration")
 research_app.add_typer(research_knowledge_app, name="knowledge")
 research_app.add_typer(research_directions_app, name="directions")
+research_app.add_typer(research_trials_app, name="trials")
 research_channels_app = typer.Typer(no_args_is_help=True)
 research_app.add_typer(research_channels_app, name="channels")
 
@@ -154,6 +160,173 @@ research_app.add_typer(research_channels_app, name="channels")
 def _load_env() -> None:
     root = project_root()
     load_dotenv(root / ".env")
+
+
+def _windows_worker_result_payload(result: object) -> dict[str, object]:
+    from open_composer.remote.windows_worker import WorkerCommandResult
+
+    if not isinstance(result, WorkerCommandResult):
+        raise TypeError("unexpected Windows worker command result")
+    payload: dict[str, object] = {
+        "ok": result.ok,
+        "args": list(result.args),
+        "returncode": result.returncode,
+    }
+    if result.stdout:
+        try:
+            payload["data"] = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            payload["stdout"] = result.stdout
+    if result.stderr:
+        payload["stderr"] = result.stderr
+    return payload
+
+
+@windows_worker_app.command("contract")
+def windows_worker_contract_command(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """Show the local Windows Paseo worker contract without reading its offer."""
+    from open_composer.remote.windows_worker import load_worker_contract
+
+    contract = load_worker_contract(project_root())
+    if json_output:
+        print(json.dumps(contract, ensure_ascii=False, indent=2))
+    else:
+        console.print(f"endpoint={contract.get('endpoint_label', 'unknown')}")
+        console.print(f"transport={contract['transport']}")
+        console.print(f"remote_root={contract['remote_root']}")
+        console.print(f"max_usage_gib={contract['max_usage_gib']}")
+        console.print(f"workspace={contract.get('workspace_name', 'unknown')}")
+
+
+@windows_worker_app.command("preflight")
+def windows_worker_preflight_command(
+    remote: Annotated[
+        bool,
+        typer.Option(
+            "--remote", help="Also run read-only status and workspace checks through Paseo."
+        ),
+    ] = False,
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """Validate the worker contract and, optionally, the remote endpoint."""
+    from open_composer.remote.windows_worker import worker_preflight
+
+    payload = worker_preflight(project_root(), remote=remote)
+    if json_output:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        console.print(f"ok={'yes' if payload['ok'] else 'no'}")
+        for check in payload["checks"]:
+            console.print(f"{check['name']}: {'ok' if check['ok'] else 'blocked'}")
+    if not payload["ok"]:
+        raise typer.Exit(1)
+
+
+@windows_worker_app.command("manifest-validate")
+def windows_worker_manifest_validate_command(
+    path: Annotated[Path, typer.Argument(help="Path to a local task manifest JSON file.")],
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """Validate a manifest without transferring files or running commands."""
+    from open_composer.remote.windows_worker import validate_task_manifest
+
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        payload = validate_task_manifest(project_root(), manifest)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        payload = {"ok": False, "error": str(exc)}
+    if json_output:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    if payload.get("ok") is not True:
+        raise typer.Exit(1)
+
+
+@windows_worker_app.command("status")
+def windows_worker_status_command(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """Read the actual PowerShell worker status through a temporary Paseo terminal."""
+    from open_composer.remote.windows_worker import read_worker_status
+
+    try:
+        payload = read_worker_status(project_root())
+    except (FileNotFoundError, RuntimeError, TimeoutError) as exc:
+        payload = {"ok": False, "error": str(exc)}
+    if json_output:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    if payload.get("ok") is False:
+        raise typer.Exit(1)
+
+
+@windows_worker_app.command("daemon-status")
+def windows_worker_daemon_status_command(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """Read Paseo daemon connectivity separately from worker readiness."""
+    from open_composer.remote.windows_worker import run_worker_command
+
+    result = run_worker_command(project_root(), ["status"])
+    payload = _windows_worker_result_payload(result)
+    if json_output:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(result.stdout or result.stderr)
+    if not result.ok:
+        raise typer.Exit(result.returncode or 1)
+
+
+@windows_worker_app.command("workspace-list")
+def windows_worker_workspace_list_command(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """List remote Paseo workspaces without modifying them."""
+    from open_composer.remote.windows_worker import run_worker_command
+
+    result = run_worker_command(project_root(), ["workspace", "ls"])
+    payload = _windows_worker_result_payload(result)
+    if json_output:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(result.stdout or result.stderr)
+    if not result.ok:
+        raise typer.Exit(result.returncode or 1)
+
+
+@windows_worker_app.command("terminal-list")
+def windows_worker_terminal_list_command(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print machine-readable JSON.")
+    ] = False,
+) -> None:
+    """List remote Paseo terminals without modifying them."""
+    from open_composer.remote.windows_worker import run_worker_command
+
+    result = run_worker_command(project_root(), ["terminal", "ls"])
+    payload = _windows_worker_result_payload(result)
+    if json_output:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(result.stdout or result.stderr)
+    if not result.ok:
+        raise typer.Exit(result.returncode or 1)
 
 
 @factor_app.command("list")
@@ -896,12 +1069,55 @@ def research_iteration_validate_command(
         result = validate_iteration_dossier(iter_id, project_root(), stage=stage)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
+    if result.ok and stage == "pre-backtest":
+        from open_composer.research.gate_additions import record_prebacktest_gate
+
+        record_prebacktest_gate(iter_id, project_root())
     if json_output:
         sys.stdout.write(json.dumps(result.to_dict(project_root()), indent=2) + "\n")
     else:
         console.print(render_validation_markdown(result))
+        if result.info:
+            console.print(f"info: {json.dumps(result.info, ensure_ascii=False)}")
     if not result.ok:
         raise typer.Exit(1)
+
+
+@research_trials_app.command("count")
+def research_trials_count_command(
+    family: Annotated[str | None, typer.Option("--family", help="Mechanism family key.")] = None,
+    program: Annotated[str | None, typer.Option("--program", help="Program, e.g. P4.")] = None,
+) -> None:
+    """Cumulative registered trials across all projects (use as n_trials in the DSR)."""
+    from open_composer.research.gate_additions import count_trials
+
+    sys.stdout.write(
+        json.dumps(count_trials(project_root(), family=family, program=program), indent=2) + "\n"
+    )
+
+
+@research_trials_app.command("register")
+def research_trials_register_command(iter_id: str) -> None:
+    """Append an iteration's candidates to reports/research/trials.jsonl (idempotent)."""
+    from open_composer.research.gate_additions import (
+        ITERATION_ROOT,
+        append_trials,
+        build_trial_rows,
+    )
+
+    iter_dir = project_root() / ITERATION_ROOT / iter_id
+    if not iter_dir.is_dir():
+        raise typer.BadParameter(f"iteration dossier not found: {iter_id}")
+    added = append_trials(project_root(), build_trial_rows(iter_dir))
+    sys.stdout.write(json.dumps({"iter_id": iter_id, "added": added}) + "\n")
+
+
+@research_trials_app.command("backfill")
+def research_trials_backfill_command() -> None:
+    """Backfill trials.jsonl from existing manifests and trial ledgers (counts only)."""
+    from open_composer.research.gate_additions import backfill_trials
+
+    sys.stdout.write(json.dumps(backfill_trials(project_root()), ensure_ascii=False) + "\n")
 
 
 @research_campaign_app.command("validate")

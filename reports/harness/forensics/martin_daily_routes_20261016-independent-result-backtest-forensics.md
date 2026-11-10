@@ -1,0 +1,5 @@
+Independent saved-result forensics: warning. All9fixed books and54dependent sleeves reconcile from534saved fills to27108daily marks, both fees and20000aggregate capital. No engine or signal calculation was rerun.
+
+Causal close/next-open bookkeeping is verified within the accepted current-vintage adjusted-price model. Seen selected controls, unproved historical visibility/security cash rights and actual execution/capacity remain limitations. Passive exposure and risk differ substantially. Bounce17closed remains low_trade_count/short_sample_caveat; no broad mechanism refutation. PBO/DSR and legacy proxies stay N/A/null; two frozen hypotheses are not54independent trials, and full-parent effective trial exposure is unknown.
+
+The50continuation observed-stop exits include3net winners. The5067.72USD threshold-to-close component is an observed-path identity, never guaranteed recovery. The next protection-clock question is conditional and design-only; exact fill semantics, smallest existing-engine hook and synthetic accounting/baseline parity must be accepted before execution. No promotion, paper or new resource/action grant.

@@ -1,0 +1,29 @@
+{% if paper_history and paper_history.available %}
+<details class="lane" id="paper-accounting-history">
+<summary class="lane-head">历史核对与重算 · {{ paper_history.histories|length }} 条序列 · 至 {{ paper_history.through_session }}</summary>
+<p class="faint">账户原始权益、按原始成交/未复权收盘价重建的交易分项分别列示。重建值不是补造券商快照；费用、收入与结算未完整归属时净收益仍 N/A。父子账本不得再次相加；空缺不补零、不沿用旧价格。</p>
+{% if paper_history.quarantined_account_points %}<p>已隔离 {{ paper_history.quarantined_account_points|length }} 条 2026-10-26 官方账户日线估值异常。原始响应和独立 base_value 均保留，该日期显示 N/A；没有用当前账户权益、前日估值或其他账户替代。供应方原因尚未确认。</p>{% endif %}
+{% if paper_history.stale %}<p>本次重算截止 {{ paper_history.through_session }}，应有已收盘交易日 {{ paper_history.expected_session }}；后续日期尚未重算，不代表零收益或继续持有旧估值。</p>{% endif %}
+{% if paper_history.posted_cash_entries %}<p>已保存、已执行的账户非交易现金记录：{% for entry in paper_history.posted_cash_entries %}{{ entry.account }} {{ entry.kind }} {{ entry.amount_usd|money }}{% if not loop.last %}；{% endif %}{% endfor %}。保留账户级归属；没有订单绑定的费用不强行分配到单策略，后续入账完整性另行说明。</p>{% endif %}
+{% if paper_history.latest_account_observations %}<p>最新已接收账户观察（独立账户，不相加）：差额为权益减该账户券商报告的 base_value，不能直接归为策略盈利，也不是补造收盘日线。</p><div class="table-wrap"><table class="t"><thead><tr><th>账户</th><th>观察时间 UTC</th><th>权益</th><th>现金</th><th>券商 base_value</th><th>账户差额</th></tr></thead><tbody>{% for row in paper_history.latest_account_observations %}<tr><td>{{ row.account }}</td><td class="num">{{ row.at }}</td><td>{{ row.equity_usd|money }}</td><td>{{ row.cash_usd|money }}</td><td>{{ row.base_value_usd|money }}</td><td>{{ row.change_from_reported_base_usd|money }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% for history in paper_history.histories %}
+<details class="more">
+<summary>{{ history.label }} · {{ history.kind }}{% if history.latest %} · {{ history.latest.day }} · {% if history.kind == 'account' %}权益 {{ history.latest.equity_usd|money }}{% else %}交易分项 {{ history.latest.trading_pnl_usd|money if history.latest.trading_pnl_usd is not none else 'N/A' }}{% endif %}{% endif %}</summary>
+{% if history.first_fill %}<p class="faint">首笔成交 {{ history.first_fill }} · {{ history.execution_count or 'child sum' }} 条执行 · {{ history.execution_basis|join(', ') if history.execution_basis else 'see children' }}</p>{% endif %}
+{% if history.children %}<p class="faint">子账本只计一次：{{ history.children|join(', ') }}</p>{% endif %}
+{% if history.order_ownership %}<p>已绑定 {{ history.order_ownership.individual_FILL_count }} 笔真实成交。首笔原策略成交 {{ history.order_ownership.first_native_strategy_FILL_at }}；此前探针单独列示，已平仓探针交易分项 {{ history.order_ownership.probe_realized_trading_pnl_before_fees_usd|money }}，不直接算作 F1 策略利润。</p>{% for mismatch in history.order_ownership.canonical_daily_vs_submitted_plan_mismatches %}<p>计划绑定缺口：{{ mismatch.day }} 的 canonical daily 计划哈希与真实提交计划不同，旧 modeled net 不作为已核策略收益。</p>{% endfor %}{% endif %}
+{% if history.performance %}<p>账户权益变化 {{ history.performance.observation_change_usd|money if history.performance.observation_change_usd is not none else 'N/A' }} · 扣外部资金流后的账户变化 {{ history.performance.net_change_ex_external_flows_usd|money if history.performance.net_change_ex_external_flows_usd is not none else 'N/A' }} · 收益率 {{ '%.4f%%'|format(history.performance.return_pct) if history.performance.return_pct is not none else 'N/A' }}。这是该账户范围的变化，不能直接归属为某个策略净收益。</p><p class="faint">{{ history.performance.start or '' }} → {{ history.performance.end or '' }} · {{ history.performance.return_method }}</p>{% endif %}
+{% if history.chart %}
+<svg viewBox="0 0 800 175" role="img" aria-label="{{ history.label }} dated accounting history; missing values remain gaps" style="width:100%;display:block">
+<line x1="0" x2="800" y1="{{ history.chart.baseline }}" y2="{{ history.chart.baseline }}" stroke="currentColor" opacity="0.25"/>
+{% for bar in history.chart.bars %}{% if bar.value is not none %}<rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" fill="currentColor" opacity="0.7"><title>{{ bar.day }} · {{ bar.value|money }}</title></rect>{% else %}<line x1="{{ bar.x }}" x2="{{ bar.x }}" y1="160" y2="170" stroke="currentColor" stroke-dasharray="2 2"><title>{{ bar.day }} · missing valuation</title></line>{% endif %}{% endfor %}
+</svg>
+{% endif %}
+<div class="table-wrap"><table class="t t--stack"><thead><tr><th>纽约交易日</th><th class="num">账户权益 / 本金</th><th class="num">重建 NAV*</th><th class="num">交易 P&amp;L*</th><th class="num">{% if history.kind == 'account' %}账户扣外部资金流变化{% else %}策略净 P&amp;L{% endif %}</th><th>依据 / 缺口</th></tr></thead><tbody>
+{% for point in history.points %}<tr><td>{{ point.day }}</td><td class="num">{{ point.equity_usd|money if history.kind == 'account' else point.capital_usd|money if point.capital_usd is not none else 'N/A' }}</td><td class="num">{{ point.nav_before_unverified_items_usd|money if point.nav_before_unverified_items_usd is not none else 'N/A' }}</td><td class="num">{{ point.trading_pnl_usd|money if point.trading_pnl_usd is not none else 'N/A' }}</td><td class="num">{% if history.kind == 'account' %}{{ point.account_change_ex_external_flows_usd|money if point.account_change_ex_external_flows_usd is not none else 'N/A' }}{% else %}{{ point.net_pnl_usd|money if point.net_pnl_usd is not none else 'N/A' }}{% endif %}</td><td>{{ point.valuation }}{% if point.at %}<div class="faint num">{{ point.at }}</div>{% endif %}{% for missing in point.missing or [] %}<div class="faint">{{ missing }}</div>{% endfor %}</td></tr>{% endfor %}
+</tbody></table></div>
+</details>
+{% endfor %}
+<p class="faint num">生成 {{ paper_history.generated_at }} · {{ paper_history.source_bindings|length }} 份绑定来源 · SHA256 {{ paper_history.artifact_sha256 }}</p>
+</details>
+{% endif %}

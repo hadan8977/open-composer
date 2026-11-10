@@ -1,0 +1,379 @@
+{
+  "lookahead_check": "warning",
+  "future_leak_check": "warning",
+  "overfit_risk": "high",
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "pbo": null,
+  "dsr": null,
+  "statistical_methods": {
+    "pbo": "N/A: no actual CSCV selection/ranking on a frozen candidate matrix",
+    "dsr": "N/A: trial-adjusted Sharpe inputs and project effective trial exposure not established"
+  },
+  "conclusion": "warning",
+  "not_promotion_approval": true,
+  "independent_review": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/peer-review/final-result-review.json",
+  "review_guard": {
+    "at_utc": "2026-10-21T04:38:51.581038+00:00",
+    "quota": {
+      "at_utc": "2026-10-21T04:38:27.690173+00:00",
+      "used_percent": 91,
+      "resets_at": 1793083216,
+      "window_minutes": 10080
+    },
+    "age_seconds": 23.890865,
+    "STOP_present": false,
+    "stop": false
+  },
+  "notes": "Read-only result/diff review. No tests or experiments started. Acceptance is limited to explicitly declared conditional evidence, not physical execution, profitability or untouched OOS.",
+  "strategy_name": "martin-20261021-f1",
+  "status": "complete_limited_conditional_diagnostic",
+  "multiple_testing_count": 8,
+  "multiple_testing_scope": "8 frozen account/participation policies in this first-pass comparison; three fees are accounting views; two learned fits; not whole-project effective trial count",
+  "sample_data_caveats": [
+    "short_sample_caveat",
+    "187_trading_days",
+    "six_name_liquidity_prefix",
+    "historical_seen",
+    "current_identity_not_PIT",
+    "all_adjusted_normalized_units",
+    "conditional_unit_fill_price_reuse",
+    "synthetic_OHLC_not_quotes"
+  ],
+  "trade_count": 114,
+  "trading_days": 187,
+  "short_sample": true,
+  "trade_count_scope": "all-events policy at10bp/side, alternate policies57-63 trades",
+  "capacity_assessment": "No observed quote/depth or physical-share capacity certification; quantity-invariant/no-impact conditional price reuse only.",
+  "accepted_views": {
+    "status": "accepted_conditional_six_name_account_diagnostic",
+    "scope": [
+      "TSLA",
+      "NVDA",
+      "AAPL",
+      "MSFT",
+      "AMZN",
+      "AMD"
+    ],
+    "scope_basis": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/first-pass-scope.json",
+    "calendar": "2026-01-02/2026-09-30; 187 daily marks",
+    "counts": {
+      "train": 167,
+      "calibration": 138,
+      "evaluation_candidates": 118,
+      "total_labels": 423
+    },
+    "policy_views": 8,
+    "fee_views_bps_per_side": [
+      0,
+      10,
+      20
+    ],
+    "learned_fits": 2,
+    "primary_10bp": [
+      {
+        "arm": "all",
+        "net_dollars": -2731.7456951999557,
+        "trades": 114,
+        "max_daily_drawdown_pct": -14.067928434295684,
+        "daily_marks": 187
+      },
+      {
+        "arm": "relative_strength",
+        "net_dollars": -2373.34187639998,
+        "trades": 63,
+        "max_daily_drawdown_pct": -11.866709381999863,
+        "daily_marks": 187
+      },
+      {
+        "arm": "ridge",
+        "net_dollars": -1679.4851924999784,
+        "trades": 57,
+        "max_daily_drawdown_pct": -8.63183356249989,
+        "daily_marks": 187
+      },
+      {
+        "arm": "tree",
+        "net_dollars": -1022.9950145999755,
+        "trades": 60,
+        "max_daily_drawdown_pct": -5.831910892195424,
+        "daily_marks": 187
+      },
+      {
+        "arm": "index_timing",
+        "net_dollars": -823.3847214999805,
+        "trades": 60,
+        "max_daily_drawdown_pct": -4.819405349104522,
+        "daily_marks": 187
+      },
+      {
+        "arm": "opportunity_timing",
+        "net_dollars": -619.272641999989,
+        "trades": 60,
+        "max_daily_drawdown_pct": -3.8672615042696368,
+        "daily_marks": 187
+      },
+      {
+        "arm": "index_cal_budget_normalized",
+        "net_dollars": -828.7057614999867,
+        "trades": 60,
+        "max_daily_drawdown_pct": -4.845959367349617,
+        "daily_marks": 187
+      },
+      {
+        "arm": "opportunity_cal_budget_normalized",
+        "net_dollars": -991.3778603999817,
+        "trades": 60,
+        "max_daily_drawdown_pct": -5.674129238705716,
+        "daily_marks": 187
+      }
+    ],
+    "checks": {
+      "all_24_trade_sums_reconcile": true,
+      "max_cash_residual": 1.6370904631912708e-11,
+      "all_initial_peak_drawdowns_match": true,
+      "feature_available_after_decision": 0
+    },
+    "limitations": [
+      "liquidity-prefix first pass after TSLA partial exposure; not full29 or unseen OOS",
+      "current identities and adjusted price units; no certified PIT physical-share reconstruction",
+      "frozen baseline-flat event support; not all counterfactual entries",
+      "quantity-invariant/no-impact price reuse is conditional; no observed quotes/TCA or depth/capacity certification",
+      "all 10bp arms are negative; smaller loss is not proven Alpha or ML contribution",
+      "normalized calibration budgets are not guaranteed identical test-period exposure"
+    ],
+    "ledger_hashes": [
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/all-cost0-trades.parquet",
+        "sha256": "49334c455c8147344618afe08c936a20e966cf0303aa462fd4f011b40476de73"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/all-cost0-nav.parquet",
+        "sha256": "ec43865443c409a8c0d8032ca728a501b7959a06c999517e2f79a02ec8cfccf4"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/all-cost10-trades.parquet",
+        "sha256": "00cb174a48fd811d045d985f976e692300e32e87f9e48465484a75f832684c77"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/all-cost10-nav.parquet",
+        "sha256": "2f22836bea01605d546a0ac0ff17ecd3b99b6704b19f1857a702209bb30a0116"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/all-cost20-trades.parquet",
+        "sha256": "b305b1fa3da781903c5f95e9dd321d8a2788c5df09c764991a027546363a3cfe"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/all-cost20-nav.parquet",
+        "sha256": "9310d926788065635e00f7084a34e722010879a2662ad8bd498cfd4f0d51a226"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/relative_strength-cost0-trades.parquet",
+        "sha256": "4bb98519781656fa2f7b0b235f7819fb56a5fd1a80bebc1e116f51c0ad165a43"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/relative_strength-cost0-nav.parquet",
+        "sha256": "e06fab289e02a4c2a3e5612d957b94d70848a7e42bc1865cc4bad7782a84f734"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/relative_strength-cost10-trades.parquet",
+        "sha256": "f97c89b9011f135916770845a0bb66347890a583da35fc19ba1248d970bc6578"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/relative_strength-cost10-nav.parquet",
+        "sha256": "9e3648e763200c7c44c0347144e24a4ff3a33fca343600d3b8badd492c99eee4"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/relative_strength-cost20-trades.parquet",
+        "sha256": "b0b5f94bcd1b98a0bb544dd04afff7cce457c24f56d278c87b18eac461943df6"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/relative_strength-cost20-nav.parquet",
+        "sha256": "f430728feea303aa3613efe154328e6c6f74f576a18c7c2496a62f4c90dcaa27"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/ridge-cost0-trades.parquet",
+        "sha256": "7bba884a39a0298849cb7dfb262182d855e373ec0665d9ce28868cb8c7e47135"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/ridge-cost0-nav.parquet",
+        "sha256": "b38706c91f9d15d078bf903b7536562705434496284acd72879079aa4f57409d"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/ridge-cost10-trades.parquet",
+        "sha256": "7605183fa45780030f911fb8abd4bb98193eb8913dd04676c1dc7fae99e5b547"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/ridge-cost10-nav.parquet",
+        "sha256": "a5a2cc169f4bf4717b19203a81d079d693d0dfa6107669cc9e04a9fcf1a5d05e"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/ridge-cost20-trades.parquet",
+        "sha256": "80b61b977ec41245225ab09f2991853a06811b1b40aa65c955e1def2a718d571"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/ridge-cost20-nav.parquet",
+        "sha256": "1911c0eb5711f1e98aaba511af7c28a70cd07bce0749b098d0d314292fdd24eb"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tree-cost0-trades.parquet",
+        "sha256": "a083678e64a74b91583658aad05af0e33660e2912d5590d603ff888ed553b735"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tree-cost0-nav.parquet",
+        "sha256": "a4f5c3c5a90f95d525fec34161cf3b19f3ebde28f8fc24cc8eaed8484329d2f8"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tree-cost10-trades.parquet",
+        "sha256": "c23514250f9584533c59df020fd9b2d9070ba04c56b904a29c51fb17d81bb483"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tree-cost10-nav.parquet",
+        "sha256": "7d5ddfcae72e394b44d671499c3be370158f014e2806a52ccfd2524fc7a12d64"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tree-cost20-trades.parquet",
+        "sha256": "702ea8e5ea6244101494204c6671610bc1244b8d6b3fb93d7869adaaf1c8cd31"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tree-cost20-nav.parquet",
+        "sha256": "96959f9484ef258df8562b5f3c1a6b0680b9b5029136109b626d30005c9178a2"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_timing-cost0-trades.parquet",
+        "sha256": "86bdbd45b9883222cbc0cdb665c3740f15aab02ec81837ec8de9eb72ca24b785"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_timing-cost0-nav.parquet",
+        "sha256": "fa2acb50213a2c834ab5a8163147c80f7eee4383df4253e91d24b2e620e641bc"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_timing-cost10-trades.parquet",
+        "sha256": "0cf4f3ec1148dfd67bb23e722dd47bf01ca87bf5bb10fa884072842dd9e62ebb"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_timing-cost10-nav.parquet",
+        "sha256": "b7f7ca81bba1a2a6cc86ad97d391c326c37086e90b2c22b94235ee3003df17a4"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_timing-cost20-trades.parquet",
+        "sha256": "ecb03642236399ba7a9311cb7123d015f62e514ebaa577b45d3c79e7af1edd69"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_timing-cost20-nav.parquet",
+        "sha256": "2b80a1a17f6eb5adb45356a10e9a9cd28ce58f5d5291be97d8d32cc9039f83b9"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_timing-cost0-trades.parquet",
+        "sha256": "0a1157b535f96969b6f3fa8320368597742a94ba687c066c36c17368c9de993e"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_timing-cost0-nav.parquet",
+        "sha256": "4d6f54dac4c837ad5f1593f6cc08db58448195d3d5ef4671e3e0c4df054f824b"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_timing-cost10-trades.parquet",
+        "sha256": "090eee84dec0216f353e11fa7672c295f0872a719cd426b77f98cf4a1f52d913"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_timing-cost10-nav.parquet",
+        "sha256": "3d0b5cd1565d5224a80b7f144e0c743cb0935b3c614b95f749f029fe6875e69f"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_timing-cost20-trades.parquet",
+        "sha256": "8275b0bdecbe833b300da048ff1fc4c43be97e277be71b8ce04ccfdaef8feb11"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_timing-cost20-nav.parquet",
+        "sha256": "b50e14f4ca3f4d84848104eadfc5944aadd6625c274c126d7739c472d4ae7e99"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_cal_budget_normalized-cost0-trades.parquet",
+        "sha256": "9dd3b5226e272f2e223febfbf9d0f4ec4eed846836b8021e992665c1f1a1e78d"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_cal_budget_normalized-cost0-nav.parquet",
+        "sha256": "f593914bb85404a7f0e19216a675909cdfe64fb49ed86c1ae4bf795365a10cfc"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_cal_budget_normalized-cost10-trades.parquet",
+        "sha256": "fc4d97cfa4bde0bd4040f02413c26122b03af3a440875620ac0652a8473c9b40"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_cal_budget_normalized-cost10-nav.parquet",
+        "sha256": "266196f971f8843e41099cd4fdd16bc4f780af1098b7c5e60b1953dcc5d04e8b"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_cal_budget_normalized-cost20-trades.parquet",
+        "sha256": "ef92151a550989f08c6c5dc5b630fc81f3de16692da59bb97f04211f8e33292f"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/index_cal_budget_normalized-cost20-nav.parquet",
+        "sha256": "706666d72ba38af5a6305192298e2a69f361ba30f45555e80367eb6004376b45"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_cal_budget_normalized-cost0-trades.parquet",
+        "sha256": "94297c4dac9b068fabb0739d19191f3375a3a1df055a5a1a7ac21acce919a924"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_cal_budget_normalized-cost0-nav.parquet",
+        "sha256": "e76d8f8415bcf8fbddc6c50376b5272e25fa4433bdbc5b44f56e82f98b9565fd"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_cal_budget_normalized-cost10-trades.parquet",
+        "sha256": "24c921c4b2fd1bbb94338076465f677cd4ff1a0e513cc40d90ac570a9c396ed8"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_cal_budget_normalized-cost10-nav.parquet",
+        "sha256": "9a53bc71daf7a2cae1c4e12127e37a01b4bf61b0d24cf7f987f195ef7367dd35"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_cal_budget_normalized-cost20-trades.parquet",
+        "sha256": "0ff66b8d6d979a372038ed623846cfb9b6f48fcc1b89c776366ab8f2fd050767"
+      },
+      {
+        "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/opportunity_cal_budget_normalized-cost20-nav.parquet",
+        "sha256": "c9230946f5868a93ff2bd4f9fed14a6537fc04a33f152c2e26567eef037fd17f"
+      }
+    ]
+  },
+  "source_bindings": [
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/result.json",
+      "sha256": "c9214911ee13b4129edb74379522127ee400e51200fc1161a817332702d37706"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/first-pass-scope.json",
+      "sha256": "e312635f9a21d06c7b3c1172ff66ab138fe04c76c6ae0d4819fbe7c81ddae33a"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/evaluate.py",
+      "sha256": "c2e3821a8bb2922591e778601128e65b68b796344622330d9958f09e7c4d3775"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/native_f1.py",
+      "sha256": "6d161f3679ee7d98a6bf83a3e972ffae89a0eac0df0ee3508ecb888e0e1e47bf"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/test_f1.py",
+      "sha256": "12177fc61c160c3b5bf758fa6e1de726ceeab1a113a0acd7f26ef93bd86207ea"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/tests-final.log",
+      "sha256": "06955fb47f16312e5d13266c774a2aa4648c46e423cbe6564a92e25b68e39131"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/predictions.parquet",
+      "sha256": "df7a0f8bd349cda56b66f90c2016d048750717dece3506baf19817f6053fadf3"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/calibration.json",
+      "sha256": "a8f0a73e25c4e73bbeae73e85c20d3e0d99f6698214b4227d5fff27aab7a5274"
+    },
+    {
+      "path": "reports/research/program/martin-quantization-plan-20261021/execution-5pct/f1/protocol.json",
+      "sha256": "df3c765468a86d0538357794aba0dbf13bee5afbce34a36ae96c3963dac261b7"
+    }
+  ]
+}
+

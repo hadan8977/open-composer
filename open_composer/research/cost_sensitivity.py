@@ -10,6 +10,10 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import project_root
 from open_composer.engines.backtest_engine import backtest_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import (
+    NativeExecutionControl,
+    require_iteration_execution_gate,
+)
 from open_composer.research.metadata import workspace_relative_path
 from open_composer.storage import write_json
 
@@ -39,6 +43,8 @@ class CostGridReport(BaseModel):
     results: list[CostGridResult]
     ranking_spread: float
     warning: str
+    selectable_candidate: Literal[False] = False
+    promotion_eligible: Literal[False] = False
 
 
 def run_cost_grid(
@@ -51,8 +57,13 @@ def run_cost_grid(
 ) -> CostGridReport:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
-    frame = load_ohlcv_for_spec(spec, base)
-    results: list[CostGridResult] = []
+    admission = require_iteration_execution_gate(
+        spec,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=spec.data.source != "sample",
+    )
+    controls = []
     for commission_pct in commission_grid:
         for slippage_bps in slippage_grid:
             for impact_model in impact_models:
@@ -62,27 +73,49 @@ def run_cost_grid(
                     slippage_bps=slippage_bps,
                     impact_model=impact_model,
                 )
-                artifacts = backtest_frame(
-                    candidate,
-                    frame,
-                    root=base,
-                    run_id_value=(
-                        f"cost-grid-{spec.name}-{commission_pct}-{slippage_bps}-{impact_model}"
-                    ),
-                )
-                results.append(
-                    CostGridResult(
-                        commission_pct=commission_pct,
-                        slippage_bps=slippage_bps,
-                        impact_model=impact_model,  # type: ignore[arg-type]
-                        impact_eta=candidate.costs.impact_eta,
-                        impact_gamma=candidate.costs.impact_gamma,
-                        return_pct=artifacts.run.total_return_pct,
-                        sharpe=artifacts.run.sharpe_ratio or 0.0,
-                        signal_count=artifacts.run.signals,
-                        trade_count=artifacts.run.trades,
+                control = (
+                    NativeExecutionControl(
+                        source=spec,
+                        purpose="cost_grid",
+                        parameters={
+                            "commission_pct": commission_pct,
+                            "slippage_bps": slippage_bps,
+                            "impact_model": impact_model,
+                        },
                     )
+                    if admission is not None
+                    else None
                 )
+                require_iteration_execution_gate(
+                    candidate, base, enforce_unbound_design=True, native_control=control
+                )
+                controls.append((candidate, control))
+    frame = load_ohlcv_for_spec(spec, base)
+    results: list[CostGridResult] = []
+    for candidate, control in controls:
+        commission_pct = candidate.costs.commission_pct
+        slippage_bps = candidate.costs.slippage_bps
+        impact_model = candidate.costs.impact_model
+        artifacts = backtest_frame(
+            candidate,
+            frame,
+            root=base,
+            run_id_value=(f"cost-grid-{spec.name}-{commission_pct}-{slippage_bps}-{impact_model}"),
+            native_control=control,
+        )
+        results.append(
+            CostGridResult(
+                commission_pct=commission_pct,
+                slippage_bps=slippage_bps,
+                impact_model=impact_model,  # type: ignore[arg-type]
+                impact_eta=candidate.costs.impact_eta,
+                impact_gamma=candidate.costs.impact_gamma,
+                return_pct=artifacts.run.total_return_pct,
+                sharpe=artifacts.run.sharpe_ratio or 0.0,
+                signal_count=artifacts.run.signals,
+                trade_count=artifacts.run.trades,
+            )
+        )
     ranking_spread = max((item.sharpe for item in results), default=0.0) - min(
         (item.sharpe for item in results), default=0.0
     )

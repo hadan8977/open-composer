@@ -1,0 +1,27 @@
+# Default settings for earlyoom. This file is sourced by /bin/sh from
+# /etc/init.d/earlyoom or by systemd from earlyoom.service.
+
+# Options to pass to earlyoom
+# -m 10 -s 10: only act when both available RAM and swap drop below 10%
+# --avoid: never kill these core infra/service processes (hermes and cloudflared added
+#          2026-10-07: the owner's other project and the remote edge; open-composer yields first)
+# no --prefer (removed 2026-10-08): it made earlyoom pick small Claude agents (80 MB, which
+#           then ignored SIGTERM) while a 2.1 GB python process filled the box; size-based
+#           selection kills the process that is actually using the memory
+EARLYOOM_ARGS="-r 3600 -m 10 -s 10 --avoid '(^|/)(systemd.*|init|sshd.*|xray|hysteria|rclone|quantcheck|dbus-daemon|rsyslogd|cron|Paseo Daemon|Paseo Superviso|polkitd|hermes|cloudflared)$'"
+
+# Examples:
+
+# Print memory report every second instead of every minute
+# EARLYOOM_ARGS="-r 1"
+
+# Available minimum memory 5%
+# EARLYOOM_ARGS="-m 5"
+
+# Available minimum memory 15% and free minimum swap 5%
+# EARLYOOM_ARGS="-m 15 -s 5"
+
+# Avoid killing processes whose name matches this regexp
+# EARLYOOM_ARGS="--avoid '(^|/)(init|X|sshd|firefox)$'"
+
+# See more at `earlyoom -h'

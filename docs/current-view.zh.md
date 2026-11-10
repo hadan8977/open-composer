@@ -1,4 +1,278 @@
-# 当前判断（常设页，每轮研究后更新）— 最近更新 2026-10-07 20:16 UTC
+# 项目当前状态（更新于 2026-10-11T11:38:21.924000+00:00）
+
+## 2026-10-11 16:39 UTC（机主纠正训练授权，Hadan现场ready）
+
+- 机主明确合适已有资源可恢复研究训练，不存在持续全平台暂停；Hadan在线开机且fresh preflight ready、usage_ok与<50GiB时可直接使用，不重复询问是否恢复。
+- 本会话实际remote preflight通过：worker更新时间2026-10-11T16:41:10.9657608Z，ready、paused=false、hard_off=false，C:\paseo占用3.4GiB；这是该次观测，每次实际派工仍fresh检查。
+- owner-compute-hold.json与相关当前规则/任务授权同步；原暂停/撤回记录留存，不复活旧实验或重置额度。本机开关、路径、预算和适用科学/输入门保持，无新付费。
+- 本次只纠正授权和监控许可判定，尚未由本会话启动训练；现有研究root继续自己的经济任务，并承接资源适合的有效训练包。
+- 证据：reports/research/program/compute-authorization-correction-20261011/owner-correction.json。
+
+## 2026-10-11T11:38:21.924000+00:00：2000份来源批量完成父验收，身份与经济输入仍待补
+
+- 本批2000次请求正常退出，1979份完整、21份超限；1120份有摘录、2794段。近期完整来源208→2187/15065，完整缺口12878；全文未保留，不等于可交易关系表。
+- 单次805.109秒，cgroup峰值190.375MiB、swap/OOM0；旧210加本批2000累计2210，请求和invocation余额0。原40分钟父期限内完成，未派重复collector/review。
+- 父验收初次以accession唯一映射CIK误报3项；失败记录保留，逐项证实采集器忠实原索引首行。3个多CIK accession仍需下游实体/证券证据，不能自动取当前代码。
+- workflow仅source通过，research/ML/LLM/paper false，新增经济trial/模型/关系/订单0，组合Sharpe N/A。WeChat720h额度阻断不重试，训练hold保留，其他独立研究继续。
+- 当前入口：`reports/research/program/source-continuation-scale-20261011/current-state.json`；父验收：`reports/research/program/source-continuation-scale-20261011/parent-acceptance.json`。下一步实际实体/分母输入修复或另一真实ready任务，不以继续增加来源数量代替经济准入。
+
+## 2026-10-11T09:51:25.914753+00:00：经济关系真实输入验收完成，近期覆盖缺失
+
+- 2022–2026索引15,065个唯一申报，实际fetched/parsed均0；不能以现有抽取进程active代替近期覆盖。
+- 50条样本均由2021补足，作者原语义31通过/17失败/2不可证；root独立10条确认身份错配、分部/集团/渠道分母问题，保留原判断及字段差异；50条历史可交易性均不可证。不是总体精度或Alpha。
+- 两次capped累计189.799/240秒，首次timeout保留，同225份immutable输入恢复成功；无第三次额度。仅data workflow通过，research/ML/LLM/paper未通过，收益/账户增量N/A。
+- 下一步一次完整有界来源恢复与PIT身份/表格分母输入修复计划，独立批准后才新增获取；不重复审计、不等待未采集文件自行出现。原抽取driver、训练hold、调度及生产未改。
+- 唯一当前入口：`reports/research/program/economic-links-acceptance-20261011/parent-acceptance.json`。
+
+## 2026-10-11T07:29:21.515827+00:00：月度执行原记录已独立验收
+
+- S2/S3在09-30晚生成的10-01计划与本地成交6/6匹配，数量达到记录目标且次周期本地持仓一致；S1两项skip_below_tolerance，滑点N/A。
+- 按日线开盘名义金额加权，S2/S3滑点2.3105/8.4080bp，合计7.0854bp（$13.29）；仅本地可覆盖回执诊断，非独立broker/NBBO认证。
+- 原target/data哈希未绑定，研究一致性及账户成本后Sharpe仍N/A；仅workflow通过，research/ML/LLM/paper_ready未通过，本轮经济trial/新订单0。
+- 主审Astra和作者Sol均xhigh/实际full-access；Hadan一次relay超时不派工，训练hold保留。28输入hash和独立Decimal复算通过，作者已归档；不重复该审计，待真实原始版本再定parity入口。
+- 唯一当前入口：`reports/research/program/monthly-execution-acceptance-20261011/parent-acceptance.json`；next-actions与原队列任务已同步，其他研究继续其有效合同。
+
+
+## 2026-10-11T06:56:53.785950+00:00：并行准备与独立审查闭环
+
+- 三位独立作者完成三包，另一个独立review turn完成收益包审查；Root验收完毕，活动owner已释放。当前入口：`reports/research/program/parallel-research-20261011/root-acceptance.json`。
+- 收益路线：确认旧G2未来退出信息进入入场资格；论文已有15:55稳健性。真实五类输入/authority未绑定，本次重开not_ready，不复跑旧OOS或网格。
+- QQQ：保留原数量/双路参考准备；不启动提议的13,800秒纯数值审计。需要实际lineage或完整新经济问题；原parity N/A。
+- 新闻GRPO：固定revision条款与非循环准备入口已核；数据/数值/model准入仍未通过，训练暂停。
+- 长期记忆、会话入口与三个实际定时prompt已同步；Hadan本次连接超时未派工，仅在线且ready时可做非训练研究。所有新收益/模型指标N/A；未回测、下单或新增付费。
+
+
+## 2026-10-11 06:33 UTC（机主授权扩大独立派工，Hadan仅在线且ready，训练仍暂停）
+
+- 八项LLM机制研究的短结论/反证和详细阅读笔记已永久保留在 reports/research/knowledge/llm-internals-20261011/，AGENTS/使命/三个实际schedule均接入；它们不是Alpha或训练结果。
+- 独立subagent不固定只派两位，按真实运行槽位、memory/预算和约500MiB余量扩展。本轮三次admission通过，三位Sol/xhigh/full-access实际启动：独立收益入口、QQQ三输入/双路参考、新闻GRPO准备；具体owner和brief见next-actions.json。
+- Hadan新授权仅非训练研究，必须开机在线且fresh worker ready、usage_ok、C:\paseo占用<50GiB；不唤醒/resume/hard-on。本次relay连接超时，ready未知，远端派工0。原GRPO所有平台训练/optimizer/load暂停字段未改。
+- 主审/执行/日报仍active，真实full-access、原模型与频率回读一致。此刻只是准备包运行中，无新增经济评估或收益结论，不重置旧GET/replay/fixture额度。证据：reports/research/program/research-parallel-policy-20261011/acceptance.json。
+
+
+## 2026-10-11 05:29 UTC（连续衔接完成实际输入诊断；收益评估仍缺真实输入）
+
+- 承接04:37包后，同轮完成独立范围审查、五文件源码建设、独立源码/精确命令验收和一次真实元数据诊断；退出2/incomplete，77个缺失字段、0个格式错误，引用文件打开0。60秒KILL/256MiB地址空间上限；未测RSS或独立子进程耗时，不把tool wall当真实执行时长。一次额度1/1消耗，无重跑。
+- 源码接受不等于行情读取器或输入接受。缺口包括实际SIP复权/修订依据、同口径2015-12-31前序、完整冻结股票池/预热、共同账户资本/权重/现金和可比收益流来源；完整fidelity/five-offset运行器仍缺。下一步必须补这些真实绑定或有界来源提案，不再重复日期、B1、末月RF或本次缺项诊断。
+- 并行Kappa/账户核查25份原记录哈希一致，文件额度25/25结束。quant1的100万是dry-run计划，quant2的10万是独立配置，1.5万是分析分母，30万资金表只是未启用示例；不能据此编原账户配置或实际种子。历史借券和原95%跟踪区间定义仍未绑定。初始误输出整份计划的范围偏差已记录，未用数值做收益/持仓计算。
+- 主审Astra/xhigh、两子代理Sol/xhigh及两处full-access均核验；调度只读核验active，频率未改；Hadan/训练hold原样保持。旧300分钟经济上限、QQQ已耗尽来源/诊断、Kappa原2次fixture均保留，无新增GET/模型/经济trial/订单/特别报告。
+- workflow仅上述准备与实际元数据诊断true；research/ML/LLM/paper均false，收益与账户增量N/A。两方向not_ready/not_at_depth，不是机制否定。具体阶段已完成并释放后续协调，缺口不能被“交互聊天running”替代。证据：`reports/research/program/continuous-lead-20261011-0501/lead-decision.json`。
+
+## 2026-10-11 05:19 UTC（机主指出效率低：自动研究流程已修复，后台继续）
+
+- 实查上一交互结束后的9轮：19:17至04:46历时569.1分钟，主轮会话累计99.8分钟，主要做输入/来源准备，无新增经济评估；这不是CPU利用率，也不是项目总试验数。两条schedule一直active，问题包括步骤过碎、跨轮交接、旧交互归属和冗长相互覆盖的提示词。
+- 已读取10-06/07真实Claude会话活动、原简报和小结果JSON，恢复完整工作包、复用模块、成批预注册实验和父轮持续验收的做法；旧Claude也有额度/闲置agent阻塞，旧结论和门槛不自动恢复。当前两条真实调度已换成versioned compact prompts，字符较原分别少56%/65%，full-access/模型/cadence不变。
+- 新连续性规则、完整brief模板和短next-actions索引已落地。新交互不暂停研究；已结束QQQ/Kappa后续可交自动队列；未改经济门、冻结窗口、资源预算、Hadan/训练hold。普通同范围小修做差异验收，实质变更及旧review明确的复审仍保留。
+- 05:01启动的独立主审94c449e9和作者fc095eb8在05:18仍运行；已收到独立scope审查和账户恢复产物并在同轮继续输入入口实现，未等待下一班。当前仍无新增经济结果，不宣称收益或吞吐已实证提升。证据：`autonomous-continuity-20261011/process-audit.json`、`verification.json`；后续按有效经济/执行结论验收。
+
+## 2026-10-11 03:45 UTC（状态层：完整历史日期兼容性实际通过）
+
+- 独立bfe09abe批准集成准备、明确marker续接和真实入口后，唯一离线日期尝试exit0：1970-01-02至2026-08-31的14,287个French日期与固定commit XNYS完全一致，缺失/额外/非法/重复/乱序均0。冻结至09-17共14,299个计划日期，另12个September日期仍缺来源；没有补值或改窗。
+- 1970Memorial静态规则空档未造成实际集合差：05-29两者均存在，05-30均无；1971-05-31两者均休。完整规则、范围内adhoc闭市和early-close覆盖已输出；回溯实现兼容性不等于交易所认证、CRSP日期实物等价或原PIT。
+- 准备累计7GET/4,269,152bytes/16.555秒；首次误拒绝pyluach doc/test extras的失败保留，独立续接复用原3raw，无HTTP重试。离线launcher4.690秒，AS256MiB/CPU60s/wall120s，VmHWM92,644KiB；memory gate确实returncode0，但stdout-only回执漏录其stderr说明，不伪报headroom。
+- 此日期依赖闭环，不再重复calendar/B1/AugustRF。下一步一次绑定调整后SPY/SIP2016拼接与warmup、完整runner和原资金/袖套共同日矩阵；September来源、原PIT及这些经济输入缺口保留，不称算力故障。完整经济仍revise_plan/not_at_depth。
+- workflow仅上述实际诊断true；research/ML/LLM/paper均false，绩效与账户增量N/A。无收益回放、模型、Hadan、GRPO训练、订单或特别报告，QQQ/GRPO/kappa归属不变。主审Astra/xhigh和reviewer Sol/xhigh两处full-access已核验；reviewer已归档。证据：`reports/research/program/regime-date-reconciliation-20261011-0317/lead-decision.json`。
+
+## 2026-10-11 01:27 UTC（状态层：历史日历来源固定，完整日期对账仍待执行）
+
+- 主审03625fc0已核验Astra/xhigh/full-access；独立63b7e72f为Sol/xhigh且两处full-access实测。复核2317实际结果及三个绑定一致，没有重复B1或末月RF。
+- 独立审查仅批准source_only_admission，完整经济仍revise_plan/not_ready。唯一收集器exit0：7GET、6个200/1个404、336978字节、3.755秒、VmHWM23936KiB；7份raw/hash已验收，无重试。XNYS与US holiday规则固定commit bbda29fed902374bdb75acab008f421fbd567823，未安装/导入或运行上游代码。
+- CRSP官方字段将DateTrade的Trading Day=Y与普通及延伸日历日期区分；日期存在不能证明市场观测。上游注释June16与实际Juneteenth规则June19不一致，不能按注释生成日历。旧CRSPAccess手册端点真实404，未把搜索摘要当原文；完整provider日期集合、XNYS等价性和原vintage/PIT仍待证。
+- 下一步是固定完整运行依赖后一次精确dates-only对账：观测前缀至08-31与缺失后缀至09-17分别报，不删填日期、改窗或重复RF。本轮交付具体handoff，没有放行该数值/日期执行；经济仍需调整后SIP、完整runner和固定资金共同日组合矩阵，不把这些写成算力故障。
+- workflow仅文档依赖闭环true；research/ML/LLM/paper均false，收益和账户边际N/A。无行情解码、模型、回测、Hadan、训练、订单或特别报告；QQQ/GRPO/kappa归属保持。证据：`reports/research/program/regime-calendar-source-20261011-0117/lead-decision.json`。
+
+## 2026-10-10 23:30 UTC（状态层：末月 RF 条件诊断完成）
+
+- 独立e258909b批准限定计划及R1字节优先脚本后，唯一实际尝试exit0：留存French August21日与冻结NYSE计划交易日集合完全一致，缺失/额外为0；RF百分数之和21/100，按冻结算术日均并转decimal得1/10000，即1bp/日。9月12个日期只作估计说明，未观察到9月RF、未生成runner输入。
+- 此结果仅是scheduled-reference条件性回溯诊断。实际完整交易日、1970+历史calendar/French日期口径、原始vintage/PIT仍未通过；完整B2和经济准入保持关闭。旧B1结果不改、不重跑。首次静态审查拦下全CSV文本解码，修为raw-byte日期先筛后才解码目标行；未发生失败数值尝试。
+- 实际脚本0.059秒、父进程0.147秒、tool0.188秒；VmHWM23404KiB，AS256MiB；一次无重试。workflow仅限定诊断true；research/ML/LLM/paper均false，收益和账户增量N/A。无模型/回测/Hadan/训练/订单或特别报告；QQQ/GRPO/kappa归属不变。
+- 下一步固定完整历史calendar来源与provider日期口径，再处理调整后SIP、完整runner与固定资金共同账户矩阵；不得重复B1和本次末月算术。证据：`reports/research/program/regime-terminal-rf-20261010-2317/lead-decision.json`。
+
+## 2026-10-10 21:24 UTC（状态层：French所需数值已实际检查，完整输入仍未通过）
+
+- 独立49c483f6批准一次B1限定诊断后已执行：19700102..20260831共14,287行Mkt-RF/RF数值全部有效，未发现必需值缺失码、日期或布局异常。12,030行区间外记录先按日期排除再解析数值；SMB/HML未解析。
+- 唯一报错是第3行RF来源说明续行，已只读前三行归类为metadata。原combined validation失败结果保持，不修后重跑、不伪装完整输入通过。脚本0.565秒，RLIMIT_AS256MiB；ru_maxrss349596KiB可能含继承高水位，未采当前RSS，不能声称峰值低于256MiB。
+- 日历/末月完整性、9月RF延续、原PIT、调整后SIP、完整runner与共同日账户矩阵仍缺；下一步绑定精确calendar后做B2，不重复取数或B1。workflow仅有限诊断通过，research/ML/LLM/paper均false，绩效与账户增量N/A；无模型、回测、Hadan、订单或特别报告。
+- 本轮主审83293ea3已核验Astra/xhigh/full-access；QQQ/GRPO/kappa归属不变。证据：`reports/research/program/regime-value-audit-20261010-2117/lead-decision.json`。
+
+
+## 2026-10-10 19:25 UTC（状态层：真实French来源已取得，日期覆盖不足）
+
+- 本轮只承接未占用的状态层来源准备，独立 reviewer7b6ef0aa 明确批准 source_only_admission；完整经济 verdict 保持revise_plan。三个官方GET均200，440,923bytes、4.264秒，无重试；raw/hash/plan/执行源码绑定已核对。
+- 官方日频ZIP含14,287个1970-01-02起范围内有效日期，实际末日2026-08-31，未覆盖冻结2026-09-17。仅检查日期token，没有解析市场数值；不能把日历合法当交易日覆盖完整，也不能前填或缩窗。官方确认缺失码-99.99/-999；现有静态parser未拒绝它们。新来源为修订历史，不证明原PIT。
+- 来源缺口已具体化；下一步用已留存文件限定数值输入验收及按原因果RF规则核实9月覆盖，不重复抓取/旧设计补审。SIP总收益调整、原论文数据/VIX-BAA PIT、完整实现与共同账户净收益矩阵仍缺。workflow仅来源闭环，research/ML/LLM/paper均false，收益/组合增量N/A。
+- Hadan/所有平台GRPO训练暂停保持；未接管交互QQQ/GRPO/kappa、未拟合回测或下单。无特别报告。真实资源回执（含ru_maxrss与AS口径差异）及结论：`reports/research/program/regime-french-source-20261010-1917/lead-decision.json`。
+
+
+## 2026-10-10 18:02 UTC（QQQ 来源数值诊断完成，参考下一步改用直接 raw）
+
+- 独立source诊断及最小精确等值修订批准后已执行。四点16个OHLC价格中只有定义用开盘anchor通过原严容差，另15项超限，最大恢复误差USD0.0083887854；4个volume一致（首点仍为归一化anchor）。结果是precision/source-revision inconclusive，不能据此否定QQQ机制。
+- 当前served daily open737.04与首分钟open737.05差-0.01；daily close742.74与19:59分钟close742.69差+0.05，delta=1.00006732284。原terminal factor不能当作纯复权倍率；下一参考优先直接raw分钟，保留raw/all舍入/版本和daily/minute端点各自含义，不事后放宽容差。
+- Root首次launcher命名operator.py遮蔽标准库，导入失败、未读行情；失败归档计1次/1秒。独立launcher-only补跑批准后第二次完成，actual tool wall0.479251秒，保守1秒，累计2/120秒，实际512MiB/swap0、peakRSS18944KiB、scope关闭；无第三次。原raw/plan/阈值保留。当前回执：`qqq-reference-recovery-20261010/paired-source-diagnostic/root-closure.json`。
+- 仅来源/有限数值诊断workflow通过，research/ML/LLM/PIT/paper_ready false，收益与组合增量N/A；无信号回放/生产改动/订单/Hadan/训练。下一步单独绑定raw参考的16 prior sessions、15 closes、14同槽历史与三种时钟口径；原76日审计保持，不能把本次四点当完整历史或原PIT。
+
+## 2026-10-10 17:48 UTC（QQQ 真实成对来源已取得）
+
+- 独立source/auth审查及root实际driver验收后，固定首日三请求全部HTTP200，零重试/分页/跳转，原始83,232bytes和hash已存quarantine。raw/all分钟各391条（研究时段390+20:00边界1），raw日线3条（目标2+06-02边界1），原响应未裁剪。
+- 全phase6.269秒/180，实际512MiB/swap0，采样cgroup peak98,271,232bytes，所有response/client与scope已关闭；应用原有认证正常，未读印凭证或新建权限。完成回执：`qqq-reference-recovery-20261010/raw-source-acquisition/root-source-closure.json`。
+- 来源可用性缺口解除；价格数值/配对尺度、daily与minute端点、原始版本与PIT仍待诊断。下一步只用这些已绑定小快照做独立审核的配对诊断，无新增HTTP，不重跑旧D1。workflow仅取数通过，research/ML/LLM/paper_ready false、收益N/A；Hadan和训练暂停不变。
+
+## 2026-10-10 17:25 UTC（状态层：静态输入包已落地，未开始经济运行）
+
+- 自动主审 ae70a94c 承接既有独立准入，子代理519adca0交付6份child-only静态文件；主审源码检查及16项文本绑定通过。French先判日期再数值转换，SIP查询文本包含cutoff/warmup/符号边界；未运行、导入、测试、读取市场数据或构造输入，runtime未验证。
+- 来源额度已核对：现有索引14次GET（13成功/1失败、成功78,228字节），另French HEAD一次；没有找到French专属额度已耗尽的依据，不能据此要求机主续额度。此结论不自动放行source/data或表示无限额度。
+- French有限缺失值哨兵处理尚未实现，真实schema/日历/输入锁、SIP公司行动与分红调整、共同账户固定权重仍缺。下一步只审真实包的French-only输入准备范围，保持SIP/账户缺口独立；不重复已关闭深度设计，不把内部建设缺口写成算力故障。
+- workflow仅静态准备通过；research/ML/LLM/paper_ready均false，performance和账户边际N/A。无收益评估、拟合、Hadan/GRPO训练或订单；交互QQQ/GRPO/kappa任务未接管。证据：`reports/research/program/regime-preparation-20261010-1717/lead-decision.json`。
+
+## 2026-10-10 17:19 UTC（低换手合成准备完成，转向真实输入）
+
+- R1已独立approve_implementation并获唯一追加回归slot；实际35/35通过，包含8个新入口绕过检查。真实MemoryMax512MiB/swap0、峰值RSS34588KiB，scope停止，冻结manifest/源码和旧27/27证据均未改。含root收尾保守计时，新operator170.177秒/600秒，累计两次170.985秒；无第三次额度。
+- `kappa-causal-preparation-20261010/root-preparation-closure.json`为当前完成回执；frozen manifest/README保留运行前状态，不用它们覆盖最新回执。本项仅为薄连续目标/状态接口准备，不是生产集成；PIT/完整资本seed/借券/95%跟踪定义、市场回放、旧生产parity及收益仍未通过，不重复这项准备件审查/测试。
+- QQQ缺少真实成对分钟输入的来源获取计划已交652独立审查，拟最多3个只读请求留存固定首日raw/all分钟和raw日线。仍未取数/运行driver，原76日审计不动。Hadan和训练继续暂停，无新券商或付费行为。
+
+## 2026-10-10 17:14 UTC（低换手准备：入口绕过修订已冻结）
+
+- 独立实现审查只发现一处必修：自洽重建Intent可绕过commit的packet准入。Root已于17:09冻结最小修订，propose/commit共享完整packet校验，原kernel/风险/实际账本逻辑不改；scopedRuff和AST通过。新回归含有效重建对照及7种绕过输入，共准备8项，尚未运行。
+- 原9份文件按字节归档revision-r0，旧27/27结果/receipt/logs保持原样，仅归属初版SHA；不得标为修订版已测。原author30分钟内完成修订，旧fixture额度已用。ab61正独立差异复核及审一次额外120秒/512MiB合成检查提案；无自动重试。
+- QQQ真实输入恢复已准备独立来源获取提案：固定首日raw/all分钟和raw日线最多3个只读请求、零重试/零新增付费；原始隔离存证，不做收益，不能证明原始PIT。当前仅提案，未写driver、未发API请求；不是扩大已结束的local-only检查。Hadan/训练暂停不变。
+
+## 2026-10-10 16:55 UTC（低换手准备代码完成，首次合成检查通过）
+
+- Root在独立R0/R1准备批准后约9分17秒完成隔离worktree reports的连续目标wrapper、状态接口、manifest和说明；复用已绑定partial_adjust，缺D价格先拒绝，旧fill_ok仅表示D可定价。没有构造M0、实现风险策略、订单或完整账本。
+- 唯一获准fixture已实际27/27通过；真实cgroup MemoryMax512MiB、swap0，峰值RSS34380KiB，含memory gate/启动合计0.808秒，进程scope已停止/回收。scoped Ruff与语法通过，原16份源码/规则绑定未变；未运行全仓测试、未重复fixture。
+- 独立实现验收进行中，证据：`kappa-causal-preparation-20261010/implementation-handoff.json`；实际代码在`/root/codex-test/oc-t20/reports/research/iterations/t20261007_20_kappa/preparation-20261010/`。真实calendar/PIT、完整资本和seed、borrow、95%跟踪、生产None/60日parity及经济收益仍未通过。无主线/生产修改、市场回放、Hadan、训练或订单。
+
+## 2026-10-10 16:33 UTC（低换手改造：实际输入恢复与因果准备）
+
+- 独立主审允许恢复准备，未批准市场回放。Root已绑定16份源码/规则与3份留存记录元数据：10-07目标及10-08计划均为F1、100万美元；当前共享代码无子账本模块/config，T07提交尚非主线祖先。记录资金基数不等于历史资本schedule或实时NAV，目标文件不等于实际持仓种子。
+- 已写`kappa-causal-preparation-20261010/input-recovery.json`及`causal-preparation-plan.json`：纯慢分数扩展、D信息/实际decision_at分离、虚拟意图/风险后意图/整数计划/真实库存分离。旧95%跟踪带缺定义，原阈值和旧生产parity未通过状态保留，不用新合成核检查替换。
+- ab61正在独立审核限定准备代码及合成fixture范围。市场capsule的输入、日历、种子、CI和执行命令仍null/false；共享生产未改，无市场价格/仓位明细解码、收益计算、Hadan、模型或订单。准备通过后只在隔离工作树中写薄wrapper，实际市场执行另依真实输入准入。
+
+## 2026-10-10 16:16 UTC（机主问进度与提速：有效产出落后计划）
+
+- 按10-09计划评估：当前没有新增有效收益评估、模型增量或paper晋级；QQQ耗13,380秒完成76日错误审计，参考仍无效；不能把流程完成计为收益进展。Root承认决定性输入核实和交接排序不当。
+- 低换手股票多空在10-08 04:28已报告三处研究/生产冲突，真实工作树仍只有设计/引擎拷贝，旧running失真。已改blocked_handoff并交652独立处理root的A/B/C恢复提案，12分钟、full-access/xhigh，不改生产或原阈值。
+- QQQ两项来源调查完成：论文16:00、观察版15:58、冻结审计15:59是不同口径，差异不能单独证明生产bug；因果raw/open恢复有数学路径，但实际配对输入和历史版本未证。Root核验15项来源hash和公式报告hash通过；先恢复输入，不重跑原占位reference。
+- 已重算主工作区规范档案：167迭代目录、134manifest轮、1282候选、35轮/37份评估报告；今天规范evaluation-report新增0。去重ledger7536行含事件记录，不能叫7536次独立实验；完整口径、资产和提速决定在`reports/research/program/progress-review-20261010-1612/assessment.json`及`inventory.json`。
+- 执行优先级调整为低换手交接、QQQ真实参考、有真实输入的收益/组合实验；无新输入不重复相同审查。保持既有自动频率和独立计划门，Hadan/训练暂停不变，无新订单、费用或特别报告。
+
+## 2026-10-10 16:00 UTC（按机主要求删除技能；服务器研究继续）
+
+- 已删除 Codex/Claude 两份 ultracode-reviewer、清单和强制检查，保留历史报告；过时会话目录不得恢复调用。清单中既有 research-plan-reviewer 的漏登记一并修复；10项针对性测试、scoped Ruff和镜像检查通过。
+- 机主明确“仅继续服务器研究；Hadan 和训练仍暂停”，hold继续有效。QQQ原76日审计保持闭环；已实际派两个独立轻量任务核实因果价格尺度和15:58/15:59版本依据，均codex/gpt-6.1-sol/xhigh/full-access，无人工审批。
+- 本轮尚未重放或计算收益。价格参考可能恢复与生产时钟是否有错仍待证，不把原硬编码invalid_reference当作不可恢复结论；先取得具体证据，再决定最小后续实验。任务与结果目录：`reports/research/program/qqq-reference-recovery-20261010/`。
+
+## 2026-10-10 15:28 UTC（残差收盘执行：识别审查完成，未获执行准入）
+
+- 对14:37准备包的独立审查为`revise_plan/not_ready`（3 pass、4 revise、4 blocked）。open与close不能只比较净Sharpe后归因为价差；等长H覆盖相同隔夜区间，差异包括首尾日内、价格标记、成交和资金路径。同ranker代码也不保证同score/目标数量。
+- 本轮只核对旧E1b摘要：年化超额毛收益5.110%、总成本3.398%、净超额1.712%；价差占成本49.7%、融资34.8%。原cost_share36.5%分母是未扣现金收益的gross，成本/超额gross为66.5%，不是代码bug，也不是本轮新增收益。2019已发表原论文已留存，支持分开归因，但不证明本地盈利。
+- 精确D1/D2报价、D3队列/生命周期、永久身份/退市/历史ETB、未触碰分区和完整预算仍未绑定。无新输入不重复纸面审查或旧24格；下一步仅接受已有小manifest并窄审可识别性。新selectable child保留20bps、continuous terminal-free Sharpe-excess-BIL>1.0；旧T22合同不改。
+- 本轮performance与组合边际N/A，workflow/research/ML/LLM/paper_ready均false（独立审查流程已完成）。未训练、回测、使用Hadan、下单或接管QQQ/GRPO/kappa。产物：`reports/research/program/residual-lead-review-20261010-1517/lead-decision.json`。
+
+
+## 2026-10-10 14:08 UTC（QQQ 全76日错误审计完成，尚未通过一致性）
+
+- Root已独立核对76个固定checkpoint/result、228个raw hash、11项原产物、累计账本和实际进程停止。原样本06-01至09-17完整覆盖，无partial；运行器106个事件，独立有效reference事件为0，因此一致率为N/A/invalid_reference，不能把0配对写成0%有效一致率或信号被否定。
+- 76日均记录冻结规定15:59与运行配置15:58的平仓时间差；then-known raw尺度尚未绑定。当前只完成错误审计，没有修复生产、收益评估或paper晋级。workflow_pass仅指本审计闭环；research、ML/LLM贡献、PIT、paper_ready均false，收益N/A。
+- 原生exit1对应complete_error_audit，已核验并停止；含root最终文件复核和收尾，累计13,380秒/13,800秒，5次续跑全部保留失败/准备耗时。完整证据：`reports/research/iterations/t20261010_qqq_execution_shadow/runtime-budget-r3/root-final-acceptance.json`，原operator交付及R2树未改。
+- 下一步是核实独立历史价格尺度并提交针对平仓/状态语义的修复计划；生产改动须用隔离worktree和独立复核。D2/NBBO/组合仍dependency_skipped，不重复已完成的同一审计。GRPO只做准备、Hadan留给机主的暂停继续有效；本轮未使用Hadan、模型或下单。
+
+## 2026-10-10 13:41 UTC（QQQ 已验收72日，最后四日收尾待资源复审）
+
+- Linux QQQ D1 已按4次续跑上限停止；72/76完整checkpoint及216个raw hash经原validator核验，剩09-14至09-17，09-14唯一partial保留。所有已启动尝试和首次operator错误均入账，累计11,965秒，原210分钟总额还剩635秒；没有擅自第5次启动。
+- 最新三轮平均每新增完整日156.1秒，四日指示624.4秒已超过原余额扣120秒收尾reserve后的515秒，尚需门禁和归档。独立资源R3已批准：仅把累计上限加20分钟至230分钟、总续跑上限加1至5，其他900MiB/串行/原driver与输入/经济边界不变。Root已验收新外层operator差异与128份R2文件，实际标准门/72checkpoint全hash/partial归档/900MiB通过；唯一第5次重放已于13:53 UTC启动，PID851278。全部新准备和收尾从13:47:06计入，绝对all-phase截止14:17:41 UTC。
+- R2已停止历史结果为 child `runtime-budget-r2/operator-handoff.json`；当前第5次状态以 `runtime-budget-r3/runtime-state.json` 为准。旧native completion停在22日，仅作历史。primary parity仍N/A，PIT/Alpha/收益/paper均未通过，不是信号被否定。Hadan与GRPO训练暂停继续有效。
+
+## 2026-10-10 13:06 UTC（新闻 GRPO 准备复审闭环；继续遵守暂停）
+
+- A 的 R1–R3 准备代码已独立 `approve_implementation`，数据 P0–P6 分层准备设计已独立 `approve_deep_plan`；两者均仅限准备范围。当前没有必修代码差异，真实 tokenizer/官方 FP32 优势、N1/current-reference 数值、reload/resume 尚未通过，未加载模型或训练。
+- Root 已核对审查与实施/数据计划/hold 绑定，完成获准的来源声明—对象—版本—实际投资用途对应表及方法规则适用性文档。仅读取既有快照和小 JSON，计入的输入约 0.81 MiB；无正文/价格/标签处理、网络抓取、Hadan 连接或新增代理。回执：`grpo-news-realignment-2026-10-10/A-preparation-closure-v1.json`。
+- 投资用途下的正文适用许可、真实永久身份/价格/标签/分区仍待证。普通策略 CLI 不能直接表达 A 方法实验；当前文档不是可执行的 scoped API，也没有伪造交易 StrategySpec 或门禁通过。实际数据集、训练可用性和收益均未通过，不把准备审查当 Alpha。
+- 机主训练/Hadan 暂停继续有效。QQQ D1 在 Linux 的原预算内 continuation-04 继续，13:04 UTC checkpoint 头计数 59/76，尚待最终验收；primary parity=N/A，未计算收益。下一研究动作前继续读 owner-compute-hold.json，自动轮勿重复接管交互任务。
+
+## 2026-10-10 12:26 UTC（机主使用 Hadan；GRPO 只做准备）
+
+- 机主先要求“先不训练了做好准备”，随后要求“继续做其他的，我要用自己电脑了（hadan）”。Hadan 停止研究使用，不再启动下载、依赖安装、探针或计算；GRPO 在所有计算平台只做准备，训练和带参数更新的容量测试须等机主明确恢复。统一状态：`reports/research/control/owner-compute-hold.json`。不得用此前 ready 状态、旧批准或自动轮绕过。
+- Hadan 已通过远端回读确认 paused，已知 GRPO job 路径的进程检查为 0；三条自动研究 prompt 已同步 hold，full-access/频率保持。Linux 上继续 A 薄实现的代码修订、真实新闻来源/标签/切分准备计划；原来源留存范围没有自动扩大成训练样本生成授权。A runner 已按独立审查修完 R1–R3 准备代码：实际 SFT 顺序/mask、数学奖励与官方优势区分、reload 精度及 resume 状态。Root 核验 18 项当前绑定、8 份旧文件归档、16 项数据计划来源绑定均一致；652 已于 12:50 UTC 启动代码差异与数据准备计划独立复审。真实 tokenizer/官方优势/reload/resume 和语料仍未验收，尚未加载模型或开始训练。
+- Linux 上的 QQQ D1 审计继续原累计 210 分钟预算；12:25 UTC 的实际 checkpoint 头计数为 45/76，尚未最终验收。primary parity 仍为 N/A（缺独立 raw-scale 参考），未计算收益。
+- 自动研究保持既定 full-access 和频率，继续其他有条件的独立工作；新指令覆盖旧“立即训练/优先 Hadan”条款，不能自动恢复 Hadan 或改用别处继续已暂停的 GRPO 训练。
+
+## 2026-10-10 12:07 UTC（真实新闻方法验证设计获批，原始来源已留存）
+
+- 新闻 GRPO v2 的 A 阶段已获独立 `approve_deep_plan`，范围为固定的非晋级方法验证设计与代码编写；不是原论文结果复现、30k 深度完成或收益通过。597 正实现官方 TRL 的 SFT/SFT×8/GRPO/标签安慰剂四族、三个种子的薄 runner；实际数据、标签、切分、实现、知识/方向/迭代和 Hadan 准入仍须完成，尚未加载模型或训练。
+- 独立批准的新增 Nasdaq 原始来源留存已实际完成：单请求、零重试、256 MiB，37.47 秒，实测峰值 RSS 39,088 KiB。保守排除末尾记录后，37,250 条记录正文非空，36,060 个不同正文哈希，32 个 literal ticker strings（A..ACB），Publisher 全缺失。这是前缀偏样本，不是全库代表性或永久证券身份认证；新旧前缀重叠不得重复计文章。
+- 原始 `.part` 位于 `data/research/quarantine/news-finsmart-source-intake-20261010/`；raw/source/script/hash 与计数验收通过。完整回执在 `grpo-news-realignment-2026-10-10/source-intake-v1/receipt.json` 和 `root-acceptance.json`。尚未生成训练样本或标签；rights/PIT/原论文语料身份和训练使用仍未准入。
+- B 阶段 C1 时钟定义已独立批准：新闻可见时刻独立锚定 eligible session，09:34 价格截点、09:35 评分截止、09:36–09:40 成交窗口；迟到记 cash/missed-entry，历史模拟时钟与真实计算 wallclock 分开。B 的真实经济输入、成本/借券、未见评估及资源等依赖仍 blocked，不授权收益实验。
+- QQQ 独立审计仍在已批准的累计 210 分钟预算内续跑；12:00 前后为 continuation-02。实时状态以 child `runtime-budget-r2/runtime-state.json` 为准；primary parity 仍 N/A，无收益计算。
+
+## 2026-10-10 11:29 UTC（新闻正文来源审计已执行）
+
+- 完整新闻 GRPO 计划 v1 独立结论为 `revise_plan`（5 pass / 4 revise / 2 blocked），未批准模型执行。597 正按 R1–R7 修订复现口径、可识别 placebo、因果时钟、显式 GRPO 配置与资源方案；实际语料和经济依赖不能靠填写计划消除。
+- 独立批准的来源审计已实际执行：两个固定 revision FNSPID 文件各读取 64 MiB，合计 128 MiB、零重试、59.107 秒。`All_external.csv` 前缀的 284,591 条完整记录正文全空；Nasdaq 前缀的 9,677 条记录 Article 非空，包含 9,538 个不同正文哈希，Publisher 全缺失。没有保存训练样本、读市场价格/标签或执行模型。
+- 以上是有偏的文件前缀，非空字段不证明全文质量、全库覆盖、原论文文章身份、历史版本或使用权；128 MiB 额度已耗尽，未扩大至 4 GiB。实际回执：`reports/research/program/grpo-news-realignment-2026-10-10/source-body-vintage-coverage.json`。
+- QQQ continuation-01 的 operator 进程识别误匹配导致停止，17.1 分钟已计入累计预算；修复仅限 operator，原 driver/lock 不变。continuation-02 已于 11:27 UTC 启动原 driver（PID 827374），此前 22 个完整 checkpoint 已验收。累计仍最多 210 分钟、最多 4 次续跑；实际记录以 child `runtime-budget-r2/cumulative-ledger.jsonl` 为准。
+
+## 2026-10-10 11:12 UTC（新闻 GRPO 计划恢复；QQQ 审计单独续跑）
+
+- Claude 09-30 原会话已核对：原意是免费新闻/公告文本到股票排序，先同输入基线，再检验 GRPO 增量。当前主论文选 FinSMART，Alpha-R1 与 FinRankGRPO 为辅助证据；`grpo-news-realignment-2026-10-10/news-GRPO-reproduction-plan-v1.md/.json` 已交 652 独立审查，尚未批准经济训练。
+- 草案保留原 G8、KL 0.1、非对称市场反应奖励和三点真实全文深度。Qwen 9B NF4、可成交后净收益奖励及仓位归一化是扩展，不能称原结果复现；原语料、完整 recipe、真实历史版本和干净评估窗口仍待绑定。240 GPU 小时仅为待审提案，没有据此启动模型。
+- 本地 701,266 行是 headline/summary，无正文；所有历史 visible_at 都是 created_at 加 15 分钟，8,184 行更新晚于该假设时间，不能据此宣称 PIT 通过。FNSPID 两个固定 revision CSV 已真实返回 206 且有 Article 列；目前只读过合计 8 KiB 表头，正文覆盖尚待有界审计。
+- Hadan 旧错误方向任务已停止，19 个结果文件回传并核验 SHA，旧 job 目录于 10:37 UTC 清理；没有权重 load 或训练 update。仅保留临时通用依赖环境供纠正后的任务使用。
+- QQQ 原 45 分钟审计真实停止于 22/76 日，未完成日为 07-02。独立资源审查批准累计最多 210 分钟、每次最多 45 分钟/900 MiB 串行；root 已交 ab61 验证 checkpoint、归档唯一 partial 并按原 driver 续跑，实际重启仍须通过这些入口。旧 driver/lock/输入与经济口径不改，primary parity 仍 N/A，未计算收益。
+- 本轮新闻 GRPO 无模型、训练或收益结果，research/ml/llm/paper_ready 均未通过。自动轮保持 full-access，GRPO/QQQ 由交互会话持有，避免重复领取。
+
+## 2026-10-10 10:01 UTC（机主纠正 GRPO 目标，优先于下方旧进度）
+
+- GRPO 应恢复 Claude 原先新闻/事件/财报信息驱动的论文复现与改进。当前 QQQ 执行优化主线不符合机主要求，已撤回；不以人工算术容量探针代替收益研究。
+- Hadan 下载子进程已停止；runner/launcher/input-admission 均未部署，无权重 load 或参数更新。旧技术审查保留，但不再授权接续旧训练。
+- Root 正核对 09-30 调研、10-05 计划和 Claude 原始会话，按原论文的输入、奖励、训练和评估重新对齐。QQQ 独立实现审计仍是单独任务，不能充当新闻 GRPO。
+
+## 2026-10-10（交互：Hadan 实际训练准备与新模型选型）
+
+- 机主再次要求立即深入研究和训练（明确 GRPO），高内存/算力优先 Hadan；主审奇数小时 :17、执行偶数小时 :37 的全天交错频率已从 Paseo 实际配置核对，两条提示词已补入 Hadan/GRPO 接续和任务去重。
+- Hadan 实测为 RTX 5070 Ti **Laptop**、12,227 MiB 显存，系统内存 15.72 GiB，不能按桌面16GB显卡做计划。原生 Windows 独立环境在 `C:\paseo\scratch\grpo-env-20261010`，08:23:54 UTC 已完成 torch 2.14.1+cu130、Transformers 5.19.0、TRL 1.15.0、PEFT 和 bitsandbytes 安装，CUDA 导入返回 true，原生 triton-windows 3.8.0.post29 也已安装。当前准备获批的 E2/E3 容量入口验收；未下载模型权重，未训练。
+- 机主追加要求优先考虑新一代及量化模型，明确提出 Qwen3.8；此前 Qwen3-14B 专属容量方案已暂停，不能自动执行。官方 Qwen3.8-27B 及低位 GGUF 已核实存在，但低位推理不等于当前12GB显卡能做 GRPO。独立 R2 已批准 Qwen3.5-9B NF4/BF16 GRPO 容量方案；机主随后要求训练至少4位，Qwen3.8 IQ2_S 推理对照已在下载前撤回，见 owner-precision-amendment.json。
+- QQQ 限定D1 R2已approve_deep_plan：完整76日、强制平仓和fallback语义审计进入薄driver实施；实际重放仍待implementation-lock和fixture，不计算收益、不改生产。D2/NBBO保持单列依赖。
+- 自动研究权限已修复：三条Codex调度实际modeId=full-access；08:37执行轮实测danger-full-access/never，MCP、文件读写、联网通过，receipt为 `reports/research/program/autonomous-permissions-2026-10-10.json`。频率与模型不变。
+- 状态和真实进程：`reports/research/program/hadan-training-runtime-2026-10-10/status.json`；计划/审查：`reports/research/program/grpo-hadan-2026-10-10/`。旧14B探针 review 未批准，实际模型和市场训练仍须通过适用的独立审查及合同门。`research_pass/ml_contribution_pass/llm_contribution_pass/paper_ready_pass` 均没有本轮新增通过。
+
+## 2026-10-10（DLSA child plan review 与数据门）
+
+- R3 独立 `research-plan-reviewer` 对 `t20261010_p1_s1_dlsa_review` 给出 `approve_deep_plan`；11 项检查通过。该 verdict 只批准深度计划，不批准回测、训练或远程计算。
+- `direction-check=ok`；`iteration validate --stage pre-backtest` 仍因 `search_space_data_feasibility_not_authorized` 阻塞。8 个候选全部 `dependency_skipped`，`workflow_pass=true`（只表示可行性审计工作流完成）、`research_pass=false`、`ml_contribution_pass=false`、`paper_ready_pass=false`。
+- 本地有界审计发现：T-22 close-only memmap 为 2692×7556、116 个 PIT 月度 universe 行；默认卫生扫描记录 4,291 个 close 断点；PCA 组成恒等式三点抽样最大绝对误差 `1.63e-8`。但当前绑定输入没有 open/OHLC 或 corporate-action feed、永久证券身份、退市收益和 IPCA 子库，实际成交覆盖/未成交机会成本也没有。
+- 因此没有计算共同日 power、回测、训练、Hadan preflight/transfer、订单或 paper readiness。SIP 归档虽有 OHLCV，尚未形成可绑定的 PIT 永久身份/退市数据合同；不得用 ticker-only 拼接替代。
+- 证据：`reports/research/program/dlsa-child-feasibility-2026-10-10.md`、`reports/research/program/plan-review-2026-10-10-dlsa-child-r3.md`、`reports/research/iterations/t20261010_p1_s1_dlsa_review/child-feasibility-audit.json`。
+
+## 2026-10-10（Codex 自动研究调度恢复）：组合 Sharpe 目标与每小时波次
+
+- 机主已明确：Sharpe `>2` 是**账户/组合层**目标，由多个低相关策略、因子、模型和另类数据合成，不要求单一策略达到 2。每条收益线按 after-cost 边际贡献和相关性评估。
+- 旧 Claude 主审/执行 schedule 保持 paused；Codex 调度已改为交替每小时：主审 `17 1-23/2` 使用 GPT-6-Astra xhigh，执行 `37 2-23/2` 使用 GPT-6.1-Sol max；可见 subagent 统一使用 GPT-6.1-Sol xhigh，每波按实际独立任务派 1–2 个 subagent，总并发受 6 agent 和内存预算约束。
+- 00:37 UTC 启动轮已实际完成：派出并审阅 2 个 subagent，写入 `reports/research/program/round-20261010-depth-brief.md`、`dlsa-depth-review-2026-10-10.md` 和 `qqq-gap-depth-review-2026-10-10.md`；没有启动重计算或下单，环境阻塞已记录。
+- 历史方向深挖新增：`historical-direction-deep-review-2026-10-10.md` 选出状态层、期权 composite、隔夜真实竞价执行三条可能增加组合低相关性的重开路线；`intraday-history-deep-review-2026-10-10.md` 给出 T-21/T-22/QQQ/G3 的三深度真实执行实验。已否定且满足五条规则的路线不重开。
+- 组合层 roadmap `composite-sharpe-roadmap-2026-10-10.md` 已完成：近期 RP/CRP 样本 Sharpe 约 `2.0–2.07`，但收缩先验后只有约 `1.02–1.04`；这证明目标应在组合层实现，也证明当前 ETF 簇还没有可信的 paper/实盘 Sharpe `>2`。下一轮只增加低相关收益线并做统一组合实验，不继续在 ETF 簇内调权。
+- 此前特别报告 `reports/research/program/special-report-2026-10-10.zh.md` 已完成并通过 SMTP 发出，作为历史证据保留；自本条规则生效后，除非机主明确要求，自动轮不再创建或发送特别报告。正常研究产物、日报和周报按既定节奏继续。
+- 期权 composite 审查 `continuous-alpha-2026-10-10/options-composite-review.md` 确认 DIV5 残差 IC 0.0144、NW t=1.92 仍不足以晋级；仅允许一次固定 combined/missing-option/placebo 成本实验。残差方向的 `residual-close-execution-brief.md` 只保留 T-22 收盘执行 pivot，需先过 schema-v3 direction-check 和 iteration validate，不能当作新 Alpha。
+- 机主指出此前 14 天计划过于保守、把历史研究拆成等待清单。已新增 `docs/research-plan-review-standard.zh.md` 和 `research-plan-reviewer` skill：历史复现、三点以上深度曲线、成本/模型/组合边际默认当天闭环；14 天只计 shadow/paper/实时成交。自动轮已加入独立 reviewer 硬门，未获 `approve_deep_plan` 不得回测、训练或分配资源。
+- 独立 reviewer 对 T-22 残差收盘执行和期权 composite 均给出 `revise_plan`；审查报告已写入 `reports/research/program/plan-review-2026-10-10.md`。T-22 需补 schema-v3/manifest/trial ledger、同日历史闭环和 full benchmark；期权线需补独立 prior-art/source cards、三点经济深度和同日成本后 sleeve 矩阵。当前两线均不得分配回测/训练资源。
+- 第二轮复审仍为 `revise_plan/not_ready`：旧 D+5/D+14 历史等待已移除，T-22 benchmark family 已进入 brief，但两线实际 v3 direction-review/source bindings、candidate manifest、trial ledger、power/data-feasibility 尚不存在；P6 prior-art/source-card 仍是阻塞。自动执行轮已按硬门正确跳过计算，只提交补审请求和阻塞记录。
+
+## 2026-10-10（Windows Paseo worker 已完成验收）
+
+- Windows daemon `hadan` 已通过 Paseo endpoint 连通；两个 worker 脚本已部署到固定 `C:\paseo`，本地与远端 SHA-256 一致。
+- 原生 fixture 写入、哈希回读、删除、worker `pause/resume` 和本机网页 API `pause/resume` 均通过；最终状态为 `ready`，占用约 `0 GiB / 50 GiB`。
+- 目前没有传输市场数据、没有启动远程训练或回测。下一步是把一个已过门禁的小型任务接入 manifest-bound runner，并在结果回传和清理闭环后再扩大任务。
+- 机主 03:05 UTC 明确授权 Hadan 从现在起承接高内存研究任务；当前远端状态已核实为 `ready`、`usage_ok=true`、0/50 GiB。第一项远程研究优先做通过独立 reviewer 和迭代门后的 DLSA 小数据切片；训练或宽回测也可后续转 Hadan。机主使用时可能 pause/hard-off，所有轮次必须尊重，不得绕过。
+- 已增加统一远程接口：`oc remote windows-worker contract/preflight/status/daemon-status/workspace-list`；其他 session/subagent 通过该 CLI 和 `windows-paseo-worker` skill 使用 worker，不读取或打印 pairing offer。
+- Windows 当前用户登录启动项已配置为同时启动 Paseo 和 worker 控制面板；控制面板地址为 `http://127.0.0.1:8765/`，当前状态 ready。
+
+## 2026-10-09（Codex 交互会话）：C 组股票异动 ORB 完成并关闭
+
+- T-20261006-15 C 组已完成 2017-10 至 2026-10-06 的 162 个注册版本，修复了跨月分区泄漏、重复键和未来断点回看。
+- 近期 689 个交易日，池 100/300/600 的冻结中位选择净 Sharpe 为 `-1.66/-3.84/-5.40`，年化净收益 `-8.7%/-27.4%/-40.7%`，回归 Alpha 对 SPY 同样为负；成本分别约为毛利的 `1.84/3.32/6.48` 倍。
+- 日度横截面方向 IC 为 `0.023/0.009/0.006`，扩大池后不显著；相对成交量 IC 为负。三档均未通过 DSR、V4 和 P1，不进模拟盘。详见 `report_c.md` 和回测取证文件。
+- 当前可继续投入的研究线仍是 QQQ 噪声带前向观察与 DLSA 残差库；C 组不再做事后调参。
+- DLSA 已完成真实 PCA5 残差库（2,380 refresh，平均解释方差 45.99%）。OU-T 参数化诊断近期毛 Sharpe -0.72、方向 IC -0.0022，但仅有 155 个有效组合日，尚不是最终成本后结论；下一步是按冻结合同继续学习模型和统一成本/安慰剂评估。
 
 > **2026-10-01 06:41 UTC 纲领已重写，06:04 的暂停令解除**（交互会话 Opus）。主力改为多信号、风险受控、扣成本优化的美股组合。自动轮按 `docs/research-program.zh.md` 和 `docs/equity-book-design.zh.md` 执行；队列里标 running（交互会话）的组合线任务不要碰。
 

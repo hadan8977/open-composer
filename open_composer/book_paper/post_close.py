@@ -8,6 +8,7 @@ at 25 bp a year on the short notional.
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -44,10 +45,13 @@ def fetch_broker_orders(client: Any, plan: OrderPlan) -> list[dict[str, Any]]:
     """The plan's orders as the broker holds them (read-only), by client_order_id."""
     lookup = OrderLookup(client, plan.execution_date)
     found = []
+    from open_composer.book_paper.reversal import reversal_legs
+
     for order in plan.orders:
-        broker_order = lookup.find(order["client_order_id"])
-        if broker_order is not None:
-            found.append(normalize_broker_order(broker_order))
+        for request in [order, *reversal_legs(order)]:
+            broker_order = lookup.find(request["client_order_id"])
+            if broker_order is not None:
+                found.append(normalize_broker_order(broker_order))
     return found
 
 
@@ -62,34 +66,85 @@ def reconcile(
     broker_orders: list[dict[str, Any]],
     positions: dict[str, float],
     close_prices: dict[str, float],
+    submission_receipts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Orders -> fills -> positions against the plan and the target weights."""
+    from open_composer.book_paper.reversal import reversal_legs
+
     by_id = {o["client_order_id"]: o for o in broker_orders}
+    attempts: dict[str, dict[str, Any]] = {}
+    deferrals = set()
+    for receipt in submission_receipts or []:
+        attempts.update(receipt.get("attempts", {}))
+        for failed in receipt.get("failed", []):
+            attempts[failed["client_order_id"]] = failed
+        deferrals.update(r["client_order_id"] for r in receipt.get("deferred", []))
     rows: list[dict[str, Any]] = []
     for order in plan.orders:
-        broker = by_id.get(order["client_order_id"])
-        filled = broker["filled_qty"] if broker else 0.0
-        if broker is None:
-            state = "missing"
-        elif filled >= order["qty"]:
+        legs = reversal_legs(order)
+        requests = [order, *legs]
+        brokers = [by_id[r["client_order_id"]] for r in requests if r["client_order_id"] in by_id]
+        filled = sum(b["filled_qty"] for b in brokers)
+        evidence = [
+            attempts[r["client_order_id"]] for r in requests if r["client_order_id"] in attempts
+        ]
+        rejected = any(
+            e.get("outcome") == "submission_rejected"
+            or (
+                e.get("error") == "APIError"
+                and '"code":40310000' in str(e.get("message", "")).replace(" ", "")
+            )
+            for e in evidence
+        ) or any(b["status"] == "rejected" for b in brokers)
+        submission_state = "acknowledged" if brokers else "missing_acknowledgement"
+        if rejected:
+            submission_state = "submission_rejected"
+        elif evidence and not brokers:
+            submission_state = "acknowledgement_unknown"
+        elif filled < order["qty"] and any(r["client_order_id"] in deferrals for r in requests):
+            submission_state = "deferred"
+        if filled >= order["qty"]:
             state = "filled"
         elif filled > 0:
             state = "partial"
-        else:
+        elif brokers or submission_state in ("submission_rejected", "deferred"):
             state = "unfilled"
-        rows.append(
-            {
-                "symbol": order["symbol"],
-                "side": order["side"],
-                "qty": order["qty"],
-                "filled_qty": filled,
-                "fill_state": state,
-                "broker_status": broker["status"] if broker else None,
-                "unfilled_qty": max(order["qty"] - filled, 0.0),
-                "filled_avg_price": broker["filled_avg_price"] if broker else None,
-                "client_order_id": order["client_order_id"],
-            }
+        else:
+            state = "missing"
+        priced = [b for b in brokers if b["filled_qty"] > 0]
+        avg = (
+            sum(b["filled_qty"] * b["filled_avg_price"] for b in priced) / filled
+            if filled and all(b["filled_avg_price"] is not None for b in priced)
+            else None
         )
+        row = {
+            "symbol": order["symbol"],
+            "side": order["side"],
+            "qty": order["qty"],
+            "filled_qty": filled,
+            "fill_state": state,
+            "submission_state": submission_state,
+            "broker_status": (
+                brokers[0]["status"] if len(brokers) == 1 else "staged" if brokers else None
+            ),
+            "unfilled_qty": max(order["qty"] - filled, 0.0),
+            "filled_avg_price": avg,
+            "client_order_id": order["client_order_id"],
+        }
+        if legs:
+            row["leg_evidence"] = [
+                {
+                    **r,
+                    "broker": by_id.get(r["client_order_id"]),
+                    "submission": attempts.get(r["client_order_id"]),
+                }
+                for r in legs
+            ]
+        if evidence:
+            row["submission_evidence"] = evidence
+        if filled > order["qty"]:
+            row["overfilled_qty"] = filled - order["qty"]
+        rows.append(row)
 
     expected = {s: float(q) for s, q in plan.payload["post_trade_qty"].items()}
     frozen_names = {row["symbol"] for row in plan.payload.get("frozen", [])}  # T-20261002-40
@@ -117,18 +172,43 @@ def reconcile(
                 positions.get(symbol, 0.0) * price / basis - target.weights.get(symbol, 0.0)
             )
     states = [r["fill_state"] for r in rows]
+    drift_names = {
+        s for s in set(target.weights) | set(positions) if target.weights.get(s) or positions.get(s)
+    }
+    fallback_names = sorted(
+        s for s in drift_names if not close_prices.get(s) and target.reference_prices.get(s)
+    )
     return {
         "n_orders": len(rows),
         "n_filled": states.count("filled"),
         "n_partial": states.count("partial"),
         "n_unfilled": states.count("unfilled"),
         "n_missing": states.count("missing"),
+        "n_submission_rejected": sum(r["submission_state"] == "submission_rejected" for r in rows),
+        "n_acknowledgement_unknown": sum(
+            r["submission_state"] == "acknowledgement_unknown" for r in rows
+        ),
+        "n_deferred": sum(r["submission_state"] == "deferred" for r in rows),
         "orders": rows,
         "unfilled_orders": [r for r in rows if r["fill_state"] in ("unfilled", "missing")],
         "partial_fills": [r for r in rows if r["fill_state"] == "partial"],
         "position_drift_vs_plan": drift_rows,
         "n_position_drift_names": len(drift_rows),
         "realized_vs_target_one_sided_drift": round(weight_gap / 2.0, 8),
+        "weight_drift_valuation": {
+            "denominator": "target_equity_basis",
+            "equity_basis": basis,
+            "target_reference_date": target.decision_date.isoformat(),
+            "target_reference_fallback": fallback_names,
+            "unpriced_names": sorted(
+                s
+                for s in drift_names
+                if not (close_prices.get(s) or target.reference_prices.get(s))
+            ),
+            "complete_at_official_close": all(
+                _usable_mark(close_prices.get(s)) for s in drift_names
+            ),
+        },
     } | ({"frozen_names": sorted(frozen_names)} if frozen_names else {})
 
 
@@ -158,7 +238,11 @@ def tca(
             r = ref.get(fill["symbol"])
             row[key] = sign * (price - r) / r * 1e4 if r else None
         rows.append(row)
-    out: dict[str, Any] = {"n_fills": len(rows), "fills": rows}
+    out: dict[str, Any] = {
+        "n_fills": len(rows),
+        "fills": rows,
+        "row_unit": "logical_order_aggregate",
+    }
     for key in ("vs_official_close_bp", "vs_snapshot_1545_bp"):
         valid = [(r["notional"], r[key]) for r in rows if r[key] is not None]
         total = sum(n for n, _ in valid)
@@ -218,6 +302,11 @@ def shadow_costs(
         "borrow": borrow,
         "borrow_bp_per_year": BORROW_BP_PER_YEAR_BASE,
         "short_notional_at_close": short_notional,
+        "unpriced_short_positions": {
+            s: q
+            for s, q in sorted(close_positions.items())
+            if q < 0 and not _usable_mark(close_prices.get(s))
+        },
         "total": total,
     }
 
@@ -225,6 +314,15 @@ def shadow_costs(
 # --------------------------------------------------------------------------------------
 # realized exposures and daily record
 # --------------------------------------------------------------------------------------
+
+
+def _usable_mark(value: Any) -> bool:
+    """Coverage only: do not replace or impute prices in the existing arithmetic."""
+    try:
+        price = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(price) and price > 0
 
 
 def realized_exposures(
@@ -253,6 +351,9 @@ def realized_exposures(
         industry[e.industry] += w
     beta += hedge_weight  # SPY hedge, beta 1.0
     missing = sorted(s for s in weights if s not in target.exposures)
+    held = {s: q for s, q in positions.items() if q}
+    unpriced = {s: q for s, q in sorted(held.items()) if s not in close_prices}
+    invalid = sorted(s for s in held if s in close_prices and not _usable_mark(close_prices[s]))
     return {
         "net_weight": sum(weights.values()),
         "gross_weight": sum(abs(w) for w in weights.values()),
@@ -261,6 +362,20 @@ def realized_exposures(
         "size_weighted": size,
         "industry_net": dict(sorted(industry.items())),
         "names_without_exposure": missing,
+        "valuation_coverage": {
+            "position_count": len(held),
+            "priced_position_count": len(held) - len(unpriced) - len(invalid),
+            "unpriced_positions": unpriced,
+            "invalid_price_names": invalid,
+            "complete": not unpriced and not invalid and math.isfinite(equity) and equity > 0,
+            "price_basis": "supplied_official_close",
+            "denominator": "broker_account_equity",
+            "equity": equity,
+            "exposure_target_decision_date": target.decision_date.isoformat(),
+            "scope": (
+                "existing metrics use priced positions; coverage does not grant pretrade permission"
+            ),
+        },
     }
 
 
@@ -275,11 +390,23 @@ def build_daily_record(
     official_close: dict[str, float],
     snapshot_1545: dict[str, float],
     generated_at_utc: str,
+    submission_receipts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    rec = reconcile(plan, target, broker_orders, positions, official_close)
+    rec = reconcile(plan, target, broker_orders, positions, official_close, submission_receipts)
     fills = rec["orders"]
     costs = shadow_costs(fills, target, positions, official_close, trade_date=plan.execution_date)
     gross = equity - last_equity
+    from open_composer.book_paper.cost_ledgers import profit_ledgers
+
+    # This legacy caller has no verified activity-flow/fee inclusion inputs.
+    # Do not turn a raw equity difference into a certified incremental-net PnL.
+    exposures = realized_exposures(target, positions, official_close, equity)
+    ledgers = profit_ledgers(
+        equity,
+        last_equity,
+        costs,
+        holdings_valuation_complete=exposures["valuation_coverage"]["complete"],
+    )
     return {
         "generated_at_utc": generated_at_utc,
         "account": plan.payload["account"],
@@ -297,8 +424,10 @@ def build_daily_record(
             "shadow_costs_total": costs["total"],
             "net_pnl": gross - costs["total"],
             "net_return": (gross - costs["total"]) / last_equity if last_equity else None,
+            "legacy_net_basis": "full_shadow_stress_not_incremental_net",
         },
-        "realized_exposures": realized_exposures(target, positions, official_close, equity),
+        "profit_ledgers": ledgers,
+        "realized_exposures": exposures,
     }
 
 

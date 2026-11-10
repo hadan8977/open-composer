@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "stock_liquidity_causal_inventory_20261023",
+  "spec_path": "strategy_specs/drafts/stock_liquidity_causal_inventory_20261023.yaml",
+  "spec_file_sha256": "aa117ceda397778798e2d610855509d911bb11df311cea59f474dd27e339e0bc",
+  "spec_semantic_sha256": "b04cdf50a2c72801859a48fc895e7ee5b3977038951317ab0a22c30994c15cb2",
+  "risk_domains": [
+    "daily_open_execution",
+    "router_strategy",
+    "short_selling"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "borrow_cost_estimate",
+    "ex_dividend_risk_note",
+    "execution_policy",
+    "execution_reality_report",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "short_exposure_policy",
+    "short_sale_source_cards",
+    "short_squeeze_stress",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_requires_target_weight_observation",
+      "blocks": "research_pass",
+      "description": "Router strategy promotion requires target weights, rebalance intents, cost stress, data evidence, and validation artifacts.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_order_authorization_requires_readiness",
+      "blocks": "paper_ready_pass",
+      "description": "Router execution can remain observation_only before paper order authorization; broker orders require paper readiness and safety artifacts.\n"
+    },
+    {
+      "domain": "short_selling",
+      "rule_id": "short_requires_borrow_and_rule_evidence",
+      "blocks": "research_pass",
+      "description": "Short-selling research pass requires broker/rule source cards and borrow/shortable evidence.\n"
+    },
+    {
+      "domain": "short_selling",
+      "rule_id": "short_paper_ready_requires_squeeze_and_dividend_stress",
+      "blocks": "paper_ready_pass",
+      "description": "Paper readiness for short exposure requires squeeze stress and ex-dividend risk review.\n"
+    }
+  ]
+}

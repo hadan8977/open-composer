@@ -1,0 +1,1 @@
+条件组件回测取证结论为warning。财报反应严格晚于SEC接受时刻，下一开盘成交；当前行业版本、条件身份链接及原生回溯清洗仍不能证明历史PIT。每日现金、费用及实际成交归因已核对。完整解释和数值见[经济报告](/root/codex-test/open-composer/research/peer_earnings_increment_20261103/runs/mechanisms-20261102-7/worker/report.zh.md)；DSR／PBO保持N/A，累计登记为已知下界。

@@ -1,4 +1,4 @@
-# Disk policy for this box (root partition /dev/vda1, 217 GB).
+# Disk policy for this box (root partition /dev/vda1, 217 GiB / 232.4 GB).
 # Enforced by scripts/disk_guard.py (hourly cron, nice/ionice); rules in docs/runbook-disk.zh.md.
 # Owner 2026-10-02: keep it light -- registering paths here is optional; research tasks have no disk steps.
 #
@@ -18,6 +18,7 @@
 version: 1
 
 thresholds:
+  ordinary_available_goal_pct: 50 # lightweight capacity warning; never expands deletion scope
   act_pct: 80          # hourly run acts at or above this usage
   target_pct: 75       # actions stop once usage is at or below this
   emergency_pct: 90    # warm datasets may be archived and removed
@@ -154,4 +155,7 @@ watch:
   - /root/.claude
   - /root/.paseo
   - /opt/openwebui-venv
+  - /opt/hadan
+  - /root/work/work
+  - /root/finance
   - /var/log

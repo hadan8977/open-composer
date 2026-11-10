@@ -1,0 +1,72 @@
+{
+  "strategy_name": "bond_expectations_information_20261017",
+  "lookahead_check": "warning",
+  "future_leak_check": "warning",
+  "overfit_risk": "high",
+  "multiple_testing_count": 6,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "pbo": null,
+  "dsr": null,
+  "statistical_methods": {
+    "learned_information_arms": 2,
+    "controls": 4,
+    "costviews": 2,
+    "Ridge_fits": 66,
+    "train_only_PCA_fits": 11,
+    "decision_quarters": 11,
+    "mature_evaluation_quarters": 10,
+    "paired_dependent_LOG_intervals": 50,
+    "PBO_DSR": "Not computed: fixed dependent arms, small quarterly sample and no declared CSCV selection/trial matrix",
+    "account_calls_vs_distinct_NAV": {
+      "actual_account_core_invocations_total": 12,
+      "original_completed_reused_in_recovery": 1,
+      "new_account_core_invocations_in_recovery": 11,
+      "distinct_saved_NAV_trajectories": 10,
+      "identical_NAV_groups": [
+        [
+          "HISTORICAL_MEAN-10",
+          "BIL_HOLD-10"
+        ],
+        [
+          "HISTORICAL_MEAN-20",
+          "BIL_HOLD-20"
+        ]
+      ],
+      "interpretation": "Separately funded account calls, not independent experiments; within each cost view historical mean and BIL have exactly identical economic NAV paths. Source intention sequences differ, so actual invocations are truthfully counted."
+    }
+  },
+  "sample_data_caveats": [
+    "Seen2024-2026 selected4ETF current-vintage source/adjustment data",
+    "Conditional14dayGSWlag/SPFnext-sessionclock, not empiricaldelivery/PIT",
+    "27..37mature commontrainquarters,10matureevaluationquarters and correlated3durationETFs",
+    "Fractional adjusted economic-index with implicit income, not physical shareholder/cash-entitlement/exactTR",
+    "Model capacity3PC addition/variable horizon versus fixed63risk"
+  ],
+  "trade_count": 274,
+  "trade_count_definition": "Positive modeled fill rows summed over12 dependent cost/policy views; request rows separate, not independent trades",
+  "order_request_count": 274,
+  "trading_days": 689,
+  "capacity_assessment": "Unmeasured; no new orderbook/ADV source read, no physicalfill/TCA or provider/account permission inferred",
+  "short_sample": true,
+  "conclusion": "warning",
+  "notes": "Stop unchanged curve/price+survey3PC/Ridge/gamma10 recipe: negative recent absolute and incremental performance, below frozen10% screen; small full10bp increment reverses at20bp and loses to purchasedBIL/causalmean/trend opportunity costs. No nearby gamma/PCA/alpha/maturity/fee/window rescue or mechanism-wide rejection.",
+  "bindings": {
+    "result": {
+      "path": "reports/research/program/bond-expectations-information-20261017/saved-completion-v1/result.json",
+      "sha256": "1671a85aec326e866997f4cdd35fe579065edd6f6f597499eff5f4d876b641e8",
+      "bytes": 145570
+    },
+    "assessment": {
+      "path": "reports/research/program/bond-expectations-information-20261017/actual-result-assessment.json",
+      "sha256": "07e9306c5253d7e442afc342ebd11f5d3c961c2a23408fa56cdd93ba154c9cea",
+      "bytes": 292844
+    },
+    "report": {
+      "path": "reports/research/program/bond-expectations-information-20261017/actual-result-report.zh.md",
+      "sha256": "f63f79e02712e3cfb63936139e8945aa5953244444c233de32737f1534d007a7",
+      "bytes": 12912
+    }
+  },
+  "low_independent_decision_sample": true
+}

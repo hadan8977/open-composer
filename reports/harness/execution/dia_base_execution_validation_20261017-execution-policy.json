@@ -1,0 +1,57 @@
+{
+  "strategy_name": "dia_base_execution_validation_20261017",
+  "policy_id": "FROZEN_BASE_WHOLE_NEXT_OPEN",
+  "order_style": "conditional_opening_reference_scenario",
+  "time_in_force": "one_scheduled_reference_attempt_then_expire",
+  "price_protection": "No price guarantee or fictional limit. Precommitted quantities and actual funded-cash affordability reductions only.",
+  "gap_filter": "None; report all requested reference-to-open gaps. No outcome-based filter.",
+  "spread_filter": "Unobserved; no fabricated BBO.",
+  "participation_cap": "No calibrated ADV/BBO cap; target nameweight0.2 and whole-share/funding bounds are capital limits, not liquidity/TCA certification.",
+  "fallback_behavior": "Invalid reference rejects monthlyproposal; invalidopening rejectsorder; funding/lotlock reducesfills; remainingrequestexpiresuntilnextoriginalmonthlyintent. Unknownheldmark=>incomplete, never ffill/zero/drop.",
+  "tca_plan": {
+    "reference_prices": [
+      "observed_decision_day_close",
+      "next_session_raw_daily_open",
+      "future_actual_arrival_price",
+      "future_actual_fill_price"
+    ],
+    "record_submitted_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "review_frequency": "For this one conditional study, inspect complete request/fill/gap ledger; live monitoring not activated."
+  },
+  "source_card_ids": [
+    "opening_reference_orders_limit",
+    "daily_bar_open_not_official_auction"
+  ],
+  "alternatives_compared": [
+    {
+      "style": "DAY market",
+      "price_protection": "None",
+      "fill_certainty": "Not guaranteed; venue/latency/spread may changeprice",
+      "complexity": "Can be queued afterclose; sequential actual sale acknowledgements matter",
+      "used": false
+    },
+    {
+      "style": "MOO market+OPG",
+      "price_protection": "None",
+      "fill_certainty": "Auction-only; unfilledcancel;9:28cutoff and accountcapabilitynotverified",
+      "complexity": "Primaryauction print/ordersupport absent, so not certified bydailyopen",
+      "used": false
+    },
+    {
+      "style": "LOO limit+OPG",
+      "price_protection": "Explicitlimit",
+      "fill_certainty": "Can remainunfilled; dailyhighlow cannot provequeuefill",
+      "complexity": "Needs limits/auctionqueueevidence absent; no newlimitparameter invented",
+      "used": false
+    }
+  ],
+  "naked_market_justification": "No real DAYmarket recommendation or broker activation. Chosen economic object is a price-taking conditional raw-open scenario.",
+  "non_paper_research_only": true,
+  "source_assessment": {
+    "path": "reports/research/program/dia-base-execution-validation-20261017/source-assessment.json",
+    "bytes": 1708,
+    "sha256": "3f1e533de766f3377f7779bd157887c7b3e85c94569413aa90cb785f3b9cb05a"
+  }
+}

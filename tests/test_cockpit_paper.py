@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
+from cockpit_contract_fixture import cockpit_workspace as cockpit_workspace
+from cockpit_contract_fixture import publish_fixture_overview
 from fastapi.testclient import TestClient
 
 from open_composer.cockpit.app import create_app
@@ -414,26 +417,125 @@ def test_sleeve_without_fills_or_budget_says_so(tmp_path: Path) -> None:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(create_app())
+def client(cockpit_workspace: Path) -> TestClient:
+    rehearsal = cockpit_workspace / "reports/paper/rehearsal"
+    for name in REAL_STRATEGY_NAMES:
+        (rehearsal / f"{name}-latest.json").write_text(
+            json.dumps(
+                {
+                    "generated_at": "2024-01-02T21:00:00+00:00",
+                    "session": "2024-01-02",
+                    "status": "dry_run_unauthorized",
+                    "position_scope": "strategy_ledger",
+                    "strategy_ledger_positions": {},
+                    "counts": {},
+                    "orders": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+    (rehearsal / "us_etf_sector_rotation_252_top2_weekly-authorization.json").write_text(
+        json.dumps(
+            {
+                "authorization_id": "synthetic-expired",
+                "expires_at": "2000-01-01T00:00:00Z",
+                "limits": {},
+                "scope": "Synthetic expired authorization fixture only",
+            }
+        ),
+        encoding="utf-8",
+    )
+    publish_fixture_overview(
+        cockpit_workspace,
+        [
+            {
+                "id": "six/BASE",
+                "label": "Synthetic BASE",
+                "capital_usd": 20_000,
+                "pnl_usd": 100,
+                "return_pct": 0.5,
+                "status": "实际账本",
+            },
+            {
+                "id": "six/H5",
+                "label": "Synthetic H5",
+                "capital_usd": 20_000,
+                "pnl_usd": -40,
+                "return_pct": -0.2,
+                "status": "实际账本",
+            },
+            {
+                "id": "legacy/us_etf_sector_rotation_252_top2_weekly",
+                "label": "Synthetic S1",
+                "capital_usd": 20_000,
+                "pnl_usd": -20,
+                "return_pct": -0.1,
+                "status": "实际账本",
+            },
+            {
+                "id": "legacy/us_recent_high_return_top50",
+                "label": "Synthetic retired",
+                "capital_usd": None,
+                "pnl_usd": 5,
+                "return_pct": None,
+                "status": "已退出",
+            },
+        ],
+    )
+    return TestClient(create_app(warm=False))
 
 
-def test_paper_index_returns_200_and_lists_every_strategy(client: TestClient) -> None:
+def comparison_payload(text: str) -> dict:
+    match = re.search(r'<script type="application/json">(.*?)</script>', text, flags=re.S)
+    assert match is not None
+    return json.loads(match[1])
+
+
+def test_paper_index_returns_200_and_lists_every_published_strategy(client: TestClient) -> None:
     response = client.get("/paper")
     assert response.status_code == 200
-    for name in REAL_STRATEGY_NAMES:
-        assert name in response.text
+    assert 'data-native-comparison aria-label="策略收益比较"' in response.text
+    comparison = comparison_payload(response.text)
+    assert comparison["initial_capital_usd"] == 100_000
+    assert [row["id"] for row in comparison["strategies"]] == [
+        "six/BASE",
+        "six/H5",
+        "legacy/us_etf_sector_rotation_252_top2_weekly",
+        "legacy/us_recent_high_return_top50",
+    ]
+    for row in comparison["strategies"]:
+        assert f'href="{row["href"]}"' in response.text
+    assert 'href="/paper/accounts"' in response.text
+    assert 'href="/paper/history"' in response.text
 
 
-def test_paper_index_shows_expired_and_observation_labels(client: TestClient) -> None:
-    response = client.get("/paper")
-    assert "observation only" in response.text
+def test_paper_detail_keeps_expired_and_observation_authorization_labels(
+    client: TestClient,
+) -> None:
+    expired = client.get("/paper/us_etf_sector_rotation_252_top2_weekly")
+    observation = client.get("/paper/us_insider_buy_broad_monthly")
+    assert expired.status_code == observation.status_code == 200
+    assert "expired" in expired.text
+    assert "observation only" in observation.text
+    assert "us_insider_buy_broad_monthly" not in {
+        row["id"] for row in comparison_payload(client.get("/paper").text)["strategies"]
+    }
 
 
-def test_paper_index_lists_running_sleeves_before_the_rest(client: TestClient) -> None:
-    text = client.get("/paper").text
-    assert text.index("S1 · Sector rotation") < text.index("Not running")
-    assert text.index("Not running") < text.index("us_insider_buy_broad_monthly")
+def test_paper_index_preserves_published_order_and_retired_contributions(
+    client: TestClient,
+) -> None:
+    rows = comparison_payload(client.get("/paper").text)["strategies"]
+    assert [row["label"] for row in rows] == [
+        "Synthetic BASE",
+        "Synthetic H5",
+        "Synthetic S1",
+        "Synthetic retired",
+    ]
+    assert rows[-1]["archived"] and not rows[-1]["selectable"]
+    assert not rows[-1]["default_selected"]
+    assert rows[-1]["disabled_reason"] == "本金待确认"
+    assert [row["latest_return_pct"] for row in rows] == [0.5, -0.2, -0.1, None]
 
 
 @pytest.mark.parametrize(

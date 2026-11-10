@@ -127,6 +127,26 @@ def run_market_timing_research(
     source = load_strategy_spec(spec_path)
     selected_symbol = (symbol or source.primary_symbol).upper()
     selected_feed = feed or source.data.feed or data_feed()
+    params_grid = _build_timing_grid(
+        profiles or ["risk_control_hold", "trend_pullback", "breakout_hold", "macd_trend"],
+        fast_bars or [5, 13],
+        slow_bars or [21, 34],
+        exit_bars or [13, 21],
+        momentum_bars or [3],
+        min_momentum_pct or [0.0],
+        breakout_bars or [10],
+        volume_bars or [5],
+        stop_loss_pct or [10.0],
+        take_profit_pct or [None],
+        max_candidates=max_candidates,
+    )
+    stages["build_grid"] = perf_counter() - stage_started
+    stage_started = perf_counter()
+    for index, params in enumerate(params_grid, start=1):
+        candidate = _candidate_spec(
+            source, selected_symbol, data_source, selected_feed, params, index
+        )
+        require_iteration_execution_gate(candidate, base, enforce_unbound_design=True)
     frame = fetch_ohlcv(
         root=base,
         symbol=selected_symbol,
@@ -151,21 +171,6 @@ def run_market_timing_research(
     stages["load_data"] = perf_counter() - stage_started
     stage_started = perf_counter()
 
-    params_grid = _build_timing_grid(
-        profiles or ["risk_control_hold", "trend_pullback", "breakout_hold", "macd_trend"],
-        fast_bars or [5, 13],
-        slow_bars or [21, 34],
-        exit_bars or [13, 21],
-        momentum_bars or [3],
-        min_momentum_pct or [0.0],
-        breakout_bars or [10],
-        volume_bars or [5],
-        stop_loss_pct or [10.0],
-        take_profit_pct or [None],
-        max_candidates=max_candidates,
-    )
-    stages["build_grid"] = perf_counter() - stage_started
-    stage_started = perf_counter()
     candidates = _evaluate_timing_candidates(
         source=source,
         frame=frame,

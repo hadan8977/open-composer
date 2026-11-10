@@ -290,6 +290,8 @@ UPSTREAM: tuple[Table, ...] = (
             "--out-root",
             "{tmp}",
             "--skip-weekly-panel",
+            "--symbol-batch-size",
+            "180",
         ),
         fetch=(
             (
@@ -314,6 +316,8 @@ UPSTREAM: tuple[Table, ...] = (
         build=(
             *PY,
             "scripts/build_short_volume_features.py",
+            "--memory-limit",
+            "450MB",
             "--years",
             "{year}",
             "--universe-root",
@@ -986,6 +990,10 @@ def run_command(step: Step, runner: Runner = subprocess.run) -> int:
     tail = (proc.stdout + proc.stderr).splitlines()[-6:]
     for line in tail:
         log.info("  %s", line)
+    if proc.returncode != 0:
+        log.error(
+            "command failed: %s (returncode=%s); downstream stopped", step.label, proc.returncode
+        )
     return proc.returncode
 
 
@@ -1322,6 +1330,21 @@ def run_upstream_table(
                     for group in ("daily", "daily_broad", "sec_fundamentals")
                     for p in (FEATURES / group).glob("*.parquet")
                     if p != out
+                ]
+            if table.name == "sec_fundamentals_daily":
+                dependencies += [
+                    ROOT / "scripts/build_sec_xbrl_fundamentals.py",
+                    ROOT / "data/raw/sec_xbrl/company_tickers.json",
+                ]
+            if table.name == "insider_broad":
+                dependencies += [ROOT / "scripts/build_insider_features.py"]
+                dependencies += sorted((ROOT / "data/raw/insider/parsed").glob("*.parquet"))
+                dependencies += sorted((ROOT / "data/raw/insider/tail/parsed").glob("*.parquet"))
+            if table.name in {"short_volume_broad", "short_interest"}:
+                stem = "short_volume" if table.name == "short_volume_broad" else "short_interest"
+                dependencies += [
+                    ROOT / f"scripts/build_{stem}_features.py",
+                    ROOT / f"data/raw/finra_{stem}/parsed.parquet",
                 ]
             bind_consumer(ROOT, forward_config, table.name, dependencies)
             consumer_frozen = True
@@ -1754,6 +1777,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             if offset is not None:
                 write_cursor(offset, day)
+        log.info("refresh finished: day=%s exit=%s", day, code)
         return code
     finally:
         lock.__exit__()

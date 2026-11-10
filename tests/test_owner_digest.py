@@ -326,6 +326,51 @@ def test_internal_log_keeps_the_old_sections_and_numbers() -> None:
     assert subject.endswith("需要你决定 0")
 
 
+def test_daily_subject_dates_stale_performance_instead_of_calling_it_today() -> None:
+    sessions = (date(2026, 10, 23), date(2026, 10, 26))
+    row = _sleeve("S1", [(sessions[0], 15000.0), (sessions[1], 15300.0)], start=sessions[0])
+    subject = od.digest_subject(
+        _data(
+            now=datetime(2026, 10, 29, 1, tzinfo=UTC),
+            sleeves=(row,),
+            sessions=sessions,
+            spy_closes={sessions[0]: 100.0, sessions[1]: 101.0},
+        )
+    )
+    assert "日报 10-29" in subject
+    assert "ETF 策略 2026-10-26 收益 +2.00%，SPY +1.00%" in subject
+    assert "当日" not in subject
+
+
+def test_weekly_subject_dates_its_five_session_window() -> None:
+    subject = od.digest_subject(_data(kind="weekly"))
+    assert "ETF 策略截至 2026-10-02 近 5 个交易日" in subject
+    assert "SPY +0.66%" in subject
+
+
+@pytest.mark.parametrize("missing_endpoint", [0, 1])
+def test_subject_does_not_present_carried_marks_as_dated_returns(missing_endpoint: int) -> None:
+    prior, start, end = date(2026, 10, 22), date(2026, 10, 23), date(2026, 10, 26)
+    rows = [
+        _sleeve("S1", [(prior, 15000.0), (start, 15100.0), (end, 15200.0)], start=prior),
+        _sleeve(
+            "S2",
+            [(prior, 15000.0), ((start, end)[1 - missing_endpoint], 15500.0)],
+            start=prior,
+        ),
+    ]
+    subject = od.digest_subject(_data(sleeves=tuple(rows), sessions=(start, end)))
+    assert "ETF 策略截至 2026-10-26 估值数据不齐" in subject
+    assert "%" not in subject
+
+
+@pytest.mark.parametrize("kind,sessions", [("daily", ()), ("weekly", SESSIONS[-5:])])
+def test_subject_reports_insufficient_history(kind: str, sessions: tuple[date, ...]) -> None:
+    subject = od.digest_subject(_data(kind=kind, sessions=sessions))
+    assert "ETF 策略收益数据不足" in subject
+    assert "%" not in subject
+
+
 def test_render_weekly_embeds_the_written_report_or_says_it_is_missing() -> None:
     written = od.render_digest(_data(kind="weekly", weekly_text="# 周报 2026-W41\n\n结论。\n"))
     assert written.startswith("# 周报 2026-W41")

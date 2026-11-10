@@ -1,0 +1,5 @@
+The frozen sequential SIP scenario passes every literal viability gate at both additional friction levels. The independent saved-only oracle reconciles two paths, all1378 marks and42718 economic value coordinates, actual wave quote references, fixed requests, AR funding/unique reservations and new-path rights. No account, selector, target, estimator or native rerun was called.
+
+Primary recent profit is $8406.23 /38.0858%, and2026 profit is $8608.41 /39.3623%; these continuous-account periods have their own actual opening NAVs. Two dependent cost views and689 calendar marks are not independent experiments. INTC concentration,19 supported cycles, postselection, current-vintage inputs and conditional historical quote access keep the evidence nonpromotable.
+
+Positive conditional profit survives actual display/funding constraints; it is neither a broker execution demonstration nor source/PIT/Alpha/Martin/paper certification. Retain this bounded lead for Main's next allocation decision. No adjacent variant or new validation is granted by this receipt.

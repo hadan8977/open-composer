@@ -10,7 +10,6 @@ import fcntl
 import hashlib
 import json
 import math
-import os
 import re
 import signal
 import subprocess
@@ -21,6 +20,21 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from open_composer.research.event_wait import (
+    WaitSpec,
+    bind_wait,
+    checkpoint_status,
+    wait_event,
+)
+from open_composer.research.process_identity import (
+    group_members,
+    identity,
+    legacy_terminal_received,
+    process_state,
+    signal_group,
+    signal_members,
+)
 
 WORKFLOW_SOURCE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
@@ -36,6 +50,7 @@ class Reply(BaseModel):
         description="Unresolved blocker evidence; null for a completed review or result."
     )
     next_review: Literal["reuse", "plan", "result", "both"] = "reuse"
+    wait: WaitSpec | None = None
 
 
 class ReplyFormatError(ValueError):
@@ -179,26 +194,36 @@ def execute(command: list[str], prompt: str, folder: Path, timeout: float) -> di
                 text=True,
                 start_new_session=True,
             )
+            saved_identity = identity(process.pid)
             write_json(
                 folder / "process.json",
-                {"pid": process.pid, "started": datetime.now(UTC).isoformat()},
+                {
+                    **saved_identity,
+                    "started": datetime.now(UTC).isoformat(),
+                    "phase": folder.name,
+                    "run": folder.parent.name,
+                },
             )
             process.communicate(prompt, timeout=timeout)
         except BaseException:
             if process is None:
                 raise
+            members = group_members(saved_identity)
             with suppress(ProcessLookupError):
-                os.killpg(process.pid, signal.SIGTERM)
+                signal_group(saved_identity, signal.SIGTERM)
             try:
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 pass
             # A promptly exiting leader can leave descendants ignoring TERM.
             with suppress(ProcessLookupError):
-                os.killpg(process.pid, signal.SIGKILL)
+                signal_group(saved_identity, signal.SIGKILL)
+            signal_members(members, signal.SIGKILL)
             process.wait()
             raise
-    return {**read_events(folder), "exit_code": process.returncode}
+    transport = {**read_events(folder), "exit_code": process.returncode}
+    write_json(folder / "transport.json", transport)
+    return transport
 
 
 TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens")
@@ -564,12 +589,21 @@ def require_local_stopped(run: Path, state: dict) -> None:
         path = phase_folder(run, name, phase) / "process.json"
         if not path.exists():
             continue
-        pid = int(json.loads(path.read_text())["pid"])
-        try:
-            os.killpg(pid, 0)
-        except ProcessLookupError:
-            continue
-        raise ValueError(f"Local phase process group is still present: {name}, pid={pid}")
+        saved = json.loads(path.read_text())
+        observed = process_state(saved)
+        if observed == "running":
+            raise ValueError(f"Local phase process group is still present: {name}")
+        if observed == "unknown":
+            raise ValueError(f"Local process identity needs reconciliation (group unknown): {name}")
+        if observed in ("legacy_unknown", "identity_mismatch"):
+            if phase.get("status") != "complete" and not phase.get("exit_code") == 0:
+                if (
+                    observed == "legacy_unknown"
+                    and phase.get("status") == "interrupted_or_failed"
+                    and legacy_terminal_received(path)
+                ):
+                    continue
+                raise ValueError(f"Local process identity needs reconciliation: {name}")
 
 
 def resolve_prior_checkpoints(root: Path, run: Path, state: dict) -> None:
@@ -632,6 +666,8 @@ def reply_file(root: Path, name: str) -> Path:
 
 
 def validate_reply(root: Path, reply: Reply, kind: str, direction: str) -> None:
+    if reply.wait is not None and (kind != "worker" or reply.status != "blocked"):
+        raise ReplyFormatError("Only a blocked worker may declare an event wait")
     if reply.checkpoint is not None:
         reply_file(root, reply.checkpoint)
     if reply.next_brief is not None:
@@ -648,6 +684,52 @@ def validate_reply(root: Path, reply: Reply, kind: str, direction: str) -> None:
             raise ReplyFormatError("Lead must choose continue/repair/branch/park")
         if reply.decision != "park" and reply.next_brief is None:
             raise ReplyFormatError("Continuing work requires a concrete next brief")
+
+
+def reconcile_event_attempts(root: Path, run: Path, state: dict, deadline: float) -> None:
+    """Receive started event continuations under the direction lock; never dispatch."""
+    for name, phase in state.get("phases", {}).items():
+        attempt = phase.get("event_attempt", {})
+        if attempt.get("state") != "dispatching":
+            continue
+        folder = phase_folder(run, name, phase)
+        process = folder / "process.json"
+        if process.is_file():
+            saved = json.loads(process.read_text())
+            while process_state(saved) == "running" and time.monotonic() < deadline:
+                require_research(root)
+                time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+            if process_state(saved) != "exited":
+                raise ValueError("Event continuation process needs reconciliation")
+        receipt = folder / "transport.json"
+        observed = read_events(folder)
+        if receipt.is_file():
+            transport = json.loads(receipt.read_text())
+        elif (
+            process.is_file()
+            and observed.get("session")
+            and not observed.get("usage_incomplete")
+            and observed.get("usage") is not None
+        ):
+            transport = {**observed, "exit_code": 0}
+        else:
+            raise ValueError("Uncertain event dispatch; reconcile original session before retry")
+        if transport.get("exit_code") != 0:
+            raise ValueError("Event continuation failed; preserve checkpoint for reconciliation")
+        if transport.get("session") != phase.get("resumes_session"):
+            raise ValueError("Event continuation did not return original session")
+        reply = Reply.model_validate_json((folder / "reply.json").read_text())
+        validate_reply(root, reply, phase_kind(name), state["direction"])
+        phase.update(transport)
+        phase.update(reply.model_dump())
+        if reply.wait is not None:
+            phase["wait_state"] = bind_wait(root, run, reply.wait, transport["session"])
+        source = state["phases"][attempt["source_phase"]]
+        if source.get("wait_state", {}).get("attempt") != name:
+            raise ValueError("Event attempt binding changed")
+        source["wait_state"]["state"] = "received"
+        attempt["state"] = "received"
+        write_json(run / "run.json", state)
 
 
 def run_round(
@@ -687,6 +769,7 @@ def run_round(
             state = json.loads((run / "run.json").read_text())
             if state["direction"] != direction or state["run_id"] != run_id:
                 raise ValueError("Saved run identity does not match")
+            reconcile_event_attempts(root, run, state, started + timeout)
             require_local_stopped(run, state)
             attempt = len(list(run.glob("before-resume-*.json"))) + 1
             archive = run / f"before-resume-{attempt}.json"
@@ -741,12 +824,18 @@ def run_round(
             }
         )
         write_json(run / "run.json", state)
-        deadline = time.monotonic() + timeout
+        deadline = started + timeout
         schema = run / "reply.schema.json"
         dispatch_schema = Reply.model_json_schema()
         # Strict provider output requires all keys; old saved replies still parse.
         dispatch_schema["required"] = list(dispatch_schema["properties"])
         dispatch_schema["properties"]["next_review"].pop("default", None)
+        dispatch_schema["properties"]["wait"].pop("default", None)
+        for definition in dispatch_schema.get("$defs", {}).values():
+            if definition.get("type") == "object":
+                definition["required"] = list(definition.get("properties", {}))
+                for prop in definition.get("properties", {}).values():
+                    prop.pop("default", None)
         write_json(schema, dispatch_schema)
         try:
             worker_blocked = False
@@ -792,6 +881,31 @@ def run_round(
                 )
                 while True:
                     require_research(root)
+                    event_record = prior.get("wait_state") if kind == "worker" else None
+                    if event_record and not changed_upstream:
+                        if event_record.get("state") == "dispatching":
+                            raise ValueError("Uncertain event attempt; reconcile original session")
+                        observed = wait_event(root, run, event_record, deadline, require_research)
+                        event_record.update(observed)
+                        write_json(run / "run.json", state)
+                        if observed["state"] != "ready":
+                            reply = Reply.model_validate(
+                                {k: prior.get(k) for k in Reply.model_fields if k in prior}
+                            )
+                            break
+                        if any(
+                            p.get("event_attempt", {}).get("event") == observed["event"]
+                            and p["event_attempt"].get("wait_id") == event_record["id"]
+                            for p in state["phases"].values()
+                        ):
+                            event_record["state"] = "duplicate_event"
+                            write_json(run / "run.json", state)
+                            reply = Reply.model_validate(
+                                {k: prior.get(k) for k in Reply.model_fields if k in prior}
+                            )
+                            break
+                        event_record["state"] = "observed"
+                        write_json(run / "run.json", state)
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         raise TimeoutError("Round deadline reached; preserve existing job state")
@@ -832,6 +946,14 @@ def run_round(
                         "depends_on": list(upstream),
                         "automatic_recovery": recovery_reason,
                     }
+                    if event_record:
+                        event_record.update(state="dispatching", attempt=phase)
+                        state["phases"][phase]["event_attempt"] = {
+                            "wait_id": event_record["id"],
+                            "event": event_record["event"],
+                            "source_phase": prior_name,
+                            "state": "dispatching",
+                        }
                     phase_started = time.monotonic()
                     write_json(run / "run.json", state)
                     dispatch = (
@@ -886,6 +1008,7 @@ def run_round(
                     ]
                     try:
                         transport = execute_fn(wrapped, prompt, folder, remaining)
+                        write_json(folder / "transport.json", transport)
                         state["phases"][phase].update(transport)
                     finally:
                         state["phases"][phase]["elapsed_seconds"] = time.monotonic() - phase_started
@@ -906,6 +1029,10 @@ def run_round(
                     if transport["exit_code"]:
                         failure = f"Agent exited {transport['exit_code']}; inspect {folder}"
                         state["phases"][phase].update(status="interrupted_or_failed", error=failure)
+                        if event_record:
+                            event_record["state"] = "failed"
+                            state["phases"][phase]["event_attempt"]["state"] = "failed"
+                            write_json(run / "run.json", state)
                         if (
                             session
                             and capacity_failure(folder)
@@ -932,6 +1059,9 @@ def run_round(
                         validate_reply(root, reply, kind, direction)
                     except ReplyFormatError as exc:
                         state["phases"][phase].update(status="invalid_reply", error=str(exc))
+                        if event_record:
+                            event_record["state"] = "invalid_reply"
+                            state["phases"][phase]["event_attempt"]["state"] = "invalid_reply"
                         write_json(run / "run.json", state)
                         if not session or reply_repaired or deadline - time.monotonic() <= 0:
                             raise
@@ -945,10 +1075,26 @@ def run_round(
                         snapshot.write_bytes(local_path(root, reply.results).read_bytes())
                         state["phases"][phase]["results_snapshot"] = str(snapshot.relative_to(root))
                     state["phases"][phase].update(reply.model_dump())
+                    if event_record:
+                        event_record["state"] = "received"
+                        state["phases"][phase]["event_attempt"]["state"] = "received"
+                    if reply.wait is not None:
+                        state["phases"][phase]["wait_state"] = bind_wait(
+                            root, run, reply.wait, session
+                        )
+                        if reply.checkpoint:
+                            state["phases"][phase]["checkpoint_availability"] = checkpoint_status(
+                                root, run, reply.checkpoint, session
+                            )
                     if kind in ("worker", "lead"):
                         state[f"latest_{kind}_phase"] = phase
                     state["active_phase"] = None
                     write_json(run / "run.json", state)
+                    if kind == "worker" and reply.wait is not None:
+                        prior_name, prior = phase, state["phases"][phase]
+                        changed_upstream = False
+                        recovery_reason = "event_ready"
+                        continue
                     break
                 if kind == "plan_review" and (
                     reply.status != "complete" or reply.decision != "accept"

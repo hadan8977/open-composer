@@ -1,0 +1,11 @@
+[Unit]
+Description=Check whether a bounded Hadan availability probe is due
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+AccuracySec=15s
+Unit=oc-hadan-availability.service
+
+[Install]
+WantedBy=timers.target

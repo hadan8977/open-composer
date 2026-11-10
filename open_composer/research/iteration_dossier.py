@@ -5,13 +5,14 @@ import json
 import math
 import re
 import stat
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.gate_additions import gate_additions_blockers, record_prebacktest_gate
 from open_composer.storage import write_json
 from open_composer.strategy_versions import strategy_content_hash
 
@@ -88,6 +89,13 @@ LIGHTWEIGHT_EXEMPTION_WARNING = "lightweight_single_mechanism_exemption_used"
 # every structural condition below holds; see
 # docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md §3.1.
 LIGHTWEIGHT_MAX_CANDIDATE_BUDGET = 24
+PUBLIC_METHOD_ROLE = "public_method_replication"
+PUBLIC_METHOD_FALSE_FIELDS = (
+    "promotion_eligible",
+    "paper_trading_allowed",
+    "broker_activity_allowed",
+    "real_market_claim",
+)
 FINAL_STATUS_FIELDS = (
     "workflow_pass",
     "research_pass",
@@ -177,6 +185,7 @@ class IterationDossierValidation:
     blocked: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     checked_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    info: dict[str, Any] = field(default_factory=dict)
 
     @property
     def ok(self) -> bool:
@@ -184,7 +193,7 @@ class IterationDossierValidation:
 
     def to_dict(self, base: Path | None = None) -> dict[str, Any]:
         root = base or project_root()
-        return {
+        payload = {
             "iter_id": self.iter_id,
             "root": _relpath(self.root, root),
             "status": self.status,
@@ -192,6 +201,22 @@ class IterationDossierValidation:
             "warnings": list(self.warnings),
             "checked_at": self.checked_at.isoformat(),
         }
+        if self.info:
+            payload["info"] = dict(self.info)
+        return payload
+
+
+@dataclass(frozen=True)
+class NativeExecutionControl:
+    """A required native diagnostic derived from a separately admitted source.
+
+    This is execution context, not a StrategySpec note or a selectable candidate
+    registration. The gate reconstructs every field with the existing producer.
+    """
+
+    source: StrategySpec
+    purpose: str
+    parameters: dict[str, Any] = field(default_factory=dict)
 
 
 def iteration_dossier_paths(iter_id: str, root: Path | None = None) -> IterationDossierPaths:
@@ -267,9 +292,32 @@ def validate_iteration_dossier(
             blocked.append(f"missing_{key}")
     external = _load_json(paths.external_brief_json, blocked, "external_brief")
     search_space = _load_json(paths.search_space_json, blocked, "search_space")
+    method_blocked = _public_method_role_blockers(external, search_space, base)
+    blocked.extend(method_blocked)
+    from open_composer.research.market_component import (
+        MARKET_COMPONENT_ROLE,
+        market_component_role_blockers,
+    )
+
+    component_blocked = market_component_role_blockers(external, search_space, base)
+    blocked.extend(component_blocked)
+    market_component = (
+        isinstance(external, dict)
+        and external.get("research_role") == MARKET_COMPONENT_ROLE
+        and not component_blocked
+    )
+    public_method = (
+        isinstance(external, dict)
+        and external.get("research_role") == PUBLIC_METHOD_ROLE
+        and not method_blocked
+    )
     if isinstance(external, dict):
         blocked.extend(_identity_blockers(external, iter_id, base))
-        blocked.extend(_external_brief_blockers(external))
+        blocked.extend(
+            _external_brief_blockers(
+                external, public_method=public_method, market_component=market_component
+            )
+        )
         from open_composer.research.direction import (
             requires_direction_review,
             validate_direction_review,
@@ -304,8 +352,12 @@ def validate_iteration_dossier(
     )
     if iter_id == Q2_ITERATION_ID and stage in ARTIFACT_REQUIRED_STAGES:
         blocked.extend(_q2_output_artifact_blockers(base))
-    # Non-blocking audit markers (currently only the lightweight single-
-    # mechanism exemption) travel through `blocked` because the nested
+    # T-20261005-34 additions preserve verified unchanged historical contracts;
+    # `info` carries the family trial total for the DSR.
+    gate_blocked, gate_info = gate_additions_blockers(iter_id, base, stage=stage)
+    blocked.extend(gate_blocked)
+    # Non-blocking audit markers (lightweight exemption and verified fixed
+    # component applicability) travel through `blocked` because the nested
     # blocker helpers only return one list; promote them to `warnings` here
     # so they show up for audit without ever downgrading `status`.
     remaining_blocked: list[str] = []
@@ -322,6 +374,7 @@ def validate_iteration_dossier(
         status=status,
         blocked=blocked,
         warnings=warnings,
+        info=gate_info,
     )
 
 
@@ -331,6 +384,7 @@ def require_iteration_execution_gate(
     *,
     enforce_unbound_design: bool = False,
     require_registered_iteration: bool = False,
+    native_control: NativeExecutionControl | None = None,
 ) -> IterationDossierValidation | None:
     """Fail closed for execution that is or must be bound to an iteration."""
     from open_composer.research.design_contract import (
@@ -343,6 +397,8 @@ def require_iteration_execution_gate(
         if isinstance(spec_source, StrategySpec)
         else load_strategy_spec(Path(spec_source))
     )
+    if native_control is not None:
+        return _require_native_execution_control(spec, native_control, root or project_root())
     design = research_design_mapping(spec)
     if not research_design_requires_iteration_gate(design):
         if require_registered_iteration:
@@ -358,10 +414,238 @@ def require_iteration_execution_gate(
         if campaign_bound or enforce_unbound_design or require_registered_iteration:
             raise ValueError("research_design requires iter_id before execution")
         return None
-    result = validate_iteration_dossier(iter_id, root or project_root(), stage="pre-backtest")
+    base = root or project_root()
+    result = validate_iteration_dossier(iter_id, base, stage="pre-backtest")
     if not result.ok:
         raise ValueError(f"iteration dossier blocked for {iter_id}: {', '.join(result.blocked)}")
+    identity_blockers = _execution_spec_identity_blockers(spec, iter_id, base)
+    if identity_blockers:
+        raise ValueError(
+            f"iteration dossier blocked for {iter_id}: {', '.join(identity_blockers)}. "
+            "Preregister the actual variant in the admitted candidate manifest, or use an "
+            "exact derivation in its frozen parameter space; a new scientific version "
+            "retains prior exposure and frozen evaluation definitions."
+        )
+    record_prebacktest_gate(iter_id, base)
     return result
+
+
+def _require_native_execution_control(
+    actual: StrategySpec, control: NativeExecutionControl, root: Path
+) -> IterationDossierValidation | None:
+    """Admit only an exact native baseline/ablation/stress, preserving its role."""
+    if not isinstance(control, NativeExecutionControl):
+        raise ValueError("native execution control requires a registered source and fixed producer")
+    source_result = require_iteration_execution_gate(
+        control.source, root, enforce_unbound_design=True, require_registered_iteration=True
+    )
+    purpose = control.purpose
+    parameters = control.parameters
+    if purpose == "ml_linear_baseline" and control.source.model is not None and not parameters:
+        from open_composer.research.ml_backend.evaluation import _linear_baseline_spec
+
+        expected = _linear_baseline_spec(control.source)
+    elif purpose in {"llm_quant_baseline", "llm_missing_modality"} and not parameters:
+        from open_composer.research.promotion import _llm_control_spec
+
+        if not any(factor.source == "llm_feature" for factor in control.source.factors.values()):
+            raise ValueError("native LLM control requires registered LLM factors")
+        expected = _llm_control_spec(control.source, purpose=purpose)
+    elif purpose == "cost_sensitivity" and set(parameters) == {"slippage_bps"}:
+        from open_composer.research.promotion import _clone_spec_with_costs
+
+        bps = parameters["slippage_bps"]
+        if isinstance(bps, bool) or not isinstance(bps, int) or bps < 0:
+            raise ValueError("native cost sensitivity requires nonnegative integer bps")
+        expected = _clone_spec_with_costs(control.source, slippage_bps=bps)
+    elif purpose == "cost_grid" and set(parameters) == {
+        "commission_pct",
+        "slippage_bps",
+        "impact_model",
+    }:
+        from open_composer.research.cost_sensitivity import _rewrite_costs
+
+        for key in ("commission_pct", "slippage_bps"):
+            value = parameters[key]
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value < 0
+            ):
+                raise ValueError("native cost grid requires finite nonnegative costs")
+        if parameters["impact_model"] not in {"linear", "sqrt", "almgren_chriss"}:
+            raise ValueError("native cost grid impact model is not supported")
+        expected = _rewrite_costs(control.source, **parameters)
+    elif purpose == "blind_test" and set(parameters) == {"mode", "seed"}:
+        from open_composer.research.blind_test import _rewrite_spec
+
+        if (
+            parameters["mode"] not in {"real", "anonymous", "random_remap", "sector_preserved"}
+            or isinstance(parameters["seed"], bool)
+            or not isinstance(parameters["seed"], int)
+        ):
+            raise ValueError("native blind test requires a fixed supported mode and integer seed")
+        expected, _ = _rewrite_spec(control.source, parameters["mode"], seed=parameters["seed"])
+    else:
+        raise ValueError("native execution control purpose or parameters are not supported")
+    if not _same_execution_spec(actual, expected):
+        raise ValueError("native execution control differs from its registered source/producer")
+    if source_result is None:
+        # The source's strict gate permits this only for the original explicit
+        # local sample workflow exemption. Exact producer verification above
+        # still applies; this grants no market/model or candidate admission.
+        return None
+    return replace(
+        source_result,
+        info={
+            **source_result.info,
+            "native_execution_control": {
+                "purpose": purpose,
+                "source_spec_hash": strategy_content_hash(control.source),
+                "execution_spec_hash": strategy_content_hash(actual),
+                "parameters": dict(parameters),
+                "selectable_candidate": False,
+                "promotion_eligible": False,
+            },
+        },
+    )
+
+
+def _same_execution_spec(actual: StrategySpec, registered: StrategySpec) -> bool:
+    """Compare the existing canonical identity, ignoring only reporting metadata.
+
+    Research bindings and arbitrary notes remain part of the identity. A renamed
+    report or an edited description does not change the execution definition.
+    """
+    notes = actual.notes.model_dump(mode="json")
+    registered_notes = registered.notes.model_dump(mode="json")
+    for key in ("intent", "open_questions", "reporting"):
+        if key in registered_notes:
+            notes[key] = registered_notes[key]
+        else:
+            notes.pop(key, None)
+    normalized = actual.model_copy(
+        update={
+            "name": registered.name,
+            "description": registered.description,
+            "notes": type(actual.notes).model_validate(notes),
+        }
+    )
+    return strategy_content_hash(normalized) == strategy_content_hash(registered)
+
+
+def _execution_spec_identity_blockers(spec: StrategySpec, iter_id: str, root: Path) -> list[str]:
+    """Bind supplied bytes/semantics to the validated source or manifest version.
+
+    Explicitly registered candidates may differ from the source. Existing sweep
+    derivations are also valid when they reconstruct exactly from the frozen
+    source's finite parameter space and fit its already registered inventory.
+    This does not approve a new scientific branch or reset cumulative exposure.
+    """
+    paths = iteration_dossier_paths(iter_id, root)
+    blocked: list[str] = []
+    external = _load_json(paths.external_brief_json, blocked, "external_brief")
+    search = _load_json(paths.search_space_json, blocked, "search_space")
+    if blocked or not isinstance(external, dict) or not isinstance(search, dict):
+        return ["execution_spec_registration_unreadable"]
+    bindings: dict[str, str] = {}
+    for payload in (external, search):
+        if payload.get("source_spec_path") and payload.get("spec_hash"):
+            bindings[str(payload["source_spec_path"])] = str(payload["spec_hash"])
+    manifest: dict[str, Any] = {}
+    manifest_raw = search.get("candidate_manifest_path")
+    if manifest_raw:
+        manifest_path, error = _safe_repo_path(root, str(manifest_raw))
+        if error is None:
+            candidate_manifest = _load_json(manifest_path, blocked, "candidate_manifest")
+            if isinstance(candidate_manifest, dict):
+                manifest = candidate_manifest
+                hashes = manifest.get("spec_hashes")
+                if isinstance(hashes, dict):
+                    rows = manifest.get("candidates")
+                    candidate_paths = {
+                        str(row.get("spec_path"))
+                        for row in rows or []
+                        if isinstance(row, dict) and row.get("spec_path")
+                    }
+                    bindings.update(
+                        {
+                            str(path): str(digest)
+                            for path, digest in hashes.items()
+                            if str(path) in candidate_paths
+                        }
+                    )
+    registered_specs: list[StrategySpec] = []
+    for raw, digest in bindings.items():
+        path, error = _safe_repo_path(root, raw)
+        if error or not path.is_file():
+            continue
+        try:
+            registered = load_strategy_spec(path)
+        except (OSError, ValueError):
+            continue
+        if strategy_content_hash(registered) != digest:
+            continue
+        registered_specs.append(registered)
+        if _same_execution_spec(spec, registered):
+            return []
+    if not registered_specs:
+        return ["execution_spec_registration_missing"]
+
+    # Use the existing producer, rather than trusting a caller's claim that an
+    # arbitrary mutated strategy is a sweep candidate.
+    sweep = spec.notes.model_dump(mode="json").get("parameter_sweep")
+    contracts = search.get("contracts")
+    policy_locked = (
+        bool(search.get("campaign_contract_path"))
+        or (isinstance(contracts, dict) and bool(contracts.get("candidate_policy")))
+        or (paths.root / "phase-one-preregistration-lock.json").exists()
+    )
+    if not policy_locked and isinstance(sweep, dict) and isinstance(sweep.get("params"), dict):
+        from open_composer.research.design_contract import research_design_mapping
+        from open_composer.research.parameter_sweep import (
+            _candidate_from_params,
+            _parameter_value_to_cli,
+        )
+
+        params = sweep["params"]
+        index = sweep.get("candidate_index")
+        rows = manifest.get("candidates")
+        budget = len(rows) if isinstance(rows, list) else 0
+        for source in registered_specs:
+            allowed = research_design_mapping(source).get("parameter_space")
+            if (
+                sweep.get("source_strategy") != source.name
+                or not isinstance(allowed, dict)
+                or not allowed
+                or any(not isinstance(values, list) or not values for values in allowed.values())
+                or not params
+                or set(params) != set(allowed)
+                or isinstance(index, bool)
+                or not isinstance(index, int)
+                or not 1 <= index <= budget
+            ):
+                continue
+            if any(
+                not isinstance(allowed[key], list) or not allowed[key] or value not in allowed[key]
+                for key, value in params.items()
+            ):
+                continue
+            if math.prod(len(values) for values in allowed.values()) > budget:
+                continue
+            try:
+                rebuilt, _ = _candidate_from_params(
+                    source,
+                    {key: _parameter_value_to_cli(value) for key, value in params.items()},
+                    index,
+                    root,
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
+            if _same_execution_spec(spec, rebuilt):
+                return []
+    return ["execution_spec_not_registered_or_admitted_derivation"]
 
 
 def _spec_requires_registered_iteration(spec: StrategySpec) -> bool:
@@ -447,7 +731,178 @@ def _load_json(path: Path, blocked: list[str], label: str) -> dict[str, Any] | N
     return payload
 
 
-def _external_brief_blockers(payload: dict[str, Any]) -> list[str]:
+def _public_method_bound_artifact(
+    root: Path, binding: Any, label: str
+) -> tuple[Path | None, list[str]]:
+    prefix = f"public_method_{label}"
+    if not isinstance(binding, dict):
+        return None, [f"{prefix}_binding_missing"]
+    raw_path = str(binding.get("path") or "")
+    path, error = _safe_repo_path(root, raw_path)
+    if error or not raw_path or (root / raw_path).is_symlink() or not path.is_file():
+        return None, [f"{prefix}_path_invalid"]
+    if (
+        not _is_sha256(binding.get("sha256"))
+        or hashlib.sha256(path.read_bytes()).hexdigest() != binding["sha256"]
+    ):
+        return None, [f"{prefix}_sha256_mismatch"]
+    return path, []
+
+
+def _public_method_manifest_blockers(
+    manifest: dict[str, Any], search_space: dict[str, Any], root: Path
+) -> list[str]:
+    """Only reviewed, nonpromotable anonymous methods may replace a securities spec."""
+    blocked: list[str] = []
+    if (
+        manifest.get("research_role") != PUBLIC_METHOD_ROLE
+        or search_space.get("research_role") != PUBLIC_METHOD_ROLE
+        or manifest.get("schema_version") != 3
+        or manifest.get("generated_before_backtest") is not True
+        or manifest.get("manifest_type") != "generic_candidate_family_v1"
+        or search_space.get("candidate_manifest_contract") != "generic_candidate_family_v1"
+        or manifest.get("spec_hashes")
+    ):
+        blocked.append("public_method_manifest_role_invalid")
+    candidates = manifest.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        return [*blocked, "public_method_candidates_missing"]
+    ids = [row.get("candidate_id") for row in candidates if isinstance(row, dict)]
+    if (
+        len(ids) != len(candidates)
+        or any(not isinstance(cid, str) or not cid for cid in ids)
+        or len(set(ids)) != len(ids)
+    ):
+        return [*blocked, "public_method_candidate_ids_invalid"]
+    definitions: dict[str, dict[str, Any]] = {}
+    for row in candidates:
+        if (
+            row.get("research_role") != PUBLIC_METHOD_ROLE
+            or row.get("promotion_eligible") is not False
+            or row.get("spec_path")
+        ):
+            blocked.append(f"public_method_candidate_scope_invalid:{row['candidate_id']}")
+        binding = {
+            "path": row.get("method_definition_path"),
+            "sha256": row.get("method_definition_sha256"),
+        }
+        path, errors = _public_method_bound_artifact(root, binding, "definition")
+        blocked.extend(errors)
+        if path is None or str(path) in definitions:
+            continue
+        definition = _read_json_object(path)
+        if definition is None:
+            blocked.append("public_method_definition_invalid_json")
+            continue
+        definitions[str(path)] = definition
+        expected = {
+            "schema_version": 1,
+            "research_role": PUBLIC_METHOD_ROLE,
+            "iter_id": search_space.get("iter_id"),
+            "candidate_manifest_path": search_space.get("candidate_manifest_path"),
+            "data_feasibility_path": search_space.get("data_feasibility_path"),
+            "time_axis_kind": "sample_index",
+        }
+        for key, value in expected.items():
+            if definition.get(key) != value:
+                blocked.append(f"public_method_definition_{key}_mismatch")
+        for key in PUBLIC_METHOD_FALSE_FIELDS:
+            if definition.get(key) is not False:
+                blocked.append(f"public_method_definition_{key}_must_be_false")
+        if definition.get("candidate_ids") != ids:
+            blocked.append("public_method_definition_candidate_ids_mismatch")
+        bound: dict[str, Path] = {}
+        for key in ("scientific_plan", "independent_plan_review", "author_implementation"):
+            artifact, errors = _public_method_bound_artifact(root, definition.get(key), key)
+            blocked.extend(errors)
+            if artifact is not None:
+                bound[key] = artifact
+        if len(bound) != 3:
+            continue
+        plan = _read_json_object(bound["scientific_plan"])
+        review = _read_json_object(bound["independent_plan_review"])
+        if plan is None or review is None:
+            blocked.append("public_method_plan_or_review_invalid_json")
+            continue
+        review_bindings = review.get("bindings")
+        review_plan = review_bindings.get("plan") if isinstance(review_bindings, dict) else None
+        if (
+            review.get("verdict") != "approve_deep_plan"
+            or not isinstance(review_plan, dict)
+            or any(
+                review_plan.get(key) != definition["scientific_plan"].get(key)
+                for key in ("path", "sha256")
+            )
+        ):
+            blocked.append("public_method_independent_plan_review_not_approved_or_bound")
+        if not review.get("reviewer") or review.get("reviewer") == review.get("author"):
+            blocked.append("public_method_plan_review_not_independent")
+        evidence = plan.get("evidence")
+        source_bindings = evidence.get("source_bindings") if isinstance(evidence, dict) else None
+        implementation = definition["author_implementation"]
+        if not isinstance(source_bindings, list) or not any(
+            isinstance(source, dict)
+            and all(source.get(key) == implementation.get(key) for key in ("path", "sha256"))
+            for source in source_bindings
+        ):
+            blocked.append("public_method_implementation_not_in_approved_sources")
+    return blocked
+
+
+def _public_method_role_blockers(external: Any, search_space: Any, root: Path) -> list[str]:
+    payloads = [external, search_space]
+    if not any(
+        isinstance(row, dict) and row.get("research_role") == PUBLIC_METHOD_ROLE for row in payloads
+    ):
+        return []
+    if any(
+        not isinstance(row, dict) or row.get("research_role") != PUBLIC_METHOD_ROLE
+        for row in payloads
+    ):
+        return ["public_method_dossier_role_mismatch"]
+    if any(row.get("schema_version") != 3 for row in payloads):
+        return ["public_method_dossier_schema_mismatch"]
+    if any(row.get("source_spec_path") or row.get("spec_hash") for row in payloads):
+        return ["public_method_dossier_securities_spec_not_allowed"]
+    path, blocked = _public_method_bound_artifact(
+        root,
+        {
+            "path": search_space.get("candidate_manifest_path"),
+            "sha256": search_space.get("candidate_manifest_sha256"),
+        },
+        "manifest",
+    )
+    manifest = _read_json_object(path) if path is not None else None
+    if manifest is None:
+        return [*blocked, "public_method_manifest_invalid_json"]
+    canonical = {
+        "path": str(
+            ITERATION_ROOT / str(search_space.get("iter_id") or "") / "candidate-manifest.json"
+        ),
+        "sha256": search_space.get("candidate_manifest_sha256"),
+    }
+    _, canonical_blocked = _public_method_bound_artifact(root, canonical, "canonical_manifest")
+    return [
+        *blocked,
+        *canonical_blocked,
+        *_public_method_manifest_blockers(manifest, search_space, root),
+    ]
+
+
+def public_method_role_applies(iteration_dir: Path, root: Path) -> bool:
+    """Shared applicability only; never substitutes for source/knowledge/execution gates."""
+    external = _read_json_object(iteration_dir / "external-brief.json")
+    search_space = _read_json_object(iteration_dir / "search-space.json")
+    return bool(
+        external
+        and external.get("research_role") == PUBLIC_METHOD_ROLE
+        and not _public_method_role_blockers(external, search_space, root)
+    )
+
+
+def _external_brief_blockers(
+    payload: dict[str, Any], *, public_method: bool = False, market_component: bool = False
+) -> list[str]:
     blocked: list[str] = []
     if int(payload.get("schema_version") or 1) >= 2:
         if not payload.get("current_source_card_paths"):
@@ -457,8 +912,9 @@ def _external_brief_blockers(payload: dict[str, Any]) -> list[str]:
     sources = payload.get("sources")
     if not isinstance(sources, list):
         return ["external_brief_sources_missing"]
-    if len(sources) < 8:
-        blocked.append(f"external_brief_sources_lt_8:{len(sources)}")
+    minimum_sources = 2 if public_method or market_component else 8
+    if len(sources) < minimum_sources:
+        blocked.append(f"external_brief_sources_lt_{minimum_sources}:{len(sources)}")
     paper_count = 0
     for idx, source in enumerate(sources):
         if not isinstance(source, dict):
@@ -469,8 +925,23 @@ def _external_brief_blockers(payload: dict[str, Any]) -> list[str]:
             blocked.append(f"external_brief_source_{idx}_missing:{','.join(missing)}")
         if str(source.get("source_type") or "").strip().lower() in PAPER_SOURCE_TYPES:
             paper_count += 1
-    if paper_count < 3:
-        blocked.append(f"external_brief_paper_sources_lt_3:{paper_count}")
+    minimum_papers = 1 if public_method or market_component else 3
+    # A validated nonpromotable market component may reconstruct an authored
+    # practitioner method. Source cards, actual snapshots and independent plan /
+    # implementation bindings are still enforced by the surrounding v3 route.
+    authored_component = market_component and any(
+        isinstance(source, dict)
+        and source.get("source_type") == "practitioner_first_person"
+        and source.get("source_kind") == "authored_public_method"
+        for source in sources
+    )
+    if paper_count < minimum_papers and not authored_component:
+        blocked.append(f"external_brief_paper_sources_lt_{minimum_papers}:{paper_count}")
+    if public_method and not any(
+        isinstance(source, dict) and source.get("source_kind") == "official_author_implementation"
+        for source in sources
+    ):
+        blocked.append("public_method_official_implementation_source_missing")
     topic_coverage = payload.get("topic_coverage")
     if not isinstance(topic_coverage, list) or len([item for item in topic_coverage if item]) < 6:
         blocked.append("external_brief_topic_coverage_incomplete")
@@ -562,7 +1033,11 @@ def _search_space_blockers(
             blocked.append(f"search_space_{field_name}_empty_final")
     knowledge_contract = payload.get("knowledge_contract")
     if knowledge_contract is not None:
-        blocked.extend(_knowledge_contract_blockers(knowledge_contract, root))
+        blocked.extend(
+            _knowledge_contract_blockers(
+                knowledge_contract, root, expected_iter_id=str(payload.get("iter_id") or "")
+            )
+        )
     blocked.extend(
         _campaign_contract_blockers(
             payload,
@@ -637,10 +1112,18 @@ def _campaign_contract_blockers(
     declared_sha256 = str(payload.get("campaign_contract_sha256") or "").strip()
     iter_id = str(payload.get("iter_id") or "").strip()
     registered_campaign_ids = _registered_campaign_ids_for_child(root, iter_id)
+    from open_composer.research.market_component import fixed_seen_component_comparison_applies
+
+    fixed_component = (
+        not raw_path
+        and not registered_campaign_ids
+        and fixed_seen_component_comparison_applies(payload, root)
+    )
     requirement_blockers = _campaign_requirement_blockers(
         payload,
         registered_campaign_ids=registered_campaign_ids,
         campaign_bound=bool(raw_path),
+        verified_fixed_component=fixed_component,
     )
     if not raw_path:
         blocked = list(requirement_blockers)
@@ -781,6 +1264,7 @@ def _campaign_requirement_blockers(
     *,
     registered_campaign_ids: list[str],
     campaign_bound: bool,
+    verified_fixed_component: bool = False,
 ) -> list[str]:
     blocked: list[str] = []
     schema_version = _int_or_none(payload.get("schema_version")) or 1
@@ -812,7 +1296,9 @@ def _campaign_requirement_blockers(
             "campaign_contract_binding_missing_for_registered_child:" + registered_campaign_ids[0]
         )
     if not legacy_unbound and not campaign_bound:
-        if _lightweight_single_mechanism_exempt(payload, campaign_bound=campaign_bound):
+        if verified_fixed_component and not registered_campaign_ids:
+            blocked.append("warning:reviewed_fixed_seen_component_campaign_not_applicable")
+        elif _lightweight_single_mechanism_exempt(payload, campaign_bound=campaign_bound):
             blocked.append(LIGHTWEIGHT_EXEMPTION_WARNING_PREFIX + LIGHTWEIGHT_EXEMPTION_WARNING)
         else:
             blocked.append("campaign_contract_required_for_new_iteration")
@@ -1555,8 +2041,20 @@ def _candidate_manifest_blockers(
             blocked.append("candidate_manifest_contract_type_mismatch")
         if manifest_contract == "generic_candidate_family_v1":
             blocked.extend(_generic_manifest_contract_blockers(contracts, root))
+    from open_composer.research.market_component import (
+        MARKET_COMPONENT_ROLE,
+        market_component_manifest_blockers,
+    )
+
+    public_method = search_space.get("research_role") == PUBLIC_METHOD_ROLE
+    market_component = search_space.get("research_role") == MARKET_COMPONENT_ROLE
+    method_definition = public_method or market_component
+    if public_method:
+        blocked.extend(_public_method_manifest_blockers(manifest, search_space, root))
+    if market_component:
+        blocked.extend(market_component_manifest_blockers(manifest, search_space, root))
     spec_hashes = manifest.get("spec_hashes")
-    if not isinstance(spec_hashes, dict) or not spec_hashes:
+    if not method_definition and (not isinstance(spec_hashes, dict) or not spec_hashes):
         blocked.append("candidate_manifest_spec_hashes_missing")
         spec_hashes = {}
     contract_map = {
@@ -1575,10 +2073,15 @@ def _candidate_manifest_blockers(
         "role",
         "method",
         "ablation",
-        "spec_path",
         "fallback",
         *contract_map,
     }
+    if method_definition:
+        required_fields.update(
+            {"method_definition_path", "method_definition_sha256", "research_role"}
+        )
+    else:
+        required_fields.add("spec_path")
     if policy_bound:
         required_fields.add("candidate_policy_sha256")
     policy_rows_by_contract: dict[str, dict[str, dict[str, Any]]] = {}
@@ -1638,6 +2141,8 @@ def _candidate_manifest_blockers(
                 blocked.append(
                     f"candidate_manifest_{candidate_id}_candidate_policy_sha256_mismatch"
                 )
+        if method_definition:
+            continue
         spec_path, error = _safe_repo_path(root, str(candidate["spec_path"]))
         if error:
             blocked.append(f"candidate_manifest_{candidate_id}_invalid_spec_path:{error}")
@@ -2403,7 +2908,7 @@ def _q2_execution_map_blockers(
     return blocked
 
 
-def _knowledge_contract_blockers(payload: Any, root: Path) -> list[str]:
+def _knowledge_contract_blockers(payload: Any, root: Path, *, expected_iter_id: str) -> list[str]:
     if not isinstance(payload, dict):
         return ["knowledge_contract_not_object"]
     blocked: list[str] = []
@@ -2422,7 +2927,7 @@ def _knowledge_contract_blockers(payload: Any, root: Path) -> list[str]:
         path, error = _safe_repo_path(root, raw)
         if error:
             blocked.append(f"knowledge_contract_invalid_{field_name}:{error}")
-        elif not path.exists():
+        elif not path.is_file():
             blocked.append(f"knowledge_contract_missing_artifact_{field_name}")
         else:
             resolved[field_name] = path
@@ -2435,28 +2940,80 @@ def _knowledge_contract_blockers(payload: Any, root: Path) -> list[str]:
     }
     if not isinstance(partitions, list) or not required_partitions.issubset(set(partitions)):
         blocked.append("knowledge_contract_visibility_partitions_incomplete")
-    assessment_path = resolved.get("assessment_path")
-    if assessment_path is not None:
+    artifacts: dict[str, dict[str, Any]] = {}
+    for field_name, path in resolved.items():
         try:
-            assessment = json.loads(assessment_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            blocked.append("knowledge_contract_assessment_invalid_json")
+            artifact = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            label = "assessment" if field_name == "assessment_path" else field_name
+            blocked.append(f"knowledge_contract_{label}_invalid_json")
+            continue
+        if not isinstance(artifact, dict):
+            blocked.append(f"knowledge_contract_{field_name}_not_object")
+            continue
+        artifacts[field_name] = artifact
+        if artifact.get("iter_id") != expected_iter_id:
+            blocked.append(f"knowledge_contract_{field_name}_iter_id_mismatch")
+    assessment = artifacts.get("assessment_path")
+    if assessment is not None:
+        if assessment.get("status") != "ok" or assessment.get("blocked") != []:
+            blocked.append("knowledge_contract_assessment_not_ok")
+        brief_path = root / ITERATION_ROOT / expected_iter_id / "external-brief.json"
+        if not brief_path.is_file():
+            blocked.append("knowledge_contract_external_brief_missing")
         else:
-            if assessment.get("status") != "ok":
-                blocked.append("knowledge_contract_assessment_not_ok")
-            brief_path = assessment_path.parent / "external-brief.json"
-            if not brief_path.is_file():
-                blocked.append("knowledge_contract_external_brief_missing")
-            else:
-                expected_brief_hash = str(assessment.get("external_brief_sha256") or "")
-                actual_brief_hash = hashlib.sha256(brief_path.read_bytes()).hexdigest()
-                if not expected_brief_hash:
-                    blocked.append("knowledge_contract_external_brief_sha256_missing")
-                elif expected_brief_hash != actual_brief_hash:
-                    blocked.append("knowledge_contract_external_brief_sha256_mismatch")
-                expected_brief_path = _relpath(brief_path, root)
-                if assessment.get("external_brief_path") != expected_brief_path:
-                    blocked.append("knowledge_contract_external_brief_path_mismatch")
+            expected_brief_hash = str(assessment.get("external_brief_sha256") or "")
+            actual_brief_hash = hashlib.sha256(brief_path.read_bytes()).hexdigest()
+            if not expected_brief_hash:
+                blocked.append("knowledge_contract_external_brief_sha256_missing")
+            elif expected_brief_hash != actual_brief_hash:
+                blocked.append("knowledge_contract_external_brief_sha256_mismatch")
+            if assessment.get("external_brief_path") != _relpath(brief_path, root):
+                blocked.append("knowledge_contract_external_brief_path_mismatch")
+        bindings = assessment.get("artifact_bindings")
+        if not isinstance(bindings, dict):
+            blocked.append("knowledge_contract_assessment_bindings_missing_refresh_assessment")
+            bindings = {}
+        for field_name in required_paths.keys() - {"assessment_path"}:
+            path = resolved.get(field_name)
+            if path is None:
+                continue
+            binding = bindings.get(field_name)
+            if not isinstance(binding, dict):
+                blocked.append(f"knowledge_contract_assessment_binding_missing:{field_name}")
+                continue
+            if binding.get("path") != _relpath(path, root):
+                blocked.append(f"knowledge_contract_assessment_binding_path_mismatch:{field_name}")
+            if binding.get("sha256") != hashlib.sha256(path.read_bytes()).hexdigest():
+                blocked.append(
+                    f"knowledge_contract_assessment_binding_sha256_mismatch:{field_name}"
+                )
+    scout_path = resolved.get("scout_path")
+    if scout_path is not None and "scout_path" in artifacts:
+        from open_composer.research.knowledge_memory import _load_valid_scout
+
+        iteration_dir = root / ITERATION_ROOT / expected_iter_id
+        if scout_path != iteration_dir / "knowledge-scout.json":
+            blocked.append("knowledge_contract_scout_path_mismatch")
+        try:
+            _load_valid_scout(scout_path, iteration_dir, expected_iter_id, root)
+        except (OSError, ValueError, TypeError, AttributeError, KeyError):
+            blocked.append("knowledge_contract_scout_content_invalid")
+    reuse = artifacts.get("model_reuse_decision_path")
+    if reuse is not None and (
+        reuse.get("schema_version") != 1 or not isinstance(reuse.get("decisions"), list)
+    ):
+        blocked.append("knowledge_contract_model_reuse_content_invalid")
+    matrix = artifacts.get("modality_role_matrix_path")
+    if matrix is not None:
+        roles = matrix.get("roles")
+        if (
+            matrix.get("schema_version") != 1
+            or not isinstance(roles, list)
+            or not roles
+            or any(not isinstance(row, dict) or not row.get("role") for row in roles)
+        ):
+            blocked.append("knowledge_contract_modality_role_matrix_content_invalid")
     return blocked
 
 
@@ -2738,6 +3295,36 @@ def _final_evaluation_receipt_blockers(
         for field_name in ("decision", *FINAL_STATUS_FIELDS):
             if evaluation.get(field_name) != receipt.get(field_name):
                 blocked.append(f"final_evaluation_receipt_{field_name}_mismatch")
+        search_space = _read_json_object(paths.search_space_json)
+        from open_composer.research.market_component import (
+            MARKET_COMPONENT_FALSE_FIELDS,
+            MARKET_COMPONENT_ROLE,
+        )
+
+        if search_space and search_space.get("research_role") == MARKET_COMPONENT_ROLE:
+            for label, payload in (("receipt", receipt), ("report", evaluation)):
+                for field_name in (*MARKET_COMPONENT_FALSE_FIELDS, "paper_ready_pass"):
+                    if payload.get(field_name) is not False:
+                        blocked.append(f"market_component_final_{label}_{field_name}_must_be_false")
+                if payload.get("claim_scope") != "conditional_cohort":
+                    blocked.append(f"market_component_final_{label}_claim_scope_mismatch")
+        if search_space and search_space.get("research_role") == PUBLIC_METHOD_ROLE:
+            for label, payload in (("receipt", receipt), ("report", evaluation)):
+                for field_name in (
+                    *PUBLIC_METHOD_FALSE_FIELDS,
+                    "research_pass",
+                    "llm_contribution_pass",
+                    "paper_ready_pass",
+                ):
+                    if payload.get(field_name) is not False:
+                        blocked.append(f"public_method_final_{label}_{field_name}_must_be_false")
+                if (
+                    payload.get("ml_contribution_pass") is not None
+                    and payload.get("ml_contribution_pass") is not False
+                ):
+                    blocked.append(
+                        f"public_method_final_{label}_ml_contribution_pass_must_be_false"
+                    )
         if is_strict_multimodal:
             expected_decision = (
                 "continue_to_locked_forward_observation"
@@ -3271,6 +3858,10 @@ def _external_brief_json_template(iter_id: str) -> dict[str, Any]:
         "source_spec_path": None,
         "spec_hash": None,
         "objective": "US minute momentum round 1",
+        "registered_at": datetime.now(UTC).isoformat(),
+        "mechanism_family": "",
+        "mechanism_description": "",
+        "difference_from_existing": [],
         "current_source_card_paths": [],
         "source_evidence_bindings": [],
         "sources": [],

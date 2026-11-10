@@ -1,0 +1,174 @@
+{
+  "strategy_name": "conditional_factor_dislocation_20261018-independent-66ad",
+  "author": "f28170c4-1c44-491e-93ce-79c18a81e8dc",
+  "reviewer": "66ad4b54-ec62-400b-9a03-a29682cf58e6",
+  "at_utc": "2026-10-18T18:52:40.945104+00:00",
+  "review_kind": "Consumed saved result only",
+  "lookahead_check": "warning",
+  "future_leak_check": "warning",
+  "overfit_risk": "high",
+  "causal_saved_state_and_account_arithmetic": "PASS within explicitly conditional accepted scope",
+  "multiple_testing_count": 8,
+  "trial_count_interpretation": "Eight dependent policy/context views; one frozen KF recipe, two state pipelines, sixteen actual cost books. No independent-trial equivalence.",
+  "actual_estimation_operations": {
+    "nuisance_OLS": 2483,
+    "unfiltered_GLS": 2231,
+    "KF_updates": 2189
+  },
+  "actual_state_pipelines": 2,
+  "actual_core_books": 16,
+  "reused_paths": 0,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "pbo": null,
+  "dsr": null,
+  "statistical_methods": {
+    "PBO": "N/A; no CSCV selection/ranking experiment",
+    "DSR": "N/A; no justified project-wide independent-trial Sharpe claim",
+    "descriptive_maxT4": {
+      "bands": {
+        "ORIGINAL32:KF-minus-GLS": [
+          -0.00018038497388018053,
+          0.00018019844220086396
+        ],
+        "ORIGINAL32:KF-minus-REVERSAL": [
+          -0.0007549044554166766,
+          0.00041877791391290337
+        ],
+        "DIA28:KF-minus-GLS": [
+          -0.00014841786586058405,
+          -2.0594100516656386e-06
+        ],
+        "DIA28:KF-minus-REVERSAL": [
+          -0.00035211697879009897,
+          0.000288896611106629
+        ]
+      },
+      "sample": 689,
+      "block_sessions": 21,
+      "draws": 1999,
+      "seed": 20261018,
+      "estimand": "Full-calendar mean DAILY ARITHMETIC return difference",
+      "meaning": "Dependent descriptive family, not recent/year USD intervals, future probabilities or a new gate"
+    }
+  },
+  "sample_data_caveats": [
+    "Selected, previously seen, dependent ORIGINAL32/DIA28 cohorts and dates; chronological arithmetic is not pristine OOS.",
+    "Current-vintage connected returns/actions, conditional completed-close availability and next daily CLOSE fills; no first-seen PIT, attainable auction, broker, TCA or paper certification.",
+    "Reduced three price characteristics plus intercept, SPY/BIL proxies and long/cash funding are explicit local adaptations; no source five-factor, constant-notional or hedged-short replication.",
+    "504-session risk, 252-session R/Z references, ten-session overlapping residuals and common state histories reduce independent information; marked days, estimates, fills and cost views are not independent trials.",
+    "10/20bp per filled side are research assumptions. Different funded capital, latches, holdings and exposure preclude a pure timing or ex-post matched-risk causal attribution.",
+    "DIA EW actually owns 62 CVR and fractional/child rights; operating NAV is not complete wealth. CVR common-v 0..3 bounds are conditional and unknown other rights stay UNKNOWN.",
+    "Prior20 dollarADV is only a size diagnostic. Closing-auction depth, nonfill, participation, impact, borrow and physical accessibility remain uncertified."
+  ],
+  "trade_count": 3582,
+  "primary_KF_positive_sidefill_rows_by_context": {
+    "ORIGINAL32": 2471,
+    "DIA28": 1111
+  },
+  "all_dependent_positive_sidefill_rows": 28110,
+  "trading_days": 689,
+  "scored_dates_and_slots": {
+    "ORIGINAL32": {
+      "dates": 689,
+      "slots": 20833,
+      "no_score_dates": 0,
+      "finite_Z_and_desired_and_funded_differences": {
+        "GLS": {
+          "common_finite_Z_pairs": 20833,
+          "changed_finite_Z": 20833,
+          "changed_desired_membership_slots": 168,
+          "changed_membership_dates": 155,
+          "cost10_changed_funded_holding_dates": 596,
+          "cost10_changed_funded_name_date_slots": 2029,
+          "cost20_changed_funded_holding_dates": 587,
+          "cost20_changed_funded_name_date_slots": 2043
+        },
+        "REVERSAL": {
+          "common_finite_Z_pairs": 20833,
+          "changed_finite_Z": 20833,
+          "changed_desired_membership_slots": 2960,
+          "changed_membership_dates": 662,
+          "cost10_changed_funded_holding_dates": 681,
+          "cost10_changed_funded_name_date_slots": 4872,
+          "cost20_changed_funded_holding_dates": 680,
+          "cost20_changed_funded_name_date_slots": 4905
+        }
+      }
+    },
+    "DIA28": {
+      "dates": 381,
+      "slots": 10148,
+      "no_score_dates": 308,
+      "finite_Z_and_desired_and_funded_differences": {
+        "GLS": {
+          "common_finite_Z_pairs": 10148,
+          "changed_finite_Z": 10148,
+          "changed_desired_membership_slots": 80,
+          "changed_membership_dates": 72,
+          "cost10_changed_funded_holding_dates": 347,
+          "cost10_changed_funded_name_date_slots": 1191,
+          "cost20_changed_funded_holding_dates": 348,
+          "cost20_changed_funded_name_date_slots": 1242
+        },
+        "REVERSAL": {
+          "common_finite_Z_pairs": 10148,
+          "changed_finite_Z": 10148,
+          "changed_desired_membership_slots": 1517,
+          "changed_membership_dates": 377,
+          "cost10_changed_funded_holding_dates": 378,
+          "cost10_changed_funded_name_date_slots": 2256,
+          "cost20_changed_funded_holding_dates": 378,
+          "cost20_changed_funded_name_date_slots": 2282
+        }
+      }
+    }
+  },
+  "short_sample": false,
+  "capacity_assessment": "Author-bound prior20 dollarADV diagnostics are scale context; independently checked fills/quantities and saved marks do not establish auction capacity or TCA.",
+  "conclusion": "warning",
+  "allocation_verdict": "stop_or_pivot",
+  "notes": "Accept genuine DIA absolute profits, retain all contrary controls/ORIGINAL outcomes, and stop unchanged KF allocation because both model-contribution conjunctions fail. No parameter rescue or automatic control promotion.",
+  "bindings": {
+    "protocol": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/protocol.json",
+      "bytes": 19131,
+      "sha256": "193a626b2509c72caf1bd837475ee8270a7c238e53a44eff67b81eb585132057"
+    },
+    "science": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/independent-science-review.json",
+      "bytes": 17032,
+      "sha256": "0e5c0465fda5e30818d6e0d1d60343a14d4b80b9072f8e9cf168f870ee26f0d6"
+    },
+    "entry": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/independent-entry-review.json",
+      "bytes": 9809,
+      "sha256": "869286584d20b1f79098b42f70abfd9905be303888eccd5a59dba574fbe05d8c"
+    },
+    "result": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/result.json",
+      "bytes": 397143,
+      "sha256": "d1627be9b1699bbcc7e10d1c2b54f2796b0ed879caba355e32a352f661ea58ae"
+    },
+    "appendix": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/saved-result-economic-appendix.json",
+      "bytes": 7053177,
+      "sha256": "e0ae20a748a697d108fb4d28f782d1d1a78179f84c38a27b8e54d9efd3498b20"
+    },
+    "trial_ledger": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/trial-ledger.jsonl",
+      "bytes": 7809,
+      "sha256": "fbe5411ab334e99f770e78f3d7e77541ba8737791172ec68c32fd96531995ab3"
+    },
+    "independent_audit": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/independent-saved-result-audit-66ad.json",
+      "bytes": 44011,
+      "sha256": "932cfa8a5ad4802bb598baf5b8adf90bdfa675f5411571f4a80a56103151a984"
+    },
+    "resource": {
+      "path": "reports/research/program/conditional-factor-dislocation-20261018/independent-actual-result-resource-66ad.json",
+      "bytes": 7512,
+      "sha256": "3eb85c916f90f25ba8709e2764fb7f7c1e1d60cd9138f98f78f3a41d9f720f6e"
+    }
+  }
+}

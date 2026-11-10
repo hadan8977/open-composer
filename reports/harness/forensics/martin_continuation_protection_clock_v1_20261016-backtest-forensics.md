@@ -1,0 +1,5 @@
+Independent conditional-result warning. Saved18sleeves,9036daily marks,588fills and252conditional intraday intervals reconcile; no engine, signals or new scenario ran. Current-vintage adjusted-price units,seen selected controls and source/PIT/rights/execution limitations remain. PBO/DSR/proxies are null, not fabricated statistics.
+
+At20bp the exact variant returns-5.95% versus+11.16% baseline, while drawdown improves15.13% versus17.10%. At0bp it remains-.996%; fees are not the sole explanation. All69old entries persist;29new entries lose835.73USD,12of19old winners become nonpositive and15next-session reentries occur. The-3420.53USD exit-price/quantity/fee/new-entry partition is algebra,not independent causal effects. An adverseGMEentry improves conditionally,without overturning the complete negative result.
+
+Stop unchanged fixed2.5%daily-protection allocation andparklowdepthbounce. Preserve no-hookcontinuation as a nonpromotable development reference. A source-grounded saved-entry geometry audit can inform the next exact question; it cannot justify a stop-width/gap threshold search or new financial launch. Mother question remains open.

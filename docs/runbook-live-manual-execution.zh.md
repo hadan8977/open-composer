@@ -1,58 +1,47 @@
-# Open Composer 人工实盘执行 Runbook
+# Manual live-execution reference
 
-本文只定义人工实盘流程，不新增实盘 API，也不授权自动实盘下单。实盘启动前必须同时满足：
+This document describes a manual mapping for a specific router; it grants no live-trading permission or live API access. Activation remains an owner decision. The existing prerequisites are:
 
-- `reports/paper/validation/paper-validation-report-<date>.json` 中 `paper_validation_pass=true`
-- `reports/research/control/route-cross-source-validation-<date>.json` 中 `route_cross_source_pass=true`
-- `uv run oc paper readiness nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate --strict` 通过
-- `uv run oc paper status` 显示 kill switch 未启用
+- `reports/paper/validation/paper-validation-report-<date>.json`: `paper_validation_pass=true`.
+- `reports/research/control/route-cross-source-validation-<date>.json`: `route_cross_source_pass=true`.
+- `uv run oc paper readiness nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate --strict` passes.
+- `uv run oc paper status` shows the kill switch disabled.
 
-截至 2026-07-09，跨源重验的数据深度问题由用户延后处理；这不删除实盘前置项，实盘启动仍需用户逐项批准。
+The historical deferral of cross-source data-depth work did not waive any launch prerequisite or the requirement for explicit owner approval.
 
-## 每日流程
+## Daily procedure if separately authorized
 
-1. 开盘前读取通知与 `reports/paper/review_cards/YYYYMMDD.md`。
-2. 若 Action 为 `No operation.`，当天不做实盘操作。
-3. 若有变化，按 review card 的 `50% live weight` 列人工下单；剩余仓位放 BIL 或现金。
-4. 成交后追加一行 `reports/live/manual_journal.jsonl`。
-5. 若 paper cycle、state drift、数据、对账任一项 warning/error 未解释，当天实盘不操作。
-
-Paper 验证循环默认先跑 readiness。若 router order authorization 工件存在、readiness 为 `status=ok`、execution substate 为 `order_authorized` 且 kill switch 清空，循环会向 Alpaca Paper 路径传递 `--allow-paper-orders`；否则保持 observation-only。任一 counted trading day 验证失败后，次日循环前必须存在 `reports/paper/validation/remediations/YYYYMMDD.md` 处置记录。
-
-`manual_journal.jsonl` 每行格式：
+Read notifications and `reports/paper/review_cards/YYYYMMDD.md` before open. `Action: No operation.` means no live action. Otherwise follow the card's `50% live weight` column manually, with the balance in BIL/cash, then append the actual fill to `reports/live/manual_journal.jsonl`. Any unexplained paper-cycle, state-drift, data or reconciliation warning/error blocks that day's new live action.
 
 ```json
 {"date":"2026-07-09","symbol":"GLD","action":"buy","qty":100,"price":350.12,"source_review_card":"reports/paper/review_cards/20260709.md","note":"manual 50pct mapping"}
 ```
 
-## 50% 仓位映射
+The paper validation cycle first checks readiness. It passes `--allow-paper-orders` only with an existing router-order authorization, readiness `status=ok`, execution substate `order_authorized` and a clear kill switch; otherwise it stays observation-only. A failed counted trading day requires `reports/paper/validation/remediations/YYYYMMDD.md` before the next day's cycle.
 
-| 路由状态 | review card 目标 | 实盘首期 |
-| --- | --- | --- |
-| `confirmation_transition_overlay_TQQQ` | TQQQ | TQQQ 50% + BIL/现金 50% |
-| `post_drawdown_reentry` | TQQQ | TQQQ 50% + BIL/现金 50% |
-| `risk_on_ranked` | 当日 selected symbol | selected 50% + BIL/现金 50% |
-| `confirmation_transition` | QLD | QLD 50% + BIL/现金 50% |
-| `early_deterioration_downshift` | QQQ | QQQ 50% + BIL/现金 50% |
-| `hard_stress_defensive` | GLD | GLD 50% + BIL/现金 50% |
-| `cooldown_transition_overlay_TQQQ` | TQQQ | TQQQ 50% + BIL/现金 50% |
-| `soft_stress` | QQQ | QQQ 50% + BIL/现金 50% |
-| `cooldown_transition` | QLD | QLD 50% + BIL/现金 50% |
-| `selected_asset_blocked` | QLD | QLD 50% + BIL/现金 50% |
-| `melt_up_peak_guard` | QLD | QLD 50% + BIL/现金 50% |
+## Initial 50% mapping
 
-执行时以当天 review card 为准；上表用于人工复核状态是否合理。
+The current review card governs execution; use this table only as a consistency check.
 
-## Kill 规则
+| Router state | Card target | Initial manual allocation |
+|---|---|---|
+| `confirmation_transition_overlay_TQQQ` | TQQQ | 50% TQQQ, 50% BIL/cash |
+| `post_drawdown_reentry` | TQQQ | 50% TQQQ, 50% BIL/cash |
+| `risk_on_ranked` | Selected symbol | 50% selected symbol, 50% BIL/cash |
+| `confirmation_transition` | QLD | 50% QLD, 50% BIL/cash |
+| `early_deterioration_downshift` | QQQ | 50% QQQ, 50% BIL/cash |
+| `hard_stress_defensive` | GLD | 50% GLD, 50% BIL/cash |
+| `cooldown_transition_overlay_TQQQ` | TQQQ | 50% TQQQ, 50% BIL/cash |
+| `soft_stress` | QQQ | 50% QQQ, 50% BIL/cash |
+| `cooldown_transition` | QLD | 50% QLD, 50% BIL/cash |
+| `selected_asset_blocked` | QLD | 50% QLD, 50% BIL/cash |
+| `melt_up_peak_guard` | QLD | 50% QLD, 50% BIL/cash |
 
-- 每日循环连续 2 个交易日失败：暂停实盘新操作，仅允许降风险，并启用 `uv run oc paper kill-switch --enable --reason "daily cycle failed twice"`。
-- 实盘账户自启动以来回撤超过 -25%：全部转 BIL/现金，强制复盘后才能恢复。
-- 数据、对账、state drift 当日异常：当天实盘不操作，维持现状。
-- `route_cross_source_pass=false` 或 `paper_validation_pass=false`：不得启动实盘。
+## Stop conditions and monthly audit
 
-## 月检
+Two consecutive failed trading-day cycles stop new live actions, permit only risk reduction and require `uv run oc paper kill-switch --enable --reason "daily cycle failed twice"`. Drawdown worse than -25% since live inception requires moving entirely to BIL/cash and review before resuming. A data/reconciliation/state-drift anomaly means no live action that day. Either validation flag false prevents launch.
 
-每月运行：
+Monthly audit commands:
 
 ```bash
 uv run oc data verify-research-cache
@@ -60,4 +49,4 @@ uv run oc strategy router-replay-audit
 uv run oc paper validation-report
 ```
 
-若 replay audit 出现 drift，先检查 research cache manifest hash，再比较策略数字；不得用调参修复审计漂移。
+On replay drift, inspect research-cache manifest hashes before comparing strategy numbers. Parameter tuning is not an audit-drift repair.

@@ -115,6 +115,14 @@ def _row(frame: pd.DataFrame, symbol: str, trade_date: date) -> pd.Series:
     return match.iloc[0]
 
 
+def test_forward_runtime_limits_preserve_all_fixture_values(parsed_archive, monkeypatch):
+    monkeypatch.delenv("OC_FORWARD_SPILL_BYTES", raising=False)
+    baseline = _build()
+    monkeypatch.setenv("OC_FORWARD_SPILL_BYTES", str(64 * 1024**2))
+    bounded = _build()
+    pd.testing.assert_frame_equal(bounded, baseline, check_exact=True)
+
+
 # --------------------------------------------------------------------------
 # ratio maths
 # --------------------------------------------------------------------------
@@ -291,3 +299,59 @@ def test_output_columns_match_the_declared_contract(parsed_archive) -> None:
     frame = _build()
     expected = ["symbol", "trade_date", *bsvf.FEATURE_COLUMNS, *bsvf.METADATA_COLUMNS]
     assert list(frame.columns) == expected
+
+
+@pytest.mark.parametrize(
+    "symbols", [["AAA", "BBB"] + [f"NULL{i:03}" for i in range(200)], ["VOID"]]
+)
+def test_streaming_keeps_exact_values_order_dtypes_and_nulls(
+    parsed_archive, tmp_path, monkeypatch, symbols
+):
+    monkeypatch.setenv("OC_FORWARD_SPILL_BYTES", str(128 * 1024**2))
+    args = dict(universe_symbols=symbols, as_of=date(2024, 3, 31), memory_limit="100MB")
+    expected = bsvf.build_year(YEAR, **args)
+    target = tmp_path / "streamed.parquet"
+    result = bsvf.build_year(YEAR, output_path=target, **args)
+    actual = pd.read_parquet(target)
+    pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+    assert result == {
+        "rows": len(expected),
+        "symbols": expected.symbol.nunique(),
+        "coverage": float(expected.record_present.mean()),
+    }
+    if len(symbols) > 1:
+        assert len(expected) > 8192  # Cross a real fetch_df_chunk boundary.
+
+
+def test_streaming_failure_retains_old_target_and_partial(parsed_archive, tmp_path):
+    expected = _build()
+    target = tmp_path / "existing.parquet"
+    target.write_bytes(b"old accepted bytes")
+
+    class FailingResult:
+        calls = 0
+
+        def fetch_df_chunk(self, *, vectors_per_chunk):
+            self.calls += 1
+            if self.calls == 1:
+                return expected.iloc[:3].copy()
+            raise RuntimeError("injected next chunk failure")
+
+    with pytest.raises(RuntimeError, match="injected next chunk"):
+        bsvf.write_ordered_chunks(FailingResult(), target)
+    assert target.read_bytes() == b"old accepted bytes"
+    assert len(list(tmp_path.glob("existing.parquet.*.part"))) == 1
+
+
+def test_first_null_string_chunk_accepts_later_real_values(parsed_archive, tmp_path):
+    expected = _build(["000VOID", "AAA", "BBB"])
+    assert expected.iloc[:1].market_facilities.isna().all()
+    frames = iter([expected.iloc[:1], expected.iloc[1:], expected.iloc[:0]])
+
+    class SplitResult:
+        def fetch_df_chunk(self, *, vectors_per_chunk):
+            return next(frames).copy()
+
+    target = tmp_path / "null-first.parquet"
+    bsvf.write_ordered_chunks(SplitResult(), target)
+    pd.testing.assert_frame_equal(pd.read_parquet(target), expected, check_exact=True)

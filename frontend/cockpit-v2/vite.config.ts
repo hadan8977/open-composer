@@ -2,12 +2,23 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
-// Cockpit v2: the Figma Make export, trimmed to the two plugins it actually
-// needs. Built once (`pnpm build`) into the FastAPI static tree and served at
-// /v2/ by `open_composer.cockpit.app`; no node runtime on the server.
+// The shared comparison assets stay external to the React bundle. Their
+// content hash changes the immutable-cache URLs whenever either file changes.
+const comparisonHash = createHash('sha256')
+for (const asset of ['css/paper-comparison.css', 'js/paper-comparison.mjs']) {
+  comparisonHash.update(readFileSync(path.resolve(__dirname, '../../open_composer/cockpit/static', asset)))
+}
+const comparisonVersion = comparisonHash.digest('hex').slice(0, 12)
+
+// React workspace with the shared paper comparison renderer, served by FastAPI.
 export default defineConfig({
   base: '/v2/',
+  define: {
+    __PAPER_COMPARISON_VERSION__: JSON.stringify(comparisonVersion),
+  },
   build: {
     outDir: path.resolve(__dirname, '../../open_composer/cockpit/static/v2'),
     emptyOutDir: true,

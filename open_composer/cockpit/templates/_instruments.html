@@ -5,8 +5,8 @@
     (the tooltip script in cockpit.js reads it with textContent). -#}
 
 {% macro money_hero(value) -%}
-{%- set cents = ((value * 100)|round|int) % 100 -%}
-<span class="hero-num">${{ "{:,}".format(value|int) }}<small>.{{ "%02d"|format(cents) }}</small></span>
+{%- set parts = ('{:,.2f}'.format(value|abs)).split('.') -%}
+<span class="hero-num">{{ '-' if value < 0 }}${{ parts[0] }}<small>.{{ parts[1] }}</small></span>
 {%- endmacro %}
 
 {% macro delta(history) -%}

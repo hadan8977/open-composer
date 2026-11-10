@@ -87,6 +87,7 @@ class SleeveLine:
     sessions: int
     spark: tuple[float, ...]  # value / budget - 1 per observed close, oldest first
     holdings: tuple[tuple[str, float], ...]
+    market_as_of: date | None = None
 
     @property
     def href(self) -> str:
@@ -304,12 +305,37 @@ def build_money(data: DigestData | None, track: dict[str, Any] | None) -> MoneyB
         )
     sessions = data.sessions
     total, day, week = combined_returns(data.sleeves, sessions)
+
+    # nav_on deliberately carries values for report continuity. The dashboard
+    # must not label mixed/stale sessions as a synchronized portfolio return.
+    def aligned(day: date) -> bool:
+        return bool(data.sleeves) and all(
+            day < row.start_session or any(d == day for d, _ in row.navs) for row in data.sleeves
+        )
+
+    if sessions:
+        if not aligned(sessions[-1]):
+            total = day = week = None
+        elif len(sessions) >= 2:
+            if not aligned(sessions[-2]):
+                day = None
+            if not aligned(sessions[-6] if len(sessions) >= 6 else sessions[0]):
+                week = None
     spy_day, spy_week = spy_returns(data.spy_closes, sessions)
     budget_total = sum(row.budget for row in data.sleeves) or None
     since = (total / budget_total - 1.0) if total is not None and budget_total else None
     sleeves = []
     for row in data.sleeves:
         s_day, s_week = sleeve_returns(row, sessions)
+        observed = {d for d, _ in row.navs}
+        if sessions and sessions[-1] not in observed:
+            s_day = s_week = None
+        elif len(sessions) >= 2:
+            if sessions[-2] >= row.start_session and sessions[-2] not in observed:
+                s_day = None
+            base = sessions[-6] if len(sessions) >= 6 else sessions[0]
+            if base >= row.start_session and base not in observed:
+                s_week = None
         sleeves.append(
             SleeveLine(
                 name=row.name,
@@ -324,6 +350,7 @@ def build_money(data: DigestData | None, track: dict[str, Any] | None) -> MoneyB
                 sessions=len(row.navs),
                 spark=sleeve_spark(row),
                 holdings=row.holdings,
+                market_as_of=row.last_session,
             )
         )
     book = tuple(

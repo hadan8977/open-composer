@@ -652,6 +652,7 @@ def test_cli_submit_fails_loudly_when_an_order_is_not_accepted(monkeypatch, tmp_
     plan = plan_for(client=client)
     account = plan.payload["account"]
     monkeypatch.setattr(bp_cli, "_build", lambda *a: (tmp_path, client, None, plan))
+    monkeypatch.setattr(bp_cli, "project_root", lambda: tmp_path)
     monkeypatch.setattr(bp_cli, "_kill_switch_check", lambda root: lambda: None)
     rejected = {
         "submitted_at_utc": "2026-09-18T18:00:00Z",

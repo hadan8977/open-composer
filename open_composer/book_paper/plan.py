@@ -202,11 +202,16 @@ class OrderLookup:
         self._by_id = {str(getattr(o, "client_order_id", "")): o for o in orders}
         self._truncated = len(orders) >= ORDER_PAGE_LIMIT
 
-    def find(self, client_order_id: str) -> Any | None:
+    def find(self, client_order_id: str, *, fresh: bool = False) -> Any | None:
+        if fresh:
+            return self._find_remote(client_order_id)
         if client_order_id in self._by_id:
             return self._by_id[client_order_id]
         if not self._truncated or not hasattr(self._client, "get_order_by_client_id"):
             return None
+        return self._find_remote(client_order_id)
+
+    def _find_remote(self, client_order_id: str) -> Any | None:
         try:
             return self._client.get_order_by_client_id(client_order_id)
         except Exception as exc:
@@ -591,8 +596,10 @@ def _risk_checks(
     )
 
     short_names = [s for s, q in post_qty.items() if q < 0]
+    equity_ok = _valid_price(state.equity) is not None
     account_ok = (
-        state.status == "ACTIVE"
+        equity_ok
+        and state.status == "ACTIVE"
         and not state.trading_blocked
         and (state.shorting_enabled or not short_names)
     )
@@ -603,6 +610,7 @@ def _risk_checks(
             f"status={state.status} trading_blocked={state.trading_blocked} "
             f"shorting_enabled={state.shorting_enabled}",
             "ACTIVE, not blocked, shorting enabled when short",
+            "" if equity_ok else "account equity must be finite and positive",
         )
     )
     results.append(
@@ -791,6 +799,9 @@ def submit_plan(
     kill_switch_check: Callable[[], None] | None = None,
     pace_seconds: float = 0.0,
     tif_mode: str = "close",
+    clock: Callable[[], datetime] | None = None,
+    checkpoint: Callable[[dict[str, Any]], None] | None = None,
+    prior_attempts: Mapping[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Send the plan's CLS market orders.  Needs an unblocked plan and a verified paper client.
 
@@ -827,18 +838,61 @@ def submit_plan(
         except Exception as exc:
             raise BookEngineError(f"kill switch blocks submission: {exc}") from exc
 
+    import time as _time
+
+    from open_composer.book_paper.reversal import reversal_legs, submit_reversal
+
+    started = _time.monotonic()
+    live_clock = clock or (lambda: now + timedelta(seconds=_time.monotonic() - started))
     lookup = OrderLookup(client, plan.execution_date)
-    sent: list[dict[str, Any]] = []
-    skipped: list[dict[str, Any]] = []
-    failed: list[dict[str, Any]] = []
-    ordered = sorted(plan.orders, key=lambda o: (o["side"] != "sell", o["symbol"]))  # sells first
-    for order in ordered:
+    report: dict[str, Any] = {
+        "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "plan_sha256": plan.payload["plan_sha256"],
+        "staged_submission_version": 1,
+        "time_in_force": "cls" if tif_mode == "close" else "day",
+        "sent": [],
+        "skipped_existing": [],
+        "failed": [],
+        "deferred": [],
+        "reversals": [],
+        "attempts": {},
+    }
+    attempted = dict(prior_attempts or {})
+
+    def save() -> None:
+        if checkpoint is not None:
+            checkpoint(report)
+
+    def guard() -> None:
+        require_submission_window(live_clock(), plan.execution_date)
+        if kill_switch_check is not None:
+            kill_switch_check()
+
+    def send(order: dict[str, Any]) -> Any | None:
         cid = order["client_order_id"]
-        if lookup.find(cid) is not None:
-            skipped.append(
-                {"symbol": order["symbol"], "client_order_id": cid, "reason": "already at broker"}
+        evidence = {k: order[k] for k in ("symbol", "client_order_id", "qty", "side")}
+        if "logical_client_order_id" in order:
+            evidence.update(
+                logical_client_order_id=order["logical_client_order_id"], stage=order["stage"]
             )
-            continue
+        if pace_seconds > 0 and (report["sent"] or report["failed"]):
+            _time.sleep(pace_seconds)
+        # Persist intent before the broker call: a lost acknowledgement is never a fresh order.
+        try:
+            # Preserve the existing one-window admission for ordinary orders. Each staged
+            # reversal leg has a new, live admission because it depends on a prior fill.
+            if "stage" in order:
+                guard()
+        except Exception as exc:
+            report["deferred"].append({**evidence, "reason": broker_error_text(exc)})
+            save()
+            return None
+        if cid in attempted:
+            report["deferred"].append({**evidence, "reason": "prior attempt lacks broker ack"})
+            save()
+            return None
+        report["attempts"][cid] = {**evidence, "outcome": "submitting"}
+        save()
         request = MarketOrderRequest(
             symbol=order["symbol"],
             qty=order["qty"],
@@ -846,38 +900,55 @@ def submit_plan(
             time_in_force=TimeInForce.CLS if tif_mode == "close" else TimeInForce.DAY,
             client_order_id=cid,
         )
-        if pace_seconds > 0 and (sent or failed):
-            import time as _time
-
-            _time.sleep(pace_seconds)
         try:
             result = client.submit_order(request)
         except Exception as exc:
-            failed.append(
-                {
-                    "symbol": order["symbol"],
-                    "client_order_id": cid,
-                    "error": exc.__class__.__name__,
-                    "message": broker_error_text(exc),
-                }
+            status = getattr(exc, "status_code", None)
+            rejected = isinstance(status, int) and 400 <= status < 500 and status not in (408, 429)
+            evidence.update(
+                error=exc.__class__.__name__,
+                message=broker_error_text(exc),
+                outcome="submission_rejected" if rejected else "acknowledgement_unknown",
+            )
+            report["failed"].append(evidence)
+            report["attempts"][cid] = evidence
+            save()
+            return None
+        evidence.update(
+            broker_order_id=str(getattr(result, "id", "")),
+            status=_text(getattr(result, "status", "")),
+            outcome="acknowledged",
+        )
+        report["sent"].append(evidence)
+        report["attempts"][cid] = evidence
+        save()
+        return result
+
+    save()
+    ordered = sorted(plan.orders, key=lambda o: (o["side"] != "sell", o["symbol"]))
+    for order in ordered:
+        if reversal_legs(order):
+            submit_reversal(
+                client,
+                order,
+                lookup=lookup,
+                send=send,
+                guard=guard,
+                report=report,
+                save=save,
+                pace_seconds=pace_seconds,
             )
             continue
-        sent.append(
-            {
-                "symbol": order["symbol"],
-                "client_order_id": cid,
-                "broker_order_id": str(getattr(result, "id", "")),
-                "status": _text(getattr(result, "status", "")),
-            }
-        )
-    return {
-        "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "plan_sha256": plan.payload["plan_sha256"],
-        "time_in_force": "cls" if tif_mode == "close" else "day",
-        "sent": sent,
-        "skipped_existing": skipped,
-        "failed": failed,
-    }
+        cid = order["client_order_id"]
+        if lookup.find(cid) is not None:
+            report["skipped_existing"].append(
+                {"symbol": order["symbol"], "client_order_id": cid, "reason": "already at broker"}
+            )
+            save()
+            continue
+        send(order)
+    save()
+    return report
 
 
 # --------------------------------------------------------------------------------------
@@ -904,7 +975,12 @@ def next_orders_receipt_path(root: Path, account: str, execution_date: date, now
     if not first.exists():
         return first
     stamp = now.astimezone(UTC).strftime("%H%M%S")
-    return first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}.json")
+    candidate = first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}.json")
+    suffix = 0
+    while candidate.exists():
+        suffix += 1
+        candidate = first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}-{suffix}.json")
+    return candidate
 
 
 _TOKEN_LIKE = re.compile(r"[A-Za-z0-9_\-]{32,}")

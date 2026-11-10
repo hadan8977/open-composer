@@ -1,0 +1,7 @@
+The saved result is accepted at its conditional historical scope. All96input/code/result bindings,8unique paths,5512rows,767requests/fills,196window metrics and35contrast windows reconcile. No simulator, estimator, target or source job was run by this reviewer. Prior H5 and BASE authorship is disclosed; their old genuine independent acceptances remain authoritative.
+
+EQ6 earns recent+$20,870.26/67.72% on its own opening NAV, but S3 supplies68.2%of that profit and76.0%of realized variance. Capital drifts from1/6 to44.7%S3. LegacyETF EQ4/IV4 retain strong opportunity comparisons; more named sleeves is not demonstrated independent information.
+
+STATE earns recent+$10,653.78/48.47% at10bp and+$10,301.65/47.31%at20bp. Recent10bp increment versusBASE is+$2,247.54, with only$28.03fee savings and lower exposure. This is a bundled conditional budget-policy contribution, not pure timing or raw orthogonal Alpha. INTC+MSFT explain85.3%of the increment;2025relative loss and fullSharpe90%interval[-.0801,.5932]remain. Ex-post equal-vol downscaling and arithmetic name subtraction are nonselectable diagnostics.
+
+All689days/windows are seen. PBO/DSR and legacy proxies remain null for this fixed nonselectable descriptive study; historical multiplicity is not reset. ETF/H5 economic units, current-vintage data, conditional quote fills, rights and capacity limitations prevent a whole-portfolio physical execution or paper certification. No source replication, first-seen PIT, TCA, Martin or deployment claim follows.

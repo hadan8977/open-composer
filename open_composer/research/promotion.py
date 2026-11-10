@@ -23,7 +23,10 @@ from open_composer.research.alt_data_quality import build_alternative_data_quali
 from open_composer.research.blind_test import load_blind_test_report
 from open_composer.research.contracts import write_research_contract
 from open_composer.research.factor_lab import run_factor_lab
-from open_composer.research.iteration_dossier import require_iteration_execution_gate
+from open_composer.research.iteration_dossier import (
+    NativeExecutionControl,
+    require_iteration_execution_gate,
+)
 from open_composer.research.kernel import GateResult, ResearchArtifactWriter, ResearchRunIndexRecord
 from open_composer.research.metadata import (
     data_acquisition_tier,
@@ -141,6 +144,23 @@ def build_promotion_report(
     )
     writer = ResearchArtifactWriter(base)
     spec = load_strategy_spec(spec_path)
+    cost_slippage_bps = cost_slippage_bps or [0, 5, 10]
+    # Verify native diagnostics before data acquisition, model fits or replay.
+    for bps in cost_slippage_bps:
+        require_iteration_execution_gate(
+            _clone_spec_with_costs(spec, slippage_bps=bps),
+            base,
+            native_control=NativeExecutionControl(
+                source=spec, purpose="cost_sensitivity", parameters={"slippage_bps": bps}
+            ),
+        )
+    if any(factor.source == "llm_feature" for factor in spec.factors.values()):
+        for purpose in ("llm_quant_baseline", "llm_missing_modality"):
+            require_iteration_execution_gate(
+                _llm_control_spec(spec, purpose=purpose),
+                base,
+                native_control=NativeExecutionControl(source=spec, purpose=purpose),
+            )
     if spec.portfolio.mode in ROUTER_PROMOTION_MODES:
         from open_composer.research.router_promotion import build_router_promotion_report
 
@@ -158,7 +178,6 @@ def build_promotion_report(
         msg = "promotion gate requires at least 4 bars of data"
         raise ValueError(msg)
 
-    cost_slippage_bps = cost_slippage_bps or [0, 5, 10]
     checks: list[GateResult] = []
     contract_path = write_research_contract(spec_path, base)
     data_profile = frame_data_profile(
@@ -678,6 +697,9 @@ def _cost_sensitivity_check(
             frame,
             root=root,
             run_id_value=f"promotion-{spec.name}-cost-{bps}",
+            native_control=NativeExecutionControl(
+                source=spec, purpose="cost_sensitivity", parameters={"slippage_bps": bps}
+            ),
         )
         runs.append(artifacts)
         details.append(
@@ -1350,24 +1372,21 @@ def _llm_marginal_lift_checks(
     )
     if not llm_factors:
         return []
-    baseline_spec = copy.deepcopy(spec)
-    for name in llm_factors:
-        baseline_spec.factors[name].default = 0.0
-        baseline_spec.factors[name].path = "__missing_llm_baseline_packet__.jsonl"
+    baseline_spec = _llm_control_spec(spec, purpose="llm_quant_baseline")
     baseline = backtest_frame(
         baseline_spec,
         frame,
         root=root,
         run_id_value=f"promotion-{spec.name}-quant-baseline",
+        native_control=NativeExecutionControl(source=spec, purpose="llm_quant_baseline"),
     )
-    missing_spec = copy.deepcopy(spec)
-    for name in llm_factors:
-        missing_spec.factors[name].path = "__missing_llm_modality_packet__.jsonl"
+    missing_spec = _llm_control_spec(spec, purpose="llm_missing_modality")
     missing = backtest_frame(
         missing_spec,
         frame,
         root=root,
         run_id_value=f"promotion-{spec.name}-missing-modality",
+        native_control=NativeExecutionControl(source=spec, purpose="llm_missing_modality"),
     )
     baseline_sharpe = _metric_value(baseline.run.sharpe_ratio)
     variant_sharpe = _metric_value(variant.run.sharpe_ratio)
@@ -1535,6 +1554,21 @@ def _benchmark_family_check(
         ),
         family,
     )
+
+
+def _llm_control_spec(spec: StrategySpec, *, purpose: str) -> StrategySpec:
+    if purpose not in {"llm_quant_baseline", "llm_missing_modality"}:
+        raise ValueError("unsupported native LLM control")
+    control = copy.deepcopy(spec)
+    for factor in control.factors.values():
+        if factor.source != "llm_feature":
+            continue
+        if purpose == "llm_quant_baseline":
+            factor.default = 0.0
+            factor.path = "__missing_llm_baseline_packet__.jsonl"
+        else:
+            factor.path = "__missing_llm_modality_packet__.jsonl"
+    return control
 
 
 def _clone_spec_with_costs(spec: StrategySpec, *, slippage_bps: int) -> StrategySpec:

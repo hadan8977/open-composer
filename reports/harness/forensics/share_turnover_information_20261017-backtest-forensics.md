@@ -1,0 +1,3 @@
+# Share turnover information: conditional backtest warning
+
+Read the bound owner report and trial ledger. There are20 actual funded calls and104 rolling fits, not independent validation trials. Seen selected contexts, sparse disclosed-class normalization and33/19 supported months, with14DIA cash months, limit interpretation. All132 fit definitions and20 account definitions were registered,28 fits never started. Current-vintage/rights/unit/PIT/TCA/capacity caveats remain.80 descriptive LOG contrasts are not USD/significance or PBO/DSR. Both primary conjunctive criteria fail; preserve DIA positive absolute account evidence. No promotion/paper permission.

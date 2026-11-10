@@ -1,0 +1,5 @@
+<section data-native-comparison aria-label="策略收益比较">
+<script type="application/json">{{ comparison|tojson }}</script>
+<div data-comparison-root><div class="pc-panel pc-hero"><span class="pc-caption">等权组合 · 100k 参考账户</span><div class="pc-empty">正在载入收益图</div></div></div>
+<noscript><div class="tile"><h2>策略收益率</h2>{% for row in comparison.strategies %}<p><a href="{{ row.href }}">{{ row.label }}</a> · {{ '%+.2f%%'|format(row.latest_return_pct) if row.latest_return_pct is not none else '—' }}</p>{% endfor %}</div></noscript>
+</section>

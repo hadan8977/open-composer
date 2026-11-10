@@ -1,0 +1,33 @@
+{
+  "strategy_name": "t20261017_common_factor_residual_momentum",
+  "reviewed_at": "2026-10-17",
+  "capabilities": [
+    {
+      "capability_id": "market.french_ff3_monthly_current_vintage",
+      "kind": "market",
+      "status": "partial",
+      "strict_behavior": "research_only",
+      "paper_ready": false,
+      "notes": "Actual official originalFF3 ZIP200/13065B header202608CRSP,128selected201601..202608 months; no fixture substituted. Assumedv+2/currentvintage not historicfirstseen. Source receipts bind actualfetch and units."
+    },
+    {
+      "capability_id": "accepted_connected_stock_economic_paths",
+      "kind": "market",
+      "status": "partial",
+      "strict_behavior": "research_only",
+      "paper_ready": false,
+      "notes": "Reuse exact accepted original32/DIA28 derivatives and source identity/actions/hygiene. No rawSIP matrix conversion or return padding. Split-month signal exclusion and fullroster rights accounting remain."
+    }
+  ],
+  "feature_packet_pit_check": "warning",
+  "sample_data_caveats": [
+    "Selected/exposedcohorts/seen dates; currentvintageFF3 can incorporate retrospective corrections",
+    "Historic publicationtimestamp/firstseen UNKNOWN; v+2 onlyconditional clock",
+    "Conditional fractional economic-unit accounts, no physicalfill/broker/PITcertification; unpricedCVRnever funding"
+  ],
+  "conclusion": "warning",
+  "research_claim": "Conditional vintage/availability method only, genuine independent input/native gates still required",
+  "paper_ready": false,
+  "source_file": "source-reception.json",
+  "registry_snapshot": "capability-registry-entry.json"
+}

@@ -9,7 +9,10 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import backtest_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.research.iteration_dossier import require_iteration_execution_gate
+from open_composer.research.iteration_dossier import (
+    NativeExecutionControl,
+    require_iteration_execution_gate,
+)
 from open_composer.research.ml_backend.training import MLTrainingRun, run_rolling_training
 
 
@@ -57,6 +60,9 @@ def compare_ml_to_baseline(
     spec = load_strategy_spec(spec_path)
     if spec.model is None:
         raise ValueError("ML comparison requires StrategySpec.model")
+    baseline_spec = _linear_baseline_spec(spec)
+    baseline_control = NativeExecutionControl(source=spec, purpose="ml_linear_baseline")
+    require_iteration_execution_gate(baseline_spec, base, native_control=baseline_control)
     frame = load_ohlcv_for_spec(spec, base)
     training = run_rolling_training(spec, frame, base)
     evaluation_start_index = _first_oos_prediction_index(training.full_predictions)
@@ -67,13 +73,13 @@ def compare_ml_to_baseline(
         run_id_value=f"ml-walk-forward-{spec.name}",
         evaluation_start_index=evaluation_start_index,
     )
-    baseline_spec = _linear_baseline_spec(spec)
     baseline_artifacts = backtest_frame(
         baseline_spec,
         frame,
         root=base,
         run_id_value=f"linear-baseline-{spec.name}",
         evaluation_start_index=evaluation_start_index,
+        native_control=baseline_control,
     )
     status, status_reason = _comparison_status(
         ml_artifacts.run.sharpe_ratio, baseline_artifacts.run.sharpe_ratio

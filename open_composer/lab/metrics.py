@@ -111,3 +111,22 @@ def dsr_summary(returns: pd.Series | None, *, n_trials: int, config: DSRConfig) 
     except (ValueError, ZeroDivisionError, OverflowError) as exc:
         result["reason"] = str(exc)
     return result
+
+
+def longest_underwater_sessions(equity, initial_equity: float, *, tolerance: float = 1e-8) -> int:
+    """Longest observed streak below the running peak including initial capital.
+
+    This counts ledger observations, not calendar days. Recovery within the native
+    absolute dollar tolerance ends the streak; an unrecovered tail is included.
+    """
+    values = np.asarray(equity, dtype=float)
+    if values.ndim != 1 or not np.isfinite(values).all():
+        raise ValueError("Equity must be a finite one-dimensional sequence")
+    if not math.isfinite(initial_equity) or not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("Initial equity and nonnegative tolerance must be finite")
+    peak, streak, longest = initial_equity, 0, 0
+    for value in values:
+        peak = max(peak, value)
+        streak = streak + 1 if value < peak - tolerance else 0
+        longest = max(longest, streak)
+    return longest

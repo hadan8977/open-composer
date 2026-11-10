@@ -1,0 +1,18 @@
+[Unit]
+Description=Open Composer read-only Hadan availability check
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/codex-test/open-composer
+Environment=PATH=/root/.hermes/node/bin:/usr/local/bin:/usr/bin:/bin
+ExecCondition=/usr/bin/python3 /root/codex-test/open-composer/scripts/memory_budget.py admit --kind job --mem 256
+ExecStart=/usr/bin/python3 /root/codex-test/open-composer/scripts/hadan_availability_watch.py
+TimeoutStartSec=35
+KillMode=control-group
+Nice=10
+Slice=oc-research.slice
+MemoryMax=256M
+MemorySwapMax=0
+CPUQuota=25%
+

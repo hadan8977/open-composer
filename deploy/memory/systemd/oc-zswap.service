@@ -1,0 +1,19 @@
+# Compressed swap cache for the whole box (owner 2026-10-08: double the agent and job
+# limits). Memory the kernel swaps out is first compressed and kept in RAM (zstd, about
+# 3:1) and only the coldest part goes to /swapfile and /swapfile2, so idle agents cost
+# about a third of their size and come back without disk waits. The pool may use at most
+# 25% of RAM; it counts against each cgroup's own limit, so the project's 2.2 GB limit and
+# the governor's 500 MB reserve are unchanged. Undo: systemctl disable --now oc-zswap.
+[Unit]
+Description=zswap: compress swapped-out memory in RAM (open-composer memory budget)
+After=local-fs.target swap.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/sbin/modprobe zstd
+ExecStart=/bin/sh -c 'P=/sys/module/zswap/parameters; echo zstd > $P/compressor && echo zsmalloc > $P/zpool && echo 25 > $P/max_pool_percent && echo Y > $P/enabled'
+ExecStop=/bin/sh -c 'echo N > /sys/module/zswap/parameters/enabled'
+
+[Install]
+WantedBy=multi-user.target

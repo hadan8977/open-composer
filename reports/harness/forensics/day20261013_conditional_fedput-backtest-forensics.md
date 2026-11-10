@@ -1,0 +1,7 @@
+All six fixed primary costed accounts lose. The code uses prior-close orders and causal prefix thresholds, but current-vintage inputs and date-only calendar activation prevent complete historical PIT certification. This is a warning-bearing conditional study, with all history seen.
+
+The six primary definitions, fourteen controls and five benchmark/cash/EW definitions constitute 25 current-study economic definitions. Native registration has six candidate rows. Cost, capital, French descriptive and inference views are separate nonselectable exposures. DSR25 is descriptive; broader prior-family multiplicity is unverified. PBO and SPA are N/A.
+
+D1/D2/D3 have71/41/29 entries across43/27/17 cycles. The29-entry deepest state is low power, and source-form French2020–2021 D3 is N/A at N=8. Six jointly adjusted calendar-versus-generic differences range from -0.91 to -5.53 bp per calendar day, with MDE80 about2.94–6.03 bp; only SSO D1's joint95 interval excludes zero on the negative side. This is evidence against deploying the current application, not proof that the entire original mechanism is false.
+
+Real cash-dividend entitlement and physical split books balance, but cash availability is an unverified proxy. Historical opening reference trades are not real fills. Very small average daily volume fractions do not verify auction capacity, and the observed SSO2020 stress halfspread exceeds20bp. All these limits survive native validation and result acceptance.

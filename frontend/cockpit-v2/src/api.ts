@@ -304,6 +304,15 @@ export interface Authorization {
 }
 export interface StrategySummary {
   name: string
+  label: string
+  performance: {
+    budget: number | null
+    nav: number | null
+    return_pct: number | null
+    start_session: string | null
+    last_session: string | null
+    status: string
+  }
   authorization: Authorization
   generated_at: string | null
   session: string | null
@@ -332,17 +341,203 @@ export interface KillSwitch {
   status: Status
   warnings: string[]
 }
+export interface AccountBook {
+  account: string
+  book_id: string
+  label: string
+  status: string
+  observed_at: string | null
+  market_as_of: string | null
+  expected_session: string
+  latest_plan_session: string | null
+  equity_usd: number | null
+  net_pnl_usd: number | null
+  orders: number | null
+  filled: number | null
+  rejected: number | null
+  missing: number | null
+  position_count: number | null
+  warnings: string[]
+}
+export interface ValidationTrial {
+  task_id: string
+  label: string
+  kind: string
+  status: string
+  observed_at: string | null
+  market_as_of: string | null
+  capital_usd: number | null
+  nav_usd: number | null
+  net_pnl_usd: number | null
+  net_return_pct: number | null
+  positions: { symbol: string; qty: number | null; market_value: number | null }[]
+  submitted: number | null
+  filled: number | null
+  rejected: number | null
+  pending: number | null
+  reconciled_at: string | null
+  note: string
+  warnings: string[]
+  service_phase?: string | null
+  unresolved_order_intents?: number | null
+  instruction_status?: string | null
+  next_input_status?: string | null
+  next_application_day?: string | null
+  refresh_not_before?: string | null
+  service_observed_at?: string | null
+  last_fill_at?: string | null
+  component_market_value_usd?: number | null
+  component_pnl_usd?: number | null
+  component_realized_usd?: number | null
+  component_unrealized_usd?: number | null
+  component_observed_at?: string | null
+  component_basis_status?: string | null
+  recorded_order_intents?: number | null
+  component_return_on_capital_pct?: number | null
+  initial_capital_usd?: number | null
+  allocation_flows_usd?: number | null
+  component_start_at?: string | null
+  input_attempt_status?: string | null
+}
+export interface IntradayConfiguration {
+  name: string
+  account: string
+  symbols: string[]
+  status: string
+}
+export interface HistoricalPaperPoint {
+  day: string
+  at?: string
+  equity_usd: number | null
+  capital_usd: number | null
+  nav_before_unverified_items_usd: number | null
+  trading_pnl_usd: number | null
+  net_pnl_usd: number | null
+  valuation: string
+  account_change_ex_external_flows_usd?: number | null
+  missing?: string[]
+}
+export interface HistoricalPaperSeries {
+  id: string
+  label: string
+  kind: string
+  points: HistoricalPaperPoint[]
+  latest: HistoricalPaperPoint | null
+  children?: string[]
+  performance?: {
+    start?: string
+    end?: string
+    observation_change_usd?: number | null
+    net_change_ex_external_flows_usd?: number | null
+    return_pct?: number | null
+    return_method: string
+  }
+  order_ownership?: {
+    individual_FILL_count: number
+    first_native_strategy_FILL_at: string | null
+    probe_realized_trading_pnl_before_fees_usd: number | null
+    canonical_daily_vs_submitted_plan_mismatches: { day: string }[]
+  }
+}
+export interface HistoricalPaperReading {
+  available: boolean
+  through_session?: string
+  generated_at?: string
+  artifact_sha256?: string
+  histories: HistoricalPaperSeries[]
+  warning?: string
+  expected_session?: string
+  stale?: boolean
+  posted_cash_entries?: { account: string; kind: string; amount_usd: number | null }[]
+  latest_account_observations?: { account: string; at: string; equity_usd: number | null; cash_usd: number | null; base_value_usd: number | null; change_from_reported_base_usd: number | null }[]
+  quarantined_account_points?: { account: string; day: string; valuation: string }[]
+}
 export interface PaperPayload {
   generated_at: string
+  paper_overview?: PaperOverviewReading
+  dashboard?: PaperDashboardReading
+  paper_history?: HistoricalPaperReading
+  account_equity?: {
+    history: {
+      days: { day: string; point: EquityPoint | null }[]
+      first: EquityPoint | null
+      latest: EquityPoint | null
+    }
+    market_as_of: string | null
+    expected_session: string
+    missing_sessions: string[]
+    recovered_sessions?: string[]
+    change_usd: number | null
+    change_pct: number | null
+    net_pnl_usd: null
+  }
   report: {
     generated_at: string
     account: AccountSnapshot
     kill_switch: KillSwitch
     open_order_count: number | null
     strategies: StrategySummary[]
+    account_books?: AccountBook[]
+    validation_trials?: ValidationTrial[]
+    intraday_configurations?: IntradayConfiguration[]
     warnings: string[]
   }
   auth_state_labels: Record<AuthState, string>
+}
+export interface PaperComparisonPayload {
+  schema_version: 1
+  initial_capital_usd: number
+  through_session: string | null
+  snapshot_at: string | null
+  strategies: {
+    id: string
+    label: string
+    href: string
+    start_day: string | null
+    latest_return_pct: number | null
+    selectable: boolean
+    default_selected: boolean
+    points: { day: string; return_pct: number | null }[]
+  }[]
+  days: string[]
+}
+export interface PaperDashboardRow {
+  id: string
+  label: string
+  capital_usd: number | null
+  pnl_usd: number | null
+  return_pct: number | null
+  status_label: string
+  status_tone: Status
+  href: string
+  observed_at: string | null
+}
+export interface PaperDashboardReading {
+  rows: PaperDashboardRow[]
+  snapshot_at: string | null
+  stale?: boolean
+}
+export interface PaperOverviewReading {
+  available: boolean
+  warning?: string
+  snapshot: {
+    pnl_usd: number | null
+    capital_usd: number
+    return_pct: number | null
+    at_start: string
+    at_end: string
+    marks_start: string
+    marks_end: string
+    adjustment_usd: number | null
+    unassigned_capital_usd: number
+    display_rounding_usd: number | null
+    rows: { id: string; label: string; capital_usd: number | null; pnl_usd: number | null; precise_pnl_usd: number | null; return_pct: number | null; status: string }[]
+    adjustments: { pool: string; entries: Record<string, number>; quote_precision_usd: number }[]
+  }
+  daily: { day: string; pnl_usd: number | null; return_pct: number | null; missing: string[]; pools: string[] }[]
+  charts: Record<'pnl_usd' | 'return_pct', { baseline: number; high: number; low: number; bars: { day: string; value: number | null; x: number; y: number | null; width: number; height: number | null; pools: string[]; missing: string[] }[] }>
+  six_assigned_capital_usd: number
+  F1_observed_adopted_baseline: { equity_usd: number }
 }
 export interface PositionRow {
   symbol: string

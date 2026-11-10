@@ -5,6 +5,8 @@ and the route's empty states. The digest fixture mirrors
 
 from __future__ import annotations
 
+import json
+import re
 from collections import Counter
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -379,57 +381,63 @@ def _write_track(root: Path) -> None:
     (root / "reports/owner/live-track.json").write_text(json.dumps(TRACK), "utf-8")
 
 
-def test_today_renders_the_four_blocks_in_order(
+def _comparison_payload(text: str) -> dict:
+    match = re.search(r'<script type="application/json">(.*?)</script>', text, flags=re.S)
+    assert match is not None
+    return json.loads(match[1])
+
+
+def test_today_leads_with_paper_strategies_then_actions_and_research(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     _write_track(tmp_path)
     page = _client(monkeypatch, tmp_path, _sources(_digest())).get("/")
     assert page.status_code == 200
     text = page.text
-    assert "<title>Today · Quant</title>" in text
+    assert "<title>总览 · Quant</title>" in text
     positions = [
         text.index(label)
         for label in (
-            ">Needs you<",
-            'href="/paper">Money<',
-            ">Path to live<",
-            'href="/research">Research<',
+            "data-native-comparison",
+            ">待处理<",
+            'href="/research">研究进展 ↗<',
+            ">策略进度<",
         )
     ]
     assert positions == sorted(positions)
-    assert 'verdict-word">Attention<' in text and "decision due in" in text
-    assert "$30,118" in text  # C2 15058 + S1 15060: the combined sleeve value
+    assert "实盘资金规模" in text and "授权实盘下单路径" in text
+    # The digest's sleeve NAV is not a replacement for the published P&L total.
+    assert "$30,118" not in text
+    assert _comparison_payload(text)["strategies"] == []
     assert "S1 · Sector rotation" in text and 'href="/paper/s1"' in text
-    assert "<polyline points=" in text
-    assert "Live: <b>none</b>" in text
-    assert "10/10" in text and "no paper sessions" in text
-    assert "日频股票组合" in text and "No round report yet" in text
-    assert "1 to review · 6 ready · 4 blocked" in text
+    assert 'class="ticks ticks--10"' in text and "0/10" in text
+    assert "日频股票组合" in text and "暂无报告" in text
+    assert "0 运行 · 1 待复核" in text
     # retired Now instruments stay off the landing screen
     for gone in ("Fresh tokens", "Model calls", "led--fine", 'data-slot="quota-claude"'):
         assert gone not in text
     assert 'data-slot="system"' in text
 
 
-def test_today_says_it_is_collecting_before_the_first_snapshot(
+def test_today_keeps_available_track_and_empty_valuations_before_first_snapshot(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     _write_track(tmp_path)
     page = _client(monkeypatch, tmp_path, None).get("/")
     assert page.status_code == 200
-    assert "Collecting the first snapshot" in page.text
-    assert 'http-equiv="refresh"' in page.text
-    assert (
-        "Path to live" in page.text and "S1 · Sector rotation" in page.text
-    )  # cheap sources still show
+    payload = _comparison_payload(page.text)
+    assert payload["strategies"] == [] and payload["snapshot_at"] is None
+    assert "data-paper-refresh" in page.text
+    assert "策略进度" in page.text and "S1 · Sector rotation" in page.text
 
 
 def test_today_renders_on_a_bare_repo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     page = _client(monkeypatch, tmp_path, _sources(None, "OSError: no paper store")).get("/")
     assert page.status_code == 200
-    assert "No live-track file" in page.text
     assert "Report data unavailable" in page.text
-    assert "No paper sleeve has a close yet" in page.text
+    assert _comparison_payload(page.text)["strategies"] == []
+    assert "暂无候选策略" in page.text
+    assert "暂无研究进展" in page.text
 
 
 def test_today_api_mirrors_the_report(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -438,3 +446,28 @@ def test_today_api_mirrors_the_report(monkeypatch: pytest.MonkeyPatch, tmp_path:
     assert body["needs"]["word"] == "Attention"
     assert body["money"]["sleeves"][1]["href"] == "/paper/s1"
     assert [c["id"] for c in body["candidates"]] == ["S1", "V12F1"]
+
+
+def test_stale_sleeve_cannot_be_carried_into_current_aggregate():
+    from dataclasses import replace
+
+    data = _digest()
+    stale, current = data.sleeves
+    stale = replace(stale, last_session=stale.navs[-2][0], navs=stale.navs[:-1])
+    money = T.build_money(replace(data, sleeves=(stale, current)), None)
+    assert money.total is None and money.since is None
+    assert money.day is None and money.week is None
+    assert money.sleeves[0].since == stale.since_return  # dated own result remains visible
+    assert money.sleeves[0].market_as_of == stale.last_session
+    assert money.sleeves[0].day is None
+
+
+def test_missing_prior_valuation_withholds_day_but_preserves_current_nav():
+    from dataclasses import replace
+
+    data = _digest()
+    first, second = data.sleeves
+    first = replace(first, navs=first.navs[-1:])
+    money = T.build_money(replace(data, sleeves=(first, second)), None)
+    assert money.total == pytest.approx(first.nav + second.nav)
+    assert money.since is not None and money.day is None

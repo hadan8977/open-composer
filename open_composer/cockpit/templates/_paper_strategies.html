@@ -1,0 +1,19 @@
+<section class="paper-strategies" id="paper-strategies" aria-label="模拟盘策略">
+<div class="section paper-section"><h2>策略 <span class="faint num">{{ dashboard.rows|length }}</span></h2><a href="/paper/accounts">账户 ↗</a></div>
+<div class="group paper-ledgers" data-filter-group>
+  <div class="paper-ledger-head"><span>策略</span><span>本金</span><span>盈亏</span><span>收益率</span><span></span></div>
+{% for row in dashboard.rows %}
+  <a class="row paper-ledger" data-detail data-strategy="{{ row.id }}" data-filter="{{ row.label }} {{ row.id }} {{ row.status_label }}" href="{{ row.href }}">
+    <span class="paper-ledger-name"><span class="text">{{ row.label }}</span><small><span class="dot dot--{{ row.status_tone }}"></span>{{ row.status_label }}</small></span>
+    <span class="paper-ledger-capital num">{{ row.capital_usd|money(0) if row.capital_usd is not none else '—' }}</span>
+    <span class="num {{ 'is-up' if row.pnl_usd is not none and row.pnl_usd > 0 else 'is-down' if row.pnl_usd is not none and row.pnl_usd < 0 }}">{{ row.pnl_usd|money if row.pnl_usd is not none else '—' }}</span>
+    <span class="num {{ 'is-up' if row.return_pct is not none and row.return_pct > 0 else 'is-down' if row.return_pct is not none and row.return_pct < 0 }}">{{ '%+.2f%%'|format(row.return_pct) if row.return_pct is not none else '—' }}</span><span class="paper-chevron">›</span>
+  </a>
+{% else %}<div class="empty">暂无策略记录</div>{% endfor %}
+{% if paper_overview.available %}
+  <a href="/paper/accounts" class="paper-ledger paper-ledger-other"><span>其他收支</span><span class="paper-ledger-capital">—</span><span class="num">{{ paper_overview.snapshot.adjustment_usd|money }}</span><span>—</span><span>›</span></a>
+  {% if paper_overview.snapshot.unassigned_capital_usd %}<div class="paper-ledger paper-ledger-other paper-capital-row"><span>未分配本金</span><span class="paper-ledger-capital num">{{ paper_overview.snapshot.unassigned_capital_usd|money(0) }}</span><span>—</span><span>—</span><span></span></div>{% endif %}
+{% endif %}
+</div>
+<p class="paper-filter-empty" hidden>没有匹配的策略</p>
+</section>

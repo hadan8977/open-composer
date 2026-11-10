@@ -1,0 +1,41 @@
+<section class="tile tile--hero paper-overview" id="all-strategy-overview" data-paper-overview data-unit="pnl_usd" aria-label="模拟盘收益">
+{% if paper_overview.available %}
+{% set o = paper_overview %}{% set s = o.snapshot %}
+<header class="tile-head">
+  <a class="tile-label" href="/paper">模拟盘</a>
+  <time class="tile-meta" datetime="{{ s.at_end }}" title="{{ s.at_start }} — {{ s.at_end }}">{{ s.at_end[:10] }} · {{ s.at_end[11:16] }} UTC{% if dashboard.stale %} · 待更新{% endif %}</time>
+</header>
+<div class="paper-readings">
+  <div><span class="paper-caption">总盈亏</span><div class="hero paper-total" data-total-pnl>{% if s.pnl_usd is not none %}{{ money_hero(s.pnl_usd) }}{% else %}<span class="hero-num">—</span>{% endif %}</div></div>
+  <div class="paper-reading"><span class="paper-caption">收益率</span><strong class="{{ 'is-up' if s.return_pct is not none and s.return_pct > 0 else 'is-down' if s.return_pct is not none and s.return_pct < 0 }}">{{ '%+.2f%%'|format(s.return_pct) if s.return_pct is not none else '—' }}</strong></div>
+  <div class="paper-reading paper-capital"><span class="paper-caption">本金</span><strong>{{ s.capital_usd|money(0) }}</strong></div>
+</div>
+<div class="paper-chart-toolbar">
+  <span class="paper-caption">累计表现</span>
+  <div class="segmented" role="group" aria-label="图表单位">
+    <button type="button" data-paper-unit="pnl_usd" aria-pressed="true">盈亏 $</button>
+    <button type="button" data-paper-unit="return_pct" aria-pressed="false">收益率 %</button>
+  </div>
+</div>
+<div class="well well--chart paper-chart-well">
+{% for field, chart in o.charts.items() %}
+<div data-paper-chart="{{ field }}"{% if field != 'pnl_usd' %} hidden{% endif %}>
+  <div class="paper-plot" role="group" aria-label="{{ '累计盈亏' if field == 'pnl_usd' else '累计收益率' }}">
+    {% for value in [chart.high, (chart.high + chart.low) / 2, chart.low] %}
+    {% set pct = 100 - (value - chart.low) / (chart.high - chart.low if chart.high != chart.low else 1) * 100 %}
+    <div class="paper-gridline" style="top:{{ pct }}%"><span class="num">{{ value|money(0) if field == 'pnl_usd' else '%.2f%%'|format(value) }}</span></div>
+    {% endfor %}
+    <div class="paper-columns">
+    {% for b in chart.bars %}
+      {% set tip = b.day ~ ' · ' ~ (('%.2f'|format(b.value) ~ (' USD' if field == 'pnl_usd' else '%')) if b.value is not none else '缺少估值') %}
+      <button type="button" class="paper-column {{ 'is-up' if b.value is not none and b.value >= 0 else 'is-down' }}{{ ' is-missing' if b.value is none }}" aria-label="{{ tip }}" data-tip="{{ tip }}" style="--bar-top:{{ ((b.y - 15) / 135 * 100) if b.y is not none else 97 }}%;--bar-height:{{ (b.height / 135 * 100) if b.height is not none else 0 }}%"><i></i></button>
+    {% endfor %}
+    </div>
+  </div>
+  <div class="paper-axis num"><span>{{ o.daily[0].day }}</span><span>{{ o.daily[(o.daily|length // 2)].day }}</span><span>{{ o.daily[-1].day }}</span></div>
+</div>
+{% endfor %}
+</div>
+<div class="paper-chart-foot"><span>每日 · 纽约 20:00</span>{% if o.daily[-1].missing %}<span class="paper-gap">{{ o.daily[-1].day }} 缺少估值</span>{% endif %}<a href="/paper/history">历史记录 ↗</a></div>
+{% else %}<header class="tile-head"><span class="tile-label">模拟盘</span></header><div class="hero"><span class="hero-num">—</span></div><p class="empty">收益数据暂不可用</p>{% endif %}
+</section>

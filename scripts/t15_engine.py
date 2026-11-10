@@ -46,13 +46,21 @@ COST_MULTS = (0.5, 1.0, 2.0, 4.0)
 class Panel:
     """One symbol's minute matrices."""
 
-    def __init__(self, symbol: str, frame: pd.DataFrame | None = None, start: str | None = None):
+    def __init__(
+        self,
+        symbol: str,
+        frame: pd.DataFrame | None = None,
+        start: str | None = None,
+        end: str | None = None,
+    ):
         """``frame`` (IEX check): raw-price minute frame with date, minute, OHLCV, vwap;
         the raw daily
         file is then not used and the factor is 1."""
         if frame is None:
-            flt = [("date", ">=", pd.Timestamp(start))] if start else None
-            d = pd.read_parquet(PANEL / f"{symbol}.parquet", filters=flt)
+            flt = [("date", ">=", pd.Timestamp(start))] if start else []
+            if end:
+                flt.append(("date", "<=", pd.Timestamp(end)))
+            d = pd.read_parquet(PANEL / f"{symbol}.parquet", filters=flt or None)
         else:
             d = frame
         self.symbol = symbol

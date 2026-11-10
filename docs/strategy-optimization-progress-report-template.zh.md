@@ -1,158 +1,44 @@
-# 策略优化进展汇报模板
+# Strategy progress: measurement appendix
 
-本模板用于回答“现在进展怎样”“优化迭代怎么样了”“策略现在咋样了”以及语义相同的问题。目标是让每次汇报同时做到全面、直观、简明，并且所有数字都能回到仓库证据。
+Use `docs/owner-reporting.zh.md` for the owner-facing structure and cadence. This file defines the evidence and counts behind a strategy-progress answer; it adds no second report format or research gate.
 
-## 一、固定验收口径
+## Scope and performance
 
-### 1. 前瞻 Sharpe 门槛
+State the as-of time, counting window, claim, sample dates, cost/execution/funding basis and evidence. Report the actual current result against its own frozen criteria; another strategy or earlier version is only a labelled historical baseline. A result does not need a particular filename to be valid, and paper-readiness failure does not erase useful conditional method measurements.
 
-- 适用范围：首次冻结时间晚于 `2026-08-15` 的新策略迭代。
-- 适用对象：所有可选择、可晋级的候选；复制、缺失模态和 placebo 等诊断候选不要求晋级。
-- 指标身份：主成本 `20 bps`、连续且不含终端清算的 OOS 日收益流、相对 BIL 的年化 Sharpe。
-- 门槛：`Sharpe > 1.0`，是严格大于，不是大于等于。
-- 治理：必须在训练或回测前写入新迭代 validation contract；已冻结迭代不得追改。
+Keep `workflow_pass`, `research_pass`, `ml_contribution_pass`, `llm_contribution_pass` and `paper_ready_pass` distinct. Explicitly distinguish historical simulation, forward observation, paper orders and live activity. Missing current evaluation is N/A with the cause.
 
-除非用户在新迭代冻结前明确修改，当前目标组合还包括：净 CAGR `>=45%`、匹配 TQQQ CAGR 比例 `>=85%`、相对 QQQ CAGR 提升 `>=8` 个百分点、最大回撤不差于 `-65%`、MAR `>=0.4`、TQQQ 上行捕获 `>=0.85`、下行捕获 `<=0.9`、DSR `>=0.75`、PBO `<=0.4`、至少 `3/4` 折正向，并报告 `10/20/40 bps` 成本压力。
+For each relevant comparison include net return/CAGR, Sharpe, drawdown and recovery time; contract-specific risk/capture/statistical gates; realistic and pressure costs; positive folds and uncertainty; matched baseline and contribution. State the exact gate and operator rather than inventing a threshold. The applicable selectable-candidate20bps OOS gate is documented once in `docs/research-plan-review-standard.zh.md`; it is not a universal actual-cost estimate.
 
-ML 只有在校准有效、精确回退成立、有效覆盖次数和折数达标、成本后增量价值为正、相对确定性与价格-only ML 均有增量时，才获得复杂度信用。
+ML/LLM claims need the role, uniquefits/updates, prediction coverage, calibration, exact fallback, matched deterministic/price-only increment, missing-modality/placebo results and uncertainty. Model Sharpe alone does not show model contribution.
 
-### 2. 累计数量定义
+## Portfolio dependence and account contribution
 
-| 名称 | 固定定义 |
+Use a lightweight sequence: consider likely economic overlap when selecting directions, run the useful experiment, then check a simple return correlation against existing paper strategies and relevant candidates after useful results. This is not a test required before starting, for every variant, or in every report, and it adds no approval step or universal threshold.
+
+For an actual comparison, use aligned common dates and after-cost returns, state the sample, and keep missing history missing. Signal/holding similarity can help interpretation but is not measured return correlation. Add rolling/downside checks or account-addition comparisons only when they answer a real question; a full diagnostic suite is not a routine prerequisite. When considering a combination, focus on useful net account return and risk after its costs. Unmeasured dependence stays unknown. Preserve frozen studies and distinguish historical simulation from forward evidence; no paper-order authority is added.
+
+## Count definitions
+
+Report cumulative values and the current increment separately. Do not combine these into an ambiguous attempt count:
+
+| Count | Meaning |
 |---|---|
-| 研究迭代目录 | `reports/research/iterations/` 下的一级目录数；包含研究、前向和控制轮次 |
-| 正式优化轮次 | 存在 `candidate-manifest.json` 的迭代数 |
-| 锁定轮次 | 存在 `historical-evaluation-lock.json` 的独立迭代数 |
-| 有评估报告轮次 | 至少有一份 `evaluation-report.json` 的独立迭代数；它不自动代表评估完整或通过，另报报告文件数以暴露重试/重复发布 |
-| 预注册候选 | 所有 candidate manifest 声明的候选行数；不等于已评估次数 |
-| 正式试验记录 | 所有 trial ledger 行规范化后去重的数量 |
-| 实际承载记录 | 去重试验记录减去明确的 dependency-skipped 和 invalid-contract/control；不得把它描述为全部成功回测 |
-| 模型训练 | 优先报告唯一持久化 `model_id`；同时报告原始 ledger 行和重复发布数 |
-| 未落盘训练暴露 | 已知运行过但没有可信 ledger 的训练，单列为估计/上下界，不并入正式模型总数 |
-| 自动因子筛选 | `reports/research/auto/*/ic_scores.json` 文件数和其中因子评估行数；与正式试验分开 |
+| Iteration directories | Actual directories, including research/forward/control iterations |
+| Manifest-backed rounds | Rounds with an actual candidate manifest |
+| Locked rounds | Actual historical-evaluation locks |
+| Evaluation rounds and files | Distinct evaluated rounds and report files separately; neither implies a pass |
+| Preregistered candidates | Manifest rows, not necessarily evaluated candidates |
+| Unique trial records | Normalized, deduplicated ledger rows |
+| Skipped/invalid/unrun rows | Explicit statuses, separate from actual exposure |
+| Persisted models | Unique persisted model IDs; report duplicate ledger rows separately |
+| Unpersisted exposure | Known training without reliable persisted records, as bounds/unknowns |
+| Automatic factor screens | Actual IC files and factor rows, separate from formal trials |
 
-旧式 ad-hoc 文档、烟雾测试和无法去重的命令记录不并入正式试验总数。需要展示时单列为“历史非标准记录”。
+Unknown statuses are not successful runs. Preparation, fixtures, repeated publishing and ordinary checks are not new economic trials. Reuse a recent unchanged inventory with its date instead of rescanning the whole repository for every round report.
 
-## 二、固定汇报格式
+## Knowledge and data inventory
 
-### 1. 一句话结论
+When relevant, report verified/stale source claims, experiment/model memories, registered and executable factors, signal coverage/IC and flags, and data capability approval/visibility limitations. Inventory is preparation evidence, not profitability or live readiness.
 
-`[完成/未完成/阻塞]`：当前是否满足用户最终目标、是否需要继续迭代、是否已经到可立即接入模拟盘但尚未启动的阶段。
-
-### 2. 阶段总览
-
-| 项目 | 当前值 | 状态/差距 |
-|---|---|---|
-| 当前迭代与主候选 | `{iter_id}` / `{candidate_id}` | `{stage}` |
-| workflow_pass | `{true/false/N/A}` | `{原因}` |
-| research_pass | `{true/false/N/A}` | `{原因}` |
-| ml/llm_contribution_pass | `{true/false/N/A}` | `{原因}` |
-| paper_ready_pass | `{true/false/N/A}` | `{原因}` |
-| 模拟盘/券商活动 | `{未启动/已启动}` | `{订单数及授权}` |
-
-### 3. 累计工作量
-
-| 统计 | 累计值 | 本轮增量 | 口径备注 |
-|---|---:|---:|---|
-| 研究迭代目录 | `{n}` | `{delta}` | 含控制/前向轮次 |
-| 正式优化轮次 | `{n}` | `{delta}` | 有 manifest |
-| 锁定轮次 | `{n}` | `{delta}` | 一次性历史锁 |
-| 有评估报告轮次/报告 | `{n}/{m}` | `{delta}` | 独立轮次/文件，不等于通过 |
-| 预注册候选 | `{n}` | `{delta}` | 未必已跑 |
-| 正式试验记录 | `{n}` | `{delta}` | 去重 ledger 行 |
-| 实际承载记录 | `{n}` | `{delta}` | 排除跳过和无效 |
-| 唯一持久化模型 ID | `{n}` | `{delta}` | 另报重复行 |
-| 未落盘训练暴露 | `{n或范围}` | `{delta}` | 不并入正式总数 |
-| 自动因子筛选 | `{文件/评估行}` | `{delta}` | 不并入正式试验 |
-
-### 4. 当前策略表现
-
-当前没有有效 evaluation report 时，所有当前指标必须写 `N/A`，并在首行解释缺失原因。旧策略只能放在“上一可审计基线”列。
-
-| 指标 | 当前策略 | 上一可审计基线 | 门槛 | 差距 | 判定 |
-|---|---:|---:|---:|---:|---|
-| 20 bps 净 CAGR | `{value}` | `{baseline}` | `>=45%` | `{gap}` | `{pass/fail/N/A}` |
-| 20 bps OOS Sharpe | `{value}` | `{baseline}` | `>1.0` | `{gap}` | `{pass/fail/N/A}` |
-| 最大回撤 | `{value}` | `{baseline}` | `>=-65%` | `{gap}` | `{pass/fail/N/A}` |
-| MAR | `{value}` | `{baseline}` | `>=0.4` | `{gap}` | `{pass/fail/N/A}` |
-| TQQQ 上/下行捕获 | `{up/down}` | `{baseline}` | `>=0.85/<=0.9` | `{gap}` | `{pass/fail/N/A}` |
-| DSR / PBO | `{dsr/pbo}` | `{baseline}` | `>=0.75/<=0.4` | `{gap}` | `{pass/fail/N/A}` |
-| 正向折数 | `{n/4}` | `{baseline}` | `>=3/4` | `{gap}` | `{pass/fail/N/A}` |
-| 40 bps 成本压力 | `{value}` | `{baseline}` | `{frozen gate}` | `{gap}` | `{pass/fail/N/A}` |
-
-### 5. ML 对确定性策略的增量
-
-必须报告模型角色数、唯一 fit 数、预测数、有效覆盖数、回退数、校准通过折数、正增量折数、成本后策略价值、missing-modality 恒等、placebo 结果和最终复杂度信用。不能只报告模型自身 Sharpe。
-
-### 6. 知识库、因子库与数据
-
-| 资产 | 规模 | 质量/表现 | 当前缺口 |
-|---|---:|---|---|
-| 知识索引 | `{去重来源/来源出现/经验记忆/模型记忆}` | `{新鲜、过期、已验证}` | `{缺口}` |
-| 来源卡 | `{文件/记录/唯一 claim/URL}` | `{验证状态}` | `{旧格式缺口}` |
-| 注册因子库 | `{总数及分组}` | `{表达式可执行数}` | `{缺口}` |
-| 当前策略因子 | `{因子数和名称}` | `{IC/消融/增量表现}` | `{缺口}` |
-| 自动因子筛选 | `{报告/评估行/唯一因子}` | `{coverage、IC 分布、flags}` | `{非独立重复说明}` |
-| 数据能力 | `{approved/trial/paper-ready}` | `{覆盖、质量 blocker/warning}` | `{研究-only/PIT/延迟}` |
-
-### 7. 完成项、不足与下一步
-
-- 已完成：只列已有可验证证据的事项。
-- P0 阻塞：直接阻止绩效判断或晋级的事项。
-- P1 不足：测试、数据、执行和审计缺口。
-- 下一步：最多三项，写清预期产物、通过条件和失败后的停止/转向规则。
-- 验证：列出本次实际运行的命令及结果；没有运行的全仓门禁必须明说。
-
-## 三、当前基线快照（2026-08-15 UTC）
-
-### 1. 总体结论
-
-最终目标尚未完成。VIX R1 的研究准备、知识评估、候选预注册和冻结已完成，但唯一历史评估在候选顺序断言处、候选收益计算前失败。因此当前 VIX 策略表现全部为 `N/A`，也没有到可立即接入模拟盘的阶段。
-
-### 2. 累计规模
-
-| 统计 | 当前值 | 说明 |
-|---|---:|---|
-| 研究迭代目录 | 40 | 包含研究、前向和 paper-control 轮次 |
-| 正式优化轮次 | 29 | candidate manifest 支持 |
-| 历史锁定轮次 | 15 | 独立一次性锁 |
-| 有评估报告的独立轮次 | 28 | 共 30 份报告文件，含阶段报告和重复发布 |
-| research pass 报告/独立轮次 | 3 / 2 | R7 的 attempt 和 final 是同一内容；无 paper-ready 或 ML/LLM 增量通过 |
-| 预注册候选 | 289 | 29 份 manifest |
-| trial ledger 原始/去重记录 | 520 / 512 | 8 行为重复发布 |
-| 依赖跳过 / 合同无效 | 66 / 8 | 不算实际承载记录 |
-| 实际承载记录 | 438 | 512 - 66 - 8；不代表全部通过 |
-| 唯一持久化模型 ID | 3,706 | 3,974 行模型 ledger，268 行重复发布 |
-| 有模型 ledger 的迭代 | 17 | 42 个 iteration-candidate 模型角色 |
-| 自动研究目录 / IC 报告 | 245 / 241 | 与正式 trial ledger 分开 |
-| 自动因子评估行 | 2,440 | 33 个唯一因子 ID |
-
-当前 VIX R1 还预注册了 9 个候选，但没有生成 trial ledger 或候选收益。失败运行已经越过模型构造阶段；按代码计划为 4 个训练候选、78 个滚动 refit 点，即最多 312 个 candidate-refit 暴露。由于没有落盘 model ledger，这 312 不并入 3,706 个正式模型总数，后续失败审计必须单列。
-
-### 3. 知识、因子和数据体量
-
-| 资产 | 当前值 | 质量判断 |
-|---|---:|---|
-| 知识索引 | 175 个去重来源、1,363 次来源出现 | 172 新鲜、3 过期；仍含 55 个旧式 unverified 状态出现 |
-| 经验/模型记忆 | 53 / 8 | 28 个负面经验；8 个模型记忆均为诊断或 shadow，不是生产模型 |
-| 来源卡 | 62 文件、757 条 JSON 记录 | 431 个唯一 claim、179 个 URL；634 条显式 verified，123 条旧格式无状态 |
-| 知识评估 | 31 份 | 31 份均 `status=ok`；这只证明知识流程，不证明 Alpha |
-| 注册因子 | 84 | 34 tactical/router、30 Alpha101、20 Alpha158；71 个可表达式执行 |
-| 策略因子库产物 | 5 份 | 50 次因子选择、30 个唯一因子 |
-| 当前 VIX 因子 | 2 | VIX/VIX3M 状态因子 + 固定锚/趋势袖套；尚无有效 R1 收益归因 |
-| 自动 IC 筛选 | 241 报告、2,440 行、33 个唯一因子 | 平均 coverage 96.63%；1,476 行带 flag，仅 408 行为正 rank IC；mean/median rank IC 为 -0.0180/-0.0084，整体偏弱且包含大量重复筛选 |
-| 数据能力 | 13 | 5 approved、8 trial；仅 2 个能力声明 paper-ready timeframe，4 个为 research-only |
-
-当前价格快照覆盖 18 个标的、每个 2,388 个日频会话，区间为 `2017-02-01` 至 `2026-08-03`；机械质量检查 0 blocker、4 个真实极端行情 warning。VIX/VIX3M 快照有 4,251 个同日配对会话，区间为 `2009-09-18` 至 `2026-08-13`，无 forward fill、无未匹配美股交易日，但它没有历史 first-seen 证明，仍是 `trial/research_only`，不能支持 paper readiness。
-
-### 4. 当前表现与 ML 结论
-
-VIX R1 当前 CAGR、Sharpe、回撤、DSR、PBO 和成本表现均为 `N/A`。上一可审计基线 S1D01 在 20 bps 下为 CAGR `42.94%`、Sharpe `0.860`、最大回撤 `-49.16%`、DSR `0.0286`、PBO `0.864`；未达到新 Sharpe `>1.0`、原 CAGR `>=45%`、DSR 和 PBO 门槛。
-
-旧 ML 证据显示 S1M01 只有 1 次有效覆盖，成本后策略价值 `-0.001422`；S1M02 有 6 次覆盖，校准仅 `1/4` 折改善，成本后策略价值 `-0.007400`。因此目前没有 ML 增量信用。
-
-### 5. 当前下一步
-
-1. 为 VIX R1 固化基础设施失败审计，不伪造绩效结果。
-2. 创建新身份的纯实现修复轮次，保持经济逻辑不变，将 `Sharpe >1.0` 和完整候选顺序测试在训练前冻结，再执行一次历史评估。
-3. 只有全部收益、风险、成本、DSR/PBO、模态和 ML 增量门槛通过后，才补齐执行现实、TCA、风险、信号与模拟盘入口材料；若失败则封存并转向独立假设，不做已暴露参数邻域调优。
+Finish with the decisive completed finding, remaining claim-level gap and the next falsifiable action with owner/date. Include actual commands and validation limits in the appendix. Historical August2026 example metrics were removed from this active template and remain in `reports/research/program/guidance-consolidation-20261015/before/docs/strategy-optimization-progress-report-template.zh.md`; they are not current performance.

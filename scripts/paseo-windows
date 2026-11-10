@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+offer_file="${PASEO_WINDOWS_OFFER_FILE:-${HOME}/.config/open-composer/paseo-windows.offer}"
+if [[ ! -f "$offer_file" ]]; then
+  printf 'Paseo Windows offer file is missing: %s\n' "$offer_file" >&2
+  exit 2
+fi
+
+if [[ "$(stat -c '%a' "$offer_file" 2>/dev/null || true)" != "600" ]]; then
+  printf 'Paseo Windows offer file must be mode 600: %s\n' "$offer_file" >&2
+  exit 2
+fi
+
+IFS= read -r offer < "$offer_file"
+if [[ "$offer" != https://app.paseo.sh/#offer=* ]]; then
+  printf 'Paseo Windows offer file has an unexpected format.\n' >&2
+  exit 2
+fi
+
+for arg in "$@"; do
+  case "$arg" in
+    --host|--home|--host=*|--home=*|https://app.paseo.sh/#offer=*)
+      printf 'The Windows Paseo wrapper owns its endpoint; --host/--home and inline offers are refused.\n' >&2
+      exit 2
+      ;;
+  esac
+done
+
+unset PASEO_HOST PASEO_HOME PASEO_PASSWORD
+exec paseo --host "$offer" "$@"

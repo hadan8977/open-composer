@@ -1,0 +1,50 @@
+{
+  "strategy_name": "book_v12_existing_quant1_cross_zero_execution",
+  "reviewed_at": "2026-10-15T08:57:26.913532+00:00",
+  "review_scope": "Affected execution semantics of existing target-driven book only. No new strategy, activation, authorization or schedule.",
+  "skill": ".agents/skills/paper-auto-safety-reviewer/SKILL.md",
+  "lifecycle_status": "existing authorized book path; no new StrategySpec activation",
+  "harness_verify_pass": false,
+  "harness_verify_status": "not_run_for_new_activation; custom book target engine, no StrategySpec promotion in scope",
+  "kill_switch_verified": true,
+  "kill_switch_evidence": "existing real-file semantics regression plus staged close/open live rechecks; no production toggle",
+  "order_window": "same execution day 09:30 ET to strictly before session close minus15 minutes for staged legs; normal DAY/CLS orders retain initial-window semantics",
+  "duplicate_order_policy": "account flock in CLI; frozen saved plan/target; linked deterministic leg IDs; broker lookup and prior durable intent before send; unknown or rejected intent cannot be blindly resubmitted",
+  "credential_scope": "existing strict paper-only factory; no credential fetch or authenticated broker request by executor",
+  "signal_order_linkage": true,
+  "signal_order_evidence": "original target SHA, plan SHA and parent client ID retained; legs carry logical_client_order_id; unchanged original signal log",
+  "execution_policy_id": "existing_book_DAY_market_plus_confirmed_close_before_open_v1",
+  "source_card_ids": [
+    "sources.json",
+    "sources/installed-sdk.txt",
+    "initial-evidence.json"
+  ],
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "180",
+    "time": "15.731",
+    "timestamp": "2026-10-15T08:53:46.154358+00:00",
+    "hostname": "do-1"
+  },
+  "checklist": {
+    "risk_and_target_limits": "unchanged build_plan and whole-book risk gates; no target trimming or TIF substitution",
+    "short_open": "fresh account shorting/ETB/shortable/tradable status before short-opening leg; original short risk check retained",
+    "close_fill": "fresh matching broker order must be status=filled with exact close quantity; accepted/pending/partial/terminal failure/unknown do not open",
+    "flat_state": "fresh named position GET must show zero;404 only means no position; errors or changed position defer",
+    "concurrent_orders": "fresh symbol OPEN query must be empty before either new leg; account submit lock serializes CLI invocations",
+    "interruptions": "intent persisted before each broker POST and outcomes/leg observations saved atomically; resume reads original immutable plan",
+    "reconciliation": "one logical row, real per-leg fills summed once with weighted price; residual target drift retained; rejection separate from missing acknowledgement",
+    "closing_auction": "CLS reversal explicitly deferred with no legs sent; non-reversal CLS unchanged",
+    "historical_integrity": "2026-10-14 plan/orders/daily hashes unchanged; execution-date guard prevents historical replay",
+    "execution_test_scope": "fake broker only; no live-paper test orders, no cancel/replace/renew"
+  },
+  "code_semantics_review": "author validation passed; independent Root acceptance pending",
+  "overall": "blocked",
+  "blocking_items": [
+    "Final independent Root acceptance/integration is reserved to Root; no new paper_auto readiness approval is claimed."
+  ],
+  "overall_applies_to": "patch integration/any new activation only; not a stop instruction for existing authorized paper operations"
+}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_instruments.html' import money_hero, equity_chart %}
+{% block title %}账户 · Quant{% endblock %}
+{% block content %}
+<div class="page-head"><h1>模拟盘</h1>{% include '_paper_navigation.html' %}</div>
+<section class="tile">
+<header class="tile-head"><h2 class="tile-label">资金账户</h2>{% if paper_overview.available %}<span class="tile-meta">{{ paper_overview.snapshot.at_end[:10] }}</span>{% endif %}</header>
+<div class="table-wrap"><table class="t t--stack"><thead><tr><th>资金池</th><th class="num">本金</th><th class="num">盈亏</th><th class="num">收益率</th></tr></thead><tbody>
+{% if paper_overview.available %}{% for pool in paper_overview.snapshot.pool_readings %}
+<tr><td>{{ {'legacy':'ETF', 'six':'多策略', 'F1':'F1'}.get(pool.id,pool.id) }}</td><td data-l="本金" class="num">{{ pool.capital_usd|money }}</td><td data-l="盈亏" class="num">{{ pool.pnl_usd|money }}</td><td data-l="收益率" class="num">{{ '%+.2f%%'|format(pool.return_pct) if pool.return_pct is not none else '—' }}</td></tr>
+{% endfor %}{% endif %}
+</tbody></table></div>
+</section>
+{% if paper_history.available and paper_history.latest_account_observations %}
+<section class="tile dashboard-section"><header class="tile-head"><h2 class="tile-label">账户余额</h2></header>
+<div class="table-wrap"><table class="t t--stack"><thead><tr><th>账户</th><th class="num">权益</th><th class="num">现金</th><th>快照 UTC</th></tr></thead><tbody>
+{% for row in paper_history.latest_account_observations %}<tr><td>{{ row.account }}</td><td data-l="权益" class="num">{{ row.equity_usd|money }}</td><td data-l="现金" class="num">{{ row.cash_usd|money }}</td><td data-l="快照 UTC" class="num">{{ row.at[:16]|replace('T',' ') }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endif %}
+{% if paper_overview.available and paper_overview.snapshot.adjustments %}
+<section class="tile dashboard-section"><header class="tile-head"><h2 class="tile-label">其他收支</h2></header><div class="table-wrap"><table class="t"><thead><tr><th>资金池</th><th>项目</th><th class="num">金额</th></tr></thead><tbody>{% for pool in paper_overview.snapshot.adjustments %}{% for kind,amount in pool.entries.items() %}<tr><td>{{ pool.pool }}</td><td>{{ {'FEE':'费用','DIV':'分红','MA':'现金调整'}.get(kind,kind) }}</td><td class="num">{{ amount|money }}</td></tr>{% endfor %}{% endfor %}</tbody></table></div></section>
+{% endif %}
+{% if equity.latest %}
+<section class="tile dashboard-section"><header class="tile-head"><span class="tile-label">ETF 账户权益</span><span class="tile-meta">{{ equity.latest.at|ago }}</span></header><div class="hero">{{ money_hero(equity.latest.equity) }}</div><div class="well well--chart eqc-tall">{{ equity_chart(equity) }}</div></section>
+{% endif %}
+<section class="tile dashboard-section"><header class="tile-head"><h2 class="tile-label">ETF 交易状态</h2></header><dl class="kv"><dt>现金</dt><dd class="num">{{ report.account.cash|money }}</dd><dt>购买力</dt><dd class="num">{{ report.account.buying_power|money }}</dd><dt>挂单</dt><dd class="num">{{ report.open_order_count if report.open_order_count is not none else '—' }}</dd><dt>交易开关</dt><dd>{{ '已暂停' if report.kill_switch.enabled else '开启' if report.kill_switch.enabled is not none else '未知' }}</dd></dl></section>
+{% if report.intraday_configurations %}<section class="tile dashboard-section"><header class="tile-head"><h2 class="tile-label">策略配置</h2></header>{% for s in report.intraday_configurations %}<div class="dashboard-engine"><div><h3>{{ s.name }}</h3><p>{{ s.account }} · {{ s.symbols|join(', ') }} · 仅配置</p></div></div>{% endfor %}</section>{% endif %}
+{% endblock %}

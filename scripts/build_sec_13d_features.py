@@ -1,4 +1,4 @@
-"""H-20260916-05 step 0b: the Schedule 13D/13G point-in-time filing table.
+"""H-20260916-05 step 0b: the legacy Schedule 13D/13G acceptance-clock table.
 
 Reads what ``scripts/collect_sec_13d_filings.py`` collected
 (``data/raw/sec_13d/``) and writes the one table every 13D-based card reads:
@@ -12,8 +12,8 @@ Reads what ``scripts/collect_sec_13d_filings.py`` collected
 
 The point-in-time rule, in one place
 ------------------------------------
-``visible_session`` is the first US equity session on which a trader could
-have acted on the filing *inside* that session:
+``visible_session`` is the legacy acceptance-based US equity-session bucket,
+whose historical public availability still requires separate evidence:
 
 * acceptance timestamp is EDGAR's ``<ACCEPTANCE-DATETIME>``, which is ET;
 * if the acceptance date is a session and the time is before that session's
@@ -21,9 +21,12 @@ have acted on the filing *inside* that session:
   session;
 * otherwise the next session.
 
-That is strictly more conservative than EDGAR's own 17:30 ET dissemination
-cutoff (17:30 is after every close, so a filing accepted between the close
-and 17:30 is "same business day" for EDGAR but is *next session* here).
+This legacy acceptance-to-session mapping remains unchanged. Schedule 13D/G
+same-day filing-date cutoff was 17:30 ET before 2024-02-05 and is 22:00 ET
+from that date (FR2023-22678 II.A.5). Filing-date assignment is not observed
+dissemination latency. Acceptance, public availability, retrieval and
+computation are separate clocks; this archived mapping does not by itself
+certify historical first-seen PIT or the availability of activist content.
 
 ``entry_session`` is the session after ``visible_session`` -- the card's
 entry is the next session's open, never the visible session's own open,

@@ -124,7 +124,9 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import os
 import sys
+import tempfile
 import time
 from datetime import date, datetime
 from pathlib import Path
@@ -219,8 +221,9 @@ def build_year(
     universe_symbols: list[str],
     as_of: date,
     memory_limit: str,
-) -> pd.DataFrame:
-    """One year of the feature table, built and returned as a single frame."""
+    output_path: Path | None = None,
+) -> pd.DataFrame | dict:
+    """One year as a legacy frame, or an optional atomic streamed output summary."""
     window_start = date(year - LOOKBACK_YEARS, 1, 1)
     window_end = min(date(year, 12, 31), as_of)
     if window_start > window_end:
@@ -233,6 +236,9 @@ def build_year(
     try:
         connection.execute(f"SET memory_limit='{memory_limit}'")
         connection.execute("SET threads=2")
+        from scripts.forward_io_limits import apply_forward_limits
+
+        apply_forward_limits(connection)
         connection.execute("SET preserve_insertion_order=false")
         DUCKDB_TMP.mkdir(parents=True, exist_ok=True)
         connection.execute(f"SET temp_directory='{DUCKDB_TMP}'")
@@ -329,16 +335,64 @@ def build_year(
               AND shift.feature_date <= '{date(year, 12, 31).isoformat()}'
             ORDER BY trade_date, symbol
         """
-        frame = connection.execute(query).fetchdf()
+        result = connection.execute(query)
+        if output_path is not None:
+            return write_ordered_chunks(result, output_path)
+        frame = result.fetchdf()
     finally:
         connection.close()
 
+    return normalize_frame(frame)
+
+
+def normalize_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """The original output conversion, also applied to each ordered SQL chunk."""
     if frame.empty:
         return frame
     for column in ("trade_date", "observation_date", "publication_date", "visible_date"):
         frame[column] = pd.to_datetime(frame[column])
     columns = ["symbol", "trade_date", *FEATURE_COLUMNS, *METADATA_COLUMNS]
     return frame[columns].sort_values(["trade_date", "symbol"], ignore_index=True)
+
+
+def write_ordered_chunks(result, target: Path) -> dict:
+    """Stream the unchanged globally ordered query; retain partials on failure."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, name = tempfile.mkstemp(prefix=target.name + ".", suffix=".part", dir=target.parent)
+    os.close(descriptor)
+    temporary = Path(name)
+    writer = None
+    rows = present = 0
+    symbols: set[str] = set()
+    try:
+        while True:
+            frame = result.fetch_df_chunk(vectors_per_chunk=4)
+            if frame.empty:
+                break
+            frame = normalize_frame(frame)
+            rows += len(frame)
+            present += int(frame["record_present"].sum())
+            symbols.update(frame["symbol"].unique())
+            table = pa.Table.from_pandas(frame, preserve_index=False)
+            if writer is None:
+                # A chunk can contain only missing issuer records. Keep the
+                # string field typed even when its first chunk is all NULL.
+                schema = table.schema
+                index = schema.get_field_index("market_facilities")
+                schema = schema.set(index, pa.field("market_facilities", pa.string()))
+                writer = pq.ParquetWriter(temporary, schema, compression="zstd")
+            writer.write_table(table.cast(writer.schema))
+    finally:
+        if writer is not None:
+            writer.close()
+    if rows:
+        temporary.replace(target)
+    else:
+        temporary.unlink()
+    return {"rows": rows, "symbols": len(symbols), "coverage": present / rows if rows else None}
 
 
 # --------------------------------------------------------------------------
@@ -408,6 +462,25 @@ def main(argv: list[str] | None = None) -> int:
             written.append(str(target))
             continue
         started = time.monotonic()
+        if os.environ.get("OC_FORWARD_SPILL_BYTES"):
+            summary = build_year(
+                year,
+                universe_symbols=universe_symbols,
+                as_of=as_of,
+                memory_limit=args.memory_limit,
+                output_path=target,
+            )
+            if not isinstance(summary, dict) or not summary["rows"]:
+                log(f"{year}: no rows (out of range or before any coverage)")
+                continue
+            written.append(str(target))
+            coverage[str(year)] = summary["coverage"]
+            log(
+                f"{year}: streamed {summary['rows']:,} rows, {summary['symbols']:,} symbols, "
+                f"record present {summary['coverage']:.2%}, {time.monotonic() - started:.1f}s"
+            )
+            gc.collect()
+            continue
         frame = build_year(
             year,
             universe_symbols=universe_symbols,

@@ -94,12 +94,12 @@ def bind_consumer(root: Path, config: dict, name: str, dependencies: list[Path])
         frozen = frozen_directory / (before + p.suffix)
         frozen.parent.mkdir(parents=True, exist_ok=True)
         if not frozen.exists():
-            # Universe builders use copy2, so these snapshots must be independent.
+            # Mutable source caches/builders write in place; freeze independent bytes.
             if (
                 "universe" in p.parts
                 or "universe_broad" in p.parts
                 or p.suffix == ".py"
-                or p.name == "facts.parquet"
+                or p.name in {"facts.parquet", "company_tickers.json"}
             ):
                 shutil.copyfile(p, frozen)
             else:

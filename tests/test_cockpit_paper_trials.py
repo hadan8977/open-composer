@@ -170,7 +170,7 @@ def test_existing_html_and_api_read_the_same_trial(book, monkeypatch):
             "topbar_rehearsal": {"label": None},
         },
     )
-    client = TestClient(app.create_app())
+    client = TestClient(app.create_app(warm=False))
     payload = client.get("/api/paper.json")
     assert payload.status_code == 200
     (row,) = payload.json()["report"]["validation_trials"]

@@ -10,9 +10,9 @@ The current economic order is:
 
 1. Preserve the existing Martin funded-continuation question and its running jobs.
 2. Complete the already-dispatched `momentum_benchmark_attribution_20261103` finite risk-matched reception. This receives existing accounts and decides whether the price factor merits later regime/allocation research; it creates no new strategy.
-3. For the next Martin question, propose freezing entry rules and comparing regime-conditioned holding, reduction and exit. Do not repeat the completed removal of the 20-day limit, fixed staged exits or mechanical EMA studies. Freeze and review the new scope before dependent computation.
+3. Run the independent Martin state-conditioned exit question alongside funded continuation under the owner's Nov4 parallel-work instruction. Reuse completed original roots and frozen S entries; do not consume unfinished funded-study outputs. Complete one scientific plan review, then the accepted models and native accounts. Do not repeat the completed removal of the 20-day limit, fixed staged exits or mechanical EMA studies.
 
-This ordering preserves current study definitions, funding, source rights, seen/frozen samples and trial exposure; it does not restart jobs or change paper authority.
+These priorities preserve current study definitions, funding, source rights, seen/frozen samples and trial exposure. Independent questions need not wait for a numerical job in another direction; protect actual data dependencies and resource limits, without restarting existing jobs or changing paper authority.
 
 ## Investment preferences
 

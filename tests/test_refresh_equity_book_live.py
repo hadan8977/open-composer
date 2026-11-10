@@ -20,6 +20,18 @@ def _labels(plan: list[rf.Step]) -> list[str]:
     return [f"{s.stage}:{s.label}" for s in plan]
 
 
+def test_command_failure_records_actual_returncode(caplog):
+    step = rf.Step("up:sec_fundamentals_daily", "build", ["python", "builder.py"])
+
+    def failed(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 137, stdout="last event message\n", stderr="")
+
+    with caplog.at_level("INFO", logger=rf.log.name):
+        assert rf.run_command(step, failed) == 137
+    assert "returncode=137" in caplog.text
+    assert "downstream stopped" in caplog.text
+
+
 def test_plan_covers_every_live_stage_for_the_current_year() -> None:
     plan = rf.build_plan(date(2026, 10, 2))
     text = [s.text() for s in plan]

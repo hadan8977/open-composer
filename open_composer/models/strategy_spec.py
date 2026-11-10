@@ -475,6 +475,7 @@ class PortfolioConfig(BaseModel):
         "etf_structural_family",
         "model_ranking_portfolio",
         "event_driven_capacity_book",
+        "source_method_policy",
         "insider_buy_portfolio",
         "etf_rotation_portfolio",
     ] = "single_symbol"
@@ -1054,6 +1055,7 @@ class ExecutionPolicy(BaseModel):
     policy_id: str = Field(min_length=1)
     order_style: Literal[
         "day_market",
+        "day_limit",  # Scoped adapter only; generic paper execution rejects it.
         "moo_market",
         "opg_limit",
         "loo_limit",

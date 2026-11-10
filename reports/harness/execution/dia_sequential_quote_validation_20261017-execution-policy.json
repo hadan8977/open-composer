@@ -1,0 +1,63 @@
+{
+  "strategy_name": "dia_sequential_quote_validation_20261017",
+  "policy_id": "FROZEN_BASE_SEQUENTIAL_SIP",
+  "order_style": "conditional_two_wave_vendor_bid_ask_size_reference",
+  "time_in_force": "one_scheduled_reference_attempt_then_expire",
+  "price_protection": "Close-committed whole maxima;09:35bid sale then09:40ask purchase with size/funding reductions only. No price guarantee or hindsight limit.",
+  "gap_filter": "No economic gap filter; unchanged default10xunitguard from priorcompletedclose.",
+  "spread_filter": "Require latestrawstatewithin5s/regularRbothsides/positiveunlockedbidask; no tightspread cutoff or older-valid fallback.",
+  "participation_cap": "One normalized displayed side size per name/wave per alternative; no replenishment, hidden depth or priority.",
+  "fallback_behavior": "Reject invalidwave, cap displayed/funded/affordable quantity, wholefloor; expire residual to next original monthly intent. Unknown mandatoryheldmark=>incomplete.",
+  "tca_plan": {
+    "reference_prices": [
+      "committed_close",
+      "sell_bid_vendor_time_and_size",
+      "buy_ask_vendor_time_and_size",
+      "future_actual_arrival_fill_if_separately_authorized"
+    ],
+    "record_submitted_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "review_frequency": "Complete this one conditional ledger; no live monitoring/schedule is authorized."
+  },
+  "source_card_ids": [
+    "historical_SIP_quote_schema_units",
+    "pre_transition_NMS_standard_round_lot",
+    "UTP_size_representation_transition",
+    "quote_wave_not_broker_acknowledgment"
+  ],
+  "alternatives_compared": [
+    {
+      "style": "DAY market",
+      "price_protection": "None",
+      "fill_certainty": "Not guaranteed; venue/latency/spread may changeprice",
+      "complexity": "Can be queued afterclose; sequential actual sale acknowledgements matter",
+      "used": false
+    },
+    {
+      "style": "MOO market+OPG",
+      "price_protection": "None",
+      "fill_certainty": "Auction-only; unfilledcancel;9:28cutoff and accountcapabilitynotverified",
+      "complexity": "Primaryauction print/ordersupport absent, so not certified bydailyopen",
+      "used": false
+    },
+    {
+      "style": "LOO limit+OPG",
+      "price_protection": "Explicitlimit",
+      "fill_certainty": "Can remainunfilled; dailyhighlow cannot provequeuefill",
+      "complexity": "Needs limits/auctionqueueevidence absent; no newlimitparameter invented",
+      "used": false
+    }
+  ],
+  "naked_market_justification": "No real DAYmarket recommendation or broker activation. Chosen economic object is a price-taking conditional raw-open scenario.",
+  "non_paper_research_only": true,
+  "source_assessment": {
+    "path": "reports/research/program/dia-sequential-quote-validation-20261017/source-assessment.json",
+    "bytes": 1666,
+    "sha256": "ebf667ca3417f6673569d3edabc5d324c21d2a2f9c6eb5f220e6edba7f5ad153"
+  },
+  "additional_friction_bps_per_side": [
+    10,
+    20
+  ]
+}

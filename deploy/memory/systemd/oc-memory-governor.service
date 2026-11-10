@@ -1,0 +1,18 @@
+# Keeps MemAvailable >= 650 MB by lowering oc.slice MemoryHigh when the rest of the box
+# needs memory (scripts/memory_budget.py, config/memory-budget.json).
+[Unit]
+Description=open-composer memory governor (leave the owner >=500 MB free)
+After=oc.slice
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /root/codex-test/open-composer/scripts/memory_budget.py governor
+Restart=always
+RestartSec=5
+OOMScoreAdjust=-900
+MemoryMax=60M
+Nice=-5
+CPUQuota=20%
+
+[Install]
+WantedBy=multi-user.target

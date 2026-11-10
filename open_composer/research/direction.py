@@ -32,6 +32,8 @@ SOURCE_TYPES = {
     "paper",
     "platform_docs",
     "industry_standard",
+    "practitioner_first_person",
+    "competition_official",
 }
 
 
@@ -111,8 +113,36 @@ def validate_direction_review(
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return ["direction_review_missing_or_invalid"]
-    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+    if not isinstance(payload, dict) or payload.get("schema_version") not in {1, 3}:
         return ["direction_review_schema_invalid"]
+    schema_version = payload.get("schema_version")
+    if schema_version == 3:
+        bindings = payload.get("source_evidence_bindings")
+        if not isinstance(bindings, list) or not bindings:
+            blocked.append("direction_v3_source_evidence_bindings_missing")
+        manifest = payload.get("query_manifest")
+        if not isinstance(manifest, dict):
+            blocked.append("direction_v3_query_manifest_missing")
+        else:
+            for key in ("path", "sha256"):
+                if not str(manifest.get(key) or "").strip():
+                    blocked.append(f"direction_v3_query_manifest_{key}_missing")
+            _verify_bound_artifact(manifest, root, blocked, "direction_v3_query_manifest")
+            try:
+                manifest_path = (root / str(manifest.get("path") or "")).resolve()
+                manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+                if manifest_payload.get("queries") != payload.get("queries"):
+                    blocked.append("direction_v3_query_manifest_content_mismatch")
+            except (OSError, ValueError, AttributeError):
+                blocked.append("direction_v3_query_manifest_invalid")
+        baseline = payload.get("pre_iteration_knowledge_baseline")
+        if not isinstance(baseline, dict):
+            blocked.append("direction_v3_knowledge_baseline_missing")
+        else:
+            for key in ("path", "sha256"):
+                if not str(baseline.get(key) or "").strip():
+                    blocked.append(f"direction_v3_knowledge_baseline_{key}_missing")
+            _verify_bound_artifact(baseline, root, blocked, "direction_v3_knowledge_baseline")
     if expected_iter_id is not None and payload.get("iter_id") != expected_iter_id:
         blocked.append("direction_review_iteration_mismatch")
     if payload.get("decision") != "proceed":
@@ -244,4 +274,47 @@ def validate_direction_review(
                 raise ValueError("source quotation absent from snapshot")
         except (OSError, ValueError):
             blocked.append(f"{prefix}:verified_claim_binding_invalid")
+    if schema_version == 3 and isinstance(sources, list):
+        binding_rows = payload.get("source_evidence_bindings")
+        if isinstance(binding_rows, list):
+            expected = {
+                str(row.get("claim_id") or ""): row
+                for row in sources
+                if isinstance(row, dict) and row.get("claim_id")
+            }
+            actual = {
+                str(row.get("claim_id") or ""): row
+                for row in binding_rows
+                if isinstance(row, dict) and row.get("claim_id")
+            }
+            if set(actual) != set(expected):
+                blocked.append("direction_v3_source_evidence_binding_claim_set_mismatch")
+            for claim_id, source in expected.items():
+                binding = actual.get(claim_id)
+                if binding is None:
+                    continue
+                for binding_key, source_key in (
+                    ("source_card_path", "source_card_path"),
+                    ("snapshot_path", "snapshot_path"),
+                    ("snapshot_sha256", "sha256"),
+                    ("source_url", "url"),
+                ):
+                    if binding.get(binding_key) != source.get(source_key):
+                        blocked.append(
+                            f"direction_v3_source_evidence_binding_mismatch:{claim_id}:{binding_key}"
+                        )
     return blocked
+
+
+def _verify_bound_artifact(
+    binding: dict[str, Any], root: Path, blocked: list[str], label: str
+) -> None:
+    try:
+        path = (root / str(binding.get("path") or "")).resolve()
+        path.relative_to(root.resolve())
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != binding.get(
+            "sha256"
+        ):
+            raise ValueError("missing or changed artifact")
+    except (OSError, ValueError):
+        blocked.append(f"{label}_missing_or_hash_mismatch")

@@ -79,6 +79,8 @@ def disk_usage(path: str = "/") -> dict[str, float]:
         "total_gb": total / 1e9,
         "used_gb": used / 1e9,
         "free_gb": avail / 1e9,
+        "ordinary_available_pct_of_total": 100.0 * avail / total if total else 0.0,
+        "reserved_unavailable_gb": (st.f_bfree - st.f_bavail) * st.f_frsize / 1e9,
         "pct": 100.0 * used / (used + avail) if used + avail else 0.0,
     }
 
@@ -416,6 +418,18 @@ def delete_path(item: Item, policy: dict[str, Any], dry: bool) -> tuple[bool, st
 
 
 # ----------------------------------------------------------------------------- commands
+def capacity_state(policy: dict[str, Any], usage: dict[str, float]) -> str:
+    """Report the owner capacity goal without expanding automatic cleanup."""
+    thresholds = policy["thresholds"]
+    if usage["pct"] >= thresholds["emergency_pct"]:
+        return "emergency"
+    if usage["pct"] >= thresholds["act_pct"]:
+        return "act"
+    goal = thresholds.get("ordinary_available_goal_pct")
+    available_pct = 100.0 * usage["free_gb"] / usage["total_gb"] if usage["total_gb"] else 0.0
+    return "below_capacity_goal" if goal is not None and available_pct < goal else "ok"
+
+
 def cmd_status(policy: dict[str, Any], write: bool = True) -> dict[str, Any]:
     now = time.time()
     queue = QUEUE_PATH.read_text() if QUEUE_PATH.exists() else ""
@@ -488,13 +502,7 @@ def cmd_status(policy: dict[str, Any], write: bool = True) -> dict[str, Any]:
         "managed": managed,
         "watch": watch,
         "unregistered_large": unregistered,
-        "state": (
-            "emergency"
-            if u["pct"] >= policy["thresholds"]["emergency_pct"]
-            else "act"
-            if u["pct"] >= policy["thresholds"]["act_pct"]
-            else "ok"
-        ),
+        "state": capacity_state(policy, u),
     }
     if write:
         STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -510,6 +518,8 @@ def cmd_run(policy: dict[str, Any], force: bool, dry: bool, all_items: bool = Fa
         f"(act {th['act_pct']}%, target {th['target_pct']}%)"
     )
     if u["pct"] < th["act_pct"] and not (force or all_items):
+        if not dry:
+            write_light_status(policy, u, u)
         return 0
     queue = QUEUE_PATH.read_text() if QUEUE_PATH.exists() else ""
     now = time.time()
@@ -638,12 +648,11 @@ def write_light_status(
 ) -> None:
     """Usage before/after an acting run; the full du sweep is `status`, run on demand."""
     th = policy["thresholds"]
-    pct = after["pct"]
-    state = "emergency" if pct >= th["emergency_pct"] else "act" if pct >= th["act_pct"] else "ok"
+    state = capacity_state(policy, after)
     STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATUS_PATH.write_text(
         json.dumps(
-            {"generated_at": now_utc(), "state": state, "usage_before": before, "usage": after},
+            {"generated_at": now_utc(), "state": state, "ordinary_available_goal_pct": th.get("ordinary_available_goal_pct"), "usage_before": before, "usage": after},
             indent=1,
             sort_keys=True,
         )

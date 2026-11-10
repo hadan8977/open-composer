@@ -86,6 +86,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -94,6 +95,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import modal_budget  # noqa: E402
+
+# Memory cap of the local `modal run` driver (run_capped.sh --mem). One shard's
+# output tarball must fit; larger outputs belong on the volume, not in the return.
+MODAL_DRIVER_MEM = "1G"
 
 APP_TEMPLATE = ROOT / "scripts" / "modal_app.py"
 MANIFEST_PATH = ROOT / "reports/research/control/modal-data-manifest.json"
@@ -281,8 +286,48 @@ def read_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
 
 
 def write_manifest(manifest: dict[str, Any], path: Path = MANIFEST_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    # Merge ONLY this upload's updates into the CURRENT shared manifest. The
+    # budget command acquires the same lock separately, never recursively.
+    with modal_budget.ledger_lock(modal_budget.LEDGER):
+        if path.is_symlink():
+            raise ValueError("Shared manifest symlink refused")
+        before = None
+        if path.exists():
+            with path.open("rb") as source:
+                before = os.fstat(source.fileno())
+                current = json.loads(source.read())
+                after = path.stat()
+                assert (before.st_dev, before.st_ino, before.st_mtime_ns, before.st_size) == (
+                    after.st_dev,
+                    after.st_ino,
+                    after.st_mtime_ns,
+                    after.st_size,
+                )
+        else:
+            current = {}
+        current.update(manifest)
+        raw = json.dumps(current, indent=2, sort_keys=True).encode()
+        temporary = path.with_name(path.name + ".martin.tmp-" + uuid.uuid4().hex)
+        guard = storage_guard()
+        if guard:
+            guard.before(temporary, len(raw), creators=[path], shared=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with temporary.open("xb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if before is not None:
+            after = path.stat()
+            assert (before.st_dev, before.st_ino, before.st_mtime_ns, before.st_size) == (
+                after.st_dev,
+                after.st_ino,
+                after.st_mtime_ns,
+                after.st_size,
+            )
+        else:
+            assert not path.exists(), "Foreign manifest appeared during guarded merge"
+        os.replace(temporary, path)
+        fsync_parent(path)
 
 
 def sync_data(data_paths: list[str], manifest_path: Path = MANIFEST_PATH) -> list[str]:
@@ -294,6 +339,7 @@ def sync_data(data_paths: list[str], manifest_path: Path = MANIFEST_PATH) -> lis
     """
     manifest = read_manifest(manifest_path)
     synced: list[str] = []
+    updates = {}
     for rel in data_paths:
         local = ROOT / rel
         if not local.exists():
@@ -307,9 +353,10 @@ def sync_data(data_paths: list[str], manifest_path: Path = MANIFEST_PATH) -> lis
             ["modal", "volume", "put", "oc-data", str(local), rel, "-f"],
             check=True,
         )
-        manifest[rel] = stat
+        updates[rel] = stat
         synced.append(rel)
-    write_manifest(manifest, manifest_path)
+    if updates:
+        write_manifest(updates, manifest_path)
     return synced
 
 
@@ -329,6 +376,9 @@ def stage_code(dest_dir: Path, extra_dirs: list[str] | None = None) -> list[Path
     for f in files:
         rel = f.relative_to(ROOT)
         out = dest_dir / rel
+        guard = storage_guard()
+        if guard:
+            guard.before(out, f.stat().st_size)
         out.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, out)
     return files
@@ -358,9 +408,14 @@ def parse_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument("--fetch-to", default=None)
     parser.add_argument("--shards", type=int, default=1)
     parser.add_argument("--extra-dir", action="append", default=[])
+    parser.add_argument("--driver-wait-min", type=int, default=30)
+    parser.add_argument("--keep-remote-output", action="store_true")
+    parser.add_argument("--resource-limits", action="store_true")
     ns = parser.parse_args(own_argv)
     if ns.shards < 1:
         raise SystemExit("--shards must be >= 1")
+    if ns.driver_wait_min < 0:
+        raise SystemExit("--driver-wait-min must be >= 0")
     return ns, command
 
 
@@ -390,9 +445,43 @@ def check_budget(ns: argparse.Namespace) -> None:
 
 
 def append_actuals(row: dict[str, Any], path: Path = LEDGER_ACTUALS_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(row) + "\n")
+    raw = (json.dumps(row) + "\n").encode()
+    with modal_budget.ledger_lock(modal_budget.LEDGER):
+        guard = storage_guard()
+        if guard:
+            guard.before(path, len(raw), shared=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.is_symlink():
+            raise ValueError("Shared actuals symlink refused")
+        fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        try:
+            before, current = os.fstat(fd), path.stat()
+            assert (before.st_dev, before.st_ino) == (current.st_dev, current.st_ino)
+            written = os.write(fd, raw)
+            if written != len(raw):
+                raise OSError("Partial actuals append retained; no retry")
+            os.fsync(fd)
+            after = path.stat()
+            assert (before.st_dev, before.st_ino) == (after.st_dev, after.st_ino)
+        finally:
+            os.close(fd)
+        fsync_parent(path)
+
+
+def storage_guard():
+    if os.environ.get("OC_MARTIN_STORAGE_GUARD") == "1":
+        from martin_modal_storage_20261027 import from_env
+
+        return from_env()
+    return None
+
+
+def fsync_parent(path):
+    fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -400,12 +489,17 @@ def main(argv: list[str] | None = None) -> int:
     check_budget(ns)
 
     local_dest = ROOT / (ns.fetch_to or ns.out)
+    guard = storage_guard()
+    if guard:
+        guard.before(local_dest, 0)
     local_dest.mkdir(parents=True, exist_ok=True)
 
     synced = sync_data(ns.data) if ns.data else []
 
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     log_path = ROOT / "logs" / f"modal-{ns.job}-{stamp}.log"
+    if guard:
+        guard.before(log_path, 0)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     threads = max(1, int(2 * ns.cpu))
@@ -431,6 +525,8 @@ def main(argv: list[str] | None = None) -> int:
                 "OC_OUT_DIR": str(local_dest.resolve()),
                 "OC_LOG_PATH": str(log_path),
                 "OC_SHARD_COMMANDS": json.dumps(shard_commands),
+                "OC_KEEP_REMOTE_OUTPUT": "1" if ns.keep_remote_output else "0",
+                "OC_RESOURCE_LIMITS": "1" if ns.resource_limits else "0",
             }
         )
         print(
@@ -439,7 +535,23 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         t0 = time.time()
-        proc = subprocess.run(["modal", "run", str(APP_TEMPLATE)], cwd=str(ROOT), env=env)
+        # The local driver runs inside the project memory budget (owner 2026-10-07,
+        # docs/runbook-memory.zh.md): it holds one shard's output tarball at a time.
+        proc = subprocess.run(
+            [
+                str(ROOT / "scripts" / "run_capped.sh"),
+                "--mem",
+                MODAL_DRIVER_MEM,
+                "--wait-min",
+                str(ns.driver_wait_min),
+                "--",
+                "modal",
+                "run",
+                str(APP_TEMPLATE),
+            ],
+            cwd=str(ROOT),
+            env=env,
+        )
         wall_seconds = time.time() - t0
 
     shards_path = local_dest / "_modal_shards.json"

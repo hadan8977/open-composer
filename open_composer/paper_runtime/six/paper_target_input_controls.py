@@ -3,6 +3,7 @@
 import hashlib
 import json
 import math
+import os
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -27,8 +28,32 @@ def binding(path):
 
 
 def checked(row):
-    assert binding(row["path"]) == row
-    return Path(row["path"])
+    """Verify one recorded binding, naming why it no longer matches.
+
+    A bare assert used to make every mismatch look alike; 2026-11-05..09 showed
+    the cost -- an ops cleanup had replaced a bound parquet with a symlink to the
+    archive mount, so ``Path.resolve()`` stopped equalling the recorded path and
+    the H5 refusal message was empty for four sessions. The check still fails
+    closed, it just says which case it is.
+    """
+    path = Path(row["path"])
+    actual = binding(path)
+    if actual != row:
+        if path.is_symlink():
+            target = os.readlink(path)
+            same_bytes = target and path.exists() and len(path.read_bytes()) == row.get(
+                "bytes"
+            ) and hashlib.sha256(path.read_bytes()).hexdigest() == row.get("sha256")
+            raise AssertionError(
+                "bound input was replaced by a symlink"
+                + (" (bytes unchanged)" if same_bytes else "")
+                + f" -> {target}; restore the file at {path}"
+            )
+        raise AssertionError(
+            f"bound input changed: {path} (recorded {row.get('bytes')} bytes "
+            f"{str(row.get('sha256'))[:12]}, found {actual['bytes']} bytes {actual['sha256'][:12]})"
+        )
+    return path
 
 
 def receive_current_paper_maintenance():

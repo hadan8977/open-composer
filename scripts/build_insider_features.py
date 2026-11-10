@@ -219,8 +219,10 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import sys
+import tempfile
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -378,7 +380,7 @@ def session_open_utc(trade_date: pd.Timestamp) -> pd.Timestamp:
 # --------------------------------------------------------------------------
 
 
-def load_transactions(*, symbols: set[str] | None) -> pd.DataFrame:
+def load_transactions(*, symbols: set[str] | None, allow_empty: bool = False) -> pd.DataFrame:
     """Every parsed Form 4/4-A non-derivative transaction row, narrowed to
     ``symbols`` (the union point-in-time universe) if given."""
     paths = sorted(PARSED_ROOT.glob("*.parquet")) + sorted(TAIL_PARSED_ROOT.glob("*.parquet"))
@@ -389,14 +391,23 @@ def load_transactions(*, symbols: set[str] | None) -> pd.DataFrame:
         )
     frames: list[pd.DataFrame] = []
     for path in paths:
-        frame = pd.read_parquet(path, columns=list(READ_COLUMNS))
+        frame = pd.read_parquet(
+            path,
+            columns=list(READ_COLUMNS),
+            use_threads=False,
+            filters=[("issuer_symbol", "in", sorted(symbols))] if symbols is not None else None,
+        )
         frame = frame.loc[frame["document_type"].isin(["4", "4/A"])]
         if symbols is not None:
             frame = frame.loc[frame["issuer_symbol"].isin(symbols)]
         if frame.empty:
             continue
         frames.append(frame)
-    combined = pd.concat(frames, ignore_index=True)
+    combined = (
+        pd.DataFrame(columns=list(READ_COLUMNS))
+        if allow_empty and not frames
+        else pd.concat(frames, ignore_index=True)
+    )
     combined["trans_code"] = combined["trans_code"].astype("string").fillna("")
     combined["acquired_disposed"] = combined["acquired_disposed"].astype("string").fillna("")
     combined["owner_cik"] = pd.to_numeric(combined["reporting_owner_cik"], errors="coerce").astype(
@@ -1153,6 +1164,80 @@ def build_weekly_panel(
 # --------------------------------------------------------------------------
 
 
+def build_partitioned_years(args, out_root, sessions, session_position, universe_panel):
+    """Execution partitions only; retain each issuer's complete source history."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    years = list(range(args.start_year, args.end_year + 1))
+    pending = [year for year in years if args.force or not (out_root / f"{year}.parquet").exists()]
+    written = [str(out_root / f"{year}.parquet") for year in years if year not in pending]
+    if not pending:
+        return written
+    cohorts = {
+        timestamp: universe_as_of_calendar_month(universe_panel, timestamp, top_n=args.top_n)
+        for timestamp in sessions
+        if timestamp.year in pending
+    }
+    symbols = sorted(set().union(*cohorts.values())) if cohorts else []
+    with tempfile.TemporaryDirectory(prefix=".issuer-parts-", dir=out_root) as directory:
+        work = Path(directory)
+        log(f"bounded insider parts: {work}; {len(symbols)} symbols; full history")
+        for start in range(0, len(symbols), args.symbol_batch_size):
+            selected = set(symbols[start : start + args.symbol_batch_size])
+            tx = load_transactions(symbols=selected, allow_empty=True)
+            tx = attach_visible_index(tx, session_position, shift_days=0, seed=args.placebo_seed)
+            tx = classify_transactions(tx)
+            tx = pd.concat([tx, label_buy_routineness(tx)], axis=1)
+            for year in pending:
+                result = build_year(
+                    year,
+                    transactions=tx,
+                    sessions=sessions,
+                    universe_panel=universe_panel,
+                    top_n=args.top_n,
+                    output_symbols=selected,
+                )
+                if not result.empty:
+                    parts = work / str(year)
+                    parts.mkdir(exist_ok=True)
+                    result.to_parquet(
+                        parts / f"{start:06d}.parquet", index=False, compression="zstd"
+                    )
+                del result
+            del tx
+            gc.collect()
+            log(
+                f"bounded symbols {min(start + args.symbol_batch_size, len(symbols))}"
+                f"/{len(symbols)}"
+            )
+        for year in pending:
+            parts = sorted((work / str(year)).glob("*.parquet"))
+            if not parts:
+                continue
+            candidate = work / f"{year}.parquet"
+            writer = None
+            rows = 0
+            try:
+                for part in parts:
+                    parquet = pq.ParquetFile(part)
+                    if writer is None:
+                        writer = pq.ParquetWriter(
+                            candidate, parquet.schema_arrow, compression="zstd"
+                        )
+                    for batch in parquet.iter_batches(batch_size=8192, use_threads=False):
+                        writer.write_table(pa.Table.from_batches([batch]))
+                        rows += batch.num_rows
+            finally:
+                if writer is not None:
+                    writer.close()
+            target = out_root / f"{year}.parquet"
+            candidate.replace(target)
+            written.append(str(target))
+            log(f"{year}: wrote {rows:,} rows from {len(parts)} full-history partitions")
+    return sorted(written)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--start-year", type=int, default=2016)
@@ -1186,13 +1271,22 @@ def build_parser() -> argparse.ArgumentParser:
             "data/features/universe_broad with a large --top-n for the broad universe)"
         ),
     )
+    parser.add_argument(
+        "--symbol-batch-size",
+        type=int,
+        default=0,
+        help="Issuer-local execution partitions; zero keeps legacy path. No placebo shifting.",
+    )
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--skip-weekly-panel", action="store_true")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.symbol_batch_size < 0 or (args.symbol_batch_size and args.shift_filing_dates_days):
+        parser.error("symbol partitions require a nonnegative batch size and no placebo shift")
     shift = max(0, args.shift_filing_dates_days)
     out_root = args.out_root or (
         DEFAULT_OUT_ROOT
@@ -1215,68 +1309,73 @@ def main(argv: list[str] | None = None) -> int:
         f"{len(universe_symbols):,} symbols"
     )
 
-    transactions = load_transactions(symbols=universe_symbols)
-    log(f"loaded {len(transactions):,} Form 4/4-A transaction rows in the universe")
-    transactions = attach_visible_index(
-        transactions, session_position, shift_days=shift, seed=args.placebo_seed
-    )
-    transactions = classify_transactions(transactions)
-    buys = transactions.loc[transactions["is_buy"]]
-    if len(buys):
-        missing_price = float((buys["usd"] == 0).mean())
-        log(f"open-market buys with no usable price (usd contribution 0): {missing_price:.2%}")
-    transactions = pd.concat([transactions, label_buy_routineness(transactions)], axis=1)
-    primary_buys = transactions.loc[
-        transactions["is_buy"] & (transactions["owner_seq"].fillna(0) == 0)
-    ]
-    if len(primary_buys):
-        log(
-            "open-market buy split: "
-            f"routine {float(primary_buys['is_routine_buy'].mean()):.2%}, "
-            f"CMP-opportunistic {float(primary_buys['is_cmp_opportunistic_buy'].mean()):.2%}, "
-            f"unclassified {float(primary_buys['is_cmp_unclassified_buy'].mean()):.2%}"
+    if args.symbol_batch_size:
+        written = build_partitioned_years(
+            args, out_root, sessions, session_position, universe_panel
         )
-    transactions = transactions.drop(
-        columns=[
-            "accession",
-            "trans_code",
-            "acquired_disposed",
-            "shares",
-            "price_per_share",
-            "is_director",
-            "is_officer",
-            "is_ten_percent_owner",
-            "is_10b5_1",
+    else:
+        transactions = load_transactions(symbols=universe_symbols)
+        log(f"loaded {len(transactions):,} Form 4/4-A transaction rows in the universe")
+        transactions = attach_visible_index(
+            transactions, session_position, shift_days=shift, seed=args.placebo_seed
+        )
+        transactions = classify_transactions(transactions)
+        buys = transactions.loc[transactions["is_buy"]]
+        if len(buys):
+            missing_price = float((buys["usd"] == 0).mean())
+            log(f"open-market buys with no usable price (usd contribution 0): {missing_price:.2%}")
+        transactions = pd.concat([transactions, label_buy_routineness(transactions)], axis=1)
+        primary_buys = transactions.loc[
+            transactions["is_buy"] & (transactions["owner_seq"].fillna(0) == 0)
         ]
-    )
+        if len(primary_buys):
+            log(
+                "open-market buy split: "
+                f"routine {float(primary_buys['is_routine_buy'].mean()):.2%}, "
+                f"CMP-opportunistic {float(primary_buys['is_cmp_opportunistic_buy'].mean()):.2%}, "
+                f"unclassified {float(primary_buys['is_cmp_unclassified_buy'].mean()):.2%}"
+            )
+        transactions = transactions.drop(
+            columns=[
+                "accession",
+                "trans_code",
+                "acquired_disposed",
+                "shares",
+                "price_per_share",
+                "is_director",
+                "is_officer",
+                "is_ten_percent_owner",
+                "is_10b5_1",
+            ]
+        )
 
-    written: list[str] = []
-    for year in range(args.start_year, args.end_year + 1):
-        target = out_root / f"{year}.parquet"
-        if target.exists() and not args.force:
-            log(f"{year}: already built")
+        written: list[str] = []
+        for year in range(args.start_year, args.end_year + 1):
+            target = out_root / f"{year}.parquet"
+            if target.exists() and not args.force:
+                log(f"{year}: already built")
+                written.append(str(target))
+                continue
+            frame = build_year(
+                year,
+                transactions=transactions,
+                sessions=sessions,
+                universe_panel=universe_panel,
+                top_n=args.top_n,
+            )
+            if frame.empty:
+                log(f"{year}: no rows (no sessions or no universe cohort)")
+                continue
+            temporary = target.with_suffix(".parquet.part")
+            frame.to_parquet(temporary, index=False, compression="zstd")
+            temporary.replace(target)
             written.append(str(target))
-            continue
-        frame = build_year(
-            year,
-            transactions=transactions,
-            sessions=sessions,
-            universe_panel=universe_panel,
-            top_n=args.top_n,
-        )
-        if frame.empty:
-            log(f"{year}: no rows (no sessions or no universe cohort)")
-            continue
-        temporary = target.with_suffix(".parquet.part")
-        frame.to_parquet(temporary, index=False, compression="zstd")
-        temporary.replace(target)
-        written.append(str(target))
-        log(
-            f"{year}: {len(frame):,} rows, {frame['symbol'].nunique():,} symbols, "
-            f"share with a visible buy in 60d = "
-            f"{float((frame['open_market_buy_count_60d'] > 0).mean()):.2%}"
-        )
-        del frame
+            log(
+                f"{year}: {len(frame):,} rows, {frame['symbol'].nunique():,} symbols, "
+                f"share with a visible buy in 60d = "
+                f"{float((frame['open_market_buy_count_60d'] > 0).mean()):.2%}"
+            )
+            del frame
 
     if not args.skip_weekly_panel:
         build_weekly_panel(

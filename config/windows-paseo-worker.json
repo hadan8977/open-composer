@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "windows-paseo-worker",
+  "transport": "paseo-relay",
+  "endpoint_label": "hadan",
+  "wrapper": "scripts/paseo-windows",
+  "offer_file": "~/.config/open-composer/paseo-windows.offer",
+  "workspace_id": "wks_bcb74e86efdbe364",
+  "workspace_name": "paseo",
+  "remote_root": "C:\\paseo",
+  "max_usage_gib": 50,
+  "scratch_root": "C:\\paseo\\scratch",
+  "control_url": "http://127.0.0.1:8765/",
+  "autostart": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run (Paseo + OpenComposerWorkerPanel)",
+  "allowed_work": [
+    "manifest-bound Codex source research, planning, isolated preparation and independent review (nontraining)",
+    "fixture smoke tests",
+    "manifest-bound feature construction",
+    "manifest-bound model training",
+    "manifest-bound backtests"
+  ],
+  "forbidden_work": [
+    "broker credentials or order submission",
+    "paper or live execution",
+    "long-term market-data cache",
+    "files outside C:\\paseo",
+    "Tailscale, Windows OpenSSH, or WSL2 transport"
+  ],
+  "required_before_research": [
+    "direction-check passed",
+    "iteration validate --stage pre-backtest passed",
+    "worker status ready and usage_ok=true below 50 GiB",
+    "manifest includes relative paths, byte sizes, SHA-256, and cleanup",
+    "result return SHA-256 verified before scratch cleanup; recoverable interruptions preserve the latest complete checkpoint/completed shards"
+  ],
+  "agent_research_policy": {
+    "owner_updated": "2026-10-11",
+    "allowed_only_when": [
+      "online through Paseo endpoint hadan",
+      "fresh preflight ok=true",
+      "worker ready",
+      "usage_ok=true and usage strictly below 50GiB"
+    ],
+    "workspace_root": "C:\\paseo",
+    "agent_settings": {
+      "provider": "codex",
+      "model": "gpt-6.1-sol",
+      "thinkingOptionId": "high",
+      "modeId": "full-access"
+    },
+    "automatic_power_on_or_resume": false,
+    "training_hold": "reports/research/control/owner-compute-hold.json",
+    "unavailable_action": "skip remote dispatch and continue independent server research; no tight retries",
+    "applicable_gates": "Economic/market work needs its existing full plan and iteration gates; source/plan/review work stays within its separately authorized preparation scope.",
+    "current_training_allowed": true,
+    "owner_authorization_correction": "reports/research/program/compute-authorization-correction-20261011/owner-correction.json"
+  },
+  "interruption_policy": {
+    "availability": "Owner may pause or power off at any time; calendar daytime is only a probability, not readiness.",
+    "state": "Use native framework checkpoints and completed shards with fixed experiment configuration, seed and model/data versions.",
+    "retention": "Keep the latest complete checkpoint and completed shards under total C:\\paseo/50GiB; retain the only valid checkpoint during a recoverable interruption.",
+    "resume": "After online and fresh ready, inspect the old job/process/output. Use native resume if supported, otherwise same-definition rerun or continue completed shards.",
+    "accounting": "Retain cumulative time, cost, model fits/optimizer updates and trial exposure; no quota reset by renaming or rerunning.",
+    "cleanup": "Only after verified return/completion or explicit abandonment; do not mechanically remove the only unreturned checkpoint.",
+    "limits": [
+      "No complex recovery system or new daemon",
+      "No device wake/resume/hard-on",
+      "Disconnection does not prove checkpoint or stop succeeded"
+    ]
+  }
+}

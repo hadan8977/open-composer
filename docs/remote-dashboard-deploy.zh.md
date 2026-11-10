@@ -1,3 +1,3 @@
-# Open Composer 远程 Dashboard 部署说明（已废弃）
+# Remote dashboard deployment: retired path
 
-旧的 VPS Dashboard 部署路径（密码会话、Vercel BFF、HMAC、systemd/Caddy 脚本）随 Step 18 一起删除；远程访问的新方案见 `docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md`。
+The former VPS dashboard path (password sessions, Vercel BFF, HMAC and its old service scripts) is retired. The current product is the read-only Cockpit behind Cloudflare Access; see `docs/cockpit/cloudflare-launch-2026-09-20.zh.md` for operational guidance. Do not restore the old write surface.

@@ -1,0 +1,13 @@
+Route this authorized reporting event to the existing persistent report hub. Do not research, scan the repository, train, fetch data, email, change schedules or create research agents. Check action-specific reporting permission and config/research-agent-roles.json reporting settings once.
+
+Require `reporting.allowed=true`; when `reporting.actions` exists, also require its resolved event kind (`round`, `daily` or `weekly`) to be true. Mail/writer permission alone does not authorize chat dispatch.
+
+Read config/owner-reporting.json, config/autonomous-report-target.json and reports/owner/reporting-state.json. Determine kind from actual schedule context, including delayed starts:01:00UTC is daily or Sunday weekly; rounds end at the most recent due even UTC hour and cover the preceding2hours. IDs: round-YYYYMMDDTHH0000Z or <daily|weekly>-YYYY-MM-DD. Verify actual business artifacts with `.venv/bin/python scripts/owner_report.py health <event_id>` before claiming completion or deduplication.
+
+Verify both routes point to the same live hub. For a valid idle hub, send one background prompt with notifyOnFinish=false and sessionMode=full-access, containing kind/event_id/window/config paths and the owner-report-hub instruction file or its body. Request the full report, not an acknowledgement. Do not interrupt a hub already writing; record the pending event using the existing state.
+
+If the target is closed/missing and reporting is allowed, check for another valid dedicated hub first. Reuse it, or create one hub with current reporting settings. Before creation use list_workspaces to select an actually existing stable project workspace matching the project cwd; never copy a dead workspace ID or use a temporary dispatcher workspace. Include this event in the initial prompt, verify actual supported runtime fields, and synchronize only the existing report_agent_id/agent_id route fields. Do not create while reporting is paused, recursively trigger another dispatcher or archive the persistent hub.
+
+For a new round, a missing previous due report after the current resume is one operational incident: preserve it in existing blocker_tracking and notify the current responsible decision owner once if material. This does not block the current report or cause historical resend storms. Written/published/read are distinct states.
+
+Save the actual routing result or failure to reports/owner/dispatch/<event_id>.json. A successful tool call proves queueing only. If hub recovery fails, preserve the concrete error; do not loop over a dead agent/workspace or create a new platform. Finish promptly with the routing outcome; the hub publishes the business report. No polling or extra acknowledgement turn.

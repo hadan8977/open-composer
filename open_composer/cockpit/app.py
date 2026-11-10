@@ -84,14 +84,25 @@ from open_composer.cockpit.data.hypotheses import (
     lane_status,
 )
 from open_composer.cockpit.data.now import summarize_research
+from open_composer.cockpit.data.overview import (
+    get_default_paper_equity_cache,
+    get_default_research_overview_cache,
+)
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
     build_account_equity_history,
-    build_paper_report,
     build_rehearsal_countdown,
     build_strategy_detail,
     discover_strategy_names,
 )
+from open_composer.cockpit.data.paper_comparison import build_paper_comparison
+from open_composer.cockpit.data.paper_dashboard import (
+    build_paper_dashboard,
+    find_ledger_detail,
+    get_dashboard_report,
+)
+from open_composer.cockpit.data.paper_history import load_paper_history
+from open_composer.cockpit.data.paper_overview import load_paper_overview
 from open_composer.cockpit.data.queue import load_queue_glance
 from open_composer.cockpit.data.quota import (
     QUOTA_DISABLED_REASON,
@@ -153,7 +164,12 @@ class _ImmutableStaticFiles(StaticFiles):
 def _asset_version() -> str:
     """Short content hash of the stylesheet and script, computed once per process."""
     digest = hashlib.sha256()
-    for name in ("css/cockpit.css", "js/cockpit.js"):
+    for name in (
+        "css/cockpit.css",
+        "js/cockpit.js",
+        "css/paper-comparison.css",
+        "js/paper-comparison.mjs",
+    ):
         digest.update((STATIC_DIR / name).read_bytes())
     return digest.hexdigest()[:12]
 
@@ -164,14 +180,14 @@ def _asset_version() -> str:
 # the research queue; Agents / Quota / Health are the System group. ⌘1-7
 # follow this order. Lineage is reached from Research and has no rail entry.
 SCREENS: tuple[tuple[str, str, str], ...] = (
-    ("today", "/", "Today"),
-    ("reports", "/reports", "Reports"),
-    ("paper", "/paper", "Paper"),
-    ("research", "/research", "Research"),
-    ("agents", "/agents", "Agents"),
-    ("quota", "/quota", "Quota"),
-    ("health", "/health", "Health"),
-    ("lineage", "/lineage", "Lineage"),
+    ("today", "/", "总览"),
+    ("reports", "/reports", "报告"),
+    ("paper", "/paper", "模拟盘"),
+    ("research", "/research", "研究"),
+    ("agents", "/agents", "运行中"),
+    ("quota", "/quota", "额度"),
+    ("health", "/health", "系统"),
+    ("lineage", "/lineage", "研究链路"),
 )
 
 #: The desktop rail's grouping: (heading or None, screen slugs). The System
@@ -184,11 +200,11 @@ NAV_GROUPS: tuple[tuple[str | None, tuple[str, ...]], ...] = (
 #: The phone tab bar holds five: (slug, label). System opens Health; the tab
 #: stays lit on Quota and Agents too (see `TAB_ALSO`).
 TABS: tuple[tuple[str, str], ...] = (
-    ("today", "Today"),
-    ("reports", "Reports"),
-    ("paper", "Paper"),
-    ("research", "Research"),
-    ("health", "System"),
+    ("today", "总览"),
+    ("reports", "报告"),
+    ("paper", "模拟盘"),
+    ("research", "研究"),
+    ("health", "系统"),
 )
 
 #: Other screens a tab stays highlighted for.
@@ -540,6 +556,8 @@ def _warm_loop() -> None:
 
 _TODAY_WARM_THREAD_NAME = "cockpit-today-warm"
 _TODAY_WARM_STARTED = False
+_OVERVIEW_WARM_THREAD_NAME = "cockpit-research-overview-warm"
+_OVERVIEW_WARM_STARTED = False
 
 
 def _today_warm_loop() -> None:
@@ -576,6 +594,49 @@ def _start_today_warm_thread() -> threading.Thread | None:
     return thread
 
 
+def _research_overview_loop() -> None:
+    cache = get_default_research_overview_cache()
+    while True:
+        try:
+            cache.refresh(project_root())
+        except Exception:
+            pass
+        time.sleep(60.0)
+
+
+def _paper_equity_loop() -> None:
+    # Equity history scans many paper-cycle files. Delay the first scan so it
+    # cannot compete with the owner's first page load after a service restart.
+    time.sleep(8.0)
+    cache = get_default_paper_equity_cache()
+    while True:
+        try:
+            cache.refresh(project_root())
+        except Exception:
+            pass
+        time.sleep(300.0)
+
+
+def _start_research_overview_thread() -> threading.Thread | None:
+    global _OVERVIEW_WARM_STARTED
+    with _WARM_THREAD_LOCK:
+        if _OVERVIEW_WARM_STARTED:
+            return None
+        _OVERVIEW_WARM_STARTED = True
+    thread = threading.Thread(
+        target=_research_overview_loop,
+        name=_OVERVIEW_WARM_THREAD_NAME,
+        daemon=True,
+    )
+    thread.start()
+    threading.Thread(
+        target=_paper_equity_loop,
+        name="cockpit-paper-equity-warm",
+        daemon=True,
+    ).start()
+    return thread
+
+
 def _start_warm_thread() -> threading.Thread | None:
     """Start the process-wide warm thread exactly once (plan item 1: "guard
     against double start").
@@ -599,13 +660,10 @@ def _start_warm_thread() -> threading.Thread | None:
 def create_app(*, warm: bool = True) -> FastAPI:
     """Build the cockpit's FastAPI app.
 
-    `warm`, default `True`: start the T10 background thread that keeps the
-    429-calibration/usage-estimate/live-quota caches refreshed off the
-    request path (see `_warm_loop`). The real `oc cockpit serve` entry point
-    always wants this; tests that care about the thread's absence construct
-    the app with `warm=False` explicitly (most tests do not need to, since
-    `_warm_loop` is already a no-op without a real `~/.claude/projects`
-    tree -- see its docstring).
+    `warm`, default `True`, starts the quota, Today, research-overview and
+    paper-equity cache warmers off the request path. `warm=False` disables
+    every warmer, including the overview/equity loops that have no transcript
+    guard. Production serving keeps the default; isolated tests use False.
     """
     app = FastAPI(
         title="Open Composer Cockpit",
@@ -635,6 +693,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
     if warm:
         _start_warm_thread()
         _start_today_warm_thread()
+        _start_research_overview_thread()
     app.mount("/static", _ImmutableStaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")
@@ -667,6 +726,14 @@ def create_app(*, warm: bool = True) -> FastAPI:
         context = _base_context(request, "today")
         context["report"] = today_report_for(
             root, now=datetime.now(UTC), cache=get_default_today_cache()
+        )
+        context["paper_overview"] = load_paper_overview(root)
+        context["research_overview"] = get_default_research_overview_cache().get()
+        context["dashboard"] = build_paper_dashboard(
+            context["paper_overview"], get_dashboard_report(root)
+        )
+        context["comparison"] = build_paper_comparison(
+            load_paper_history(root), context["paper_overview"], context["dashboard"], root=root
         )
         context["refresh_seconds"] = int(TODAY_REFRESH_SECONDS)
         return templates.TemplateResponse(request, "today.html", context)
@@ -870,6 +937,50 @@ def create_app(*, warm: bool = True) -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    @app.get("/research/overview", response_class=HTMLResponse)
+    def research_overview_page(request: Request) -> HTMLResponse:
+        root = project_root()
+        context = _base_context(request, "research")
+        context["report"] = today_report_for(
+            root, now=datetime.now(UTC), cache=get_default_today_cache()
+        )
+        context["research_overview"] = get_default_research_overview_cache().get()
+        return templates.TemplateResponse(request, "research_overview.html", context)
+
+    @app.get("/paper/accounts", response_class=HTMLResponse)
+    def paper_accounts_page(request: Request) -> HTMLResponse:
+        root = project_root()
+        context = _base_context(request, "paper")
+        context.update(
+            paper_tab="accounts",
+            report=get_dashboard_report(root),
+            paper_overview=load_paper_overview(root),
+            paper_history=load_paper_history(root),
+            equity=build_account_equity_history(root),
+        )
+        return templates.TemplateResponse(request, "paper_accounts.html", context)
+
+    @app.get("/paper/history", response_class=HTMLResponse)
+    def paper_history_page(request: Request) -> HTMLResponse:
+        context = _base_context(request, "paper")
+        context.update(paper_tab="history", paper_history=load_paper_history(project_root()))
+        return templates.TemplateResponse(request, "paper_history.html", context)
+
+    @app.get("/paper/ledger/{ledger_id:path}", response_class=HTMLResponse)
+    def paper_ledger_page(request: Request, ledger_id: str) -> HTMLResponse:
+        root = project_root()
+        report = get_dashboard_report(root)
+        overview = load_paper_overview(root)
+        dashboard = build_paper_dashboard(overview, report)
+        detail = find_ledger_detail(dashboard, ledger_id, report)
+        if detail is None:
+            raise HTTPException(status_code=404, detail="unknown ledger")
+        context = _base_context(request, "paper")
+        context.update(ledger=detail, dashboard=dashboard)
+        if detail["sleeve"] is not None:
+            context["strategy_detail"] = build_strategy_detail(root, detail["sleeve"].name)
+        return templates.TemplateResponse(request, "paper_ledger.html", context)
+
     @app.get("/paper", response_class=HTMLResponse)
     def paper_index_page(request: Request) -> HTMLResponse:
         """Screen 4: paper trading (plan section 4, "模拟盘").
@@ -879,13 +990,14 @@ def create_app(*, warm: bool = True) -> FastAPI:
         groups or filters by symbol.
         """
         root = project_root()
-        report = build_paper_report(root)
+        report = get_dashboard_report(root)
         context = _base_context(request, "paper")
         context["report"] = report
-        context["equity"] = build_account_equity_history(
-            root, strategy_names=tuple(s.name for s in report.strategies)
+        context["paper_overview"] = load_paper_overview(root)
+        context["dashboard"] = build_paper_dashboard(context["paper_overview"], report)
+        context["comparison"] = build_paper_comparison(
+            load_paper_history(root), context["paper_overview"], context["dashboard"], root=root
         )
-        context["auth_state_labels"] = AUTH_STATE_LABELS
         return templates.TemplateResponse(request, "paper.html", context)
 
     @app.get("/paper/{strategy}", response_class=HTMLResponse)

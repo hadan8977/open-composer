@@ -1,274 +1,199 @@
-# 多信号股票组合：设计（v1，2026-10-01）
+# Multi-signal equity book: frozen v1 design
 
-交互会话（Opus）写。这是新主线"股票组合"的技术设计，规定数学框架、模块接口、预注册网格和冻结门槛。纲领见 `docs/research-program.zh.md`。
+This is the English operational rendering of the 2026-10-01 design: mathematical framework, module interfaces, preregistered grid and success gates. It does not create a new experiment or change the frozen study. Sections 9-10 were fixed at 2026-10-01 06:32 UTC before Stage 2 results; changes require a separate contract. Stage 0 used already-observed history for diagnosis and design, not acceptance.
 
-依据：
-- 复审 `reports/research/program/review-2026-10-01.zh.md`
-- 外部证据 `reports/research/intel/pro-equity-evidence-2026-10-01.md`
-- 工具调研 `reports/research/intel/pro-equity-2026-10-01.md`
-- Stage 0 诊断 `reports/research/program/stage0-hedged-books-2026-10-01/`
+Evidence: [program review](../reports/research/program/review-2026-10-01.zh.md), [external evidence](../reports/research/intel/pro-equity-evidence-2026-10-01.md), [tool investigation](../reports/research/intel/pro-equity-2026-10-01.md), [Stage 0 diagnostics](../reports/research/program/stage0-hedged-books-2026-10-01/), and [the research program](research-program.zh.md). Provider terms, costs and capability claims below are the study's documented assumptions, not freshly verified current account rules.
 
-**冻结时间**：第 9 节的网格和第 10 节的门槛写于 2026-10-01 06:32 UTC，早于任何 Stage 2 结果。Stage 0 是看过的历史数据上的诊断，不参与判定。以后改动只能新开合同，不能放宽。
+## 0. Economic context retained from the design
 
-## 0. 先认清量级
+The cited systematic long/short fund evidence had net Sharpe median 0.51, 75th percentile 0.87 and 90th percentile 1.18 (AQR/HFR, 1996-2023). JKMP's 2022 Portfolio-ML study reported 1.38 under a large-cap, $10B, impact-only, 1981-2020 setup; Chen-Velikov reported about 4 bp/month after costs for anomalies published after 2005. These contexts motivated a 0.5-1.0 book expectation, not a promise or a replacement for owner goals.
 
-证据给出的现实目标：组合净夏普 0.5–1.0，不是 2 以上。
-- 系统化多空股票基金的净夏普：中位 0.51、75 分位 0.87、90 分位 1.18（AQR 引 HFR，1996–2023）。
-- 学术上最好的可实施结果：JKMP 2022 版的 Portfolio-ML 净夏普 1.38。条件是大盘股、$10B 规模、只扣冲击成本，样本 1981–2020。
-- 异象在 2005 年后发表的部分，扣成本后平均只剩 4 bp/月（Chen-Velikov 2023）。
+The original mental K2 calculation was corrected on 2026-10-01. Synthetic 5%-volatility, zero-S3-correlation books evaluated by the actual `screen_lane` K2 function required approximately 0.75 stress-period Sharpe under frozen accounting (0.85 cash-aligned), versus 0.13 benchmark-window Sharpe (0.26 cash-aligned). Earlier 0.69/0.41 estimates were wrong, including reversed window interpretation. Inverse-volatility combination weights and SHY-versus-BIL cash accounting matter. The preregistration recorded an approximately 8% pass prior; K1 was not the expected route. Calibrate gate difficulty with the actual code rather than mental algebra.
 
-在这个量级下，K2 是现实的通过路线，但比最初估计的难。
+Stage 0 found weak liquid P1000 hedged books: an eight-book equal-risk combination had benchmark/stress Sharpe 0.58/-0.23; model books had 1.1-1.3/-0.4 to -0.6. Stronger ADV-rank 1001-3000 results largely came from shorting dilutive microcaps, whose short legs lagged SPY by 200-440 bp/month without adequate borrow modeling. This was not credible executable alpha. A 252-day beta hedge still realized beta 0.5-0.9, while simple top-N long books exceeded beta 2: a proper risk model and exposure attribution were necessary.
 
-**2026-10-01 07:49 更正**：本段原来按 (SR_S3 + SR)/√2 心算，得出"对标窗需 SR ≥ 0.69、压力期需 SR ≥ 0.41"。这个估计错了，两个窗口还算反了。
+## 1. Product and financing structure
 
-07:07 主审轮用合成书做了标定（5% 波动、与 S3 零相关，走 `screen_lane` 的真实 K2 计算），结果如下：
-- **压力期**（2017-10 起，这段 S3 自身夏普只有 0.645）：组合净夏普要约 0.75（冻结口径）或 0.85（现金对齐口径）；
-- **对标窗**：只要约 0.13 或 0.26。
+Let equity be E, long equity exposure L, absolute short exposure S (stocks/ETFs), and short-bond ETF exposure Q (SGOV/BIL). Frozen Alpaca assumptions from the cited 2026-09-17 documentation:
 
-原因有两点：
-- 按波动率倒数加权时，低波动的书在合并组合里占大半风险；
-- 对照组拿 SHY 的利差，F1 拿的是 BIL。
+- Overnight Reg T: `L + S + Q <= 2E`, 50% initial margin.
+- Cash balance: `C = E - L - Q + S`; negative cash accrues at 6.5%/360 daily (Elite 5.0%).
+- Positive cash and short proceeds earn zero in this model.
 
-所以 K2 卡在压力期，要求接近职业基金 75 分位（0.87）。预注册里通过的先验约 8%。
+The zero-financing layout is `L = S <= 0.5E`, `Q = E`, so `C = 0`, total exposure 2E and excess return approximately `0.5 * (r_L - r_S)`. A 100/100 long/short book leaves no bond allocation and has non-interest-bearing short cash; its opportunity cost is about rf. Therefore the long/short sleeve's gross is fixed at 1.0E.
 
-K1（对标窗 ≥1.19、压力期 ≥0.65）大约相当于职业基金 90 分位，不作为预期。
+| Form | Structure and role |
+|---|---|
+| F1 neutral | 0.5E long, 0.5E short, 1.0E short bonds; about 5% annual volatility. Research acceptance uses F1. |
+| F2 core plus overlay | Replace the bond allocation with 1.0E SPY; derives from F1 rather than receiving separate acceptance. |
+| F1b ETF hedge | Short only SPY/IWM/IJR/sector SPDRs; tests the value available without single-stock borrow. The design assumed easy-to-borrow ETFs at zero broker fee, subject to the modeled cushion below. |
 
-教训：门槛的难度要用代码标定，不能心算。
+Shorts must be whole shares under the cited 2025-09-24 fractional-share terms. Round optimized holdings and enforce the single-name whole-share affordability limit in section 8. Reverify current rules before a new adaptation; do not rewrite this study's accounting retrospectively.
 
-Stage 0 告诉我们 alpha 在哪里（看过的数据，只用于设计）：
-- **流动池 P1000**：单信号对冲书在压力期基本是 0，对标窗也弱。8 本书等风险合并后，对标窗 0.58、压力期 −0.23。三个模型在对标窗 1.1–1.3，压力期 −0.4 到 −0.6，符号翻转。
-- **次流动池 Q2**（ADV 1001–3000）：动量、毛利、模型书在两窗都强，但几乎全来自做空稀释型小微盘（空头腿每月比 SPY 低 200–440 bp）。这些票的借券可得性和费用都没建模，不可信。
-- 结论和文献一致（Avramov-Cheng-Metzker 2023、Chen-Pelger-Zhu、DKKM）：可预测性集中在难套利的股票上。这正是我们的约束所在。
-- 两个工程教训：
-  - 用 252 日 beta 做事前对冲，实现 beta 仍有 0.5–0.9，对冲失效。需要真正的风险模型。
-  - 等权取前 N 只的只做多书 beta 高达 2 以上，只是高 beta 暴露，不是 alpha。
+## 2. Universe and information clock
 
-## 1. 产品形态和资金结构
+- `U3000_t`: latest `universe_broad` month-end at or before t, `adv_rank <= 3000`, close at least $5, not `is_probable_fund_or_etf`, at least 252 sessions of history.
+- `P1000_t`: U3000 members with `adv_rank <= 1000`; report separately.
+- Short-eligibility proxy `SE_t`: `adv_rank <= 2000`, price at least $10, no reverse-split-like open/previous-close ratio in 252 sessions, and short-interest/share ratio outside the top 5% where available. D7 calibrates against dated Alpaca `easy_to_borrow` flags and reports false eligibility; forward use takes that day's actual flag.
+- FF48 industry mapping: `data/features/sic_map/sic_map.parquet`. Prefer `date_verified`; otherwise flag use of the latest mapping (the design reported 99.1% P1000 coverage). Industries with fewer than five members merge into the corresponding FF12 group.
+- Decide after t close using only data visible by that close. Fundamentals become usable from the session after filing, matching the intended `sec_fundamentals_daily` alignment.
 
-账户净值 E。持仓分三块：股票多头 L、空头 S（个股和 ETF）、短债 ETF Q（SGOV 或 BIL）。按 Alpaca 规则（文档 2026-09-17 版）：
-- **隔夜上限**：Reg T 下 L + S + Q ≤ 2E，初始保证金 50%。
-- **现金余额** C = E − L − Q + S。C < 0 的部分按 6.5%/360 每日计息（elite 5.0%）。
-- **现金和空头所得不计息**：文档没有提到任何利息或返利，按 0 计。
+The price/PIT caveats in [the data inventory](data-layer-pitfalls-and-capabilities.zh.md) still apply; a declared timing rule is not proof that every stored feature satisfies it.
 
-所以零融资成本的结构是：L = S ≤ 0.5E、Q = E。此时 C = 0，总敞口 2E。
-- 超额收益 ≈ 0.5·(r_L − r_S) + 0（短债收益约等于 rf）。
-- 如果做到 100/100（L = S = E），Q 只能是 0，现金 E 全是不计息的空头所得，超额收益要扣约 rf × E，即每年 4% 左右。**所以多空总敞口固定为 1.0E，不加杠杆。**
+## 3. Return accounting (D2 reference)
 
-三种形态，研究判定都以 F1 为准：
-- **F1 中性**：多空各 0.5E + 短债 1.0E。超额收益 = 纯 alpha，年化波动约 5%。
-- **F2 核心 + 叠加**：把短债换成 SPY 1.0E（同样 C = 0）。收益 = SPY + 叠加 alpha。不单独判定，由 F1 推出。
-- **F1b ETF 对冲**：空头只用 ETF（SPY、IWM、IJR、行业 SPDR），不借个股。用来回答"不做个股空头能拿到多少"。Alpaca 的 ETF 都易借、费用 0。
+Use `daily_broad` open/close with Alpaca `adjustment=all`; SPY comes from `data/sip/daily`. Dividends are embedded in adjusted prices, credited long and paid short. Stage 0 checked AAPL against SIP source values.
 
-**碎股不能做空**（官方文档 2025-09-24 版）：空头必须是整股。优化后要取整，并把空头限制在价格 ≤ 整股约束允许的范围内（见第 8 节）。
+Signals at t close fill at t+1 open (the daily opening price is the first trade); test t+1 close as a timing sensitivity. Non-rebalance holdings drift close-to-close. On a rebalance date, drift old holdings from prior close to open, trade at open and deduct costs, then drift new holdings open-to-close. Produce session-indexed daily returns compatible with S3 and `screen_lane.diversifier_edge_for_offset`.
 
-## 2. 宇宙和时点规则
+Delisting exits use the last valid close. Sensitivity adds -30% for delisted longs (Shumway's performance-delisting scale), zero additional adjustment for shorts; report the difference.
 
-- **U3000_t**：取 `universe_broad` 里 month_end ≤ t 的最新一期，条件是：
-  - adv_rank ≤ 3000、收盘价 ≥ $5；
-  - 不是基金或 ETF（`is_probable_fund_or_etf`）；
-  - 至少有 252 个会话的历史。
-- **P1000_t**：U3000_t 中 adv_rank ≤ 1000 的部分。作为流动池单独报告。
-- **可做空集合 SE_t**（易借代理，v1）：
-  - adv_rank ≤ 2000、价格 ≥ $10；
-  - 过去 252 个会话没有反向拆股（开盘/前收比落在常见合股倍数上）；
-  - short interest/股本不在最高 5%（有数据时）。
+The implementation's meaningful acceptance cases are: SPY-only equals SPY close-to-close; a two-stock rebalance agrees with hand accounting; cash/bonds/margin match section 1; and forward labels equal realized returns for the identical trade. The last mismatch invalidated H-20260929-12.
 
-  D7 用 Alpaca 当天的 `easy_to_borrow` 标记标定这个代理，并报告误判率；前向用当天标记。
-- **行业**：`data/features/sic_map/sic_map.parquet`（D1，2026-10-01 建）取 FF48。
-  - 优先用 `date_verified` 的映射，否则用最近的映射并打标记（P1000 任意时期覆盖 99.1%）。
-  - 成员少于 5 只的行业，并入 FF12 的同类行业。
-- **时点**：t 日收盘做决策，只能用可见时间 ≤ t 收盘的数据。基本面按"申报后下一个会话起可用"（`sec_fundamentals_daily` 已按此对齐）。
+## 4. Signal library v1 (S1)
 
-## 3. 收益口径（D2，全项目唯一实现）
+Each signal records its timing source, formula, literature direction and coverage. At each date inside U3000: winsorize at 1%/99%, rank-normalize, demean value/quality signals within FF48, then fill missing scores with zero.
 
-- **价格**：`daily_broad` 的 open/close，Alpaca adjustment=all（拆股和分红复权）。Stage 0 已核对 AAPL 与 SIP 原始值一致，SPY 从 `data/sip/daily` 读。分红在复权里：多头收到，空头支付。
-- **成交**：t 日收盘出信号，t+1 日开盘成交（日线开盘价是第一笔成交）。敏感性测试用 t+1 收盘成交。
-- **逐日记账**：
-  - 持仓按美元计。非调仓日，持仓按 close→close 变动。
-  - 调仓日 t+1：旧持仓先按 close_t→open_{t+1} 变动，在 open_{t+1} 换成新持仓，新持仓再按 open_{t+1}→close_{t+1} 变动。成本在成交时扣。
-  - 输出日收益序列，会话口径和 S3 相同，这样能直接调 `screen_lane.diversifier_edge_for_offset`。
-- **退市**：退出价用最后一个有效收盘价。敏感性测试：多头退市额外记 −30%（Shumway 1997 的业绩退市量级），空头记 0。报告两者的差异。
-- **单元测试**（必须有）：
-  1. 只持 SPY 的书，日收益与 SPY close→close 完全一致；
-  2. 两只股票的合成面板，调仓日拆分结果与手算一致；
-  3. 现金、短债、保证金利息与第 1 节公式一致；
-  4. 前向标签和持仓收益对同一笔交易给出同一个数字（H-20260929-12 的死因）。
-
-## 4. 信号库 v1（S1）
-
-每个信号都要写清四件事：时点来源、公式、文献方向和覆盖率。
-
-**处理流程**，每个日期在 U3000 内截面做：
-1. 1%/99% 截尾；
-2. 秩转换成正态分数；
-3. 价值和质量类在 FF48 行业内去均值（同行业比较是常规做法）；
-4. 缺失记 0。
-
-| 主题 | 信号 | 公式和来源 | 方向 |
-|---|---|---|---|
-| 价值 | bm, ep, sp, cfp | 股东权益、净利润（年报）、收入、经营现金流，分别除以市值；市值 = close × shares_outstanding（`sec_fundamentals_daily`） | + |
-| 质量/盈利 | gp_at, roe, op_at, −accruals | `sec_fundamentals_daily` | + |
-| 投资/发行 | −asset_growth, −nsi_12m | `sec_fundamentals_daily`、`nsi` | + |
-| 动量 | mom_12_1, ind_mom_12_1, resid_mom_12_1 | 收盘价；FF48 等权行业收益；对市场加行业的残差累计收益除以残差波动（Blitz 等） | + |
-| 低风险 | −beta_252（收缩）, −idio_vol_63 | `daily_broad` | + |
-| 盈余 | sue_eps, sue_rev | `sec_fundamentals_daily` | + |
-| 内部人 | cmp_opportunistic_buy_60d, net_buy_usd_nonplan_60d / 市值 | `insider_broad`（Cohen-Malloy-Pomorski） | + |
-| 卖空信息 | −short_volume_ratio_mean_21；−short interest / 股本（覆盖 1,816 只） | `short_volume_broad`、`short_interest` | + |
-| 季节性 | 过去 5 年同一日历月的平均收益（Heston-Sadka） | 收盘价 | + |
-| 快信号（只进 ML） | 行业调整的 21 日反转、ON252、alpha101/191 选列、新闻关注度（2024 起） | 各表 | 由模型学 |
-
-证据（`pro-equity-evidence` 第 3 节）说明：扣成本后靠得住的是慢信号，即价值、质量、动量、投资/发行。反转、隔夜这类快信号不进等权合成 M0，只作为 ML 的输入，让成本项去决定用不用。
-
-## 5. 预测目标和合成
-
-- **目标**：未来 21 个会话的残差收益，r_{i,t+1→t+22}（开盘到开盘），减去风险模型的因子部分（暴露取 t 日，因子收益取持有期内的实现值）。
-- **M0**：主题等权合成。主题内取信号平均，主题之间等权，方向固定。这是所有模型必须超过的基线。
-- **M1**：滚动 60 个月的 IC 加权。对残差目标做 Fama-MacBeth，权重 ∝ 平均 IC / IC 标准差，负值截为 0，留 1 个月间隔。
-- **M2**：GBDT 集成（LightGBM、XGBoost、CatBoost）。
-  - 输入：全部特征，含快信号。目标：残差收益的截面秩。
-  - 每年重训，间隔 ≥ 21 个会话。在 Modal 上跑，复用 T-17 的管道。
-- **M3**：随机傅里叶特征岭回归（DKKM、JKMP、AQR 2024）。
-  - 约 100 个特征生成 P = 4,000 个随机特征。
-  - 岭惩罚在验证折上从 {10⁻³, …, 10³} 选。在 Modal 上跑。
-- **缩放到期望收益**（Grinold-Kahn）：α_i = IC × σ_i^res × score_i。
-  - IC 取过去 36 个月实现 IC 向 0.03 收缩一半。
-  - σ^res 是风险模型给出的 21 日特质波动。
-- **ML 是否有贡献**（ml_contribution_pass）：同数据、同成本、同组合构建下，M2 或 M3 的组合净夏普在两窗都高于 M0。
-
-## 6. 风险模型（D3，自写 Barra 简化版）
-
-我们的数据是免费的，skfolio 的因子模型内存太大（1000×1500 只配 3 个因子就要 1.38 GB），API 也变动太快。所以自己写，skfolio 只用来交叉核对。
-
-- **截面回归**：每天在 U3000 上对 close→close 收益做 WLS，权重 √市值。
-  - 因子 = 市场 + 行业（FF48 合并到约 30 个，市值加权约束和为 0）+ 风格。
-  - 风格：规模、beta、动量 12-1、残差波动 63、流动性、价值 bm、盈利 gp_at、投资 asset_growth、21 日反转。
-  - 风格暴露截尾 ±3，市值加权均值为 0，等权标准差为 1。
-- **因子协方差**：EWMA，方差半衰期 126 天、相关半衰期 252 天，Newey-West 2 阶。
-- **特质方差**：残差平方的 EWMA，半衰期 63 天，向规模十分位均值收缩 0.3，设下限。
-- **输出**（按年分块写 parquet，不在内存里留全量）：
-  - 每个调仓日的暴露 X、因子协方差 F、特质方差 D；
-  - 每天的因子收益 f 和残差 e。
-- **验收**：
-  1. 偏差统计：随机组合和优化后组合的已实现/预测波动在 0.8–1.2 之间，分窗报告；
-  2. 预测 beta 的质量：按预测 beta 中性化的组合，下 21 天实现 beta 的绝对均值 < 0.15。这一条正对 Stage 0 的失败；
-  3. 用残差上的 20 因子 PCA 交叉核对。
-
-## 7. 成本和融资（D4）
-
-- **半价差**：用 Alpaca 历史 NBBO 抽样校准，复用 `scripts/run_t20260930_15_quote_check.py` 的取数和有效报价规则。
-  - 抽样：2018–2026 年 60 个随机交易日 × 每个流动性十分位 30 只 × 三个时点（09:35–09:45 开盘段、12:00、15:45）。
-  - 拟合：log(hs) = a + b·log(价格) + c·log(美元成交额) + d·log(波动) + 年份效应。
-  - 开盘段单独一套系数，因为我们在开盘成交，开盘段价差明显更宽。
-  - 日线 AR 价差已证明偏高 20–60 倍（数据坑 #58），不能用。
-- **冲击**：Δ = Y·σ_日·√(Q/V)，Y = 0.5（平方根律，Tóth-Bouchaud；FIM 2018 的量级）。我们的规模下这一项很小，主要用于容量分析。
-- **费用**：卖出端 SEC 费加 FINRA TAF，约 0.3 bp，统一按每边 0.5 bp 计。
-- **借券**：
-  - SE_t 内按 25 bp/年计。Alpaca 对易借股收 0，这里留余量。
-  - SE_t 外不准做空。
-  - 压力档：全部空头按 100 bp/年。
-- **融资**：按第 1 节公式。F1、F2 的结构下 C = 0。
-- **对照成本**：同时报告冻结合同的固定每边 10 bp 和 20 bp，方便和旧结果比。
-
-## 8. 优化器（D5，cvxpy + Clarabel，自写循环）
-
-工具调研实测：1,500 只、带全部约束，每次求解约 1 秒、峰值 150 MB。
-
-目标：
-
-max_w  α'w − (γ/2)·[w'XFX'w + Σ D_i w_i²] − Σ_i [hs_i·|Δw_i| + imp_i·|Δw_i|^{3/2}] − Σ_i borrow_i·max(−w_i, 0)·h/252
-
-其中 Δw = w − w0，w0 是漂移后的旧持仓。
-
-约束（F1）：
-- **美元中性**：Σ w = 0，ETF 对冲也计在内。
-- **beta**：|β'w| ≤ 0.02，β 取风险模型的预测 beta。
-- **行业**：每个行业 |暴露| ≤ 0.01。
-- **规模**：|X_size'w| ≤ 0.10。其他风格 |·| ≤ 0.25，允许价值、动量等有报酬的倾斜。
-- **单名**：|w_i| ≤ 0.01E，总敞口 Σ|w| ≤ 1.0。
-- **空头资格**：w_i < 0 只允许 i ∈ SE_t 或对冲 ETF；F1b 只允许 ETF。
-- **整股**：空头价格 ≤ 0.01E。例如 E = $10 万时，价格 ≤ $1,000 才能至少做空 1 股。
-- **参与率**：E = $100 万时，单笔 ≤ 1% ADV。
-- **γ 的定法**：用年化 5% 的事前波动预算求解，即风险约束 w'Σw ≤ (0.05)²/252。这样不需要手调 γ。
-
-调仓：每周一次，报告 5 个偏移，按中位数判。每日小步调仓作为后续变体，它本身不受调仓日运气影响，但算力是周频的 5 倍。
-
-求解失败时沿用上期持仓，记一次失败，失败率要报告。
-
-## 9. 预注册网格（Stage 2，冻结）
-
-**12 个变体** = 合成方法 4 × 宇宙/空头 3 × 周频调仓 1：
-- 合成方法：M0、M1、M2、M3。
-- 宇宙/空头：
-  - A：U3000 + SE_t 个股空头 + ETF 空头；
-  - B：U3000 + 只用 ETF 空头（F1b）；
-  - C：只在 P1000 内。
-
-**固定参数**：风险模型 v1、成本模型 v1、事前波动 5%、总敞口 1.0、单名 1%。
-
-**窗口**：
-- 压力期 2017-10-02 → 2023-08-31（模型预测从 2017-10 起，各方法统一从这天开始）；
-- 间隔 2023-09 → 2023-12，单独报告；
-- 对标窗 2024-01-08 → 2026-09-17；
-- 前向 2026-09-18 起。2026-01 → 09-17 已被反复看过，只算受污染的留出。
-
-**DSR 的试验数** = 12 + Stage 0 看过的 65 格 = 77。
-
-## 10. 门槛（冻结，任一变体按偏移中位数判）
-
-**研究通过**（research_pass）要同时满足下面三组条件。
-
-**(1) 判定口径**：用模型成本，并对齐 runbook 第 5 节的保留档。K1 或 K2 至少过一条：
-- K1：对标窗净夏普 ≥ 1.19、压力期 ≥ 0.65，且两窗在 2 倍成本下年化超额收益 > 0。
-- K2：和 S3 合并后，比同波动 S3 的夏普增量两窗都 ≥ 0.05。≥ 0.10 记为强保留。
-
-**(2) 必要条件**，四条都要过：
-- 安慰剂（每个日期内随机打乱 α，100 个种子，构建方式不变）：全样本 2017-10 → 2026-09 的打赢比例 ≥ 0.95，压力期和对标窗各 ≥ 0.80。
-- F1 的实现 beta 两窗都在 [−0.15, 0.15] 之内。
-- 优化求解失败率 < 2%。
-- 2 倍成本下两窗年化超额收益 > 0。
-
-**(3) ML 贡献**单独判（ml_contribution_pass），见第 5 节。
-
-**都不过时**：基础设施保留，组合 v1 记为否定。下一步扩信号库（第 12 节），不调参数。
-
-## 11. 前向影子和模拟盘
-
-- **前向影子**：管道每天跑。在 23:05 前生成 t+1 的目标持仓和信号日志（先记再看），记录 Alpaca 当天的易借标记，第二天按开盘价记影子成交。
-  - 放进已有的定时研究轮，不新增 crontab。
-- **提请机主**：前向 20 个会话没有工程故障后，向机主提交模拟盘提议，内容包括：
-  - 新 sleeve 的预算；
-  - 做空授权；
-  - 碎股和整股的处理。
-
-  模拟盘仍属于"低于合同的执行演练"。现有的 G1–G5 晋级合同不变。
-
-## 12. 后续层（v1 之后）
-
-- **择时**：只有在前向滚动中提高组合夏普才接受，变体预注册。
-  - 按市场状态调动量暴露（Daniel-Moskowitz 2016）；
-  - 因子动量调主题权重；
-  - 按因子拥挤度降低暴露。
-  - 固定压力日：2020-03、2020-11、2025-01-27、2025-04、2025-06/07、2025-10、2026-06/08。
-- **文本信号**（机主的信号分级里排在最前）：
-  - 10-K/10-Q 文本变化（Lazy Prices，Cohen-Malloy-Nguyen 2020，EDGAR 免费，不用大模型）；
-  - 8-K 和新闻的 LLM 打分（DeepSeek 端点有 5 小时滚动限额，只做增量）。
-- **成本感知的组合学习**：JKMP 的 Portfolio-ML（直接学目标组合）。在 Modal 上做缩小版：约 100 个特征、1,500 只股票。
-
-## 13. 模块和任务
-
-代码放在 `open_composer/research/equity_book/`，每个模块都要有测试。
-
-| 任务 | 模块 | 依赖 |
+| Theme | Inputs/formula | Direction |
 |---|---|---|
-| D1 行业表 | `scripts/build_sec_sic_map.py`（已完成） | — |
-| D2 面板和收益口径、回测核心、评估 | `panel.py`、`returns.py`、`backtest.py`、`evaluate.py` | D1 |
-| D3 风险模型 | `risk.py` | D2 的面板 |
-| D4 成本模型 | `costs.py` + 价差抽样脚本 | 无 |
-| D5 优化器 | `optimize.py` | D3、D4 |
-| D6 前向影子 | `shadow.py` | D2–D5 |
-| D7 易借代理 | `borrow.py` | 无（Alpaca 资产接口，只读） |
-| S1 信号库 v1 | `signals.py` | D2 |
+| Value | `bm`, `ep`, `sp`, `cfp`: equity, annual net income, revenue and operating cash flow divided by market cap (`close * shares_outstanding`) from `sec_fundamentals_daily`. | Positive |
+| Quality/profitability | `gp_at`, `roe`, `op_at`, negative accruals. | Positive |
+| Investment/issuance | Negative `asset_growth` from `sec_fundamentals_daily`, negative `nsi_12m` from `nsi`. | Positive |
+| Momentum | `mom_12_1`, FF48 equal-weight `ind_mom_12_1`, and `resid_mom_12_1`: cumulative market/industry residual return divided by residual volatility (Blitz et al.). | Positive |
+| Low risk | Negative shrunk `beta_252`, negative `idio_vol_63` from `daily_broad`. | Positive |
+| Earnings | `sue_eps`, `sue_rev` from `sec_fundamentals_daily`. | Positive |
+| Insider | `cmp_opportunistic_buy_60d`, `net_buy_usd_nonplan_60d / market_cap` from `insider_broad` (Cohen-Malloy-Pomorski). | Positive |
+| Short information | Negative `short_volume_ratio_mean_21` from `short_volume_broad`, negative short interest/shares from `short_interest` (recorded coverage 1,816 names). | Positive |
+| Seasonality | Mean return in the same calendar month over five prior years (Heston-Sadka). | Positive |
+| Fast signals, ML only | Industry-adjusted 21-day reversal, ON252, selected alpha101/191 columns, news attention from 2024. | Learned |
 
-面板格式（D2 定，其他模块都用它）：
-- 宽表，日期 × 代码，按年存 parquet：open、close、可交易标记、U3000/P1000/SE 成员、行业代码、市值、美元成交额。
-- 读取一律走 `scripts/run_capped.sh --mem 1.8G`。
+The cited evidence favored slow signals after costs: value, quality, momentum and investment/issuance. Reversal/overnight signals stay outside equal-theme M0 and enter models where costs determine usefulness.
+
+## 5. Target and combination models
+
+Target: next-21-session residual return, `r_(i,t+1 -> t+22)` open-to-open, less risk-factor contribution using t exposures and realized holding-period factor returns.
+
+| Model | Frozen specification |
+|---|---|
+| M0 | Average signals within each theme, then equal-weight themes with fixed directions; required matched baseline. |
+| M1 | Rolling 60-month IC weighting using Fama-MacBeth on the residual target; weight proportional to mean IC / IC standard deviation, negative values clipped to zero; one-month gap. |
+| M2 | LightGBM/XGBoost/CatBoost ensemble; all features including fast signals; cross-sectional rank of residual return as target; annual retraining with at least 21-session separation; reuse the T-17 pipeline. |
+| M3 | Random-Fourier-feature ridge (DKKM/JKMP/AQR 2024): about 100 inputs expanded to P=4,000 features; validation selects ridge penalty from `{10^-3, ..., 10^3}`. |
+
+Expected returns use Grinold-Kahn scaling: `alpha_i = IC * sigma_res_i * score_i`. Shrink trailing 36-month realized IC halfway toward 0.03; residual sigma is the risk model's 21-day estimate.
+
+`ml_contribution_pass` requires M2 or M3 to beat M0 net portfolio Sharpe in both windows with the same data, costs and construction. The original design planned Modal execution for M2/M3; current compute routing follows the existing admitted resource policy without changing these scientific definitions.
+
+## 6. Risk model (D3)
+
+A simplified in-repo Barra-style implementation avoids the measured skfolio memory cost (1.38 GB for 1,000 x 1,500 with three factors); use skfolio only as a cross-check.
+
+- Daily WLS on U3000 close-to-close returns, weighted by square-root market cap. Factors: market, FF48 industries merged to about 30 with a cap-weighted zero-sum constraint, and styles.
+- Styles: size, beta, 12-1 momentum, 63-session residual volatility, liquidity, `bm`, `gp_at`, `asset_growth`, 21-day reversal. Winsorize exposures at +/-3, cap-weighted mean zero, equal-weight standard deviation one.
+- Factor covariance: EWMA variance half-life 126 days, correlation half-life 252 days, Newey-West lag 2.
+- Specific variance: residual-square EWMA half-life 63 days, 0.3 shrinkage toward size-decile mean, with a floor.
+- Write annual parquet blocks: rebalance-date X/F/D, plus daily factor returns f and residuals e; do not retain the entire history in memory.
+
+Acceptance: realized/predicted volatility between 0.8 and 1.2 for random and optimized books, reported by window; mean absolute next-21-session realized beta below 0.15 after predicted-beta neutralization; residual 20-factor PCA cross-check.
+
+## 7. Costs and financing (D4)
+
+Calibrate half-spreads from historical Alpaca NBBO using the valid-quote rules in `scripts/run_t20260930_15_quote_check.py`. Sample 60 random sessions in 2018-2026, 30 names per liquidity decile, at 09:35-09:45, noon and 15:45. Fit `log(hs) = a + b*log(price) + c*log(dollar_ADV) + d*log(volatility) + year_effect`, with separate open-period coefficients. Do not use daily Abdi-Ranaldo spread estimates shown to overstate spreads 20-60x (#58 in the data inventory).
+
+Impact: `delta = Y * daily_sigma * sqrt(Q/V)`, `Y=0.5` (Toth-Bouchaud/FIM 2018 scale), mainly a capacity measure at this size. Fees use 0.5 bp per side as a cushion over the cited roughly 0.3 bp SEC/TAF sell-side rate. These are frozen modeling assumptions, not current fee verification.
+
+Borrow inside `SE_t` costs 25 bp/year despite the then-assumed zero easy-to-borrow broker charge; outside `SE_t` stock shorts are forbidden. Stress all shorts at 100 bp/year. Financing follows section 1 (`C=0` for F1/F2). Also report the frozen fixed 10/20 bp-per-side cost views for comparison with older results.
+
+## 8. Optimizer (D5)
+
+Use cvxpy/Clarabel with a custom loop; the recorded 1,500-name full-constraint solve used about one second and 150 MB peak.
+
+```text
+max_w alpha'w - (gamma/2) * [w'XFX'w + sum_i D_i*w_i^2]
+      - sum_i [hs_i*abs(delta_w_i) + imp_i*abs(delta_w_i)^(3/2)]
+      - sum_i borrow_i*max(-w_i, 0)*h/252
+
+delta_w = w - w0; w0 is the drifted previous portfolio.
+```
+
+F1 constraints:
+
+| Constraint | Frozen bound |
+|---|---|
+| Dollar neutral, including ETF hedges | `sum(w)=0` |
+| Predicted beta | `abs(beta'w) <= 0.02` |
+| Each industry | Absolute exposure <=0.01 |
+| Size / other styles | Absolute exposure <=0.10 / <=0.25 |
+| Single name / long-short gross | 1% E / 1.0 E |
+| Short eligibility | `SE_t` stocks or hedge ETFs; F1b permits only ETFs |
+| Whole-share short affordability | Price <=0.01E; at E=$100,000, price <=$1,000 for at least one share |
+| Participation at E=$1 million | Order <=1% ADV |
+| Ex-ante risk budget | `w' Sigma w <= 0.05^2 / 252`, fixing annual volatility at 5% rather than hand-tuning gamma |
+
+Rebalance weekly, report all five weekday offsets and decide by their median. Daily small-step trading is a later variant with roughly five times the compute. On solver failure, hold the prior portfolio, log the failure and report the failure rate.
+
+## 9. Frozen Stage 2 grid
+
+Twelve variants: four combination models (M0/M1/M2/M3) times three universe/short branches, all weekly:
+
+- A: U3000, `SE_t` stock shorts plus ETF shorts.
+- B: U3000, ETF shorts only (F1b).
+- C: P1000 only.
+
+Fixed: risk model v1, cost model v1, ex-ante volatility 5%, long/short gross 1.0, single-name 1%.
+
+| Partition | Frozen dates and interpretation |
+|---|---|
+| Stress | 2017-10-02 through 2023-08-31; common start for every model. |
+| Gap | September-December 2023, reported separately. |
+| Benchmark window | 2024-01-08 through 2026-09-17. |
+| Forward | From 2026-09-18. January through September 17, 2026 had already been repeatedly observed and is contaminated holdout. |
+
+DSR trial exposure is `12 + 65 Stage 0 cells = 77`. Preserve the historical exposure and partition status.
+
+## 10. Frozen acceptance gates
+
+For each variant, judge the median across offsets. `research_pass` requires a retention route and every necessary condition below. Use modeled costs aligned with the existing retention accounting in [the autonomous-round runbook](runbook-autonomous-round.zh.md); cleanup does not replace these gates with newer generic thresholds.
+
+| Retention route | Required result |
+|---|---|
+| K1 | Benchmark-window net Sharpe >=1.19 and stress >=0.65; positive annual excess return in both windows at 2x costs. |
+| K2 | Combined with S3, Sharpe improvement over same-volatility S3 >=0.05 in both windows; >=0.10 is strong retention. |
+
+All necessary conditions:
+
+- Within-date shuffled-alpha placebo, 100 seeds and identical construction: win fraction >=0.95 over October 2017-September 2026 and >=0.80 separately in stress and benchmark windows.
+- F1 realized beta in `[-0.15, 0.15]` in both windows.
+- Optimizer failure rate strictly below 2%.
+- Annual excess return strictly positive in both windows at 2x costs.
+
+Judge `ml_contribution_pass` separately using section 5. If no variant passes, retain infrastructure and mark this frozen v1 book negative; the original next step is the signal expansion in section 12, not tuning this grid after its results.
+
+## 11. Forward shadow and paper boundary
+
+The design's forward pipeline generates next-session targets and signal logs before 23:05, records that day's Alpaca borrow flags, and books next-open shadow fills. Reuse the existing scheduled route rather than adding a new crontab.
+
+After 20 forward sessions without engineering failure, the design calls for an owner paper proposal specifying new-sleeve budget, short authority, and fractional/whole-share handling. Paper remains an execution rehearsal below the existing G1-G5 promotion contract; this design does not authorize an account, orders or a renewal.
+
+## 12. Later layers, outside the frozen grid
+
+Preregister timing variants and accept them only for incremental forward portfolio Sharpe: market-state momentum exposure (Daniel-Moskowitz 2016), factor-momentum theme weights and crowding reductions. Retain the named stress periods: March/November 2020, 2025-01-27, April/June-July/October 2025, June/August 2026.
+
+Text candidates are 10-K/10-Q changes (Lazy Prices, Cohen-Malloy-Nguyen 2020, EDGAR) and 8-K/news model scoring. The historical DeepSeek five-hour rolling quota is not current access or authority; DS remains subject to current owner controls. Cost-aware Portfolio-ML is a later smaller-scale candidate (about 100 features, 1,500 names), not admitted by documenting it here.
+
+## 13. Modules and data interface
+
+Implementation lives in `open_composer/research/equity_book/`; meaningful behavior checks belong with each affected module.
+
+| Work package | Module | Dependency |
+|---|---|---|
+| D1 industry map | `scripts/build_sec_sic_map.py` | Recorded complete in the original design. |
+| D2 panel/returns/backtest/evaluation | `panel.py`, `returns.py`, `backtest.py`, `evaluate.py` | D1 |
+| D3 risk | `risk.py` | D2 panel |
+| D4 costs | `costs.py` plus quote sampling | Independent input work |
+| D5 optimizer | `optimize.py` | D3/D4 |
+| D6 forward shadow | `shadow.py` | D2-D5 |
+| D7 borrow proxy | `borrow.py` | Read-only Alpaca assets |
+| S1 signals | `signals.py` | D2 |
+
+D2's shared wide-panel interface is date x symbol in annual parquet: open, close, tradable flag, U3000/P1000/SE membership, industry, market cap and dollar ADV. Use the capped-job wrapper for reads; choose the allowance from [the memory budget](runbook-memory.zh.md), rather than copying the original fixed 1.8G request to every task.

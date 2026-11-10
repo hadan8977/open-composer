@@ -46,6 +46,34 @@ CHILD_CAPITAL = {
 }
 CHILD_STOPS = dict(zip(CHILDREN, (0.12, 0.15, 0.25, 0.12, 0.25, 0.25), strict=True))
 TERMINAL = {"filled", "expired", "canceled", "cancelled", "rejected"}
+#: Share drift worth trading on a ``hold`` instruction, as a fraction of the
+#: book's capital. ``hold`` used to mean "never touch this book", and because the
+#: flag compares the new target with the previous target file (not the book), any
+#: rebalance that failed to execute stayed ``hold`` forever: BASE kept its
+#: October roster for four sessions and H5 stayed in cash for a week. The same
+#: 5% band the deployed ETF sleeves use is the reference for the churn floor.
+HOLD_DRIFT_TOLERANCE_FRACTION = 0.05
+
+
+def hold_drift(
+    desired, held, references, *, capital, nav, tolerance=HOLD_DRIFT_TOLERANCE_FRACTION
+):
+    """Share deltas large enough to trade even though the instruction says hold.
+
+    Measured in whole shares against the instruction's target quantities, so
+    integer rounding never looks like drift; a delta must also clear the
+    tolerance band in dollars to avoid churning on price noise.
+    """
+    floor = float(tolerance) * min(float(capital), float(nav))
+    drift: dict[str, int] = {}
+    for symbol, target_qty in desired.items():
+        delta = int(target_qty - held.get(symbol, 0))
+        price = float(references.get(symbol) or 0.0)
+        if not delta or price <= 0:
+            continue
+        if abs(delta) * price > floor:
+            drift[symbol] = delta
+    return drift
 
 
 def instant(value):
@@ -788,7 +816,7 @@ class SixPaperService:
             self.save()
             if risk["killed"]:
                 desired = {s: 0 for s in held}
-            elif not new_risk or instruction["portfolio_action"] == "hold" or risk["halted"]:
+            elif not new_risk or risk["halted"]:
                 continue
             else:
                 import numpy as np
@@ -813,6 +841,35 @@ class SixPaperService:
                     True,
                 )
                 desired = dict(zip(symbols, map(int, result), strict=True))
+                if instruction["portfolio_action"] == "hold":
+                    drift = hold_drift(
+                        desired,
+                        held,
+                        references,
+                        capital=capital,
+                        nav=nav,
+                    )
+                    if not drift:
+                        self.state["cycles"][policy] = cycle
+                        continue
+                    # Distinct cycle id keeps these orders auditable and apart
+                    # from a scheduled rebalance of the same target.
+                    self.state.setdefault("hold_drift", {})[book] = {
+                        "observed_at": now.isoformat(),
+                        "capital": capital,
+                        "nav": nav,
+                        "drift": drift,
+                        "tolerance": HOLD_DRIFT_TOLERANCE_FRACTION,
+                    }
+                    self.event(
+                        "hold_drift_rebalance",
+                        book=book,
+                        capital=capital,
+                        nav=nav,
+                        drift=drift,
+                        tolerance=HOLD_DRIFT_TOLERANCE_FRACTION,
+                    )
+                    cycle = cycle + ":drift"
             for symbol in sorted(desired, key=lambda s: desired[s] - held.get(s, 0)):
                 delta = int(desired[symbol] - held.get(symbol, 0))
                 if not delta or any(
@@ -991,9 +1048,29 @@ def _load_input_refresh(root):
     return poll_refresh
 
 
-def service_loop(service, *, once=False, sleep=time.sleep):
+def service_loop(service, *, once=False, sleep=time.sleep, max_tick_failures=30):
+    """Tick until the service stops; a transport error is logged, not fatal.
+
+    ``tick`` talks to the broker on every pass, so an unreachable or silent peer
+    raises instead of returning False. Thirty consecutive failures still end the
+    process so a genuinely broken state cannot spin here forever (systemd
+    restarts it).
+    """
     refresh, input_job = None, None
-    while service.tick() and not once:
+    failures = 0
+    while True:
+        try:
+            alive = service.tick()
+        except Exception as exc:
+            failures += 1
+            service.event("tick_blocked", error_type=type(exc).__name__, consecutive=failures)
+            if failures >= max_tick_failures:
+                raise
+            sleep(15)
+            continue
+        failures = 0
+        if not alive or once:
+            return
         try:
             if refresh is None:
                 refresh = _load_input_refresh(service.root)

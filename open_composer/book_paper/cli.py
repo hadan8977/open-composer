@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -66,6 +68,24 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
     if target.account != account:
         raise typer.BadParameter("target file belongs to a different account")
     client = make_trading_client(account)
+    # Once intent is durable, continue that immutable plan instead of sizing from partial fills.
+    from open_composer.book_paper.plan import (
+        BookEngineError,
+        load_plan_file,
+        orders_receipt_path,
+        plan_path,
+    )
+
+    receipt = orders_receipt_path(root, account, target.execution_date)
+    if receipt.exists() and json.loads(receipt.read_text()).get("staged_submission_version") == 1:
+        plan = load_plan_file(plan_path(root, account, target.execution_date))
+        if (
+            plan.payload["target_sha256"] != target.payload_sha256
+            or plan.payload["account"] != account
+            or plan.payload["plan_sha256"] != json.loads(receipt.read_text())["plan_sha256"]
+        ):
+            raise BookEngineError("stored submission no longer matches target/plan identity")
+        return root, client, target, plan
     state = read_account_state(client)
     now = datetime.now(UTC)
     as_of_date = _parse_date(as_of) or now.astimezone(NEW_YORK).date()
@@ -130,9 +150,39 @@ def book_paper_plan(
         raise typer.BadParameter("plan never sends orders; use `submit --submit`")
     try:
         root, _client, _target, plan = _build(account, decision_date, as_of, min_notional)
-    except BookAccountError as exc:
+    except (BookAccountError, RuntimeError, ValueError) as exc:
         raise _fail(exc) from exc
     _print_plan(plan, write_plan_file(root, plan))
+
+
+@contextmanager
+def _submission_lock(root: Path, account: str):
+    from open_composer.book_paper.accounts import BOOK_ACCOUNTS
+    from open_composer.book_paper.plan import BookEngineError
+
+    if account not in BOOK_ACCOUNTS:
+        raise BookEngineError("unknown book account")
+    path = root / "logs" / f"book-paper-{account}.submit.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise BookEngineError("another book submission holds the account lock") from exc
+        yield
+
+
+def _prior_attempts(root: Path, account: str, execution_date: date) -> dict:
+    from open_composer.book_paper.plan import orders_receipt_path
+
+    directory = orders_receipt_path(root, account, execution_date).parent
+    attempts = {}
+    for path in sorted(directory.glob(f"{execution_date.isoformat()}*.json")):
+        receipt = json.loads(path.read_text())
+        attempts.update(receipt.get("attempts", {}))
+        for row in receipt.get("failed", []):
+            attempts.setdefault(row["client_order_id"], row)
+    return attempts
 
 
 @book_paper_app.command("submit")
@@ -160,29 +210,40 @@ def book_paper_submit(
         raise typer.BadParameter("pass --submit to send orders; `plan` is the dry-run")
     now = datetime.now(UTC)
     try:
-        root, client, _target, plan = _build(account, decision_date, None, min_notional)
-        write_plan_file(root, plan)
-        report = submit_plan(
-            client,
-            plan,
-            now=now,
-            kill_switch_check=_kill_switch_check(root),
-            pace_seconds=SUBMIT_PACE_SECONDS,
-            tif_mode=tif_mode,
-        )
+        with _submission_lock(project_root(), account):
+            root, client, _target, plan = _build(account, decision_date, None, min_notional)
+            write_plan_file(root, plan)
+            prior = _prior_attempts(root, account, plan.execution_date)
+            receipt = next_orders_receipt_path(root, account, plan.execution_date, now)
+            report = submit_plan(
+                client,
+                plan,
+                now=now,
+                kill_switch_check=_kill_switch_check(root),
+                pace_seconds=SUBMIT_PACE_SECONDS,
+                tif_mode=tif_mode,
+                clock=lambda: datetime.now(UTC),
+                prior_attempts=prior,
+                checkpoint=lambda progress: write_json_atomic(receipt, progress),
+            )
+            path = write_json_atomic(receipt, report)
     except (BookAccountError, BookEngineError) as exc:
         raise _fail(exc) from exc
-    receipt = next_orders_receipt_path(root, account, plan.execution_date, now)
-    path = write_json_atomic(receipt, report)
     console.print(
         f"sent={len(report['sent'])} skipped_existing={len(report['skipped_existing'])} "
         f"not_sent={len(report['failed'])} receipt={path}"
     )
+    if report.get("deferred"):
+        console.print(
+            f"ERROR: {len(report['deferred'])} order stage(s) deferred; see receipt={path}"
+        )
     if report["failed"]:
         # a rejected order must not look like a successful run: the cron log gets an error
         # marker for the health check and the exit code is non-zero (T-20261005-20, E1)
         sample = "; ".join(f"{f['symbol']}: {f['error']}" for f in report["failed"][:5])
         console.print(f"ERROR: {len(report['failed'])} order(s) were not accepted ({sample})")
+        raise typer.Exit(code=2)
+    if report.get("deferred"):
         raise typer.Exit(code=2)
 
 
@@ -220,6 +281,10 @@ def book_paper_reconcile(
             official_close=prices["official_close"],
             snapshot_1545=prices.get("snapshot_1545", {}),
             generated_at_utc=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            submission_receipts=[
+                json.loads(p.read_text())
+                for p in (root / "reports/paper/book" / account / "orders").glob(f"{date_}*.json")
+            ],
         )
     except (BookAccountError, ValueError, KeyError) as exc:
         raise _fail(exc) from exc

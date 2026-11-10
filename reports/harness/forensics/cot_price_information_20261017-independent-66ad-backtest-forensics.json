@@ -1,0 +1,90 @@
+{
+  "strategy_name": "cot_price_information_20261017-independent-66ad",
+  "author": "f28170c4-1c44-491e-93ce-79c18a81e8dc",
+  "reviewer": "66ad4b54-ec62-400b-9a03-a29682cf58e6",
+  "at_utc": "2026-10-17T08:38:31.556646+00:00",
+  "lookahead_check": "warning",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 4,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "pbo": null,
+  "dsr": null,
+  "trial_inventory": {
+    "fixed_learned_arms": 3,
+    "fixed_trend_control": 1,
+    "cost_views_per_policy": 3,
+    "dependent_accounts": 12,
+    "completed_causal_fits": 99,
+    "scheduled_cycles": 33,
+    "parameter_optimization": false,
+    "descriptive_comparisons": 45
+  },
+  "statistical_methods": {
+    "saved_model_checks": "All99 weighted train-only scaler means/variances, Ridge normal-equation residuals and saved forecast algebra verified; no solve/refit/predict",
+    "current_entry_sample": "All common mature IDs/date weights and end<=decision cutoff match preregistration; no future-fit backfill",
+    "bootstrap": "Frozen joint-date circular63-session blocks/1000draws/seed20261017; annualized mean daily LOG difference, not USD or compounded-return intervals",
+    "intervals": {
+      "exact_identity_zero": 15,
+      "other_strictly_crossing_zero": 30,
+      "numeric_near_zero_boundary": [
+        {
+          "comparison": "latest_complete12months:0:COT-PRICE_STALE_COT",
+          "interval": [
+            -4.695447218290177e-16,
+            0.1097368587755748
+          ]
+        }
+      ]
+    },
+    "pbo_reason": "No parameter-selection campaign or applicable CSCV candidate ranking was supplied; no substitute computed",
+    "dsr_reason": "No reliable effective full-parent independent-trial estimate or frozen DSR design; null rather than a proxy/significance claim"
+  },
+  "sample_data_caveats": [
+    "Seen development, three fixed related commodity ETFs; current-vintage price index and retrospective source observations, not independent OOS or PIT delivery",
+    "Conditional late availability: official special floor plus seven NY-calendar-day embargo, max native create/update; native timestamps are not actual public delivery",
+    "213 weekly information dates; 21-session overlapping labels, common fits and repeated cost/windows are dependent",
+    "33 evaluation allocation cycles/99 opportunities, 93 common active COT and 6 exact PRICE fallback;96 matured evaluation labels and3 tail-censored",
+    "short_sample_caveat: 2024 has231,2025 250,2026-to-end194,latest12m251 sessions; full675 does not create675 independent positioning decisions",
+    "Roundtrip trade count is not defined for netted fractional target rebalancing; no invented trade-count or low_trade_count pass",
+    "Conditional adjusted economic-price-index units; actual per-shard adjustment, distribution, ETF entitlement and physical units remain unqualified",
+    "No actual close fills, OHLC gaps, spread, impact, ADV participation, capacity or paper certification",
+    "PRICE_COT and PRICE realized paths happen to be identical; other ex-ante controls are not matched realized risk or exposure"
+  ],
+  "trade_count": null,
+  "trade_count_scope": "N/A: netted target allocations, not an independent closed-trade inventory",
+  "trading_days": 675,
+  "short_sample": false,
+  "short_sample_caveat": true,
+  "capacity_assessment": "Unknown: economic index units/aggregate closes and fixed fees cannot certify actual order size/ADV, spreads, roll-tenor exposure or execution capacity",
+  "conclusion": "warning",
+  "notes": "Saved conditional backtest is accepted; no invalidating saved-account/leakage defect found. Warning limits promotion/inference; it does not erase measured PRICE profits. COT contribution is exactly zero in the frozen allocator, so close this tested recipe for automatic further allocation.",
+  "bindings": {
+    "packet": {
+      "path": "reports/research/program/cot-price-information-20261017/actual-result-review-packet.json",
+      "sha256": "8e0d096910b5ec3b6e8050db96dbee8bb784b93601880db101e7c9774cb1eb4a",
+      "bytes": 8894
+    },
+    "result": {
+      "path": "reports/research/program/cot-price-information-20261017/result.json",
+      "sha256": "6cacd97bd08f2ed93bcf7063d64cdaf79664070151324753fc0302c5f39450b2",
+      "bytes": 53682
+    },
+    "independent_check": {
+      "path": "reports/research/program/cot-price-information-20261017/independent-saved-result-check-66ad.json",
+      "sha256": "8ed90f9ab32ec10ced206ee9df3c65b20bf4881fc55b7a2bc978bc11488f015f",
+      "bytes": 63883
+    },
+    "input_oracle": {
+      "path": "reports/research/program/cot-price-information-20261017/independent-input-oracle-66ad.json",
+      "sha256": "981ce5317ff38e945f267703212491b5ba08c7b3f2d3a7edeb733b278e2445ac",
+      "bytes": 8516
+    },
+    "resource": {
+      "path": "reports/research/program/cot-price-information-20261017/independent-actual-result-resource-receipt-66ad.json",
+      "sha256": "34fc5275939912cc8727d47f4fd21d1c4c76bfda6f8ad0f41ca5d98100eac491",
+      "bytes": 6473
+    }
+  }
+}

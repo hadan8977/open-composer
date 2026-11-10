@@ -112,3 +112,21 @@ def test_daily_book_reuses_cost_ledger_hygiene_and_trigger_exclusion():
     assert output.ledger["cost_spread"].sum() > 0
     assert output.end_equity_usd == output.ledger["equity"].iloc[-1]
     assert close.iloc[0, 0] == 100  # Caller data is never mutated.
+
+
+def test_book_rotation_keeps_old_overnight_and_charges_both_order_sides():
+    dates = pd.bdate_range("2024-01-02", periods=4)
+    close = pd.DataFrame({"A": [100., 100., 120., 120.],
+                          "B": [100., 100., 110., 110.]}, index=dates)
+    open_ = close.copy()
+    open_.loc[dates[2], "B"] = 80.
+    output = book_engine(close, open_, lambda day, state: {"B": 1.},
+        config=BookConfig(initial_equity=10_000, initial_weights={"A": 1.},
+                          signal_dates=[dates[1]], cost_bp_per_side=10.))
+    day = output.ledger.loc[dates[2]]
+    # Old A earns +20% overnight. New B earns only 110/80-1 after its open fill.
+    # Sell $12k A and buy $12k B: $24 total cost, deducted from account cash.
+    assert day.equity_open_pre == pytest.approx(12_000.)
+    assert day.turnover == pytest.approx(2.)
+    assert day.cost_spread == pytest.approx(24. / 10_000.)
+    assert day.equity == pytest.approx(12_000. * (110. / 80.) - 24.)
