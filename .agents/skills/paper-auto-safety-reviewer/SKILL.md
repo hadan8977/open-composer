@@ -1,61 +1,33 @@
 ---
 name: paper-auto-safety-reviewer
 description: >
-  Safety review for paper_auto activation: lifecycle gate, kill switch,
-  order window, duplicate order policy, broker credential scope, audit linkage,
-  and harness verify status. Required before any paper_auto strategy is activated.
-  Use when execution.mode=paper_auto is being set or activated, or when
-  runner/timer configuration changes.
+  Review paper_auto activation or runner/timer changes for lifecycle, kill switch,
+  order window, duplicate guards, paper credentials, audit linkage and harness
+  verification. Required before any paper_auto strategy is activated.
 ---
 
-## Inputs
+# Paper-auto safety review
 
-- StrategySpec (lifecycle, execution, broker)
-- `oc harness verify <spec>` output
-- Paper readiness report from `oc paper readiness <spec>`
+Read the StrategySpec, `uv run --no-sync oc harness verify <spec>` output and `uv run --no-sync oc paper readiness <spec>` report. Check the following before activation; verification actions themselves stay within existing authorization and production-isolation rules in [AGENTS.md](../../../AGENTS.md).
 
-## Mandatory output
+| Area | Required evidence |
+|---|---|
+| Lifecycle | `paper_ready` or `active`; promotion report has `promotion_pass=true`, readiness has `paper_ready_pass=true`. |
+| Harness | Verify exits 0; result is at `reports/harness/verify/{strategy}.json`. List blocking artifacts otherwise. |
+| Kill switch | Documented in spec/runner; enable/disable paths are verified. Stopping the local paper loop does not require a network or database. |
+| Window and duplicates | Explicit order window, no submission outside it, and a guard against existing open/duplicate orders. |
+| Credentials | Paper-only scope, no secrets in version control/artifacts, `.env` ignored. |
+| Audit | Log signals before submission. Orders link `signal_id`, `spec_version`, `spec_hash`, `execution_policy_id`; retain order logs at least 90 days. |
+| Execution | Supported broker order type/TIF, source-linked policy, and gap/spread filters or explicit justified waivers. |
 
-`reports/harness/paper/{strategy}-paper-safety-review.json`
+Kill-switch commands:
 
-## Safety checklist
+```text
+uv run --no-sync oc paper kill-switch --enable --reason "<reason>"
+uv run --no-sync oc paper kill-switch --disable --reason "<reason>"
+```
 
-### Lifecycle gate
-- [ ] `spec.lifecycle` is `paper_ready` or `active`. Strategies in `draft` or `research` cannot activate paper_auto.
-- [ ] Promotion report exists and `promotion_pass = true`.
-- [ ] Paper readiness report exists and `paper_ready_pass = true`.
-
-### Harness verify
-- [ ] `oc harness verify <spec>` exits 0. If non-zero, list blocking artifacts.
-- [ ] Verify output written to `reports/harness/verify/{strategy}.json`.
-
-### Kill switch
-- [ ] Kill switch documented in spec or runner config.
-- [ ] `uv run oc paper kill-switch --enable --reason "<reason>"` and
-  `uv run oc paper kill-switch --disable --reason "<reason>"` are tested and operational.
-- [ ] Kill switch does not require database access or network to stop local paper loop.
-
-### Order window
-- [ ] Order window is defined (e.g. market open ± 5 min, or specific auction window).
-- [ ] Runner does not submit orders outside the defined window.
-- [ ] Duplicate order guard: runner checks for existing open order before submitting.
-
-### Broker credential scope
-- [ ] Credentials are paper-trading scoped only. No live broker write permission.
-- [ ] Credentials are not in version-controlled files or artifacts.
-- [ ] `.env` file is gitignored.
-
-### Audit linkage
-- [ ] Every paper order references `signal_id`, `spec_version`, `spec_hash`, `execution_policy_id`.
-- [ ] Signal log is written before order submission (not after).
-- [ ] Order log is retained for at least 90 days.
-
-### Execution policy
-- [ ] `execution_policy` artifact is present and references source cards.
-- [ ] Recommended order type is supported by broker (per source cards).
-- [ ] Gap filter and spread filter are configured or explicitly waived with justification.
-
-## Output schema (json)
+Write `reports/harness/paper/{strategy}-paper-safety-review.json`:
 
 ```json
 {
@@ -75,20 +47,4 @@ description: >
 }
 ```
 
-## Blocking rules
-
-- `overall: blocked` if any checklist item fails.
-- `overall: blocked` if harness_verify_pass = false.
-- Do not approve paper_auto if lifecycle is draft or research.
-- Do not approve paper_auto if kill_switch_verified = false.
-
-## Rules this skill does NOT cover
-
-- Real-money broker write access (out of scope for all Open Composer work).
-- Dashboard remote execution of paper orders (covered by AGENTS.md remote command rules).
-
-## References
-
-- `harness/artifact_contracts.yaml` — paper_safety_review schema
-- `harness/risk_domains.yaml` — paper_auto blocking rules
-- `AGENTS.md` — project-level paper automation and remote command rules
+Any failed required check means `overall: blocked`; draft/research lifecycle, failed harness or unverified kill switch cannot pass. This review is evidence, not new order authority. See [paper_safety_review](../../../harness/artifact_contracts.yaml) and [paper_auto rules](../../../harness/risk_domains.yaml).

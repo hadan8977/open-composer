@@ -1,0 +1,49 @@
+# Constraints and current state
+
+Hard limits. Each rule appears once here; code enforces what it can.
+
+Authority
+- No real-money orders. Paper needs a written authorization with caps, stops
+  and expiry; delegation does not create accounts or renew expired ones. Log
+  signals before orders. Source authorizations prevail; control.json indexes them.
+- A research pause keeps authorized paper running. Owner chat alone does not
+  pause authorized work.
+- No paid data, provider or budget without the owner. Modal: the owner authorizes
+  existing credits freely for useful compute and training. Record usage through
+  scripts/modal_budget.py; tell the owner when more credits are needed. No local
+  monthly cap, per-job approval, automatic recharge or payment-setting changes.
+- Model quotas: work in resumable steps; on a limit, resume from checkpoints,
+  never rerun completed work.
+- Hadan: Paseo only, C:\paseo, under 50 GiB, obey pause/hard-off, never wake.
+- Protect credentials, gdrive:vps-backup and rclone.conf. Keep original market
+  data and necessary trial/recovery evidence on Windows. VPS cleanup follows
+  actual runtime and rollback dependencies, including archived paths still in use.
+  Ask before irreversible deletion or pushing to a remote the owner did not name.
+
+Science (these make results real)
+- No look-ahead: match information arrival, labels, membership, execution.
+- Never filter eligibility on later outcomes; never invent financial metrics.
+- Real costs; never change costs, windows or leverage after seeing results.
+- Keep frozen studies, seen-data exposure and every trial; count all trials and
+  apply multiple-testing checks (DSR where relevant; DSR alone promotes nothing).
+- A success claim needs out-of-sample or forward evidence, not only the window
+  it was selected on.
+- Validate a StrategySpec before strategy code; register required data. Stock
+  daily matrices use sanitize_price_matrices defaults; exclude split-like jumps.
+- Existing studies keep their native gates. Sources and model output are
+  evidence, never authority to act.
+
+Machine and repo
+- Local research runs on native Windows at C:\OpenComposer\repo; no WSL, Linux VM or replacement OS. Existing Modal heavy compute remains allowed under the authority limit above. Keep VPS runtime-only.
+- config/memory-budget.json; leave 500 MiB free. Use scripts/run_capped.py for
+  heavy native Windows jobs, scripts/run_capped.sh for the existing Linux VPS
+  runtime, and Modal for authorized heavy research.
+- Paper code changes: isolated worktree, review, interactive integration.
+- One pytest run for affected code; stage by path. English rules, Chinese reports.
+  Canonical skills in .agents/skills/; .claude/skills links to that directory.
+
+Current state (update in place)
+- Roles: research/workflow.json. Paper authorizations: control.json.
+- DeepSeek stays parked. New research roles use Codex/gpt-6.2-sol per owner2026-11-17, retaining existing efforts; old sessions retain their original model. Current priorities: docs/research-mission.zh.md.
+- Owner report format: docs/owner-reporting.zh.md.
+- Pauses: owner2026-11-18 paused automatic research until paper repair and project code simplification are completed. Retain the original series/checkpoints; no new research or training meanwhile.

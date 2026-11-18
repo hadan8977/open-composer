@@ -108,31 +108,17 @@ def s3_weights(close: pd.DataFrame, offset: int) -> tuple[pd.DataFrame, list[pd.
 
 
 def effective_weights(weights: pd.DataFrame, scale: np.ndarray) -> np.ndarray:
-    """The per-session weight vector salvage.simulate trades to."""
-    cols = list(weights.columns)
-    cash_i = cols.index(base.CASH)
-    wb = weights.to_numpy(dtype=float)
-    risk = wb.copy()
-    risk[:, cash_i] = 0.0
-    eff = risk * scale[:, None]
-    eff[:, cash_i] = wb[:, cash_i] + (1.0 - scale) * risk.sum(axis=1)
-    return eff
+    from open_composer.lab.accounting import scaled_weights
+
+    return scaled_weights(
+        weights.to_numpy(dtype=float), scale, list(weights.columns).index(base.CASH)
+    )
 
 
-def simulate_effective(
-    eff: np.ndarray,
-    cols: list[str],
-    leg_open: pd.DataFrame,
-    leg_close: pd.DataFrame,
-    cost_bps: float,
-) -> tuple[pd.Series, pd.Series]:
-    lo = leg_open[cols].to_numpy(dtype=float)
-    lc = leg_close[cols].to_numpy(dtype=float)
-    prev = np.vstack([np.zeros((1, eff.shape[1])), eff[:-1]])
-    gross = (prev * lo).sum(axis=1) + (eff * lc).sum(axis=1)
-    turnover = np.abs(eff - prev).sum(axis=1)
-    rets = gross - turnover * cost_bps / 10_000.0
-    return pd.Series(rets, index=leg_open.index), pd.Series(turnover, index=leg_open.index)
+def simulate_effective(eff, cols, leg_open, leg_close, cost_bps):
+    from open_composer.lab.accounting import simulate_effective as simulate
+
+    return simulate(eff, cols, leg_open, leg_close, cost_bps)
 
 
 def offset_effective(

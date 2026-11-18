@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}历史 · Quant{% endblock %}
+{% block content %}
+<div class="page-head"><h1>模拟盘</h1>{% include '_paper_navigation.html' %}</div>
+{% if paper_history.available %}
+<header class="section paper-section"><h2>历史记录</h2><span class="faint">截至 {{ paper_history.through_session }}</span></header>
+{% for h in paper_history.histories %}
+<details id="history-{{ h.id|replace('/','--') }}" class="paper-history-series tile" data-filter="{{ h.label }} {{ h.id }}">
+<summary><span>{{ h.label }}{% if h.latest %}<small class="faint num"> · {{ h.latest.day }}</small>{% endif %}</span><span class="faint">{{ '账户权益' if h.kind == 'account' else '交易盈亏' }}</span><span class="num">{% if h.latest %}{{ h.latest.equity_usd|money if h.kind == 'account' else h.latest.trading_pnl_usd|money }}{% else %}—{% endif %}</span></summary>
+{% if h.children %}<div class="paper-child-links">{% for child in h.children %}<a href="/paper/history#history-{{ child|replace('/','--') }}">{{ child.rsplit('/',1)[-1] }}</a>{% endfor %}</div>{% endif %}
+{% if h.chart %}<div class="well well--chart"><svg viewBox="0 0 800 175" role="img" aria-label="{{ h.label }} 历史" class="history-chart"><line x1="0" x2="800" y1="{{ h.chart.baseline }}" y2="{{ h.chart.baseline }}" stroke="currentColor" opacity=".2"/>{% for b in h.chart.bars %}{% if b.value is not none %}<rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.width }}" height="{{ b.height }}" fill="var(--tint)" opacity=".75" data-tip="{{ b.day }} · {{ b.value|money }}"/><title>{{ b.day }} · {{ b.value|money }}</title>{% else %}<circle cx="{{ b.x }}" cy="165" r="2" fill="var(--warn)" data-tip="{{ b.day }} · 缺少估值"/>{% endif %}{% endfor %}</svg></div>{% endif %}
+<div class="table-wrap"><table class="t"><thead><tr><th>日期</th><th class="num">{{ '权益' if h.kind == 'account' else '本金' }}</th><th class="num">{{ '账户变动' if h.kind == 'account' else '交易盈亏' }}</th><th>估值</th></tr></thead><tbody>
+{% for p in h.points|reverse %}<tr><td class="num">{{ p.day }}</td><td class="num">{{ p.equity_usd|money if h.kind == 'account' else p.capital_usd|money }}</td><td class="num">{{ p.account_change_ex_external_flows_usd|money if h.kind == 'account' else p.trading_pnl_usd|money }}</td><td>{{ '缺少估值' if p.missing else '账户快照' if h.kind == 'account' else '收盘估值' }}</td></tr>{% endfor %}
+</tbody></table></div>
+</details>
+{% endfor %}
+{% else %}<section class="tile empty">历史数据暂不可用</section>{% endif %}
+{% endblock %}

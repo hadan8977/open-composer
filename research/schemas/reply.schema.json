@@ -1,0 +1,207 @@
+{
+  "$defs": {
+    "WaitSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "session": {
+          "minLength": 1,
+          "title": "Session",
+          "type": "string"
+        },
+        "completion_marker": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completion Marker"
+        },
+        "failure_marker": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Marker"
+        },
+        "cancel_marker": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cancel Marker"
+        },
+        "process": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Process"
+        },
+        "local_only": {
+          "default": false,
+          "title": "Local Only",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "session"
+      ],
+      "title": "WaitSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": [
+        "complete",
+        "blocked"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "accept",
+        "revise",
+        "continue",
+        "repair",
+        "branch",
+        "park",
+        "none"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "results": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Results"
+    },
+    "next_brief": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Brief"
+    },
+    "checkpoint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Unresolved blocker evidence; null for a completed review or result.",
+      "title": "Checkpoint"
+    },
+    "next_review": {
+      "default": "reuse",
+      "enum": [
+        "reuse",
+        "plan",
+        "result",
+        "both"
+      ],
+      "title": "Next Review",
+      "type": "string"
+    },
+    "wait": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WaitSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "round_class": {
+      "anyOf": [
+        {
+          "enum": [
+            "new_money_evidence",
+            "informative_learning",
+            "no_information"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Lead only: what the completed round delivered.",
+      "title": "Round Class"
+    },
+    "accepted_conclusions": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Lead only: after-cost economic conclusions accepted this round; [] for none.",
+      "title": "Accepted Conclusions"
+    }
+  },
+  "required": [
+    "status",
+    "summary",
+    "decision",
+    "results",
+    "next_brief",
+    "checkpoint"
+  ],
+  "title": "Reply",
+  "type": "object"
+}

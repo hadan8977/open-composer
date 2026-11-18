@@ -40,13 +40,14 @@ names are included::
 from __future__ import annotations
 
 import argparse
-import fcntl
 import gc
 import hashlib
 import json
 import sys
 import time
 from pathlib import Path
+
+from open_composer.research.file_lock import lock_file
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -225,7 +226,7 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     build_lock = (out_dir / ".build.lock").open("a")
     try:
-        fcntl.flock(build_lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_file(build_lock.fileno(), blocking=False)
     except BlockingIOError as error:
         raise SystemExit(f"another builder is active for {out_dir}") from error
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading universe union symbols ...", flush=True)

@@ -267,6 +267,10 @@ def test_symbol_union_from_plan_and_target_files(tmp_path):
 # ---------------------------------------------------------------------------
 # driver --reconcile
 # ---------------------------------------------------------------------------
+# a reconcile without a plan records the observed account marks (broker read; faked here)
+VALUATION = "open_composer.book_paper.account_valuation.capture_account_valuation"
+
+
 def driver_args(tmp_path: Path, sip: Path) -> list[str]:
     return [
         "--reconcile",
@@ -311,6 +315,7 @@ def test_driver_reconcile_only_the_named_accounts(tmp_path, monkeypatch):
     # from 10-07 (C1006-ACCT) quant2 has no v1.2 plan; the crons pass --accounts quant1
     sip = make_sip(tmp_path, EDT_DAY)
     write_inputs(tmp_path, EDT_DAY, date(2026, 9, 16), "quant1")
+    monkeypatch.setattr(VALUATION, lambda *a: tmp_path / "valuation.json")
     calls: list[list[str]] = []
     monkeypatch.setattr(
         driver.subprocess,
@@ -327,6 +332,7 @@ def test_driver_reconcile_only_the_named_accounts(tmp_path, monkeypatch):
 
 def test_driver_reconcile_exit_codes(tmp_path, monkeypatch):
     sip = make_sip(tmp_path, EDT_DAY)
+    monkeypatch.setattr(VALUATION, lambda *a: tmp_path / "valuation.json")
     called: list[list[str]] = []
     monkeypatch.setattr(
         driver.subprocess,
@@ -357,3 +363,16 @@ def test_driver_reconcile_exit_codes(tmp_path, monkeypatch):
         record.write_text("{}")
     assert driver.main(driver_args(tmp_path, sip)) == 0
     assert called == []
+
+
+def test_half_day_snapshot_uses_bar_before_1245_and_ignores_later_bars(tmp_path):
+    day = date(2026, 11, 27)
+    sip = tmp_path / "sip"
+    write_shard(
+        sip / "minute/2026/11/shard-0000.parquet",
+        minute_rows("AAA", day, {(12, 44): 12.44, (12, 45): 12.45, (15, 44): 15.44}),
+    )
+    assert bp.snapshot_time_utc(day) == datetime(2026, 11, 27, 17, 45, tzinfo=UTC)
+    prices, fallback, _ = bp.snapshot_closes(sip, ["AAA"], day)
+    assert prices == {"AAA": 12.44}
+    assert fallback == {}

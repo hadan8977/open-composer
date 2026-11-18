@@ -34,10 +34,22 @@ TOL = 0.005  # both sources publish two decimals
 EXIT_OK, EXIT_FETCH, EXIT_CHECK = 0, 2, 3
 
 
-def http_get(url: str) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 (fixed https URLs)
-        return resp.read().decode("utf-8")
+def http_get(url: str, attempts: int = 3, pause: float = 10.0) -> str:
+    """GET with retries: FRED intermittently times out or resets (2026-11-12 the
+    whole quant1 refresh failed on one timeout at its last step)."""
+    import time
+
+    for attempt in range(1, attempts + 1):
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 (fixed https URLs)
+                return resp.read().decode("utf-8")
+        except OSError as exc:
+            if attempt == attempts:
+                raise
+            print(f"fetch retry {attempt}/{attempts - 1} for {url}: {exc}", file=sys.stderr)
+            time.sleep(pause * attempt)
+    raise AssertionError("unreachable")
 
 
 def parse_fred(text: str) -> pd.Series:
@@ -71,8 +83,22 @@ def merge(fred: pd.Series, cboe: pd.Series) -> tuple[pd.Series, dict]:
 
 
 def run(out_dir: Path, get: Callable[[str], str] = http_get) -> int:
+    fred_source = "fred"
     try:
         fred = parse_fred(get(FRED_URL))
+    except Exception as exc:  # noqa: BLE001
+        # FRED is intermittently unreachable from this host (2026-11-12: every
+        # request timed out for hours while CBOE answered). Fall back to the
+        # previously written file, whose rows were already overlap-checked; the
+        # same overlap check against CBOE still guards the merge below.
+        previous = out_dir / "VIXCLS.csv"
+        if not previous.exists():
+            print(f"fetch failed: {exc}", file=sys.stderr)
+            return EXIT_FETCH
+        print(f"FRED fetch failed ({exc}); using previous file rows", file=sys.stderr)
+        fred = parse_fred(previous.read_text())
+        fred_source = "previous_file"
+    try:
         cboe = parse_cboe(get(CBOE_URL))
     except Exception as exc:  # noqa: BLE001 (any network or parse error keeps the old file)
         print(f"fetch failed: {exc}", file=sys.stderr)
@@ -92,6 +118,7 @@ def run(out_dir: Path, get: Callable[[str], str] = http_get) -> int:
         "fetched_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "sources": {"fred": FRED_URL, "cboe": CBOE_URL},
         "rule": "FRED rows; CBOE closes appended after FRED's last date; overlap must match",
+        "fred_source": fred_source,
         **info,
     }
     (out_dir / "VIXCLS.meta.json").write_text(json.dumps(meta, indent=1) + "\n")

@@ -107,12 +107,6 @@ def test_run_plans_submits_only_the_named_accounts(monkeypatch, tmp_path) -> Non
     assert [c[c.index("book-paper") + 1] for c in calls] == ["plan", "submit"]
 
 
-def test_main_rejects_unknown_accounts(capsys) -> None:
-    with pytest.raises(SystemExit):
-        driver.main(["--plan", "--accounts", "quant3"])
-    assert "--accounts must name book accounts" in capsys.readouterr().err
-
-
 def test_default_targets_refuses_stale_calendar_before_old_target_noop(monkeypatch, tmp_path):
     data = tmp_path / "private"
     (data / "panel").mkdir(parents=True)
@@ -126,16 +120,15 @@ def test_default_targets_refuses_stale_calendar_before_old_target_noop(monkeypat
     )
 
 
-def test_old_target_plan_refused_before_subprocess_or_broker(monkeypatch, tmp_path):
-    monkeypatch.setattr(driver, "latest_target_path", lambda *args: Path(__file__))
+def test_missing_target_of_the_previous_session_refused_before_subprocess(monkeypatch, tmp_path):
     monkeypatch.setattr(driver.subprocess, "run", lambda *a, **k: pytest.fail("stale broker call"))
     assert (
         driver.run_plans(tmp_path, None, submit=False, now=datetime(2026, 10, 13, 18, tzinfo=UTC))
-        == driver.EXIT_FRESH
+        == driver.EXIT_REFUSED
     )
 
 
-def test_next_session_preview_is_readonly_and_backdated_submit_refused(monkeypatch, tmp_path):
+def test_next_session_preview_is_readonly(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(driver, "target_path", lambda *args: Path(__file__))
     monkeypatch.setattr(
@@ -163,18 +156,6 @@ def test_next_session_preview_is_readonly_and_backdated_submit_refused(monkeypat
         == 0
     )
     assert len(calls) == 1 and "submit" not in calls[0]
-    assert (
-        driver.run_plans(
-            tmp_path,
-            date(2026, 10, 13),
-            submit=True,
-            execution_date=date(2026, 10, 14),
-            now=now,
-            accounts=("quant1",),
-        )
-        == driver.EXIT_FRESH
-    )
-    assert len(calls) == 1
 
 
 def test_early_close_and_holiday_completed_session():
@@ -184,3 +165,55 @@ def test_early_close_and_holiday_completed_session():
     assert driver.latest_completed_us_equity_session(
         datetime(2026, 11, 26, 23, tzinfo=UTC)
     ) == date(2026, 11, 25)
+
+
+def test_normal_submit_rejects_expired_book_permission_before_any_lookup(monkeypatch, tmp_path):
+    monkeypatch.setattr(driver, "target_path", lambda *a: pytest.fail("expired target lookup"))
+    monkeypatch.setattr(
+        driver.subprocess, "run", lambda *a, **k: pytest.fail("expired broker call")
+    )
+    result = driver.run_plans(
+        tmp_path,
+        None,
+        submit=True,
+        accounts=("quant1",),
+        now=datetime(2027, 1, 4, 18, tzinfo=UTC),
+    )
+    assert result == driver.EXIT_SUBMIT_OFF
+
+
+@pytest.mark.parametrize(
+    "submit,now",
+    [(True, datetime(2026, 12, 31, 18, tzinfo=UTC)), (False, datetime(2027, 1, 4, 18, tzinfo=UTC))],
+)
+def test_expiry_is_inclusive_and_does_not_disable_readonly_planning(
+    monkeypatch, tmp_path, submit, now
+):
+    # The missing target refuses this fixture, not the expiry gate. No subprocess.
+    monkeypatch.setattr(driver.subprocess, "run", lambda *a, **k: pytest.fail("no target"))
+    assert (
+        driver.run_plans(tmp_path, None, submit=submit, accounts=("quant1",), now=now)
+        == driver.EXIT_REFUSED
+    )
+
+
+def test_capital_mismatch_refused_before_broker_call(monkeypatch, tmp_path):
+    monkeypatch.setattr(driver, "target_path", lambda *args: Path(__file__))
+    monkeypatch.setattr(
+        driver,
+        "load_target_file",
+        lambda *args: SimpleNamespace(
+            decision_date=date(2026, 10, 6),
+            execution_date=date(2026, 10, 7),
+            equity_basis=1000000.0,
+        ),
+    )
+    monkeypatch.setattr(
+        driver.subprocess, "run", lambda *a, **k: pytest.fail("mismatched broker call")
+    )
+    assert (
+        driver.run_plans(
+            tmp_path, date(2026, 10, 6), submit=False, accounts=("quant1",), equity_basis=300000.0
+        )
+        == driver.EXIT_REFUSED
+    )

@@ -1,49 +1,44 @@
-# 研究计划独立审查标准
+# Scientific review and research contracts
 
-版本：2026-10-13，机主接受v3.1并授权实施。审查帮助判断研究是否值得做、能否回答问题及结论是否可靠，不以固定步骤、文档数量或审查次数验收。新方法前瞻适用；已有冻结合同、成功门、已见窗口和累计投入保留。
+Use this reference for a new economic hypothesis, a material scientific change, or a relevant native gate. It is not a checklist for ordinary implementation, source preparation, recovery or documentation maintenance. [Current rules](rules.md) and [research workflow](../research/README.md) govern ownership and autonomy.
 
-## 适用范围
+## Review the claim
 
-新经济假设、关键科学定义变化或真正超出批准范围的工作需要独立经济审查。批准探索空间内的连续实验、同语义代码实现/修复/恢复、已授权来源准备复用原完整包，按相关差异和结果接受，不因新文件或代码编辑重复立项。
+Ask whether a correctly executed experiment would answer the owner's investment question. Challenge assumptions even when the main agent wrote the brief. Distinguish faithful replication, local adaptation, recent usefulness and deployment; inspect the strongest alternative explanation before demanding more engineering.
 
-信号、标签、模型经济角色、选择规则、验证分区、交易时点、成本和成功标准的实质变化按受影响部分形成新定义及审查。组织agent工作的prompt、技能、工具和分工更新通常属于方法维护；用于生产研究特征、标签或信号的prompt/模型变化应核对实际科学影响。科学审查不能扩大资金、设备或订单授权。
+Review what matters to that claim: opened primary sources and counterevidence; actual input/version/visibility and security identity; causal features, labels and execution clocks; matched baselines and costs; adequate information, uncertainty and multiple testing; useful contribution and a justified next experiment. Use claim-appropriate depth, not a universal three-point grid, eleven-row checklist or mandatory review-round count.
 
-方法治理只审实际差异、冲突、证据和保留边界，不套经济清单。适用性以 `docs/research-autonomy-policy.zh.md` 和 `docs/task-owned-research.zh.md` 为准。
+Support fast empirical feedback. Before an initial replication or diagnostic backtest, require the evidence needed to interpret that particular comparison; label conditional assumptions and unresolved applicability honestly. Deployment readiness is assessed at its own stage. Reuse accepted unchanged inputs and check the affected behavior. Administrative local-time or document-count quotas are not scientific acceptance criteria; follow the current resource policy in rules.md.
 
-## 判断什么
+Separate defects that invalidate this experiment from later deployment dependencies and optional improvements. Block only the affected action. Group visible material findings once, then receive the affected correction/result directly from the owner. Ordinary scientific judgments and final results do not require another main-agent signature.
 
-先从机主使命重建要作的判断，再读作者的实验框架：即使实现完全正确，这个实验能否回答该判断？最强的其他解释是什么？主审写下的假设与已通过的技术检查不替代证据。先处理会使研究问题失效的错配，再审实现；区分本阶段科学缺陷、后续部署依赖与可选改进，不能把三者全部列为当前硬门。复用现有review结论字段写清依据，无需新增固定表格或审查轮。
+Return a concise structured verdict with evidence and consequences:
 
-以下是可用的审查问题，按研究对象和风险选择深度，不要求每次填满同一张表：
+- `approve_deep_plan`: accept the stated scientific scope, subject to actual input/resource authority.
+- `revise_plan`: identify concrete corrections and the affected scope.
+- `stop_or_pivot`: justify the allocation decision and identify unresolved claims; do not pretend an untested mechanism was refuted.
 
-- **方向与来源：** 公开结果、原实现、独立复现、发表后表现和反证是否支持投入？既有结果能否复用？选择是否被数据现成或熟悉路线主导？新鲜已核实来源无需重复抓取。
-- **用途与对象：** 是策略、因子、数据、模型、择时、风险还是执行研究？改变哪项决策，如何进入当前研究目标或组合？组件不必单独交易，也不能把失败策略换个名字免除旧失败。
-- **忠实性与信息：** 原文复现和本地适配是否区分？真实数据、许可、PIT可见时点、证券身份、允许分区、标签和时间对齐是否足以支持主张？
-- **决定性实验与深度：** 计划能否区分主要解释？样本、信息覆盖、模型容量、状态或执行尺度是否充分？有需要可用三点以上曲线，不能把相邻参数或额外文件当深度，也不对所有问题强制三点。
-- **比较与统计：** 简单基线、风险/成本口径、安慰剂、功效、多重试验和不确定性是否适合结论？具体冻结的benchmark family、DSR/PBO/SPA等要求仍按合同履行。
-- **模型增量：** 若使用AI/ML或新模态，其角色、训练/数据/提示版本、缺模态、校准和fallback是否明确？模型贡献比较要有信息与成本的可比性；IC、自评或模型复杂度不等于净收益。
-- **执行与经济价值：** 费用、spread、impact、borrow、融资、延迟、容量及未成交机会成本是否影响结论？组合边际按当前使命/研究阶段与冻结合同检验，不能用无关代理组合掩盖实际应用缺口。
-- **投入与接续：** 是否有完整owner、真实入口、累计已用/剩余预算、原生断点与有信息的下一步？深度优先于数量，允许跨日；工程产物只有解除依赖或保护真实结果时才算该类进展。
-- **停止与部署：** 何种证据支持继续、暂缓、停投、pivot或科学否定？shadow/paper是否适用、已获授权且满足执行条件？不把固定两周时钟强加给每个组件，也不人为等待本可立即取得的历史证据。
+Reuse actual consumer fields when required, including legacy `same_day_closure` or `depth_curve`; do not invent evidence or add unused tables. An author cannot provide their own independent acceptance.
 
-## 深度、预算与结论
+## New directions after the owner-approved restructure
 
-预算是上限，任何时候均不得为“继续补深度”突破资金、资源或设备边界。对具体主张的否定需要足够的忠实性、机制覆盖、功效和反证；浅层无效不足以否定整个机制。决定性证据可支持限定结论，无须为了凑数量机械耗尽预算。
+Use research/<direction>/brief.md, the numerical Results contract and cumulative trial ledger. Keep detailed scientific definitions in a referenced protocol when needed. Independent review covers the economic question, causal inputs, costs, baseline, exposure and decisive comparison; it does not require a legacy dossier solely because the directory is new. Existing studies retain their original contracts and untouched windows. A new path cannot bypass an old failure or erase exposure. Strategy promotion and paper activation still use their applicable native checks and actual account authority.
 
-证据不足时如实标注 `not_at_depth` 或未解决主张。仍可因机会成本、输入限制或新反证暂缓/停止投入，说明这不等于科学否定。旧冻结任务按原先的深度和成功标准解释，不用新方法把旧失败改为通过；错误摘要/标签可根据原始结果注明更正，不删除原证据或重置曝光。
+## Existing native contracts
 
-既有机主周目标、报告节奏和任务接续责任继续有效。当前任务的具体期限与投入按有效计划执行，不因方法修订自动延长、追加额度或更换owner。
+These requirements apply to their actual research object and existing contracts, not indiscriminately to every component:
 
-## 交付和接续
+- Existing v3 studies retain verified v2 source bindings: current claims map to fetched source snapshots/cards, the query manifest and pre-iteration knowledge baseline. Run `oc research direction-check <path>` before allocation and `oc research iteration validate <iter_id>` before dependent economic execution. A failed economic gate does not prohibit separately authorized work to repair its inputs.
+- AI/ML or a new information modality uses the existing knowledge index, versioned scout and `oc research knowledge assess <iter_id>`. Preserve model/data/feature/prompt/validation provenance, training exposure, calibration, coverage and deterministic fallback. Match quant-only, modality-only, combined, missing-modality and placebo comparisons where relevant; explain inapplicable roles.
+- Parameterized or multi-model rounds preregister the actual candidates, data, features, label horizon, validation, costs, benchmark family, ablation, selection and fallback. Include the applicable same-symbol buy/hold, equal-weight universe, market, sector/theme, cash and ex-post-best controls without treating an oracle as selectable.
+- New family discovery/optimization campaigns created after2026-08-15 use `reports/research/campaigns/<campaign_id>/research-campaign-contract.json` and `oc research campaign validate <campaign_id> --stage pre-discovery`. Before candidate generation, factor evaluation, training or allocation, bind the economic hypothesis tree, candidate inventory, branches/quotas, child identities, visibility partitions, cumulative exposure, QD quality identity, tie-break and family-statistics policy.
+- Selectable stock universes use then-known membership, permanent identity, delisting returns, actions and liquidity. Static current winners/constituents are non-promotable controls. Missing required PIT evidence is `dependency_skipped`, not permission to substitute today's universe.
+- Campaign development, training, selection, pruning and archive changes read only declared development partitions. Seal the development archive and allocation-ledger head before frozen OOS. `pre-oos`/`final` verify the actual cohort, common continuous terminal-free return matrix, candidate inventory, effective trial count and applicable DSR/PBO/SPA evidence. Paths alone are not evidence.
+- Existing breadth campaigns start with economically distinct deterministic mechanisms; ML follows demonstrated deterministic signal and must beat matched deterministic/price-only controls after costs for complexity credit. Combination iterations require at least two empirically low-correlated independently passing mechanisms and a small preregistered combination set. Do not extend a campaign-specific rule into a ban on independently authorized model-method research.
+- For selectable promotion candidates newly frozen after2026-08-15, preserve the20bps daily continuous terminal-free OOS Sharpe-excess-BIL gate with strict `>1.0`, unless changed by the owner before first training/backtest. One frozen OOS evaluation; a failed branch is sealed rather than tuned nearby on the same exposed window. This gate is not a universal actual-cost assumption or an initial method-study profit requirement.
 
-复用真实消费者需要的direction-review、candidate-manifest、结果包或现有任务记录。已授权准备可在尚未取得经济准入时解除依赖，但不冒称已获训练/回测许可。适用经济门之前，登记实际候选、输入、允许分区、选择规则和累计试验。
+## Interpretation and continuation
 
-独立reviewer给可操作结论及原始证据定位：
+Preserve each study's original scientific contract, untouched windows, success criteria and accumulated exposure. A new version does not make seen data unseen. Missing or conditional evidence must remain explicit. Genuine paid/provider limits remain binding; self-imposed administrative limits can be retired prospectively under current owner instructions. Adequate evidence can justify stopping allocation before full scientific refutation, while strong unresolved evidence can justify deeper work.
 
-- `approve_deep_plan`：接受该完整经济包的适用科学范围；具体资源/输入/部署权限另按有效准入。
-- `revise_plan`：指出影响判断的具体问题及修正依据，复核受影响部分；普通修复不反复重审全包。
-- `stop_or_pivot`：说明为何不继续当前投入、哪些主张仍未解决，以及有依据的下一选择；不自动要求另开任务填空。
-
-保留实际消费者要求的字段；`same_day_closure`可记录当天实证里程碑，`depth_curve`表达所需深度而不填虚假点。没有实际消费者的占位表、固定十一项、至少一轮返工或最多两轮审查都不是要求。
-
-完整owner拥有研究判断、下一实验和实现责任，独立reviewer提供反方检验，决策角色对重要取舍作最终判断。具体模型/effort仅从 `config/research-agent-roles.json` 读取。任务方法可随能力与实际结果更新，权限、事实诚信和旧冻结标准不由方法更新绕过。
+Use `workflow_pass`, `research_pass`, `ml_contribution_pass`, `llm_contribution_pass` and `paper_ready_pass` for their distinct claims. A component may have useful measured results while paper readiness is false. Current evaluation contracts and `config/evaluation-standard-v2.json` govern applicable stage thresholds; research approval never expands spending, device, broker or production authority.

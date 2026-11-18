@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import html
+import json
 import re
 import threading
 from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
+from cockpit_contract_fixture import cockpit_workspace as cockpit_workspace
 from fastapi.testclient import TestClient
 
 from open_composer.cockpit import app as APP_MODULE
@@ -14,14 +16,10 @@ from open_composer.cockpit.app import create_app
 from open_composer.cockpit.data.hypotheses import load_cards
 from open_composer.cockpit.data.queue import parse_queue
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path, secret_scrub
-from open_composer.config import project_root
 
 
 @pytest.fixture
-def client() -> TestClient:
-    # `warm=False`: this suite does not exercise the T10 background warm
-    # thread here (see `test_create_app_starts_warm_thread_*` below for
-    # those) -- most other tests just want a plain app.
+def client(cockpit_workspace: Path) -> TestClient:
     return TestClient(create_app(warm=False))
 
 
@@ -42,6 +40,8 @@ def client() -> TestClient:
         "/lineage",
         "/agents",
         "/paper",
+        "/paper/accounts",
+        "/paper/history",
         "/quota",
     ],
 )
@@ -51,14 +51,9 @@ def test_core_routes_return_200(client: TestClient, path: str) -> None:
 
 
 # --------------------------------------------------------------------------
-# UI is English-only (plan section 3.5): the parsing vocabulary that matches
-# the Chinese source cards stays Chinese in the Python data layer, and a
-# card's own authored title is Chinese card *content* (the same category as
-# the card body rendered on `/card/<id>`) -- both `/` and `/lineage` legitimately
-# display every card's title (board row / graph node & tooltip), and all 19
-# real cards have a Chinese title, so this test strips those known titles out
-# before checking. What must never come back as CJK is the surrounding UI
-# chrome itself: nav labels, headings, lane names, chips, warnings, captions.
+# The owner-facing home, paper pages and shared navigation use Chinese.
+# Research and system page content retains its existing English vocabulary;
+# authored source content may still be Chinese.
 # --------------------------------------------------------------------------
 
 _CJK_RE = re.compile(r"[一-鿿]")
@@ -100,10 +95,10 @@ def chrome_text(page: str) -> str:
 
 
 @pytest.mark.parametrize(
-    "path", ["/", "/research", "/hypotheses", "/lineage", "/health", "/agents", "/paper", "/quota"]
+    "path", ["/research", "/hypotheses", "/lineage", "/health", "/agents", "/quota"]
 )
 def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
-    client: TestClient, path: str
+    client: TestClient, cockpit_workspace: Path, path: str
 ) -> None:
     response = client.get(path)
     assert response.status_code == 200
@@ -113,7 +108,10 @@ def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     # screen's attention items, live-track text and report headlines) and
     # are dropped first; `/reports` embeds whole Chinese documents and is
     # not checked here, like `/card/<id>`.
-    text = html.unescape(chrome_text(response.text))
+    # Localized shared navigation does not change these pages' content language.
+    page = re.sub(r"<nav\b[^>]*>.*?</nav>", "", response.text, flags=re.S)
+    page = re.sub(r'<header class="mobile-head[^>]*>.*?</header>', "", page, flags=re.S)
+    text = html.unescape(chrome_text(page))
     # `title`, `layer` and `data_layer` are the card's own authored prose
     # (parsed from its `层：`/`数据层：` fields) shown as-is on the board row
     # (`/`) and lineage node (`/lineage`) -- card content, not chrome. Longest
@@ -122,13 +120,13 @@ def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     # first would mangle the longer one into a leftover fragment.
     # The research task queue (`/` tile, `/hypotheses` lanes) shows each
     # task's authored title, status text and newest note: content too.
-    queue_text = (project_root() / "reports/research/control/autonomous-queue.md").read_text(
+    queue_text = (cockpit_workspace / "reports/research/control/autonomous-queue.md").read_text(
         encoding="utf-8"
     )
     known_content = sorted(
         {
             field
-            for card in load_cards(project_root())
+            for card in load_cards(cockpit_workspace)
             for field in (card.title, card.layer, card.data_layer)
             if field
         }
@@ -199,6 +197,9 @@ def test_every_route_is_get_or_head_only() -> None:
         "/lineage",
         "/agents",
         "/paper",
+        "/paper/accounts",
+        "/paper/history",
+        "/paper/ledger/unknown",
         "/quota",
     ],
 )
@@ -227,7 +228,8 @@ def test_shell_is_named_quant(client: TestClient) -> None:
     page = client.get("/")
     assert "<i></i>Quant</a>" in page.text
     assert "Cockpit</a>" not in page.text
-    assert "<title>Today · Quant</title>" in page.text
+    assert "<title>总览 · Quant</title>" in page.text
+    assert "<title>模拟盘 · Quant</title>" in client.get("/paper").text
     assert "<title>Research · Quant</title>" in client.get("/research").text
     assert "<title>Reports · Quant</title>" in client.get("/reports").text
 
@@ -235,6 +237,121 @@ def test_shell_is_named_quant(client: TestClient) -> None:
 def test_static_mount_rejects_post(client: TestClient) -> None:
     response = client.post("/static/css/cockpit.css")
     assert response.status_code == 405
+
+
+@pytest.fixture
+def published_paper_ui(cockpit_workspace: Path, monkeypatch: pytest.MonkeyPatch):
+    from open_composer.cockpit import api
+    from open_composer.cockpit.data.paper_overview import _chart
+
+    rows = [
+        dict(
+            id=f"six/MODEL_{index}",
+            label=f"Model {index}",
+            capital_usd=20000,
+            pnl_usd=10 * index,
+            return_pct=index / 20,
+            status="已退出" if index == 8 else "实际账本",
+        )
+        for index in range(9)
+    ]
+    daily = [
+        dict(day="2026-10-23", pnl_usd=360, return_pct=0.2, missing=[], pools=["six"]),
+        dict(day="2026-10-26", pnl_usd=None, return_pct=None, missing=["six"], pools=["six"]),
+    ]
+    overview = dict(
+        available=True,
+        through_session="2026-10-26",
+        snapshot=dict(
+            rows=rows,
+            pnl_usd=363.45,
+            return_pct=0.2019166667,
+            capital_usd=180000,
+            adjustment_usd=3.45,
+            unassigned_capital_usd=0,
+            pool_readings=[],
+            at_start="2026-10-27T04:20:00+00:00",
+            at_end="2026-10-27T04:20:03+00:00",
+        ),
+        daily=daily,
+        charts={field: _chart(daily, field) for field in ("pnl_usd", "return_pct")},
+    )
+    monkeypatch.setattr(APP_MODULE, "load_paper_overview", lambda root: overview)
+    monkeypatch.setattr(api, "load_paper_overview", lambda root: overview)
+    return TestClient(create_app(warm=False)), overview
+
+
+@pytest.mark.parametrize("path", ["/", "/paper"])
+def test_paper_comparison_mount_receives_all_top_level_choices_and_fallback_links(
+    published_paper_ui, path: str
+) -> None:
+    client, overview = published_paper_ui
+    response = client.get(path)
+    assert response.status_code == 200
+    text = response.text
+    assert 'data-native-comparison aria-label="策略收益比较"' in text
+    assert "data-comparison-root" in text
+    assert 'type="module" src="/static/js/paper-comparison.mjs?v=' in text
+    match = re.search(r'<script type="application/json">(.*?)</script>', text, flags=re.S)
+    assert match is not None
+    comparison = json.loads(match[1])
+    assert comparison["initial_capital_usd"] == 100000
+    assert comparison["snapshot_at"] == overview["snapshot"]["at_end"]
+    assert [s["id"] for s in comparison["strategies"]] == [
+        row["id"] for row in overview["snapshot"]["rows"]
+    ]
+    assert [s["latest_return_pct"] for s in comparison["strategies"]] == [
+        row["return_pct"] for row in overview["snapshot"]["rows"]
+    ]
+    assert sum(s["default_selected"] for s in comparison["strategies"]) == 8
+    assert comparison["strategies"][-1]["archived"]
+    # These fixtures have a current valuation but no published historical
+    # strategy series. The chart input must not manufacture daily points.
+    assert comparison["days"] == []
+    assert "<details" not in text
+    fallback = re.search(r"<noscript>(.*?)</noscript>", text, flags=re.S)
+    assert fallback is not None
+    assert re.findall(r'href="([^"]+)"', fallback[1]) == [
+        "/paper/ledger/" + row["id"] for row in overview["snapshot"]["rows"]
+    ]
+    assert "data-total-pnl" not in text
+    assert "账户、数据与运行明细" not in text
+    assert "计算口径与数据日期" not in text
+
+
+def test_ledger_links_open_detail_and_unknown_ids_return_404(published_paper_ui) -> None:
+    client, overview = published_paper_ui
+    for row in overview["snapshot"]["rows"]:
+        response = client.get("/paper/ledger/" + row["id"])
+        assert response.status_code == 200
+        assert f'data-title="{row["label"]}"' in response.text
+        history_id = (
+            "account--quant1--broker-daily" if row["id"] == "F1" else row["id"].replace("/", "--")
+        )
+        assert f'href="/paper/history#history-{history_id}"' in response.text
+    partial = client.get("/paper/ledger/six/MODEL_0?partial=1")
+    assert partial.status_code == 200 and 'data-title="Model 0"' in partial.text
+    assert "<html" not in partial.text
+    assert client.get("/paper/ledger/six/UNKNOWN").status_code == 404
+
+
+def test_paper_navigation_and_api_share_the_published_dashboard(published_paper_ui) -> None:
+    client, overview = published_paper_ui
+    for path, label in (
+        ("/paper", "策略"),
+        ("/paper/accounts", "账户"),
+        ("/paper/history", "历史"),
+    ):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert f'href="{path}" aria-current="page">{label}</a>' in response.text
+    response = client.get("/api/paper.json")
+    assert response.status_code == 200
+    dashboard = response.json()["dashboard"]
+    assert dashboard["snapshot"] == overview["snapshot"]
+    assert [row["id"] for row in dashboard["rows"]] == [
+        row["id"] for row in overview["snapshot"]["rows"]
+    ]
 
 
 # --------------------------------------------------------------------------
@@ -396,7 +513,7 @@ def test_safe_repo_path_rejects_symlink_escape(tmp_path: Path) -> None:
 
 
 def test_health_page_renders_when_repo_root_has_no_data_sources(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, cockpit_workspace: Path
 ) -> None:
     # An empty directory has no `data/`, no `logs/`, and (from this process'
     # point of view) an unrelated crontab -- every data-freshness lookup must
@@ -421,13 +538,12 @@ def test_health_page_renders_when_repo_root_has_no_data_sources(
 def _reset_warm_thread_guard(monkeypatch: pytest.MonkeyPatch) -> None:
     """Every test in this module starts from "no warm thread started yet".
 
-    `_WARM_THREAD_STARTED` is a process-wide guard (by design -- plan item
-    1's "guard against double start"), so without resetting it between
-    tests, whichever test in this file happens to start the real thread
-    first would make every later `create_app(warm=True)` in this module a
-    silent no-op.
+    Reset the quota, Today and research-overview guards so each test observes
+    its own start behavior without inheriting another app's warm state.
     """
     monkeypatch.setattr(APP_MODULE, "_WARM_THREAD_STARTED", False)
+    monkeypatch.setattr(APP_MODULE, "_TODAY_WARM_STARTED", False)
+    monkeypatch.setattr(APP_MODULE, "_OVERVIEW_WARM_STARTED", False)
 
 
 def test_warm_loop_returns_immediately_when_transcript_root_is_absent() -> None:
@@ -462,38 +578,58 @@ def test_start_warm_thread_guards_against_double_start() -> None:
 def test_create_app_default_warm_true_starts_the_thread_exactly_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """`create_app()`'s default wires up to `_start_warm_thread` -- and a
-    second `create_app()` call in the same process must not add a second
-    thread (the double-start guard is process-wide, not per-app). Tracks
-    calls through the real `_start_warm_thread` rather than scanning
-    `threading.enumerate()` after the fact, since `_warm_loop` can finish
-    (and stop being "alive") before this test gets to look for it -- this
-    box's `CLAUDE_PROJECTS_DIR` is absent under every test, so the thread's
-    entire body is just one fast, early return (see
-    `test_warm_loop_returns_immediately_when_transcript_root_is_absent`).
+    """Default serving starts all four daemon warmers once per process.
+
+    Keep the real starters/guards and replace only loop bodies, so the
+    contract verifies startup without scanning data or leaving daemon loops.
     """
     started: list[threading.Thread] = []
-    original = APP_MODULE._start_warm_thread
+    original = threading.Thread
 
-    def _tracking_start() -> threading.Thread | None:
-        thread = original()
-        if thread is not None:
-            started.append(thread)
+    def tracking_thread(*args, **kwargs):
+        thread = original(*args, **kwargs)
+        started.append(thread)
         return thread
 
-    monkeypatch.setattr(APP_MODULE, "_start_warm_thread", _tracking_start)
+    for target in (
+        "_warm_loop",
+        "_today_warm_loop",
+        "_research_overview_loop",
+        "_paper_equity_loop",
+    ):
+        monkeypatch.setattr(APP_MODULE, target, lambda: None)
+    monkeypatch.setattr(APP_MODULE.threading, "Thread", tracking_thread)
 
     create_app()
     create_app()  # a second app in the same process must not add a second thread
 
-    assert len(started) == 1
-    assert started[0].daemon is True
-    started[0].join(timeout=2.0)
+    assert {thread.name for thread in started} == {
+        APP_MODULE._WARM_THREAD_NAME,
+        APP_MODULE._TODAY_WARM_THREAD_NAME,
+        APP_MODULE._OVERVIEW_WARM_THREAD_NAME,
+        "cockpit-paper-equity-warm",
+    }
+    assert len(started) == 4
+    for thread in started:
+        assert thread.daemon is True
+        thread.join(timeout=2.0)
+        assert not thread.is_alive()
 
 
-def test_create_app_warm_false_never_starts_the_thread() -> None:
+def test_create_app_warm_false_never_starts_the_thread(monkeypatch: pytest.MonkeyPatch) -> None:
+    def forbidden_start():
+        raise AssertionError("warm=False must disable every warmer")
+
+    for name in (
+        "_start_warm_thread",
+        "_start_today_warm_thread",
+        "_start_research_overview_thread",
+    ):
+        monkeypatch.setattr(APP_MODULE, name, forbidden_start)
     create_app(warm=False)
     assert APP_MODULE._WARM_THREAD_STARTED is False
+    assert APP_MODULE._TODAY_WARM_STARTED is False
+    assert APP_MODULE._OVERVIEW_WARM_STARTED is False
     assert not any(t.name == APP_MODULE._WARM_THREAD_NAME for t in threading.enumerate())
 
 

@@ -107,7 +107,9 @@ def make_trading_client(account: str, env_path: Path | str | None = None):
     account's configuration."""
     creds = load_account_credentials(account, env_path)
     try:
-        from alpaca.trading.client import TradingClient
+        from open_composer.adapters.broker.alpaca_exchange_compat import (
+            ExchangeCompatibleTradingClient as TradingClient,
+        )
     except ImportError as exc:  # pragma: no cover - alpaca-py is a project dependency
         raise BookAccountError("alpaca-py is required for book accounts") from exc
     from open_composer.adapters.broker.alpaca_paper import (

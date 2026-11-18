@@ -24,7 +24,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import resource
 import subprocess
 import threading
 from dataclasses import dataclass
@@ -36,6 +35,7 @@ import pyarrow.parquet as pq
 
 from open_composer.cockpit.security import secret_scrub
 from open_composer.config import project_root
+from open_composer.research.runtime_metrics import process_usage
 
 Status = Literal["ok", "warn", "stale", "unknown"]
 
@@ -122,11 +122,23 @@ def read_crontab() -> str:
     return result.stdout
 
 
+_WRAPPER_SCRIPTS = frozenset({"run_capped.sh", "book_v12_cron_clock.py"})
+
+
 def _derive_job_name(command: str) -> str:
-    match = re.search(r"([\w.-]+\.(?:py|sh))\b", command)
-    if match:
-        return match.group(1)
-    return command[:60].strip() or "unnamed job"
+    """The script that does the job's work: the last named script, skipping
+    wrappers (``run_capped.sh``) and clock gates chained in front of it, plus
+    its first ``--flag`` so jobs running the same script stay distinct."""
+    scripts = [
+        m for m in re.finditer(r"([\w.-]+\.(?:py|sh))\b", command)
+        if m.group(1) not in _WRAPPER_SCRIPTS
+    ]
+    if not scripts:
+        match = re.search(r"([\w.-]+\.(?:py|sh))\b", command)
+        return match.group(1) if match else (command[:60].strip() or "unnamed job")
+    last = scripts[-1]
+    flag = re.match(r"\s+(--[\w-]+)", command[last.end():])
+    return f"{last.group(1)} {flag.group(1)}" if flag else last.group(1)
 
 
 def _log_paths_under_logs(command: str, repo_root: Path) -> tuple[Path, ...]:
@@ -721,7 +733,7 @@ def build_memory_status() -> MemoryStatus | None:
 
 
 def build_process_status() -> ProcessStatus:
-    usage = resource.getrusage(resource.RUSAGE_SELF)
+    usage = process_usage()
     # Linux reports ru_maxrss in KiB (it is bytes on macOS, but this box is Linux).
     rss_bytes = usage.ru_maxrss * 1024
     # The acceptance bar for this app is RSS < 150MB; warn on the way there so

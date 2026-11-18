@@ -5,6 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from cockpit_contract_fixture import CARD_ID
+from cockpit_contract_fixture import cockpit_workspace as cockpit_workspace
 from fastapi.testclient import TestClient
 
 from open_composer.cockpit.app import create_app
@@ -398,11 +400,11 @@ def test_render_markdown_rejects_javascript_scheme_links() -> None:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(create_app())
+def client(cockpit_workspace: Path) -> TestClient:
+    return TestClient(create_app(warm=False))
 
 
-@pytest.mark.parametrize("path", ["/", "/hypotheses", "/lineage", "/card/H-20260919-01"])
+@pytest.mark.parametrize("path", ["/", "/hypotheses", "/lineage", f"/card/{CARD_ID}"])
 def test_screens_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
     assert response.status_code == 200
@@ -415,9 +417,10 @@ def test_bad_card_ids_return_4xx_not_500(client: TestClient, path: str) -> None:
 
 
 def test_card_detail_renders_body_and_results(client: TestClient) -> None:
-    response = client.get("/card/H-20260918-05")
+    response = client.get(f"/card/{CARD_ID}")
     assert response.status_code == 200
-    assert "h20260918_05_recent_menu" in response.text
+    assert "Synthetic fixture only" in response.text
+    assert "synthetic_result" in response.text
     assert "unstructured" in response.text
 
 

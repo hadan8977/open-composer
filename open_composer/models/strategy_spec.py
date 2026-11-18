@@ -1055,6 +1055,7 @@ class ExecutionPolicy(BaseModel):
     policy_id: str = Field(min_length=1)
     order_style: Literal[
         "day_market",
+        "day_limit",  # Scoped adapter only; generic paper execution rejects it.
         "moo_market",
         "opg_limit",
         "loo_limit",

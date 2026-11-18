@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "scope": "offline CLI contract, no provider was launched",
+  "tools": {
+    "codex": [".venv/bin/python", "scripts/research_tools.py", "search", "drawdown", "--budget", "128"],
+    "claude": [".venv/bin/python", "scripts/research_tools.py", "search", "drawdown", "--budget", "128"]
+  },
+  "claude_examples": {
+    "start": ["claude", "-p", "Use the project research_tools CLI", "--output-format", "json"],
+    "resume": ["claude", "-p", "Continue the saved task", "--resume", "fixture-session", "--output-format", "json"],
+    "structured": ["claude", "-p", "Return the requested object", "--output-format", "json", "--json-schema", "{\"type\":\"object\",\"properties\":{\"state\":{\"type\":\"string\"}},\"required\":[\"state\"]}"]
+  },
+  "claude_result_fixture": {
+    "session_id": "fixture-session",
+    "structured_output": {
+      "status": "blocked",
+      "summary": "Offline fixture; no economic result",
+      "decision": "none",
+      "results": null,
+      "next_brief": null,
+      "checkpoint": null,
+      "next_review": "reuse",
+      "wait": null
+    }
+  }
+}

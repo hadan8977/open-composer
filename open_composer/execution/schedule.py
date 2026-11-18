@@ -55,7 +55,7 @@ def suggest_crontab_line(spec_path: Path, spec: StrategySpec, *, root: Path | No
         f'cd {base} && export PATH="$HOME/.local/bin:$PATH" && '
         f"export UV_CACHE_DIR=/tmp/open-composer-uv-cache && "
         # --class paper: a scheduled bar-cycle runner feeds paper orders, so it runs outside
-        # the research memory budget and is never queued or refused (docs/runbook-memory.zh.md).
+        # the research memory budget and is never queued or refused (docs/local-vps-migration.zh.md).
         f"./scripts/run_capped.sh --class paper --mem 1.8G -- "
         f"uv run python scripts/run_bar_cycle.py "
         f"--spec {spec_rel} >> logs/{spec.name}_bar_cycle_cron.log 2>&1"

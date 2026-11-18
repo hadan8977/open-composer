@@ -4,7 +4,7 @@
 this module renders the exact same underlying data as JSON, one endpoint per
 HTML route, so a static single-page front end (the future ``/v2`` build, and
 eventually a native SwiftUI client -- see
-``docs/cockpit/plan-two-frontends-2026-09-20.zh.md`` section 2, path C) can
+``Git tag pre-prune-20261118, former two-frontends plan`` section 2, path C) can
 render every screen without a server-side template engine.
 
 Design constraints (see the plan and the T11 brief this module implements):
@@ -70,11 +70,16 @@ from open_composer.cockpit.data.hypotheses import (
 from open_composer.cockpit.data.overview import get_default_research_overview_cache
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
-    build_paper_report,
+    account_equity_reading,
+    build_account_equity_history,
     build_strategy_detail,
     compute_equity_chart_layout,
     discover_strategy_names,
 )
+from open_composer.cockpit.data.paper_comparison import build_paper_comparison
+from open_composer.cockpit.data.paper_dashboard import build_paper_dashboard, get_dashboard_report
+from open_composer.cockpit.data.paper_history import load_paper_history
+from open_composer.cockpit.data.paper_overview import load_paper_overview
 from open_composer.cockpit.data.quota import build_quota_report, get_default_claude_cache
 from open_composer.cockpit.data.reports import (
     KINDS,
@@ -346,13 +351,29 @@ def register_api_routes(app: FastAPI, *, status_context: Callable[[], dict[str, 
     def api_paper() -> JSONResponse:
         """Mirrors `open_composer.cockpit.app.paper_index_page`."""
         root = project_root()
-        report = build_paper_report(root)
+        report = get_dashboard_report(root)
+        overview = load_paper_overview(root)
         payload = {
             "generated_at": to_jsonable(datetime.now(UTC), root=root),
             "report": to_jsonable(report, root=root),
             "auth_state_labels": to_jsonable(AUTH_STATE_LABELS, root=root),
+            "paper_history": load_paper_history(root),
+            "paper_overview": overview,
+            "dashboard": build_paper_dashboard(overview, report),
+            "account_equity": to_jsonable(
+                account_equity_reading(build_account_equity_history(root)), root=root
+            ),
         }
         return _json(payload)
+
+    @app.get("/api/paper-comparison.json")
+    def api_paper_comparison() -> JSONResponse:
+        root = project_root()
+        overview = load_paper_overview(root)
+        dashboard = build_paper_dashboard(overview, get_dashboard_report(root))
+        return _json(
+            build_paper_comparison(load_paper_history(root), overview, dashboard, root=root)
+        )
 
     @app.get("/api/paper/{strategy}.json")
     def api_paper_detail(strategy: str) -> JSONResponse:

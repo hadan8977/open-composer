@@ -616,6 +616,7 @@ _REAL_SPEC_PATH = (
 )
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(
     not _ARCHIVE_PRESENT, reason="local SIP minute archive (data/sip/minute) is not present"
 )

@@ -121,30 +121,40 @@ def _lock_path(out: Path) -> Path:
 
 @contextlib.contextmanager
 def _exclusive_lock(out: Path):
-    """A simple O_CREAT|O_EXCL lock file; refuses rather than waits.
+    """An exclusive ``flock`` on the lock file; refuses rather than waits.
 
-    This intentionally does not detect or clear a stale lock automatically --
-    a leftover lock from a crashed run should be loud (the next scheduled run
-    fails and says why) rather than silently cleared, which is exactly the
-    "fail closed, not silent" convention ``check_sip_freshness.py`` already
-    uses for this archive.
+    The kernel releases the lock when the holding process exits for any reason
+    (including the memory governor stopping it), so a crashed or killed run no
+    longer leaves a lock that blocks every later run until removed by hand
+    (2026-11-11/12: two such leftovers stopped the quant1 refresh). A second
+    concurrent run still fails loudly.
     """
+    import fcntl
+
     lock_path = _lock_path(out)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(lock_path, os.O_CREAT | os.O_WRONLY, 0o644)
     try:
-        fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError as exc:
-        raise UpdateLockedError(
-            f"{lock_path} already exists -- another update_sip_archive.py run is active "
-            "or a previous run crashed without cleaning up. Confirm no process is running "
-            "(pgrep -f update_sip_archive.py) and remove the lock file by hand before retrying."
-        ) from exc
-    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise UpdateLockedError(
+                f"{lock_path} is held by another running update_sip_archive.py"
+            ) from exc
+        try:
+            same_file = os.fstat(fd).st_ino == os.stat(lock_path).st_ino
+        except FileNotFoundError:
+            same_file = False
+        if not same_file:  # the previous holder removed the file between open and lock
+            raise UpdateLockedError(f"{lock_path} was replaced by another run; retry")
+        os.ftruncate(fd, 0)
         os.write(fd, f"{os.getpid()} {datetime.now(UTC).isoformat()}\n".encode())
-        os.close(fd)
-        yield
+        try:
+            yield
+        finally:
+            lock_path.unlink(missing_ok=True)
     finally:
-        lock_path.unlink(missing_ok=True)
+        os.close(fd)
 
 
 def _refuse_if_bulk_fetch_active() -> None:
@@ -233,7 +243,11 @@ def _as_rows(frame: pd.DataFrame | None) -> pd.DataFrame:
 
 
 def detect_restated_symbols(
-    existing: pd.DataFrame, fetched: pd.DataFrame, *, rtol: float = RESTATEMENT_RTOL
+    existing: pd.DataFrame,
+    fetched: pd.DataFrame,
+    *,
+    rtol: float = RESTATEMENT_RTOL,
+    before: datetime | None = None,
 ) -> dict[str, float]:
     """Symbols whose overlapping (symbol, timestamp) rows changed price level.
 
@@ -244,6 +258,12 @@ def detect_restated_symbols(
         return {}
     old = _as_rows(existing)
     new = _as_rows(fetched)
+    if before is not None:
+        cutoff = pd.Timestamp(before)
+        if cutoff.tzinfo is None:
+            raise ValueError("restatement comparison cutoff must be timezone-aware")
+        old = old.loc[old["timestamp"] < cutoff]
+        new = new.loc[new["timestamp"] < cutoff]
     columns = [c for c in PRICE_COLUMNS if c in old.columns and c in new.columns]
     if not columns:
         return {}
@@ -526,6 +546,21 @@ def process_restatements(
     return records
 
 
+def _daily_history_cutoff(now: datetime) -> datetime:
+    """Today's daily bar may have been cached before the session completed.
+
+    Merge that bar normally, but use only earlier NY dates to infer a change
+    to the historical price basis. Existing queued obligations are untouched.
+    """
+    return (
+        pd.Timestamp(now)
+        .tz_convert("America/New_York")
+        .normalize()
+        .tz_convert("UTC")
+        .to_pydatetime()
+    )
+
+
 def repair_full_window(
     data_client,
     out: Path,
@@ -544,7 +579,9 @@ def repair_full_window(
         frame = _fetch(data_client, symbols, year_start, now, "daily")
         if frame is None or len(frame) == 0:
             continue
-        restated.update(detect_restated_symbols(existing, _as_rows(frame)))
+        restated.update(
+            detect_restated_symbols(existing, _as_rows(frame), before=_daily_history_cutoff(now))
+        )
     LOG.info("repair-full-window: %d restated symbol(s) found", len(restated))
     ordered = _priority_order(restated, priority)
     return rewrite_full_history(
@@ -688,7 +725,9 @@ def update_existing_shards(
             if frame is None or frame.empty:
                 continue
             fetched = frame.reset_index()
-            changed = detect_restated_symbols(existing, fetched)
+            changed = detect_restated_symbols(
+                existing, fetched, before=_daily_history_cutoff(now) if kind == "daily" else None
+            )
             if changed and kind == "daily":
                 for symbol, diff in changed.items():
                     detected[symbol] = max(diff, detected.get(symbol, 0.0))
@@ -852,8 +891,8 @@ def main() -> int:
     parser.add_argument(
         "--repair-full-window",
         action="store_true",
-        help="Daily only: refetch the whole current year, find symbols whose stored rows no "
-        "longer match the vendor and rewrite their full history.",
+        help="Daily only: compare prior New York dates in the current year against the vendor "
+        "and rewrite affected history. Today's bar is merged by the regular update.",
     )
     args = parser.parse_args()
 

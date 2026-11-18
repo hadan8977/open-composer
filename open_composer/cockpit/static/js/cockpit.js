@@ -19,8 +19,9 @@
   var wide = window.matchMedia("(min-width: 900px)");
   var current = null;
   var stream = null;
+  var detailRequest = 0;
 
-  var SAFE_PATH = /^\/[A-Za-z0-9._~\/-]*$/;
+  var SAFE_PATH = /^\/[A-Za-z0-9._~%:\/-]*$/;
 
   function body() {
     return wide.matches
@@ -41,13 +42,15 @@
 
   function open(path, row) {
     if (!SAFE_PATH.test(path)) return;
+    var request = ++detailRequest;
     var url = path + (path.indexOf("?") < 0 ? "?" : "&") + "partial=1";
     fetch(url, { headers: { Accept: "text/html" }, credentials: "same-origin" })
       .then(function (r) {
-        if (!r.ok) throw new Error(String(r.status));
+        if (!r.ok || r.redirected) throw new Error(String(r.status));
         return r.text();
       })
       .then(function (html) {
+        if (request !== detailRequest) return;
         var target = body();
         target.innerHTML = html;
         var titled = target.querySelector("[data-title]");
@@ -66,12 +69,14 @@
         startStream(target);
       })
       .catch(function () {
+        if (request !== detailRequest) return;
         // A failed partial falls back to the full page.
         location.href = path;
       });
   }
 
   function close() {
+    detailRequest++;
     stopStream();
     if (sheet && sheet.open) sheet.close();
     if (inspector) inspector.hidden = true;
@@ -185,6 +190,7 @@
 
   function applyFilter(query) {
     var q = query.trim().toLowerCase();
+    window.dispatchEvent(new CustomEvent('cockpit:filter', {detail:q}));
     var lanes = document.querySelectorAll("details[data-lane]");
     for (var l = 0; l < lanes.length; l++) {
       if (q !== "") {
@@ -218,6 +224,8 @@
       var lane = groups[g].closest("details[data-lane]");
       if (lane) lane.hidden = groups[g].hidden;
     }
+    var paperEmpty = document.querySelector('.paper-filter-empty');
+    if (paperEmpty) paperEmpty.hidden = !q || !!document.querySelector('.paper-ledger[data-filter]:not([hidden])');
   }
 
   var filters = document.querySelectorAll("#filter, #filter-m");
@@ -340,7 +348,7 @@
   })();
 
   function isScreen(path) {
-    return screens.indexOf(path) >= 0;
+    return screens.indexOf(path) >= 0 || path === '/paper/accounts' || path === '/paper/history' || path === '/research/overview';
   }
 
   function fetchPage(path) {
@@ -425,6 +433,8 @@
   }
 
   function setActive(path) {
+    if (path.indexOf('/paper/') === 0) path = '/paper';
+    if (path === '/research/overview') path = '/research';
     var links = document.querySelectorAll("[data-screen], #tabbar a");
     for (var i = 0; i < links.length; i++) {
       var paths = (links[i].getAttribute("data-paths") || links[i].getAttribute("href")).split(" ");
@@ -460,6 +470,8 @@
     window.scrollTo(0, 0);
     startStream(document);
     openDeep(hash);
+    applyPaperUnit();
+    window.dispatchEvent(new Event('cockpit:content'));
   }
 
   function go(path, mode, anchor) {
@@ -540,6 +552,7 @@
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState !== "visible") return;
+    if (document.querySelector('[data-paper-refresh]')) return;
     var here = location.pathname;
     if (!isScreen(here) || current) return;
     var have = pages[here];
@@ -553,6 +566,76 @@
   });
 
   // ---- tooltips and tile light ----
+  // Delegated controls work on first load and after cached screen navigation.
+  var paperUnit = 'pnl_usd';
+  function applyPaperUnit() {
+    document.querySelectorAll('[data-paper-overview]').forEach(function (node) {
+      node.setAttribute('data-unit', paperUnit);
+      node.querySelectorAll('[data-paper-unit]').forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.getAttribute('data-paper-unit') === paperUnit));
+      });
+      node.querySelectorAll('[data-paper-chart]').forEach(function (chart) {
+        chart.hidden = chart.getAttribute('data-paper-chart') !== paperUnit;
+      });
+    });
+  }
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-paper-unit]');
+    if (!button) return;
+    paperUnit = button.getAttribute('data-paper-unit');
+    applyPaperUnit();
+    hideTip();
+  });
+  document.addEventListener('focusin', function (event) {
+    if (event.target.matches('[data-tip]')) {
+      var rect = event.target.getBoundingClientRect();
+      showTip(event.target, rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+  });
+  document.addEventListener('focusout', function (event) {
+    if (event.target.matches('[data-tip]')) hideTip();
+  });
+  // Refresh only the financial workspace; retain route, open detail, filter,
+  // chart unit and scroll. A new HTTP response never changes valuation time.
+  var paperRefreshing = false;
+  async function refreshPaper() {
+    var workspace = document.querySelector('[data-paper-refresh]');
+    if (document.hidden || paperRefreshing || !workspace) return;
+    paperRefreshing = true;
+    var route = location.pathname;
+    try {
+      var response = await fetch(route, {cache:'no-store', credentials:'same-origin'});
+      if (!response.ok || response.redirected) return;
+      var doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+      var next = doc.querySelector('[data-paper-refresh]');
+      if (!next || route !== location.pathname || !workspace.isConnected) return;
+      var comparison = next.querySelector('[data-native-comparison] script[type="application/json"]');
+      if (comparison && workspace.querySelector('[data-native-comparison]')) {
+        window.dispatchEvent(new CustomEvent('cockpit:comparison', {detail:JSON.parse(comparison.textContent)}));
+        pages[route] = {doc:doc, at:Date.now()};
+        return;
+      }
+      var active = document.activeElement;
+      var focusedUnit = workspace.contains(active) ? active.getAttribute('data-paper-unit') : null;
+      var focusedHref = workspace.contains(active) ? active.getAttribute('href') : null;
+      var y = window.scrollY;
+      workspace.innerHTML = next.innerHTML;
+      applyPaperUnit();
+      var filter = document.getElementById(wide.matches ? 'filter' : 'filter-m');
+      applyFilter(filter ? filter.value : '');
+      workspace.querySelectorAll('[data-paper-unit], a[href]').forEach(function (el) {
+        if ((focusedUnit && el.getAttribute('data-paper-unit') === focusedUnit) ||
+            (focusedHref && el.getAttribute('href') === focusedHref)) el.focus({preventScroll:true});
+        if (current && el.getAttribute('href') === current) el.classList.add('is-selected');
+      });
+      window.scrollTo(0, y);
+      pages[route] = {doc:doc, at:Date.now()};
+    } catch (_) {
+      // Keep the last complete view on a transport failure.
+    } finally { paperRefreshing = false; }
+  }
+  setInterval(refreshPaper, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshPaper(); });
   // One floating card for every [data-tip] mark (equity columns, activity
   // LEDs, token bars, status ticks). Text goes in with textContent. Tiles get
   // --mx/--my so the CSS light under the pointer can follow it.

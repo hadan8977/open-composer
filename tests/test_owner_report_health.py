@@ -67,6 +67,19 @@ def test_genuine_pause_does_not_become_false_missing_report_alarm(tmp_path):
     assert report_event_health(tmp_path, EVENT)["status"] == "not_authorized"
 
 
+def test_mail_writer_resume_keeps_chat_paused_and_global_pause_dominates(tmp_path):
+    write_state(tmp_path, {})
+    hold = tmp_path / "reports/research/control/owner-compute-hold.json"
+    reporting = {"allowed": True, "actions": {"writer": True, "mail": True, "round": False}}
+    hold.write_text(json.dumps({"reporting": reporting}))
+    assert report_event_health(tmp_path, "writer-2026-10-28")["status"] == "missing_business_result"
+    assert report_event_health(tmp_path, EVENT)["status"] == "not_authorized"
+    assert report_event_health(tmp_path, "daily-2026-10-28")["status"] == "not_authorized"
+    reporting["allowed"] = False
+    hold.write_text(json.dumps({"reporting": reporting}))
+    assert report_event_health(tmp_path, "writer-2026-10-28")["status"] == "not_authorized"
+
+
 def test_changed_bound_report_is_not_silently_accepted(tmp_path):
     write_state(
         tmp_path,

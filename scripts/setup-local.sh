@@ -34,6 +34,9 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
+if [[ "$DRY_RUN" -eq 0 && ! -e .claude/skills ]]; then
+  ln -s ../.agents/skills .claude/skills || exit 1
+fi
 
 # ---------- ansi colors ----------
 if [[ -t 1 ]]; then

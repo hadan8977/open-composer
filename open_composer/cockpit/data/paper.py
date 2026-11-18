@@ -49,6 +49,13 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from open_composer.cockpit.data.health import Status
+from open_composer.cockpit.data.paper_books import (
+    AccountBook,
+    IntradayConfiguration,
+    load_account_books,
+    load_intraday_configurations,
+)
+from open_composer.cockpit.data.paper_trials import ValidationTrial, load_validation_trials
 from open_composer.cockpit.security import secret_scrub
 from open_composer.config import project_root
 from open_composer.market_sessions import previous_us_equity_session, us_equity_session_dates
@@ -1130,6 +1137,46 @@ def build_account_equity_history(
     last_of_day: dict[date, EquityPoint] = {}
     for point in ordered:
         last_of_day[session_of(point.at)] = point
+    # Only received broker daily ACCOUNT observations can restore an account
+    # gap. Sleeve reconstructions and independent million-dollar accounts never
+    # enter this series. Original snapshot absence remains recorded separately.
+    from open_composer.cockpit.data.paper_history import load_paper_history
+
+    historical = load_paper_history(base)
+    account_file = (
+        _read_json_object(base / "reports/paper/account.json", warnings) or {}
+        if historical.get("available")
+        else {}
+    )
+    identity = account_file.get("broker_account_id_hash")
+    recovered_count = 0
+    for row in historical.get("histories", []):
+        if (
+            not isinstance(identity, str)
+            or len(identity) != 64
+            or row.get("id") != "account/legacy/broker-daily"
+            or row.get("account_hash") != identity
+        ):
+            continue
+        for point in row["points"]:
+            if point.get("valuation") != "recovered_broker_1D_account_equity":
+                continue
+            value, at = _num(point.get("equity_usd")), _parse_dt(point.get("at"))
+            if value is None or at is None:
+                continue
+            session = date.fromisoformat(point["day"])
+            if session not in last_of_day and session_of(at) == session:
+                recovered = EquityPoint(
+                    at=at, equity=value, source="recovered_broker_daily_account_observation"
+                )
+                last_of_day[session] = recovered
+                ordered.append(recovered)
+                recovered_count += 1
+    ordered.sort(key=lambda point: point.at)
+    if recovered_count:
+        warnings.append(
+            f"{recovered_count} missing sessions restored from bound broker daily history"
+        )
     days: list[AccountEquityDay] = []
     if last_of_day:
         for session in us_equity_session_dates(min(last_of_day), max(last_of_day)):
@@ -1141,6 +1188,33 @@ def build_account_equity_history(
         observations=len(ordered),
         warnings=tuple(warnings),
     )
+
+
+def account_equity_reading(
+    history: AccountEquityHistory, *, now: datetime | None = None
+) -> dict[str, Any]:
+    """Describe account observations, without claiming flow-adjusted profit."""
+    from open_composer.cockpit.data.paper_books import latest_completed_session
+
+    expected = latest_completed_session(_now(now))
+    market_day = session_of(history.latest.at) if history.latest else None
+    missing = [day.day for day in history.days if day.point is None]
+    if market_day is not None and market_day < expected:
+        missing.extend(us_equity_session_dates(market_day + timedelta(days=1), expected))
+    return {
+        "history": history,
+        "market_as_of": market_day,
+        "expected_session": expected,
+        "missing_sessions": tuple(missing),
+        "recovered_sessions": tuple(
+            day.day
+            for day in history.days
+            if day.point and day.point.source.startswith("recovered_broker")
+        ),
+        "change_usd": history.change,
+        "change_pct": history.change_pct,
+        "net_pnl_usd": None,
+    }
 
 
 # --------------------------------------------------------------------------
@@ -1394,6 +1468,68 @@ def build_sleeve_performance(
     if budget is None:
         warnings.append(f"{strategy_name}: no notional_budget_usd in its draft spec")
         return _empty("no_budget")
+    # Once a sealed reconciliation is published, use its owned executions and
+    # raw share-unit marks throughout the existing cards/detail views too.
+    # Falling back to the adjusted research archive would reintroduce a second
+    # conflicting result beside the corrected history.
+    if (base / "config/paper-history-dashboard.json").exists():
+        from open_composer.cockpit.data.paper_history import load_paper_history
+
+        received = load_paper_history(base)
+        row = next(
+            (h for h in received.get("histories", []) if h["id"] == "legacy/" + strategy_name),
+            None,
+        )
+        if not row or not row.get("points"):
+            warnings.append("Published raw-unit reconciliation unavailable for this sleeve")
+            return _empty("no_prices")
+        days = []
+        for point in row["points"]:
+            session = date.fromisoformat(point["day"])
+            value = _num(point.get("nav_before_unverified_items_usd"))
+            days.append(
+                AccountEquityDay(
+                    day=session,
+                    point=None
+                    if value is None
+                    else EquityPoint(
+                        at=datetime(session.year, session.month, session.day, 20, tzinfo=UTC),
+                        equity=value,
+                        source="reconstructed_owned_fills_raw_close_before_unverified_items",
+                    ),
+                )
+            )
+        observed = [day.point for day in days if day.point]
+        if not observed:
+            warnings.append("No supported raw-unit sleeve valuation")
+            return _empty("no_prices")
+        start = days[0].day
+        history = AccountEquityHistory(
+            days=tuple(days),
+            first=EquityPoint(
+                at=datetime(start.year, start.month, start.day, 13, 30, tzinfo=UTC),
+                equity=budget,
+                source="sleeve_allocated_capital",
+            ),
+            latest=observed[-1],
+            observations=len(observed),
+            warnings=(),
+        )
+        warnings.append(
+            "Raw-close trading component; actual fee/income net remains separately qualified"
+        )
+        return SleevePerformance(
+            budget=budget,
+            history=history,
+            start_session=start,
+            last_session=session_of(observed[-1].at),
+            nav=observed[-1].equity,
+            return_pct=(observed[-1].equity / budget - 1) * 100,
+            benchmark_return_pct=None,
+            sessions_live=len(days),
+            status="live",
+            warnings=tuple(warnings),
+        )
     start = fills[0].session
     symbols = tuple(sorted({fill.symbol for fill in fills} | {BENCHMARK_SYMBOL}))
     prices = load_session_prices(base, symbols, start)
@@ -1684,6 +1820,9 @@ class PaperAccountReport:
     open_order_count: int | None
     strategies: tuple[StrategySummary, ...]
     warnings: tuple[str, ...]
+    validation_trials: tuple[ValidationTrial, ...] = ()
+    account_books: tuple[AccountBook, ...] = ()
+    intraday_configurations: tuple[IntradayConfiguration, ...] = ()
 
 
 def build_paper_report(
@@ -1718,6 +1857,9 @@ def build_paper_report(
         open_order_count=open_order_count,
         strategies=tuple(summaries),
         warnings=tuple(warnings),
+        validation_trials=load_validation_trials(base, now=now),
+        account_books=load_account_books(base, now=now),
+        intraday_configurations=load_intraday_configurations(base),
     )
 
 

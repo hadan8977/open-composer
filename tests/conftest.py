@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import os
 import re
 import sys
+import tempfile
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -16,7 +16,7 @@ import pytest
 import yaml
 
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.paper_controls import clear_paper_kill_switch
+from open_composer.research.file_lock import lock_file
 from open_composer.research.iteration_dossier import (
     candidate_authorization_binding_sha256,
     init_iteration_dossier,
@@ -25,7 +25,7 @@ from open_composer.research.iteration_dossier import (
 from open_composer.strategy_versions import strategy_content_hash
 
 _PATH_PREFIX_PATTERN = re.compile(r"(reports|strategy_specs|signal_logs|data|\.codex|\.agents)\\")
-_PYTEST_LOCK_PATH = Path("/tmp/open-composer-pytest.lock")
+_PYTEST_LOCK_PATH = Path(tempfile.gettempdir()) / "open-composer-pytest.lock"
 _PYTEST_LOCK_ENV = "OC_PYTEST_LOCK_HELD"
 _PYTEST_LOCK_KEY = pytest.StashKey[object]()
 
@@ -37,12 +37,23 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=False,
         help="also run tests marked `slow` (full-round replay/training-heavy).",
     )
+    parser.addoption(
+        "--research-snapshots",
+        action="store_true",
+        default=False,
+        help="include optional integrations against retained real-history research snapshots.",
+    )
 
 
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers",
         "slow: full-round replay/training-heavy tests, run via `make test-full` / `make verify`.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "research_snapshot: optional real-history snapshot integration; requires "
+        "--research-snapshots and the declared local data. Run when its code/data changes.",
     )
     _hold_pytest_lock(config)
 
@@ -51,7 +62,7 @@ def _hold_pytest_lock(config: pytest.Config) -> None:
     """One pytest run at a time in this repo (memory budget, owner 2026-10-07).
 
     A full run takes about 1 GB; on 2026-10-07 two agents' runs overlapped and, with the
-    rest of the project, left the owner under 500 MB free (docs/runbook-memory.zh.md).
+    rest of the project, left the owner under 500 MB free (docs/local-vps-migration.zh.md).
     A second run waits here, up to OC_PYTEST_LOCK_WAIT seconds (default 3600). Child
     processes inherit OC_PYTEST_LOCK_HELD and skip the lock.
     """
@@ -59,21 +70,26 @@ def _hold_pytest_lock(config: pytest.Config) -> None:
         return
     handle = _PYTEST_LOCK_PATH.open("a+")
     try:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_file(handle, blocking=False)
     except BlockingIOError:
         wait = float(os.environ.get("OC_PYTEST_LOCK_WAIT", "3600"))
         handle.seek(0)
-        holder = handle.read().strip() or "unknown holder"
+        try:
+            holder = handle.read().strip() or "unknown holder"
+        except PermissionError:
+            # Windows exclusive byte locks also prohibit reads through a
+            # different handle. Holder text is diagnostic, not lock authority.
+            holder = "unknown holder"
         print(
             f"pytest: another run in this repo holds {_PYTEST_LOCK_PATH} ({holder}); "
-            f"waiting up to {wait:.0f}s (memory budget, docs/runbook-memory.zh.md)",
+            f"waiting up to {wait:.0f}s (memory budget, docs/local-vps-migration.zh.md)",
             file=sys.stderr,
         )
         deadline = time.monotonic() + wait
         while True:
             time.sleep(5)
             try:
-                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                lock_file(handle, blocking=False)
                 break
             except BlockingIOError:
                 if time.monotonic() >= deadline:
@@ -91,9 +107,7 @@ def _hold_pytest_lock(config: pytest.Config) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _cockpit_quota_no_live_network(
-    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory
-) -> None:
+def _cockpit_quota_no_live_network(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Every test runs with no real Claude credentials on the quota lookup path.
 
     ``open_composer.cockpit.data.quota`` resolves a Claude OAuth token from
@@ -143,7 +157,9 @@ def _cockpit_quota_no_live_network(
     arguments pointed at a ``tmp_path`` with synthetic JSONL, the same
     override pattern as the three credential sources.
     """
-    missing_dir = tmp_path_factory.mktemp("no-claude-credentials")
+    # Reuse the per-test directory; mktemp scans the shared numbered directory
+    # each time. Keep these named children absent so readers take their empty path.
+    missing_dir = tmp_path / "no-claude-credentials"
     monkeypatch.setattr(
         "open_composer.cockpit.data.quota.CLAUDE_CREDENTIALS_PATH",
         missing_dir / ".credentials.json",
@@ -153,12 +169,12 @@ def _cockpit_quota_no_live_network(
     )
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
 
-    no_transcripts_dir = tmp_path_factory.mktemp("no-claude-transcripts")
+    no_transcripts_dir = tmp_path / "no-claude-transcripts"
     monkeypatch.setattr(
         "open_composer.cockpit.data.quota.CLAUDE_PROJECTS_DIR",
         no_transcripts_dir / "projects-do-not-exist",
     )
-    no_subagent_dir = tmp_path_factory.mktemp("no-subagent-transcripts")
+    no_subagent_dir = tmp_path / "no-subagent-transcripts"
     monkeypatch.setattr(
         "open_composer.cockpit.data.quota.SUBAGENT_TASKS_ROOT",
         no_subagent_dir / "claude-0-does-not-exist",
@@ -178,22 +194,22 @@ def _cockpit_quota_no_live_network(
     # that want real scanning behavior pass their own `root=`/`claude_root=`/
     # `codex_root=`/`subagent_root=` pointed at a `tmp_path` with synthetic
     # fixtures, the same override pattern as the sources above.
-    no_agents_dir = tmp_path_factory.mktemp("no-paseo-agents")
+    no_agents_dir = tmp_path / "no-paseo-agents"
     monkeypatch.setattr(
         "open_composer.cockpit.data.agents.PASEO_AGENTS_DIR",
         no_agents_dir / "agents-do-not-exist",
     )
-    no_agent_transcripts_dir = tmp_path_factory.mktemp("no-agent-claude-transcripts")
+    no_agent_transcripts_dir = tmp_path / "no-agent-claude-transcripts"
     monkeypatch.setattr(
         "open_composer.cockpit.data.agents.CLAUDE_PROJECTS_DIR",
         no_agent_transcripts_dir / "projects-do-not-exist",
     )
-    no_agent_subagent_dir = tmp_path_factory.mktemp("no-agent-subagent-transcripts")
+    no_agent_subagent_dir = tmp_path / "no-agent-subagent-transcripts"
     monkeypatch.setattr(
         "open_composer.cockpit.data.agents.SUBAGENT_TASKS_ROOT",
         no_agent_subagent_dir / "claude-0-does-not-exist",
     )
-    no_codex_dir = tmp_path_factory.mktemp("no-codex-sessions")
+    no_codex_dir = tmp_path / "no-codex-sessions"
     monkeypatch.setattr(
         "open_composer.cockpit.data.agents.CODEX_SESSIONS_DIR",
         no_codex_dir / "sessions-do-not-exist",
@@ -201,13 +217,22 @@ def _cockpit_quota_no_live_network(
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    """Skip `slow` tests by default so the day-to-day suite stays a few minutes.
+    """Separate portable checks, synthetic slow tests and optional real-history integrations.
 
     ``pyproject.toml`` is hash-pinned by a sealed campaign's preregistration lock,
     so the default exclusion lives here instead of in ``addopts``. Opt back in with
     ``--runslow`` (what ``make test-full`` and ``make verify`` use) or by selecting
-    them explicitly with ``-m``.
+    them explicitly with ``-m``. Real-history snapshots need their own explicit
+    ``--research-snapshots`` option, independently of slow-test or marker selection.
     """
+    if not config.getoption("--research-snapshots"):
+        skip_snapshot = pytest.mark.skip(
+            reason="optional research snapshot: use --research-snapshots / "
+            "`make test-research-snapshots` when the relevant code/data changes"
+        )
+        for item in items:
+            if item.get_closest_marker("research_snapshot"):
+                item.add_marker(skip_snapshot)
     if config.getoption("--runslow") or config.getoption("-m"):
         return
     skip_slow = pytest.mark.skip(reason="slow: run with --runslow / `make test-full`")
@@ -294,6 +319,8 @@ def sample_workspace(tmp_path: Path, repo_root: Path, fixture_specs_root: Path) 
     )
     # Paper submissions now require an explicit control artifact; the shared fixture
     # establishes a deliberately clear state rather than relying on an absent file.
+    from open_composer.paper_controls import clear_paper_kill_switch
+
     clear_paper_kill_switch(
         tmp_path,
         reason="test fixture clear state",

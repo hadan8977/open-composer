@@ -428,17 +428,17 @@ def _sip_bars(symbol: str, timestamps: pd.DatetimeIndex, *, base: float = 100.0)
 
 
 def test_fetch_ohlcv_sip_parquet_returns_single_symbol_frame_with_provenance(
-    sample_workspace: Path,
+    tmp_path: Path,
 ) -> None:
     from open_composer.adapters.data.sip_parquet import clear_sip_index_cache
 
     clear_sip_index_cache()
-    sip_root = sample_workspace / "data" / "sip"
+    sip_root = tmp_path / "data" / "sip"
     timestamps = pd.bdate_range("2023-01-02", "2023-01-31", tz="UTC")
     _write_sip_daily_shard(sip_root, 2023, _sip_bars("QQQ", timestamps, base=300.0))
 
     frame = fetch_ohlcv(
-        root=sample_workspace,
+        root=tmp_path,
         symbol="QQQ",
         timeframe="daily",
         start=None,
@@ -456,6 +456,7 @@ def test_fetch_ohlcv_sip_parquet_returns_single_symbol_frame_with_provenance(
         "volume",
         "trade_count",
         "vwap",
+        "source_version",
     ]
     assert len(frame) == len(timestamps)
     assert frame.attrs["data_source_mode"] == "sip_parquet"
@@ -464,10 +465,10 @@ def test_fetch_ohlcv_sip_parquet_returns_single_symbol_frame_with_provenance(
     clear_sip_index_cache()
 
 
-def test_fetch_ohlcv_sip_parquet_rejects_non_daily_timeframe(sample_workspace: Path) -> None:
+def test_fetch_ohlcv_sip_parquet_rejects_non_daily_timeframe(tmp_path: Path) -> None:
     try:
         fetch_ohlcv(
-            root=sample_workspace,
+            root=tmp_path,
             symbol="QQQ",
             timeframe="1m",
             start=None,
@@ -480,12 +481,12 @@ def test_fetch_ohlcv_sip_parquet_rejects_non_daily_timeframe(sample_workspace: P
 
 
 def test_load_ohlcv_for_spec_dispatches_to_sip_parquet_via_data_path(
-    sample_workspace: Path,
+    tmp_path: Path,
 ) -> None:
     from open_composer.adapters.data.sip_parquet import clear_sip_index_cache
 
     clear_sip_index_cache()
-    sip_root = sample_workspace / "data" / "sip"
+    sip_root = tmp_path / "data" / "sip"
     timestamps = pd.bdate_range("2024-01-01", "2024-01-31", tz="UTC")
     _write_sip_daily_shard(sip_root, 2024, _sip_bars("QQQ", timestamps, base=400.0))
 
@@ -502,7 +503,7 @@ def test_load_ohlcv_for_spec_dispatches_to_sip_parquet_via_data_path(
         data={"source": "alpaca", "symbol": "QQQ", "path": "data/sip/daily"},
     )
 
-    frame = load_ohlcv_for_spec(spec, sample_workspace)
+    frame = load_ohlcv_for_spec(spec, tmp_path)
 
     assert len(frame) == len(timestamps)
     assert frame.attrs["data_source_mode"] == "sip_parquet"

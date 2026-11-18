@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -10,7 +12,6 @@ import typer
 from rich.console import Console
 
 from open_composer.book_paper.accounts import (
-    BookAccountError,
     credential_variable_names,
     make_trading_client,
     present_variables,
@@ -52,7 +53,10 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
     from open_composer.book_paper.plan import (
         OrderLookup,
         build_plan,
+        load_plan_file,
         make_asset_lookup,
+        orders_receipt_path,
+        plan_path,
         read_account_state,
     )
     from open_composer.book_paper.targets import latest_target_path, load_target_file, target_path
@@ -63,9 +67,11 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
     if path is None or not path.is_file():
         raise typer.BadParameter("no target file for this account and decision date")
     target = load_target_file(path)
-    if target.account != account:
-        raise typer.BadParameter("target file belongs to a different account")
     client = make_trading_client(account)
+    # Once orders were sent, keep the stored plan instead of re-sizing from partial fills.
+    if orders_receipt_path(root, account, target.execution_date).exists():
+        plan = load_plan_file(plan_path(root, account, target.execution_date))
+        return root, client, target, plan
     state = read_account_state(client)
     now = datetime.now(UTC)
     as_of_date = _parse_date(as_of) or now.astimezone(NEW_YORK).date()
@@ -103,6 +109,8 @@ def _print_plan(plan, path: Path) -> None:
             f"  FROZEN {row['symbol']} qty={row['qty']:g} price={row['price']} "
             f"value={row['value']} ({row['reason']})"
         )
+    if fractional_held := p.get("fractional_held"):
+        console.print("WARNING: fractional holdings skipped: " + ", ".join(fractional_held))
     for check in p["checks"]:
         console.print(
             f"  {'PASS' if check['passed'] else 'FAIL'} {check['name']} "
@@ -121,18 +129,29 @@ def book_paper_plan(
         None, "--as-of", help="calendar date to evaluate freshness on"
     ),
     min_notional: float = typer.Option(100.0, "--min-notional"),
-    dry_run: bool = typer.Option(True, "--dry-run/--no-dry-run"),
 ) -> None:
     """Dry-run plan from the target file: reads account, positions, orders and assets only."""
     from open_composer.book_paper.plan import write_plan_file
 
-    if not dry_run:
-        raise typer.BadParameter("plan never sends orders; use `submit --submit`")
     try:
         root, _client, _target, plan = _build(account, decision_date, as_of, min_notional)
-    except BookAccountError as exc:
+    except (RuntimeError, ValueError) as exc:
         raise _fail(exc) from exc
     _print_plan(plan, write_plan_file(root, plan))
+
+
+@contextmanager
+def _submission_lock(root: Path, account: str):
+    from open_composer.book_paper.plan import BookEngineError
+
+    path = root / "logs" / f"book-paper-{account}.submit.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise BookEngineError("another book submission holds the account lock") from exc
+        yield
 
 
 @book_paper_app.command("submit")
@@ -149,7 +168,6 @@ def book_paper_submit(
 ) -> None:
     """Send the plan as market orders, CLS by default (requires --submit and the window)."""
     from open_composer.book_paper.plan import (
-        BookEngineError,
         next_orders_receipt_path,
         submit_plan,
         write_json_atomic,
@@ -160,29 +178,37 @@ def book_paper_submit(
         raise typer.BadParameter("pass --submit to send orders; `plan` is the dry-run")
     now = datetime.now(UTC)
     try:
-        root, client, _target, plan = _build(account, decision_date, None, min_notional)
-        write_plan_file(root, plan)
-        report = submit_plan(
-            client,
-            plan,
-            now=now,
-            kill_switch_check=_kill_switch_check(root),
-            pace_seconds=SUBMIT_PACE_SECONDS,
-            tif_mode=tif_mode,
-        )
-    except (BookAccountError, BookEngineError) as exc:
+        with _submission_lock(project_root(), account):
+            root, client, _target, plan = _build(account, decision_date, None, min_notional)
+            write_plan_file(root, plan)
+            report = submit_plan(
+                client,
+                plan,
+                now=now,
+                kill_switch_check=_kill_switch_check(root),
+                pace_seconds=SUBMIT_PACE_SECONDS,
+                tif_mode=tif_mode,
+            )
+            path = write_json_atomic(
+                next_orders_receipt_path(root, account, plan.execution_date, now), report
+            )
+    except RuntimeError as exc:
         raise _fail(exc) from exc
-    receipt = next_orders_receipt_path(root, account, plan.execution_date, now)
-    path = write_json_atomic(receipt, report)
     console.print(
         f"sent={len(report['sent'])} skipped_existing={len(report['skipped_existing'])} "
         f"not_sent={len(report['failed'])} receipt={path}"
     )
+    if report.get("deferred"):
+        console.print(
+            f"ERROR: {len(report['deferred'])} order stage(s) deferred; see receipt={path}"
+        )
     if report["failed"]:
         # a rejected order must not look like a successful run: the cron log gets an error
         # marker for the health check and the exit code is non-zero (T-20261005-20, E1)
         sample = "; ".join(f"{f['symbol']}: {f['error']}" for f in report["failed"][:5])
         console.print(f"ERROR: {len(report['failed'])} order(s) were not accepted ({sample})")
+        raise typer.Exit(code=2)
+    if report.get("deferred"):
         raise typer.Exit(code=2)
 
 
@@ -220,8 +246,12 @@ def book_paper_reconcile(
             official_close=prices["official_close"],
             snapshot_1545=prices.get("snapshot_1545", {}),
             generated_at_utc=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            submission_receipts=[
+                json.loads(p.read_text())
+                for p in (root / "reports/paper/book" / account / "orders").glob(f"{date_}*.json")
+            ],
         )
-    except (BookAccountError, ValueError, KeyError) as exc:
+    except (RuntimeError, ValueError, KeyError) as exc:
         raise _fail(exc) from exc
     path = write_daily_file(root, record)
     rec, pnl = record["reconciliation"], record["pnl"]
@@ -297,7 +327,7 @@ def book_paper_status(account: str = ACCOUNT_OPTION) -> None:
         present = present_variables(account)
         console.print("env variables present: " + ", ".join(f"{k}={v}" for k, v in present.items()))
         state = read_account_state(make_trading_client(account))
-    except BookAccountError as exc:
+    except RuntimeError as exc:
         raise _fail(exc) from exc
     console.print(
         f"{account}: status={state.status} equity={state.equity:.2f} "
@@ -319,7 +349,6 @@ def book_paper_cancel(
 ) -> None:
     """Cancel this book's open orders (never other orders; allowed with the kill switch on)."""
     from open_composer.book_paper.plan import (
-        BookEngineError,
         cancel_open_orders,
         cancel_receipt_path,
         load_plan_file,
@@ -350,7 +379,7 @@ def book_paper_cancel(
             now=now,
             settle_seconds=2.0,
         )
-    except (BookAccountError, BookEngineError) as exc:
+    except RuntimeError as exc:
         raise _fail(exc) from exc
     path = write_json_atomic(cancel_receipt_path(root, account, day, now), receipt)
     console.print(
@@ -384,7 +413,6 @@ def book_paper_flatten(
     receipt records its state.  Untradable positions are listed and skipped.
     """
     from open_composer.book_paper.plan import (
-        BookEngineError,
         flatten_dry_run_receipt,
         flatten_plan,
         flatten_receipt_path,
@@ -416,7 +444,7 @@ def book_paper_flatten(
             if confirm_flatten
             else flatten_dry_run_receipt(plan, now=now)
         )
-    except (BookAccountError, BookEngineError) as exc:
+    except RuntimeError as exc:
         raise _fail(exc) from exc
     path = write_json_atomic(flatten_receipt_path(root, account, day, now), receipt)
     p = plan.payload

@@ -39,7 +39,7 @@ const SCREENS: { id: Screen; label: string; icon: ReactNode; inspector: string }
   { id: 'hypotheses', label: 'Hypotheses', icon: <Icon d="M3 4.5h10M3 8h10M3 11.5h6" />, inspector: 'Card' },
   { id: 'lineage', label: 'Lineage', icon: <Icon d="M6 4.5l4 3M6 11.5l4-3" extra={<><circle cx={4} cy={4} r={2} /><circle cx={12} cy={8} r={2} /><circle cx={4} cy={12} r={2} /></>} />, inspector: 'Card' },
   { id: 'agents', label: 'Agents', icon: <Icon d="M8 2.2v1.6M8 12.2v1.6M2.2 8h1.6M12.2 8h1.6" extra={<circle cx={8} cy={8} r={3} />} />, inspector: 'Agent' },
-  { id: 'paper', label: 'Paper', icon: <Icon d="M2 12l3.5-4.5 3 2.5L14 4" />, inspector: 'Strategy' },
+  { id: 'paper', label: '模拟盘', icon: <Icon d="M2 12l3.5-4.5 3 2.5L14 4" />, inspector: 'Strategy' },
   { id: 'quota', label: 'Quota', icon: <Icon d="M8 4.5V8l2.5 1.5" extra={<circle cx={8} cy={8} r={6} />} />, inspector: 'Quota' },
   { id: 'health', label: 'Health', icon: <Icon d="M2 8h3l2-4 2.5 8 2-4H14" />, inspector: 'Job' },
 ]
@@ -49,7 +49,7 @@ const ID_RE = /^[A-Za-z0-9._~%-]{1,160}$/
 function parseHash(): { screen: Screen; id: string | null } {
   const raw = window.location.hash.replace(/^#\/?/, '')
   const [s, rawId] = raw.split('/')
-  const screen = SCREENS.some(x => x.id === s) ? (s as Screen) : 'hypotheses'
+  const screen = SCREENS.some(x => x.id === s) ? (s as Screen) : 'paper'
   let id: string | null = null
   if (rawId && ID_RE.test(rawId)) {
     try {
@@ -210,30 +210,7 @@ export default function App() {
             <span className="mobile-only" style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>{meta.label}</span>
           </div>
 
-          <div className="desktop-only" style={{ display: 'flex', gap: 2, flex: 1 }}>
-            {SCREENS.map((s, i) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => navigate(s.id)}
-                title={`⌘${i + 1}`}
-                aria-current={screen === s.id ? 'page' : undefined}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--r-s)',
-                  border: 'none',
-                  background: screen === s.id ? 'var(--tint-bg)' : 'transparent',
-                  color: screen === s.id ? 'var(--tint)' : 'var(--label2)',
-                  fontSize: 13,
-                  fontWeight: screen === s.id ? 600 : 400,
-                  cursor: 'pointer',
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <span className="mobile-only" style={{ flex: 1 }} />
+          <span style={{ flex: 1 }} />
 
           <label
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg3)', borderRadius: 8, padding: '4px 10px', minWidth: narrow ? 120 : 180, flexShrink: 1 }}
@@ -253,7 +230,7 @@ export default function App() {
             />
           </label>
         </div>
-        <StatusStrip status={status} now={now} navigate={navigate} />
+        {screen !== 'paper' && <StatusStrip status={status} now={now} navigate={navigate} />}
       </header>
 
       {/* ── Body ─────────────────────────────────────────────────────── */}
@@ -271,8 +248,7 @@ export default function App() {
             <div className="num" title={status.data?.generated_at}>
               Updated {status.data ? fmtAgo(status.data.generated_at, now) : '–'}
             </div>
-            <div>Read-only · Cloudflare Access at the edge</div>
-            <a href="/" style={{ color: 'var(--label2)' }}>Native view</a>
+            <a href="/" style={{ color: 'var(--label2)' }}>主视图</a>
           </div>
         </nav>
 

@@ -10,7 +10,7 @@
 # plain launch: this wrapper must never stop Paseo from starting an agent.
 #
 # Installed to /usr/local/sbin/paseo-claude-launch by deploy/memory/install.sh;
-# rules in docs/runbook-memory.zh.md.
+# rules in docs/local-vps-migration.zh.md.
 CLAUDE_BIN=/root/.hermes/node/bin/claude
 OC_ROOT=/root/codex-test/open-composer
 
@@ -25,7 +25,7 @@ decision=$(timeout 10 /usr/bin/python3 "$OC_ROOT/scripts/memory_budget.py" launc
     || decision=plain
 case "$decision" in
     refuse:*)
-        echo "open-composer memory budget: ${decision#refuse:} (docs/runbook-memory.zh.md)" >&2
+        echo "open-composer memory budget: ${decision#refuse:} (docs/local-vps-migration.zh.md)" >&2
         logger -t paseo-claude-launch "refused agent=$PASEO_AGENT_ID: ${decision#refuse:}"
         exit 75
         ;;

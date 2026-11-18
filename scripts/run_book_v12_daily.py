@@ -8,9 +8,9 @@ Modes (exactly one):
   (default: the last session of the live equity-book root).  Exit 2: the data root is not fresh to
   D (or is missing); exit 3: the generator or the target writer refused.  Re-running for a decision
   date whose target files exist is a no-op (a logged target is never rewritten).
-* ``--plan``     on the execution date, 18:30-19:30 UTC: build the dry-run plans of the accounts
-  (``--accounts``, default both) with ``oc book-paper plan`` (read-only broker calls; sends
-  nothing).
+* ``--plan``     on the execution date: build the dry-run plans of the accounts (``--accounts``,
+  default both) from the targets of the previous session with ``oc book-paper plan`` (read-only
+  broker calls; sends nothing).  ``--execution-date`` of a later session only previews.
 * ``--submit``   the same plans, then ``oc book-paper submit --submit`` (closing-auction orders).
   Refuses (exit 4) unless the environment variable ``OC_BOOK_V12_SUBMIT=1`` is set, which only the
   owner-approved cron entry does.  This task never sets it and never runs this mode.
@@ -51,7 +51,6 @@ from open_composer.book_paper.plan import plan_path  # noqa: E402
 from open_composer.book_paper.post_close import daily_path  # noqa: E402
 from open_composer.book_paper.targets import (  # noqa: E402
     BookTargetError,
-    latest_target_path,
     load_target_file,
     now_utc_text,
     target_path,
@@ -59,7 +58,6 @@ from open_composer.book_paper.targets import (  # noqa: E402
 )
 from open_composer.market_sessions import (  # noqa: E402
     NEW_YORK,
-    next_us_equity_session,
     previous_us_equity_session,
     us_equity_session_close,
 )
@@ -70,6 +68,9 @@ LIVE_ROOT = ROOT / "data/live/equity_book"
 LOG_FILE = ROOT / "logs/book_v12_daily.log"
 LOCK_FILE = ROOT / "logs/book_v12_daily.lock"
 SUBMIT_ENV = "OC_BOOK_V12_SUBMIT"
+# Existing owner authorization: t20261002_book_v12/paper-start-checklist.md section 1.
+# This is the normal book route's permission end, not an automatic renewal or exit order.
+PAPER_AUTHORIZATION_END = date(2026, 12, 31)
 EXIT_FRESH, EXIT_REFUSED, EXIT_SUBMIT_OFF, EXIT_COMMAND, EXIT_LOCKED = 2, 3, 4, 5, 6
 log = logging.getLogger("book_v12_daily")
 
@@ -95,6 +96,7 @@ def run_targets(
     variant: str | None,
     *,
     now: datetime | None = None,
+    equity_basis: float | None = None,
 ) -> int:
     if not (data_root / "panel/_calendar.parquet").exists():
         log.error("data root %s has no calendar: not fresh", data_root)
@@ -108,14 +110,17 @@ def run_targets(
     if last < day:
         log.error("data root last session %s is before decision date %s: not fresh", last, day)
         return EXIT_FRESH
-    paths = {a: target_path(root, a, day) for a in BOOK_ACCOUNTS}
-    if all(p.exists() for p in paths.values()):
+    if all(target_path(root, a, day).exists() for a in BOOK_ACCOUNTS):
         log.info("targets of %s already logged: nothing to do", day)
         return 0
     try:
         chosen = variant or v12.primary_variant()
         bundle = v12.build_v12_bundle(
-            day, variant=chosen, data_root=data_root, logged_at_utc=now_utc_text()
+            day,
+            variant=chosen,
+            data_root=data_root,
+            logged_at_utc=now_utc_text(),
+            **({"equity_basis": equity_basis} if equity_basis is not None else {}),
         )
         for target in bundle.targets.values():
             info = v12.summarize_target(target)
@@ -145,53 +150,31 @@ def run_plans(
     accounts: tuple[str, ...] = BOOK_ACCOUNTS,
     execution_date: date | None = None,
     now: datetime | None = None,
+    equity_basis: float | None = None,
 ) -> int:
     """Plan (and with ``submit`` submit) each of ``accounts``.  10-06 (C1006-ACCT): only quant1
-    trades the v1.2 book; the submit cron passes ``--accounts quant1`` and quant2 keeps the
-    18:30 dry plan and the reconcile (no orders)."""
-    observed = now or datetime.now(UTC)
-    today = observed.astimezone(NEW_YORK).date()
-    execution = execution_date or today
-    completed = latest_completed_us_equity_session(observed)
+    trades the v1.2 book; the submit cron passes ``--accounts quant1``.  The submit command itself
+    refuses outside the execution day's submission window."""
+    execution = execution_date or (now or datetime.now(UTC)).astimezone(NEW_YORK).date()
+    if submit and execution > PAPER_AUTHORIZATION_END:
+        log.error("book submission authorization ended %s", PAPER_AUTHORIZATION_END)
+        return EXIT_SUBMIT_OFF
     if us_equity_session_close(execution) is None:
         log.error("execution date %s is not a market session", execution)
         return EXIT_FRESH
-    if execution != today and (submit or execution != next_us_equity_session(completed)):
-        log.error(
-            "refused backdated/future execution %s (today %s, submit=%s)", execution, today, submit
-        )
-        return EXIT_FRESH
-    required_decision = previous_us_equity_session(execution)
-    if required_decision > completed:
-        log.error(
-            "execution %s needs an uncompleted decision session %s", execution, required_decision
-        )
-        return EXIT_FRESH
-    if decision is None:
-        newest = latest_target_path(root, accounts[0])
-        if newest is None:
-            log.error("no target file for %s", accounts[0])
-            return EXIT_REFUSED
-        decision = load_target_file(newest).decision_date
-    if decision != required_decision:
-        log.error(
-            "stale target decision %s: execution %s requires %s",
-            decision,
-            execution,
-            required_decision,
-        )
-        return EXIT_FRESH
+    decision = decision or previous_us_equity_session(execution)
     for account in accounts:
         path = target_path(root, account, decision)
         if not path.exists():
             log.error("no target file for %s on %s", account, decision)
             return EXIT_REFUSED
         target = load_target_file(path)
-        if target.decision_date != decision or target.execution_date != execution:
-            log.error(
-                "target %s dates do not match decision %s / execution %s", path, decision, execution
-            )
+        if target.execution_date != execution:
+            log.error("target %s executes %s, not %s", path, target.execution_date, execution)
             return EXIT_FRESH
+        if equity_basis is not None and target.equity_basis != equity_basis:
+            log.error("target %s basis %s, requested %s", path, target.equity_basis, equity_basis)
+            return EXIT_REFUSED
     failed_accounts: list[str] = []
     for account in accounts:
         base = [*oc_command(), "book-paper"]
@@ -248,15 +231,8 @@ def run_reconcile(
             log.error("no plan file for %s on %s", account, execution_date)
             from open_composer.book_paper.account_valuation import capture_account_valuation
 
-            try:
-                observed = capture_account_valuation(root, account, execution_date)
-                log.info(
-                    "unattributed observed account valuation: %s (strategy ledger still missing)",
-                    observed,
-                )
-            except Exception as exc:
-                # Never turn an account-read failure into a successful strategy reconciliation.
-                log.error("account valuation unavailable: %s", type(exc).__name__)
+            observed = capture_account_valuation(root, account, execution_date)
+            log.info("observed account valuation without a plan: %s", observed)
             return EXIT_REFUSED
     try:
         path, payload = prices_builder.build_and_write(
@@ -320,6 +296,12 @@ def main(argv: list[str] | None = None) -> int:
         default=",".join(BOOK_ACCOUNTS),
         help="--plan/--submit/--reconcile: comma separated book accounts (default: all)",
     )
+    ap.add_argument(
+        "--equity-basis",
+        type=float,
+        default=None,
+        help="capital basis of new targets; --plan/--submit refuse targets of another basis",
+    )
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
     ap.add_argument("--root", default=str(ROOT), help="project root (tests)")
@@ -327,9 +309,6 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--log-file", default=str(LOG_FILE))
     args = ap.parse_args(argv)
     accounts = tuple(a for a in args.accounts.split(",") if a)
-    unknown = [a for a in accounts if a not in BOOK_ACCOUNTS]
-    if not accounts or unknown:
-        ap.error(f"--accounts must name book accounts {BOOK_ACCOUNTS}, got {args.accounts!r}")
     if args.submit and not submit_enabled():
         print(f"refused: --submit needs {SUBMIT_ENV}=1 (set only by the owner-approved cron)")
         return EXIT_SUBMIT_OFF
@@ -345,7 +324,9 @@ def main(argv: list[str] | None = None) -> int:
         root = Path(args.root)
         if args.targets:
             data_root = Path(args.data_root) if args.data_root else LIVE_ROOT
-            return run_targets(root, data_root, decision, args.variant)
+            return run_targets(
+                root, data_root, decision, args.variant, equity_basis=args.equity_basis
+            )
         if args.reconcile:
             day = (
                 date.fromisoformat(args.execution_date)
@@ -360,6 +341,7 @@ def main(argv: list[str] | None = None) -> int:
             submit=args.submit,
             tif_mode=args.tif_mode,
             accounts=accounts,
+            equity_basis=args.equity_basis,
             execution_date=date.fromisoformat(args.execution_date) if args.execution_date else None,
         )
 

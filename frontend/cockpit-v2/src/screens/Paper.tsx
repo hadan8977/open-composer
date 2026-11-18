@@ -1,47 +1,15 @@
-// Paper trading: the account, the kill switch, one row per strategy; the
-// inspector shows authorization, positions, orders, fills and equity.
+// Shared paper comparison workspace and the existing strategy inspector.
 import type { ReactNode } from 'react'
-import { useMemo } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { InspectorProps, ScreenProps } from '../App'
 import {
-  fmtAgo,
-  fmtInt,
-  fmtMoney,
-  fmtPct,
-  useJson,
-  useNow,
-  type PaperPayload,
-  type StrategyPayload,
-  type StrategySummary,
+  fmtAgo, fmtInt, fmtMoney, fmtPct, useJson, useNow,
+  type PaperComparisonPayload, type StrategyPayload,
 } from '../api'
 import {
-  AuthChipBadge,
-  Card,
-  Details,
-  Empty,
-  ErrorNote,
-  Group,
-  InspectorHead,
-  KV,
-  Loading,
-  MetricCard,
-  Metrics,
-  Row,
-  RowAside,
-  RowMain,
-  SectionCap,
-  Stat,
-  StatGrid,
-  StateWord,
-  StatusDot,
-  Warnings,
-  matches,
-  plural,
+  AuthChipBadge, Card, Details, Empty, ErrorNote, InspectorHead, KV,
+  Loading, Stat, StatGrid, StateWord, Warnings,
 } from '../components/Shared'
-
-function days(s: StrategySummary): number | null {
-  return s.authorization.days_remaining
-}
 
 /** Long free text stays one line until opened. */
 function Clamp({ text, limit = 140 }: { text: string; limit?: number }) {
@@ -56,75 +24,82 @@ function Clamp({ text, limit = 140 }: { text: string; limit?: number }) {
   )
 }
 
-export default function Paper({ selectedId, onSelect, search }: ScreenProps) {
-  const { data, error, loading } = useJson<PaperPayload>('/api/paper.json', 30_000)
-  const now = useNow()
-  const rows = useMemo(
-    () => (data ? data.report.strategies.filter(s => matches(search, s.name, s.authorization.state, s.cycle_status)) : []),
-    [data, search],
-  )
-  if (!data) return loading ? <Loading /> : error ? <ErrorNote error={error} /> : null
+interface PaperComparisonController {
+  update(payload: PaperComparisonPayload): void
+  setFilter(query: string): void
+  destroy(): void
+}
+interface PaperComparisonModule {
+  mountPaperComparison(element: HTMLElement, payload: PaperComparisonPayload): PaperComparisonController
+}
 
-  const rep = data.report
-  const labels = data.auth_state_labels
-  const soonest = rep.strategies
-    .filter(s => s.authorization.state === 'authorized' && days(s) !== null)
-    .sort((a, b) => (days(a) ?? 0) - (days(b) ?? 0))[0]
-  const ks = rep.kill_switch
+const comparisonModuleUrl = `/static/js/paper-comparison.mjs?v=${__PAPER_COMPARISON_VERSION__}`
+const comparisonStyleUrl = `/static/css/paper-comparison.css?v=${__PAPER_COMPARISON_VERSION__}`
 
-  return (
-    <div>
-      <Metrics>
-        <MetricCard
-          label="Account equity"
-          value={rep.account.equity === null ? 'unknown' : fmtMoney(rep.account.equity, 0)}
-          status={rep.account.status}
-          sub={rep.account.age_hours === null ? rep.account.warnings[0] ?? 'no snapshot' : `snapshot ${rep.account.age_hours.toFixed(1)}h old · cash ${fmtMoney(rep.account.cash, 0)}`}
-        />
-        <MetricCard label="Open orders" value={rep.open_order_count === null ? 'unknown' : rep.open_order_count} status={rep.open_order_count === null ? 'unknown' : 'ok'} sub={`${plural(rep.strategies.length, 'strategy').replace('strategys', 'strategies')}`} />
-        <MetricCard
-          label="Kill switch"
-          value={ks.enabled === null ? 'unknown' : ks.enabled ? 'on' : 'off'}
-          status={ks.status}
-          sub={ks.reason ? ks.reason : ks.updated_at ? `updated ${fmtAgo(ks.updated_at, now)}` : 'no reason recorded'}
-          title={ks.reason ?? undefined}
-        />
-        <MetricCard
-          label="Soonest expiry"
-          value={soonest && days(soonest) !== null ? `${days(soonest)!.toFixed(1)}d` : '–'}
-          status={soonest ? soonest.authorization.status : 'unknown'}
-          sub={soonest ? soonest.name : 'no authorized strategy'}
-        />
-      </Metrics>
+export default function Paper({ search }: ScreenProps) {
+  const { data, error } = useJson<PaperComparisonPayload>('/api/paper-comparison.json', 30_000)
+  const host = useRef<HTMLDivElement>(null)
+  const controller = useRef<PaperComparisonController | null>(null)
+  const [comparisonModule, setComparisonModule] = useState<PaperComparisonModule | null>(null)
+  const [moduleError, setModuleError] = useState(false)
 
-      <SectionCap aside={plural(rows.length, 'row')}>Strategies</SectionCap>
-      <Group>
-        {rows.length === 0 && <Empty>None</Empty>}
-        {rows.map(s => (
-          <Row key={s.name} selected={selectedId === s.name} onClick={() => onSelect(selectedId === s.name ? null : s.name)}>
-            <StatusDot status={s.authorization.status} />
-            <RowMain
-              title={s.name}
-              sub={
-                <>
-                  {labels[s.authorization.state]}
-                  {days(s) !== null ? ` · ${days(s)!.toFixed(1)}d to expiry` : ''}
-                  {s.cycle_status ? ` · cycle ${s.cycle_status}` : ''}
-                  {s.generated_at ? ` · ${fmtAgo(s.generated_at, now)}` : ''}
-                </>
-              }
-            />
-            <RowAside
-              value={s.latest_fill_rate === null ? '–' : fmtPct(s.latest_fill_rate * 100)}
-              sub={s.latest_fill_rate === null ? 'no fills' : `fill · ${s.latest_fill_session ?? ''}`}
-            />
-          </Row>
-        ))}
-      </Group>
+  useEffect(() => {
+    let active = true
+    let style = document.querySelector<HTMLLinkElement>('link[data-paper-comparison]')
+    if (!style) {
+      style = document.createElement('link')
+      style.rel = 'stylesheet'
+      style.href = comparisonStyleUrl
+      style.dataset.paperComparison = 'true'
+      document.head.append(style)
+    } else if (style.getAttribute('href') !== comparisonStyleUrl) {
+      style.href = comparisonStyleUrl
+    }
+    const styleError = () => { if (active) setModuleError(true) }
+    style.addEventListener('error', styleError)
+    void import(/* @vite-ignore */ comparisonModuleUrl)
+      .then((module: PaperComparisonModule) => {
+        if (typeof module.mountPaperComparison !== 'function') throw new Error('Missing comparison renderer')
+        if (active) setComparisonModule(module)
+      })
+      .catch(() => { if (active) setModuleError(true) })
+    return () => {
+      active = false
+      style.removeEventListener('error', styleError)
+    }
+  }, [])
 
-      <Warnings items={[...rep.warnings, ...rep.account.warnings, ...ks.warnings]} />
-    </div>
-  )
+  useEffect(() => {
+    if (!comparisonModule || !data || !host.current) return
+    try {
+      if (controller.current) controller.current.update(data)
+      else controller.current = comparisonModule.mountPaperComparison(host.current, data)
+      controller.current.setFilter(search)
+    } catch {
+      setModuleError(true)
+    }
+  }, [comparisonModule, data])
+
+  useEffect(() => { controller.current?.setFilter(search) }, [search])
+  useEffect(() => () => {
+    controller.current?.destroy()
+    controller.current = null
+  }, [])
+
+  return <div className="paper-page">
+    <header className="paper-page-head">
+      <h1>模拟盘</h1>
+      <nav className="paper-nav" aria-label="模拟盘导航">
+        <a href="/paper" aria-current="page">模拟盘</a>
+        <a href="/paper/accounts">账户</a>
+        <a href="/paper/history">历史</a>
+      </nav>
+    </header>
+    {moduleError || error ? <p className="paper-load-error" role="alert">
+      {data && !moduleError ? '更新失败' : '模拟盘加载失败'} · <a href="/paper">打开模拟盘</a>
+    </p> : (!data || !comparisonModule) && <Loading label="加载中" />}
+    <div ref={host} className="paper-comparison-host" />
+  </div>
 }
 
 export function PaperInspector({ id }: InspectorProps) {

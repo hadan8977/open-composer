@@ -1,0 +1,48 @@
+{% if current_paper_trials %}
+<section id="current-paper-service">
+<div class="section">Current paper strategies · Validation trials <span class="faint">{{ current_paper_trials|length }} separate books · automatically updated every 30 seconds</span></div>
+<p class="faint">各策略按自己的分配本金和成交账本计算，合成父账本包含子账本且只计一次。此表不包含独立 ETF 账户或 quant1；共享券商账户余额不是策略本金。更新时刻与价格所属日期分开，未知净收益保持 N/A。</p>
+<div class="table-wrap">
+<table class="t t--stack">
+<thead><tr><th>Strategy</th><th>Operation</th><th class="num">Capital</th><th class="num">Holdings value</th><th class="num">Trading P&amp;L*</th><th class="num">Trading / capital*</th><th class="num">Net P&amp;L</th><th>Updated / market date</th></tr></thead>
+<tbody>
+{% for trial in current_paper_trials %}
+<tr>
+<td class="lead">{{ trial.label }}<div class="faint">{{ trial.kind }}</div></td>
+<td data-l="Operation">{{ (trial.service_phase or trial.status)|replace('_', ' ') }}{% if trial.instruction_status %}<div class="faint">instruction {{ trial.instruction_status|replace('_', ' ') }}</div><div class="faint">{{ trial.next_application_day }} · {{ trial.next_input_status|replace('_', ' ') }}</div>{% endif %}</td>
+<td class="num" data-l="Capital">{{ trial.capital_usd|money if trial.capital_usd is not none else 'N/A' }}</td>
+<td class="num" data-l="Holdings value">{{ trial.component_market_value_usd|money if trial.component_market_value_usd is not none else 'N/A' }}</td>
+<td class="num" data-l="Trading P&amp;L*">{{ trial.component_pnl_usd|money if trial.component_pnl_usd is not none else 'N/A' }}{% if trial.component_basis_status and trial.component_basis_status != 'complete_saved_FILL_inventory' %}<div class="faint">provisional</div>{% endif %}</td>
+<td class="num" data-l="Trading / capital*">{{ "%+.3f%%"|format(trial.component_return_on_capital_pct) if trial.component_return_on_capital_pct is not none else 'N/A' }}</td>
+<td class="num" data-l="Net P&amp;L">{{ trial.net_pnl_usd|money if trial.net_pnl_usd is not none else 'N/A' }}</td>
+<td data-l="Updated / market date">{{ (trial.service_observed_at or trial.observed_at).isoformat() if (trial.service_observed_at or trial.observed_at) else 'no snapshot' }}<div class="faint">market {{ trial.market_as_of or 'N/A' }}</div></td>
+</tr>
+<tr><td colspan="8"><details class="more"><summary>Positions and service orders</summary>
+{% if trial.input_attempt_status %}<p>Input history: {{ trial.input_attempt_status|replace('_', ' ') }}. Publication is separate from operation and profit.</p>{% endif %}
+<p>First retained fill {{ trial.component_start_at.isoformat() if trial.component_start_at else 'N/A' }} · initial allocation {{ trial.initial_capital_usd|money if trial.initial_capital_usd is not none else 'N/A' }} + allocation flows {{ trial.allocation_flows_usd|money if trial.allocation_flows_usd is not none else 'N/A' }}. Allocation changes are capital, not profit.</p>
+<p>Recorded service order intents {{ trial.recorded_order_intents if trial.recorded_order_intents is not none else 'N/A' }} · confirmed submitted {{ trial.submitted if trial.submitted is not none else 'N/A' }} · with fills {{ trial.filled if trial.filled is not none else 'N/A' }} · rejected {{ trial.rejected if trial.rejected is not none else 'N/A' }} · pending {{ trial.pending if trial.pending is not none else 'N/A' }}</p>
+{% if trial.unresolved_order_intents %}<p>Unresolved submission identities {{ trial.unresolved_order_intents }}; retained IDs and holds require operator reconciliation.</p>{% endif %}
+<p>Last service fill {{ trial.last_fill_at.isoformat() if trial.last_fill_at else 'N/A' }} · reconciled {{ trial.reconciled_at.isoformat() if trial.reconciled_at else 'N/A' }}</p>
+{% if trial.refresh_not_before %}<p>Existing session refresh not before {{ trial.refresh_not_before.isoformat() }}. Inputs and operating acceptance remain separate.</p>{% endif %}
+<p>Realized trading component {{ trial.component_realized_usd|money if trial.component_realized_usd is not none else 'N/A' }} · unrealized {{ trial.component_unrealized_usd|money if trial.component_unrealized_usd is not none else 'N/A' }} · marks received {{ trial.component_observed_at.isoformat() if trial.component_observed_at else 'N/A' }}</p>
+{% for position in trial.positions %}<p class="num">{{ position.symbol }} · qty {{ position.qty if position.qty is not none else 'N/A' }}</p>{% else %}<p>No position record</p>{% endfor %}
+{% if trial.note %}<p>{{ trial.note }}</p>{% endif %}
+{% for warning in trial.warnings %}<p class="faint">{{ warning }}</p>{% endfor %}
+</details></td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="faint">* Principal/FIFO trading components before unverified fees, income and basis items; provisional where fill detail is incomplete. Saved broker marks have no underlying quote timestamp. Trading / capital = (realized FIFO + unrealized at saved marks) / own allocated capital; neither $100,000 nor $1,000,000 is the denominator. Each composite contains S1/S2/S3/C2/BASE/H5 child books once; standalone books have separate funding and positions. These are not certified net returns; net P&amp;L remains N/A.</p>
+</section>
+<script>
+setInterval(async () => {
+  if (document.hidden) return;
+  const response = await fetch('/paper', {cache: 'no-store'});
+  if (!response.ok) return;
+  const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+  const next = page.querySelector('#current-paper-service');
+  const current = document.querySelector('#current-paper-service');
+  if (next && current) current.innerHTML = next.innerHTML;
+}, 30000);
+</script>
+{% endif %}
+

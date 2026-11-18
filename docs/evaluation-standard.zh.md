@@ -1,189 +1,86 @@
-# 评判标准 v2.1（研究者制定；v2 自 2026-10-01 18:16 UTC 起用于所有新合同，v2.1 自 2026-10-04 17:53 UTC 起）
+# Evaluation standard v2.1
 
-> **v2.1 改了什么**（机主 2026-10-04 决定，研究者落实）：
-> - 前向记录从 2026-09-01 算起，分三段标注：设计时看过、样本外影子、模拟盘成交。只有后两段算样本外证据。
-> - 实盘试点（L1）只需 P1，加满 10 个真实模拟会话（约两周）和第 5a 节的平衡口径与逻辑复核；原来要求 P2 加 20 个会话。加到目标规模（L2）仍要求 P2。
-> - 原话："实际接到模拟盘的测试用两周就行了……从 9 月 1 号开始算，加上实际上接模拟盘测试两周，然后看一下效果、分析表现是否合理，就可以接实盘了。"另："现在的子策略在压力期的夏普比率过低……必须尽可能剔除这类过于明显的相关性……权衡好历史夏普与当前夏普的平衡，但也不要做得过于死板。"
-> - 统计门槛（P1、P2、否决条件）不变。试点规模小、止损写在前面，用它来承担缩短观察期带来的不确定性。
+This is an English reference for the existing versioned evaluation contract, not a new universal experiment template. v2 took effect2026-10-01; v2.1 on2026-10-04, with the intraday supplement on2026-10-06. Preserve each study's frozen version and the later applicable promotion gate. Current owner goals and actual trading authority still control; an L1/L2 proposal is never permission to trade live.
 
-机主 2026-10-01 原话："也不是说 7 月到现在不能亏，这太严格了，应该是整体判断和加权考量，而不是让我一个不专业的来制定标准吧，你应该怎么怎么评判和设定才能专业。最终的目标是争取尽快完成并投入实盘盈利。"
+Machine-readable thresholds: `config/evaluation-standard-v2.json`. Calibration: `scripts/calibrate_evaluation_standard.py` and `reports/research/program/evaluation-standard-2026-10-01/calibration.json`. Sources: `reports/research/intel/sources/evaluation-standard-2026-10-01/`. The original narrative/calibration examples remain in the guidance-consolidation before snapshot.
 
-分工：机主定目标、预算、账户和是否上实盘；评判标准由研究者按专业做法制定、校准和维护。阈值的机器可读版在 `config/evaluation-standard-v2.json`，校准脚本是 `scripts/calibrate_evaluation_standard.py`，结果在 `reports/research/program/evaluation-standard-2026-10-01/calibration.json`。来源存档在 `reports/research/intel/sources/evaluation-standard-2026-10-01/`。
+## Evidence layers
 
-## 0. 为什么改：RF1 的三处不专业
+Evaluate predictive signal, attainable constrained net portfolio return, and current applicability/execution separately. Weight information rather than making a short noisy interval a standalone veto. Existing historical contracts are not retrospectively relaxed; new methodological changes need a prospective version.
 
-1. **把一个短窗口写成了一票否决。** RF1 要求 2026-07-01..09-17（55 个会话）年化净超额 > 0。代码核算（Lo 2002 的夏普标准误）：
-   - 真实夏普 0.8 的策略，在 55 个会话里亏钱的概率是 37%；
-   - 真实夏普 1.0 是 35%，1.5 也有 32%；
-   - 即使是整整一年，夏普 1.0 也有 21% 的概率亏钱。
+## Hard vetoes for contracts adopting this standard
 
-   这条门槛会错杀约三分之一的好策略。错在我把机主举的分析角度（"7 月至今对比 2024-01 到 2026-07"）原样写成了否决条件，没有按信息量处理。
-2. **固定门槛不管试了多少个变体。** 模拟（12 个变体、两两相关 0.6、近期窗口 676 个会话）显示，挑出来的最好变体，观察到的夏普平均比真实值高 0.55。全无能力的策略族，最好变体超过 1.19 的概率仍有 18%。
-3. **"普通口径和现金对齐取较低者"会无端惩罚低波动的组合。** SHY 与 BIL 的期限利差，对年化波动 3% 的组合能改变约 0.3 的夏普。现金对齐只是与基准比较的工具，不应该当作夏普的定义。
+- **V1: data and reproducibility.** Causal/PIT inputs, bound versions, reproducible outputs and complete trial registration.
+- **V2: execution and capacity.** Supported order types/windows, easy-to-borrow shorts, whole shares and applicable RegT. At sleeve capital, achieved integer short exposure/target>=0.90, relativeL1 error<=30%, net dollar deviation<=5%NAV. Median proposed per-name trading notional<=1% of20day average dollar volume.
+- **V3: doubled cost.** Veto when recent-window annualized net excess return at2x cost<=0.
+- **V4: crash behavior.** For the frozen2017-10..2023-08 stress window, veto any21session loss exceeding5x corresponding monthly realized volatility, or63session loss exceeding4x quarterly realized volatility. Exceeding4x monthly or3x quarterly is a warning requiring a state-exit rule, not this veto.
+- **V5: recent structural break.** Veto when the last63sessions or current-regime Sharpe has z<-3 relative to the primary estimate. Combine standard errors; compute the short-window error under the primary/null Sharpe, not the observed short-window Sharpe.
 
-已冻结合同（v1、RF1）的结论不变，不追溯放宽。按 v2 重算 v1 只作参考：近期窗口 5 个偏移混合后，最好的 M1_C 的 DSR 是 0.68，低于孵化档的 0.70，也没做安慰剂，所以按 v2 也不够格。这个阈值是在算 v1 之前由校准定的。
+These are stage criteria where contracted. Do not impose final execution requirements on a narrower authorized method study or invent missing values to pass them.
 
-## 1. 三个问题，分别取证
+## Primary estimates and controls
 
-1. **有没有真实的预测力**（信号层）：合成信号的多空收益（行业内、beta 对冲）、t 值、安慰剂。
-2. **组合能不能在扣成本、受约束后拿到它**（组合层）：净夏普、传导系数、成本占比、2 倍成本。
-3. **适不适合现在，能不能执行**：近期状态下的条件表现、近期一致性、执行和容量、前向记录。
+For the original cross-sectional contract, use2024-01-08 through the latest allowed date, equal-mixing five rebalance offsets, daily net excess over BIL.2017–2023 is stress evidence, not part of this primary estimate. Compute Sharpe, PSR and DSR with skew/kurtosis and selection adjustment. Effective trial count is `1 + (N - 1) * (1 - mean_pairwise_correlation)`; estimate expected maximum-null Sharpe from variant Sharpe variance.
 
-只用组合回测夏普一个数是不够的。校准表明，近期 2.7 年的数据加上十来个变体，真实夏普 1.0 的组合达到 95% 置信度的概率只有 4%。所以专业做法是把多种证据加权，分档逐步投入资金，用前向记录继续筛选，不靠单个回测数。
+Report the recent long/short signal t-statistic separately from constrained portfolio performance. Short windows (last63sessions, current regime and the specified July-onward comparison) contribute consistency evidence through the z-statistic rather than a standalone positive-return rule.
 
-## 2. 硬否决（只有五条，任一触发即不进入任何档位）
+The original placebo design uses100seeds with matched construction and costs:
 
-- **V1 数据与可复现**：点时正确（无前视），版本绑定，同一输入能重算出同一结果，试验全部登记。
-- **V2 可执行与容量**：
-  - 订单类型、时间窗、只做易借券、整股、Reg T 在 Alpaca 上都可行；
-  - 整股可行性的量化（2026-10-05 补，来自 T-20261004-71）：按子策略分到的资金，空头整股取整后的实现敞口 ÷ 目标 ≥ 0.90，相对 L1 误差 ≤ 30%，净美元偏离 ≤ 净值的 5%；
-  - 按计划规模，每只股票的成交量中位数不超过 20 日平均成交额的 1%。
-- **V3 成本**：成本加倍后，近期窗口的年化净超额 ≤ 0。
-- **V4 崩溃**（旧数据只用在这里）：2017-10..2023-08 中，以下两种情况触发否决：
-  - 任一 21 个会话的亏损超过该期月度实现波动的 5 倍；
-  - 任一 63 个会话的亏损超过季度实现波动的 4 倍。
+- Gross:shuffle scores within the eligible universe on each rebalance date.
+- Net, fromv2.0.2:seed/security-hash ranks remain fixed within each calendar quarter; assign sorted real scores by those ranks, inserting newcomers by hash. Daily reshuffling artificially increases random turnover and is not the accepted net control.
 
-  如果超过的是 4 倍月度或 3 倍季度，不否决，但要警示，并在合同里写对应状态的退出规则。
-- **V5 近期结构性断裂**：最近 63 个会话或当前阶段的夏普，相对主估计的 z < −3。z 的分母是两者标准误的合成。短窗口的标准误按主估计的夏普计算，即零假设下的标准误；如果按短窗口自身的夏普计算，|z| 永远不超过约 0.77，检验就失效了（v2.0.1 修订）。
+Combine valid forward and backtest estimates using inverse-variance weights, with the backtest side adjusted for selection through DSR. The record from2026-09-01 must label design-seen, unseen shadow and actual paper-fill segments; only the latter two count as out-of-sample evidence. Preserve the original forward segment dates rather than relabelling seen history.
 
-## 3. 核心证据（按信息量加权）
+## Robustness score
 
-- **主估计**：
-  - 近期窗口（2024-01-08 至最新；2017–2023 不进入估计）里，5 个调仓偏移等权混合的日净收益，对 BIL 的超额。
-  - 计算夏普、PSR、DSR（Bailey–López de Prado 2012、2014）：
-    - 有效试验数 N_eff = 1 + (N − 1)(1 − ρ̄)，ρ̄ 是同一族变体日收益的平均相关；
-    - 零假设下最大夏普的期望，用变体夏普的方差估计；
-    - 同时校正偏度和峰度。
-- **信号层 t 值**：同一合成信号在近期窗口的多空日收益 t 值。这一项回答"有没有 α"；组合回测回答"能不能拿到"。
-- **安慰剂**：100 个种子，构造和成本与真实策略完全相同，只换掉合成分。
-  - **毛口径**：每个调仓日在宇宙内打乱合成分。
-  - **净口径**（v2.0.2 起）：每个日历季度按种子和股票代码的哈希给股票一个随机名次，季度内固定。每个调仓日把真实合成分的排序值按这个名次分配。季度内新进宇宙的名字按哈希插入名次。
-    - 这样的随机组合换手不高于真实信号，所以净口径比较的是"同样构造、同样或更低成本的随机组合"。
-    - 每个调仓日都重新打乱会让随机组合每周整本换手，净夏普只有 −2 到 −5，任何策略都能过，没有信息量。
-- **短窗口**（最近 63 个会话、当前阶段、7 月至今）：只做一致性检验，即上面的 z 值，不单独否决。这正是"加权考量"：55 个会话的信息量约是近期窗口的 1/12，权重也就只有这么多。
-- **前向记录**（2026-09-18 起的影子，加模拟盘）：
-  - 与回测估计按方差倒数加权合并；
-  - 回测一侧用 DSR 调整后的估计，也就是扣掉选择偏差；
-  - 前向越长，权重越大。
+One point each; score jointly rather than six separate vetoes:
 
-## 4. 稳健性计分（6 项，每项 1 分；看总分，不逐项否决）
-
-| 项 | 条件 |
+| Item | Condition |
 |---|---|
-| a 成本 | 2 倍成本的夏普 ≥ 基础夏普的一半 |
-| b 当前状态 | 事前状态与现在相同的交易日（大盘阶段表），条件夏普 > 0 |
-| c 不靠单一阶段 | 去掉任何一个阶段，近期窗口的收益都不少于一半 |
-| d 调仓日期 | 5 个偏移中至少 4 个净夏普为正 |
-| e 近期一致性 | 最近 63 个会话和当前阶段的 z ≥ −2 |
-| f 毛口径安慰剂 | 分位 ≥ 0.95 |
+| Cost | Sharpe at2x cost >= half the base-cost Sharpe |
+| Current state | Conditional Sharpe>0 on ex-ante states matching the current state |
+| No single-state dependence | Removing any state retains at least half recent-window return |
+| Rebalance offsets | At least4 of5 offsets have positive net Sharpe |
+| Recent consistency | Both last63sessions and current-state z>=-2 |
+| Gross placebo | Percentile>=0.95 |
 
-## 5. 分档决定
+## 5. Stage decisions
 
-| 档位 | 条件 | 动作 |
+| Stage | Existing conditions | Action within actual authority |
 |---|---|---|
-| P1 模拟孵化 | 无否决；DSR ≥ 0.70；净口径安慰剂 ≥ 0.90；稳健性 ≥ 3 | 按计划规模上模拟盘，开始前向记录 |
-| P2 实盘候选 | 无否决；DSR ≥ 0.80；信号层 t ≥ 3；净、毛安慰剂都 ≥ 0.95；稳健性 ≥ 5 | 模拟盘正式运行，准备实盘材料 |
-| L1 实盘试点提议（v2.1） | 已是 P1；真实模拟盘 ≥ 10 个会话；执行验收通过（见下）；从 2026-09-01 起的拼接前向记录 z ≥ −2（分段标注）；第 5a 节复核通过；没有触发失效信号 | 向机主提交小规模实盘提议（目标规模的 10–20%，或机主定的金额），写明止损和减半规则，由机主决定 |
-| L2 加到目标规模 | 已是 L1 并达到 P2；前向 ≥ 6 个月；回测与前向合并后 P(夏普 > 0) ≥ 0.9 | 分步加仓；中间每一步由机主批准 |
+| P1 paper incubation | No veto;DSR>=0.70;net-placebo percentile>=0.90;robustness>=3 | Start planned paper observation only under valid sleeve authorization |
+| P2 live candidate | No veto;DSR>=0.80;signal t>=3;net/gross placebo percentiles>=0.95;robustness>=5 | Prepare evidence; not live permission |
+| L1 proposed live pilot | P1;>=10actual paper sessions;execution acceptance;segmented forward z>=-2;section5a review;no invalidation | Propose10–20% of target scale or owner-specified amount, with stop/reduction rules; owner decides |
+| L2 proposed target scale | L1 andP2;>=6months forward;combined P(Sharpe>0)>=0.9 | Each capital increase requires owner approval |
 
-**校准**（`calibration.json`）：12 个变体、相关 0.6、676 个会话，基准率假设策略族真实夏普为 0 / 0.3 / 0.6 / 1.0 的概率依次是 40% / 30% / 20% / 10%。
-- **DSR ≥ 0.70**：
-  - 通过者的真实夏普期望约 0.59；
-  - 通过者中来自全无能力族的占 25%；
-  - 真实 0.6 的族通过率 78%，真实 1.0 的族通过率 94%。
-- **DSR ≥ 0.80**：通过者真实夏普期望约 0.67，来自全无能力族的占 18%。约等于旧的 1.19 门槛。
+Later owner restrictions on live deployment remain binding even if an older stage table is satisfied. Apply the exact stage version frozen for the study; do not copy these thresholds into every component.
 
-P2 另外要求信号层 t ≥ 3（Harvey–Liu–Zhu 对新因子的建议线）和更严的安慰剂，所以实际误判率会更低。
+## 5a. Balanced evidence and execution review
 
-模拟盘不花钱，所以 P1 的门槛放在"宁可多看，靠前向和退出规则再筛"。用真钱之前（v2.1）：至少过 P1、10 个会话的执行验收和第 5a 节复核，而且只用试点规模；加仓要 P2。
+Report recent, stress and full-period Sharpe using the median across rebalance offsets, with2x cost. Explain weak stress results (for example<0.3), why the current state differs, and the state-exit rule; this example is not a new veto.
 
-## 5a. 平衡口径与逻辑复核（v2.1 新增，L1 必须）
+Regress against SPY, QQQ and the relevant theme proxy (for exampleSMH), report R-squared/beta, attribute theme contributions and assess removal of theme holdings. If more than half recent return comes from one theme, require a stress-tested timing/exit rule for scaling; otherwise keep any proposal at pilot size. Describe who pays the strategy, the mechanism, effective/ineffective regimes, failure signals and relation to existing holdings. A proposal lacking a plausible mechanism starts at half pilot scale under this historical rule.
 
-不设死门槛。复核人（主审）逐项写判断，结论写进提议。
+Portfolio inclusion must improve same-volatility Sharpe and respect the actual sleeve risk allocation. Before an L1 proposal:100%order acceptance and reconciliation; actual cost within0.5–1.5x modeled cost; modeled shadow impact/borrow shown separately because paper fills omit them; tracking error<=25%of target volatility; no data-staleness fault.
 
-1. **三个窗口一起报**：近期（2024-01 起）、压力期（2017-10..2023-08）、全期夏普，都按所有调仓偏移的中位数，并附 2 倍成本。
-   - 近期决定是否值得做；
-   - 压力期太低（例如 < 0.3）时，必须说明为什么现在的状态和压力期不同，以及状态变回去时怎么退出。
-2. **主题依赖**：
-   - 对 SPY、QQQ 和主题代理（半导体用 SMH）回归，报告 R²、beta；
-   - 按持仓算主题的收益贡献；
-   - 去掉该主题标的后重算。
-   - **近期收益一半以上来自单一主题的**，必须有针对该主题、在压力期验证过的择时规则（主题走弱时减仓或换仓），否则最多给试点规模，不能加仓。
-3. **逻辑卡**：
-   - 赚的是谁的钱，机制是什么；
-   - 什么状态下有效，什么状态下失效；
-   - 失效信号和退出规则；
-   - 和账户里其他策略的相关性。
-   只有数据、说不出机制的，按试点规模的一半起步。
-4. **组合层**：加入后，组合在同波动下的夏普要提高，单条策略的风险占比不超过配置合同的上限（T-20261004-58）。
+## 5b. Existing intraday/timing supplement
 
-**执行验收**（L1 前）：
-- 订单接受率和对账一致率都是 100%；
-- 实际成本在模型估计的 0.5–1.5 倍之间。Alpaca 模拟盘不含冲击和借券费，这两项按模型影子扣除，并单独标注；
-- 模拟盘与影子目标的跟踪误差 ≤ 目标波动的 25%；
-- 没有数据时效故障。
+For same-day-flat or few-instrument timing contracts adopting this supplement:
 
-## 5b. 日内和择时策略的补充口径（2026-10-06 23:30 UTC 登记，v2.1 的补充，任何结果出来之前）
+- Timing placebos preserve entry time, holding, size and costs, randomizing direction;100seeds, gross and net.
+- Intraday cross-sectional gross placebos shuffle at each decision. Net ranks are fixed per trading day by seed/security hash, with sorted actual scores assigned to those ranks.
+- Replace five rebalance offsets with check/bar-phase offsets0,+1,+2minutes; at least2positive phases.
+- V4 uses actual minute data for the frozen stress period and daily PnL21/63day tails.
+- Count primary-grid trials for DSR; the original suggestion was about30variants, with most axes source-fixed. Robustness variants are separately exposed and do not select the winner. The original selection rule used the median specification among the three highest recent-net-Sharpe points, preregistered before results. These inherited rules are not mandatory templates for newly authorized distinct method studies.
+- Contracts frozen under the original supplement use its P1 stage. Future versions apply prospectively.
+- Before IEX-based paper operation, recompute at least20historical IEX sessions and compare SIP feature ranks/signals. Freeze acceptance before observing it; original suggested rank correlation>=0.8 and direction agreement>=90%. If unsupported, use inputs/instruments whose declared coverage can support the strategy, not invented equivalence.
 
-起因：第三版计划复核 R1006-V3 的 M3、M4、M6。第 3、4 节的安慰剂和调仓偏移是给截面月度、周度组合写的，日内和择时策略照搬会无效。本节只补定义，不改任何阈值。
+## Forward monitoring and exits
 
-1. **适用**：当天平仓的日内策略，以及单品种或少数品种的择时策略。截面月度、周度组合照原文。
-2. **安慰剂**，100 个种子：
-   - 择时：进场时刻、持有时长、仓位和成本与真实策略相同，只把每次进场的方向换成随机；毛、净口径都这样算。
-   - 日内多股票截面：毛口径在每个决策时刻、股票池内打乱预测分；净口径每个交易日按种子和代码的哈希给定随机名次，当天固定，按名次分配真实预测分的排序值。
-3. **稳健性 d 项**：用"检查时点错开"代替调仓偏移。K 线起点或检查相位错开 0、+1、+2 分钟，至少 2 个为正。
-4. **V4 崩溃否决照样要做**：用 `data/sip-hist/minute/` 跑 2017-10 至 2023-08，按日盈亏算 21 日和 63 日尾部亏损，阈值照第 2 节。不做不能进任何档位。
-5. **主网格和试验数**：
-   - DSR 的 N 和变体夏普方差按预注册的主网格算，主网格建议不超过约 30 个交易变体，大部分轴由文献固定；
-   - 过滤条件、成交时点这类稳健性变体只用在选出的规格上，单独计数，不参与选择；
-   - 所有点都登记进全局试验台账。
-6. **选规格规则**：在主网格或规模曲线上，取近期净夏普最高的三个点的中位规格，不取最高的那个。事先写进 `hypotheses.md`。
-7. **判定**：
-   - 按第 5 节的档位判，简报自己写的通过标准只作参考；
-   - 2026-10-06 已冻结或正在预注册的五个任务（日内模型、短周期统计套利、日内规则重审、运行器、策略库第一批）按 P1 判；
-   - v2.2 的实验档定稿后，只对之后冻结的合同生效。
-8. **实时行情一致性**（上模拟盘前的执行条件）：实时用 IEX 行情的策略，上模拟盘前用 Alpaca 免费的 IEX 历史 K 线重算至少 20 个交易日的特征和信号，报告与 SIP 的排名相关和信号一致率。阈值在结果出来之前写进合同，建议排名相关不低于 0.8、方向一致率不低于 90%。达不到就只用不依赖成交量的特征，或只交易 IEX 覆盖足够的品种。
+Under the contracted default, simulate a drawdown distribution for elapsed forward duration using selection-adjusted Sharpe and realized volatility. Reduce by half above its95th percentile, if absolute21session beta>0.25, or actual costs exceed2x model for two consecutive weeks. Stop and review above99th percentile, if combined P(Sharpe>0)<0.5, or when data/execution faults cannot be repaired. Respect the actual account authorization and stricter frozen contract rules; this reference does not issue orders.
 
-## 6. 前向监控与退出（Kaminski–Lo 2014；Magdon-Ismail 等 2004）
+## Pass fields and changes
 
-- 按 DSR 调整后的夏普和实现波动，模拟最大回撤在已运行时长下的分布。
-- **减半**：回撤超过该分布的 95% 分位；或 21 个会话实现 beta 的绝对值 > 0.25；或实际成本连续两周超过模型的 2 倍。
-- **停止并复核**：回撤超过 99% 分位；或合并后 P(夏普 > 0) < 0.5；或数据、执行故障无法修复。
-- 阈值放在分布尾部而不是很紧。原因：收益接近随机游走时，紧的止损只会降低期望收益；止损的价值在于识别状态切换。
-- 每个合同仍要写清适用状态、有效期、失效信号和退出规则（研究使命）。上面是默认值，合同可以更严。
+For this standard, workflow corresponds toV1/V2; research toP2; paper readiness toP1 plus actual execution dry-run acceptance. ML/LLM contribution requires higher recent matched DSR and Newey–West t>=2 on the paired daily-net-return difference. Report the identity and scope rather than equating these flags with realized Alpha.
 
-## 7. 与各项 pass 的对应
-
-- `workflow_pass`：V1、V2 通过。
-- `research_pass`：达到 P2。
-- `paper_ready_pass`：达到 P1，并且下单引擎 dry-run 检查表全部通过。
-- `ml_contribution_pass` / `llm_contribution_pass`：同数据、同成本下，带模型的变体比不带的近期 DSR 更高，且两者日净收益之差的 Newey–West t ≥ 2。
-
-## 8. 纪律
-
-- 改阈值要升版本，写理由，只对之后的新合同生效。不能为某个候选临时调整。
-- 每次判定输出 scorecard JSON，含全部输入数字、各项真假、档位和计算版本；由代码计算，不靠手算。
-- 旧合同保留原口径；按 v2 重算的结果只作参考，不改变旧结论。
-
-## 9. 来源
-
-见 `reports/research/intel/sources/evaluation-standard-2026-10-01/INDEX.md`：
-- Lo 2002；
-- Bailey–López de Prado 2012（PSR、最短业绩长度）、2014（DSR）；
-- Bailey–Borwein–López de Prado–Zhu（回测过拟合概率）；
-- Harvey–Liu 2015（夏普折扣）；
-- Kaminski–Lo 2014（止损）；
-- Magdon-Ismail 等 2004（最大回撤）；
-- Two Sigma 的夏普估计说明。
-
-已有存档还包括：
-- Jensen–Kelly–Pedersen 2023 和 McLean–Pontiff 的发表后衰减（`reports/research/intel/sources/pro-equity-2026-10-01/evidence/10_`）；
-- HFR 和 BarclayHedge 市场中性指数（同目录 `A_`）。
-
-## 10. 修订记录
-
-- **v2.1 补充（2026-10-06 23:30 UTC）**：新增第 5b 节，日内和择时策略的安慰剂、d 项、V4、主网格、选规格规则和实时行情一致性。只补定义，不改阈值；第三版计划复核 R1006-V3 的 M3、M4、M6。
-- **v2.0.2（2026-10-02 06:39 UTC）**：T-20261002-26（412ef13）发现，原定义的净口径安慰剂是退化的：每个调仓日都重新打乱，随机组合每周整本换手，100 个种子的净夏普均值 −4.7、最大 −4.0，任何真实策略的分位都是 1.00。改为季度内固定随机名次（见第 3 节）。毛口径不变，它有信息量：同一次运行里随机组合的毛夏普均值 −0.50、最大 0.29。这是定义上的修正，不是阈值变化。
-  - 只适用于此后冻结的合同；v1.2（t20261002_book_v12，05:31 冻结）的判定不变。
-  - v1.2 主变体 M0_U3000 的真实毛夏普是 1.74，毛口径分位 1.00，"同构造随机打分也能做到"这一零假设已经被拒绝。按新定义复核的净口径分位登记为 T-20261002-29，只作记录。
-- **v2.0.1（2026-10-02 04:06 UTC）**：计分代码 T-20（bf6dbaf）实现时发现，V5 和稳健性 e 的 z 检验，短窗口标准误如果按短窗口自身的夏普计算，|z| 的上限约 0.77，永远触发不了。已改为按主估计的夏普计算，即零假设下的标准误，主审用代码核对过。这是定义上的修正，不是阈值变化；此前没有任何合同用过 v2。
+Use actual computed scorecards, versions and evidence. Threshold changes are prospective and documented, never a retrospective rescue of a failed candidate. Historical corrections toV5 and net-placebo construction remain in the original calibration/source records.

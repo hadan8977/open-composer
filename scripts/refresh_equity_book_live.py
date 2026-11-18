@@ -290,6 +290,8 @@ UPSTREAM: tuple[Table, ...] = (
             "--out-root",
             "{tmp}",
             "--skip-weekly-panel",
+            "--symbol-batch-size",
+            "180",
         ),
         fetch=(
             (
@@ -314,6 +316,8 @@ UPSTREAM: tuple[Table, ...] = (
         build=(
             *PY,
             "scripts/build_short_volume_features.py",
+            "--memory-limit",
+            "450MB",
             "--years",
             "{year}",
             "--universe-root",
@@ -986,6 +990,10 @@ def run_command(step: Step, runner: Runner = subprocess.run) -> int:
     tail = (proc.stdout + proc.stderr).splitlines()[-6:]
     for line in tail:
         log.info("  %s", line)
+    if proc.returncode != 0:
+        log.error(
+            "command failed: %s (returncode=%s); downstream stopped", step.label, proc.returncode
+        )
     return proc.returncode
 
 
@@ -1158,11 +1166,11 @@ def run_monthly_table(table: Table, day: date, steps: Sequence[Step], runner: Ru
     root = (FEATURES / table.output).parent
     parts = sorted(root.glob("[0-9][0-9][0-9][0-9].parquet"))
     old_last = max((max(_dates_of(p, table.date_col)) for p in parts), default=None)
-    sessions: list[date] = []
-    for y in range((old_last or day).year, day.year + 1):
-        daily = FEATURES / f"daily_broad/{y}.parquet"
-        if daily.exists():
-            sessions += _dates_of(daily, "trade_date")
+    from open_composer.market_sessions import us_equity_session_dates
+
+    # The price partitions are refreshed after the monthly pool. Their old
+    # maximum date must not hide a month already closed by the explicit run day.
+    sessions = us_equity_session_dates(date((old_last or day).year, 1, 1), day)
     ends = new_month_ends(old_last, sessions)
     if not ends:
         log.info("%s: no new month end after %s: skipped", table.name, old_last)
@@ -1189,6 +1197,15 @@ def run_monthly_table(table: Table, day: date, steps: Sequence[Step], runner: Ru
             log.error("%s: builder wrote no %s partition", table.name, y)
             return EXIT_COMMAND
         staged = pl.read_parquet(built)
+        expected = {end for end in ends if end.year == y}
+        present = set(staged["month_end"].cast(pl.Date).drop_nulls().to_list())
+        if not expected <= present:
+            log.error(
+                "%s: source builder omitted completed month ends %s; nothing swapped",
+                table.name,
+                sorted(expected - present),
+            )
+            return EXIT_COMMAND
         old = pl.read_parquet(backups[y]) if y in backups else staged.head(0)
         out_dir = stage / "composed"
         out_dir.mkdir(exist_ok=True)
@@ -1313,6 +1330,21 @@ def run_upstream_table(
                     for group in ("daily", "daily_broad", "sec_fundamentals")
                     for p in (FEATURES / group).glob("*.parquet")
                     if p != out
+                ]
+            if table.name == "sec_fundamentals_daily":
+                dependencies += [
+                    ROOT / "scripts/build_sec_xbrl_fundamentals.py",
+                    ROOT / "data/raw/sec_xbrl/company_tickers.json",
+                ]
+            if table.name == "insider_broad":
+                dependencies += [ROOT / "scripts/build_insider_features.py"]
+                dependencies += sorted((ROOT / "data/raw/insider/parsed").glob("*.parquet"))
+                dependencies += sorted((ROOT / "data/raw/insider/tail/parsed").glob("*.parquet"))
+            if table.name in {"short_volume_broad", "short_interest"}:
+                stem = "short_volume" if table.name == "short_volume_broad" else "short_interest"
+                dependencies += [
+                    ROOT / f"scripts/build_{stem}_features.py",
+                    ROOT / f"data/raw/finra_{stem}/parsed.parquet",
                 ]
             bind_consumer(ROOT, forward_config, table.name, dependencies)
             consumer_frozen = True
@@ -1745,6 +1777,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             if offset is not None:
                 write_cursor(offset, day)
+        log.info("refresh finished: day=%s exit=%s", day, code)
         return code
     finally:
         lock.__exit__()

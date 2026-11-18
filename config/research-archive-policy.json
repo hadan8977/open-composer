@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "archive_prefix": "archive/open-composer/research/v1",
+  "catalog_root": "reports/research/archive",
+  "allowed_roots": [
+    "reports/research/program",
+    "reports/research/iterations"
+  ],
+  "protected_roots": [
+    "reports/research/program/owner-profit-delivery-plan-20261017",
+    "reports/research/program/paper-continuity-20261014",
+    "reports/research/program/martin-quantization-plan-20261021",
+    "reports/research/program/day-goal-20261013/hf-factor-return/local-ledgers"
+  ],
+  "protected_path_patterns": [
+    "*checkpoint*",
+    "*credential*",
+    "*secret*",
+    "*token*",
+    "*.pem",
+    "*.key",
+    "*.env",
+    "*.env.*",
+    ".env*",
+    "*paper*",
+    "*cash*"
+  ],
+  "allowed_suffixes": [
+    ".gz",
+    ".zip",
+    ".parquet",
+    ".npy",
+    ".npz",
+    ".raw",
+    ".bin"
+  ],
+  "tiers": {
+    "hot": "Active research, paper dependencies, unique checkpoints and explicitly local-retained evidence. Keep local.",
+    "warm": "Potential near-term dependency or incomplete acceptance. Keep local until task-specific review.",
+    "cold": "Explicitly selected completed or closed task payload, with immutable outcome evidence and no active use. May archive after verification."
+  },
+  "remote_retention": "indefinite",
+  "expiry": null,
+  "automatic_age_deletion": false,
+  "schedules": false
+}

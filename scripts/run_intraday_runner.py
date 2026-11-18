@@ -10,7 +10,7 @@
 from the event log).  Orders are only submitted with ``--allow-paper-orders`` *and* a valid
 authorization bound to the config hash and the account; the replay command never touches a broker.
 Credentials are read by variable name from the 600 env file; nothing here prints a value.
-See docs/runbook-intraday-runner.zh.md.
+See docs/local-vps-migration.zh.md.
 """
 
 from __future__ import annotations

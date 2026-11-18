@@ -5,5 +5,5 @@ virtual sub-account per strategy, nets orders across strategies into account-lev
 orders, allocates fills back, enforces risk caps, flattens before the close and recovers from
 its append-only event log.  Reuses ``open_composer.paper_intraday`` (authorization record,
 ``_client_order_id``, market-order builder, session gate) and ``open_composer.execution.bar_source``
-/ ``research.bars.hourly`` (bar aggregation).  See ``docs/runbook-intraday-runner.zh.md``.
+/ ``research.bars.hourly`` (bar aggregation).  See ``docs/local-vps-migration.zh.md``.
 """

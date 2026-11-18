@@ -166,6 +166,7 @@ class NautilusBacktestArtifacts:
     run: BacktestRun
     signals: list[Signal]
     trades: list[Trade]
+    equity_curve: list[float] = field(default_factory=list)
 
 
 class OpenComposerFeatureData(Data):
@@ -548,6 +549,7 @@ def run_nautilus_backtest(
             run=run,
             signals=collector.signals,
             trades=collector.trades,
+            equity_curve=list(collector.equity_curve),
         )
     finally:
         _unregister_collector(run_id_value)

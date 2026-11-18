@@ -161,8 +161,10 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import sys
+import tempfile
 import time
 import zipfile
 from datetime import date, datetime
@@ -1122,10 +1124,109 @@ def merge_daily_prices(
     return merged[list(DAILY_COLUMNS)].sort_values(["trade_date", "symbol"], ignore_index=True)
 
 
+def bounded_events(con, session_pos: dict[pd.Timestamp, int]) -> pd.DataFrame:
+    """Keep the original issuer calculations, but never retain the full facts frame.
+
+    Explicit physical row ordinals retain the original parquet source order,
+    including ties. A single-threaded filtered SQL scan alone does not promise it.
+    This is an execution partition, not an eligibility or history filter.
+    """
+    ciks = con.execute(
+        "SELECT DISTINCT cik FROM read_parquet(?) WHERE cik IS NOT NULL ORDER BY cik",
+        [str(FACTS_PATH)],
+    ).fetchall()
+    tables = []
+    issuers = 0
+    for start in range(0, len(ciks), 200):
+        selected = [row[0] for row in ciks[start : start + 200]]
+        facts = con.execute(
+            "SELECT * EXCLUDE(file_row_number) FROM read_parquet(?, file_row_number=true) "
+            "WHERE cik IN (SELECT unnest(?)) ORDER BY file_row_number",
+            [str(FACTS_PATH), selected],
+        ).fetchdf()
+        for cik, group in facts.groupby("cik"):
+            table = compute_cik_table(int(cik), group)
+            if not table.empty:
+                tables.append(build_all_events({int(cik): table}, session_pos))
+                issuers += 1
+        del facts
+        gc.collect()
+        log(f"daily issuer calculations: {min(start + 200, len(ciks))}/{len(ciks)}")
+    events = pd.concat(tables, ignore_index=True) if tables else build_all_events({}, session_pos)
+    log(f"daily stage: {len(events):,} state-change events across {issuers:,} issuers")
+    return events
+
+
+def write_bounded_daily_year(con, year, events, symbol_to_cik, session_pos, work):
+    """As-of join bounded symbol chunks and atomically publish the sorted result."""
+    prices = DAILY_BROAD_ROOT / f"{year}.parquet"
+    if not prices.exists() or events.empty:
+        return None
+    # Match the original FULL-YEAR relevance check after mapped-symbol and
+    # calendar filtering. Events for an absent/out-of-calendar issuer do not
+    # make an otherwise empty year's output valid.
+    con.register(
+        "daily_mapping", pd.DataFrame(list(symbol_to_cik.items()), columns=["symbol", "cik"])
+    )
+    con.register("daily_calendar", pd.DataFrame({"trade_date": list(session_pos)}))
+    valid_ciks = {
+        row[0]
+        for row in con.execute(
+            "SELECT DISTINCT m.cik FROM read_parquet(?) p "
+            "JOIN daily_mapping m USING(symbol) JOIN daily_calendar c USING(trade_date)",
+            [str(prices)],
+        ).fetchall()
+    }
+    con.unregister("daily_mapping")
+    con.unregister("daily_calendar")
+    if not events["cik"].isin(valid_ciks).any():
+        return None
+    parts = work / str(year)
+    parts.mkdir()
+    symbols = sorted(symbol_to_cik)
+    rows, all_symbols, data_symbols = 0, set(), set()
+    for start in range(0, len(symbols), 200):
+        price = con.execute(
+            "SELECT symbol,trade_date FROM read_parquet(?) WHERE symbol IN (SELECT unnest(?))",
+            [str(prices), symbols[start : start + 200]],
+        ).fetchdf()
+        frame = merge_daily_prices(price, events, symbol_to_cik, session_pos)
+        if frame.empty:
+            # A wholly unmatched subchunk is not a new universe filter: the
+            # original global as-of join retains these rows with null values.
+            frame = price.loc[
+                price["symbol"].isin(symbol_to_cik) & price["trade_date"].isin(session_pos)
+            ].copy()
+            frame["cik"] = frame["symbol"].map(symbol_to_cik)
+            for column in DAILY_COLUMNS:
+                if column not in frame.columns:
+                    frame[column] = np.nan
+            frame = frame[list(DAILY_COLUMNS)]
+        if not frame.empty:
+            frame.to_parquet(parts / f"{start:05d}.parquet", index=False)
+            rows += len(frame)
+            all_symbols.update(frame.symbol)
+            has_data = frame[list(RAW_COLUMNS)].notna().any(axis=1)
+            data_symbols.update(frame.loc[has_data, "symbol"])
+        del price, frame
+        gc.collect()
+    if not rows:
+        return None
+    candidate = work / f"{year}.parquet"
+    con.execute(
+        "COPY (SELECT * FROM read_parquet(?) ORDER BY trade_date,symbol) TO "
+        + "'"
+        + str(candidate).replace("'", "''")
+        + "' (FORMAT PARQUET)",
+        [str(parts / "*.parquet")],
+    )
+    candidate.replace(DAILY_ROOT / f"{year}.parquet")
+    return {"rows": rows, "symbols_total": len(all_symbols), "symbols_with_data": len(data_symbols)}
+
+
 def run_daily_stage(start_year: int, end_year: int, *, force: bool) -> dict[int, dict]:
     if not FACTS_PATH.exists():
         raise SystemExit(f"no {FACTS_PATH}; run --stage facts first")
-    facts = pd.read_parquet(FACTS_PATH)
     # client=None: the tickers stage (or an earlier "facts"/"all" run) must
     # already have cached company_tickers.json; this stage never fetches.
     mapping = build_cik_symbol_map(None)
@@ -1139,15 +1240,28 @@ def run_daily_stage(start_year: int, end_year: int, *, force: bool) -> dict[int,
     span = f"{sessions[0].date()}..{sessions[-1].date()}"
     log(f"session calendar: {span} ({len(sessions):,} sessions)")
 
-    cik_tables: dict[int, pd.DataFrame] = {}
-    for cik, group in facts.groupby("cik"):
-        table = compute_cik_table(int(cik), group)
-        if not table.empty:
-            cik_tables[int(cik)] = table
-    events = build_all_events(cik_tables, session_pos)
-    log(f"daily stage: {len(events):,} state-change events across {len(cik_tables):,} issuers")
-
     DAILY_ROOT.mkdir(parents=True, exist_ok=True)
+    # Parts + a sorted candidate stay on the output filesystem. Failure never
+    # truncates the accepted output; forward publication still verifies its prefix.
+    with tempfile.TemporaryDirectory(prefix=".daily-bounded-", dir=DAILY_ROOT) as directory:
+        with duckdb.connect() as con:
+            con.execute("SET threads=1; SET memory_limit='140MB'")
+            con.execute("SET max_temp_directory_size='512MB'")
+            con.execute("SET temp_directory='" + directory.replace("'", "''") + "/spill'")
+            events = bounded_events(con, session_pos)
+            return _write_daily_years(
+                con,
+                start_year,
+                end_year,
+                force,
+                events,
+                symbol_to_cik,
+                session_pos,
+                Path(directory),
+            )
+
+
+def _write_daily_years(con, start_year, end_year, force, events, symbol_to_cik, session_pos, work):
     coverage: dict[int, dict] = {}
     for year in range(start_year, end_year + 1):
         out_path = DAILY_ROOT / f"{year}.parquet"
@@ -1161,15 +1275,14 @@ def run_daily_stage(start_year: int, end_year: int, *, force: bool) -> dict[int,
             n_data = coverage[year]["symbols_with_data"]
             log(f"  {year}: already present, {n_data:,} symbols with data -- skipped")
             continue
-        frame = build_daily_year(year, events, symbol_to_cik, session_pos)
-        if frame.empty:
+        result = write_bounded_daily_year(con, year, events, symbol_to_cik, session_pos, work)
+        if result is None:
             log(f"  {year}: no price rows for mapped symbols -- skipped")
             continue
-        frame.to_parquet(out_path, index=False)
-        coverage[year] = _year_coverage(frame)
+        coverage[year] = result
         log(
             f"  {year}: wrote {out_path.relative_to(ROOT)} "
-            f"({len(frame):,} rows, {coverage[year]['symbols_with_data']:,} symbols with data)"
+            f"({result['rows']:,} rows, {result['symbols_with_data']:,} symbols with data)"
         )
     return coverage
 

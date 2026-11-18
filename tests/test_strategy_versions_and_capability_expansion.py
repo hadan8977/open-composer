@@ -231,13 +231,15 @@ def test_nautilus_backtest_plan_is_written_for_nautilus_backend(
         lambda: True,
     )
     draft_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
-    preregister_iteration_dossier(draft_path, candidate_count=1)
     active_path = activate_strategy(
         draft_path,
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
     )
+    # Activation selects the backend/execution version. Admit that exact spec
+    # before any backtest, rather than admitting its different draft ancestor.
+    preregister_iteration_dossier(active_path, candidate_count=1)
 
     artifacts = run_backtest(active_path, root=sample_workspace)
     catalog = build_dashboard_catalog(sample_workspace)

@@ -6,7 +6,7 @@ Why (owner 2026-10-07): the box has 3.9 GB and also runs the owner's other proje
 this project held 16 Claude agents, two pytest runs, a Modal client and research jobs;
 available memory was 761 MB, 8 GB of swap was 98% used, load was 31 and the box was
 rebooted at 17:27. Every budget so far assumed the whole box. Numbers live in
-config/memory-budget.json; the rules are in docs/runbook-memory.zh.md.
+config/memory-budget.json; the rules are in docs/local-vps-migration.zh.md.
 
 How: everything this project runs sits under ``oc.slice`` (agents through
 /usr/local/sbin/paseo-claude-launch, research jobs through scripts/run_capped.sh, the
@@ -266,7 +266,7 @@ def admit(
     if job_class != "paper" and mem_mb > int(cfg["job_max_mb"]):
         return False, (
             f"--mem {mem_mb} MB > local job limit {cfg['job_max_mb']} MB; run it on Modal "
-            "(docs/runbook-autonomous-round.zh.md section 5) or shrink the job"
+            "(docs/local-vps-migration.zh.md) or shrink the job"
         )
     if job_class == "paper":
         return True, f"ok (paper), headroom {room} MB"

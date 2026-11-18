@@ -24,13 +24,13 @@
 #
 # Disk (2026-10-02): the root partition also carries the owner's live service
 # /opt/quantcheck, and a full disk kills it. --min-free-gb N (opt-in; research
-# jobs that write data use 15, see docs/runbook-disk.zh.md) runs the policy
+# jobs that write data use 15, see docs/local-vps-migration.zh.md) runs the policy
 # cleanup once when fewer than N GB are free and refuses with exit 75 if that
 # is still not enough. Without the flag nothing is refused (paper crons), but a
 # warning is printed below 10 GB free.
 #
 # Memory budget (owner 2026-10-07: the project must always leave the owner >=500 MB free;
-# config/memory-budget.json, docs/runbook-memory.zh.md). Research jobs run in
+# config/memory-budget.json, docs/local-vps-migration.zh.md). Research jobs run in
 # oc-research-capped.slice, inside the project budget (oc.slice, all jobs together
 # <=1.2 GB): default --mem 900M, more than 1.2G is refused (use Modal), and a job starts
 # only when both the research jobs' group and the box have room for min(--mem, 500 MB)
@@ -100,7 +100,7 @@ if [ -n "$MIN_FREE_GB" ]; then
         FREE_GB="$(free_gb)"
         if [ "$FREE_GB" -lt "$MIN_FREE_GB" ]; then
             echo "run_capped: refusing, ${FREE_GB} GB free < ${MIN_FREE_GB} GB after cleanup" \
-                "(docs/runbook-disk.zh.md)" >&2
+                "(docs/local-vps-migration.zh.md)" >&2
             exit 75
         fi
     fi
@@ -127,11 +127,11 @@ until reason="$("${BUDGET[@]}" admit --kind job --mem "$MEM_MB" 2>&1)"; do
     rc=$?
     if [ "$rc" -ne 2 ]; then
         echo "run_capped: refusing, memory check failed (rc=$rc): $reason" \
-            "(check scripts/memory_budget.py admit; docs/runbook-memory.zh.md)" >&2
+            "(check scripts/memory_budget.py admit; docs/local-vps-migration.zh.md)" >&2
         exit 75
     fi
     if [ "$(date +%s)" -ge "$DEADLINE" ]; then
-        echo "run_capped: refusing, $reason (waited ${WAIT_MIN} min; docs/runbook-memory.zh.md)" >&2
+        echo "run_capped: refusing, $reason (waited ${WAIT_MIN} min; docs/local-vps-migration.zh.md)" >&2
         exit 75
     fi
     echo "run_capped: waiting for memory, $reason" >&2

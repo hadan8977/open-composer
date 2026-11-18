@@ -1,17 +1,14 @@
 """Step 11 Wave A 3.3.1: minute-bar-derived daily aggregates.
 
-docs/plan-step-11-ml-first-loop-2026-09-06.zh.md section 3.3 item 1. One row
+One row
 per (symbol, trading day), computed entirely from 1-minute SIP bars, restricted
 to the regular session (09:30-16:00 America/New_York) and to the union of
 symbols that ever appeared in the PIT universe (``universe.py``).
 
-**Two data roots, read separately then concatenated at the year level, never
-merged as directories** (project safety boundary): years 2016-2022 live under
-``data/sip-hist/minute/``, years 2023-2026 under ``data/sip/minute/`` --
-:func:`minute_root_for_year` is the single place that routing decision is
-made. There is no calendar-year overlap between the two roots, so "read
-separately, concatenate" degenerates to "pick the one right root per year";
-no row-level de-duplication is ever needed *across* roots.
+The historical year router keeps the original 2016-2022 ``data/sip-hist``
+and 2023-2026 ``data/sip`` aliases. On Windows both links lead to the
+same ALL archive with one directory per year. Existing explicit root
+arguments still use the original year split.
 
 **Within** ``data/sip/minute/2023/`` specifically there IS a same-root overlap:
 that year alone has both the retired whole-year shard layout

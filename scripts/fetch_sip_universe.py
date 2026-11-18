@@ -45,7 +45,10 @@ DEFAULT_REFRESH_RECENT_DAYS = 45
 
 def _clients():
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.trading.client import TradingClient
+
+    from open_composer.adapters.broker.alpaca_exchange_compat import (
+        ExchangeCompatibleTradingClient as TradingClient,
+    )
 
     key = os.getenv("ALPACA_API_KEY_ID")
     secret = os.getenv("ALPACA_API_SECRET_KEY")

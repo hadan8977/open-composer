@@ -219,13 +219,6 @@ def test_scanner_sees_built_commands_but_not_docstrings(tmp_path: Path) -> None:
     ]
 
 
-def test_autonomy_jobs_use_the_budget_job_limit(tmp_path: Path) -> None:
-    from open_composer.research.autonomy import research_job_mem
-
-    assert research_job_mem(ROOT) == f"{JOB_MAX_MB}M"
-    assert research_job_mem(tmp_path) == "2.4G"  # budget file missing: the documented limit
-
-
 def test_no_built_command_exceeds_the_research_job_limit() -> None:
     rows = all_invocations()
     assert rows, "scanner found no run_capped commands at all"

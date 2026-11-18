@@ -1,44 +1,39 @@
 ---
 name: strategy-research-orchestrator
 description: >
-  Coordinate Open Composer strategy research, optimization, promotion and
-  paper readiness using the applicable native evidence and execution gates.
-  Adapt the workflow to the research object and lifecycle; component studies
-  and method maintenance do not require an unrelated strategy or deployment.
+  Coordinate strategy research, optimization, promotion and paper readiness
+  using applicable native gates. Adapt to the research object and lifecycle;
+  components and method maintenance need no unrelated strategy or deployment.
 ---
 
-# Strategy research orchestration
+# Strategy research tools and routing
 
-Read the current mission, `docs/task-owned-research.zh.md`, and actual task/compute authority. Reuse the existing complete task, evidence and cumulative budgets. A strategy, factor, data, model or execution study can have a different useful endpoint; choose work that resolves the economic question, not a fixed sequence of artifacts.
+## Continuous series
 
-## Relevant knowledge and decisions
+Use the native finite follow series; do not build a custom supervisor:
+`research_round.py run|resume <direction> --run-id <id> --timeout-seconds 86400
+--follow` on native Windows. Choose the command from the [research workflow](../../../research/README.md).
+Read the installed research switch and effective owner authority before launching
+or resuming. The VPS runs the existing paper and website services.
 
-Read the task's compact memory and decisive original evidence as needed. A failed implementation or single-factor trial is not a global factor blacklist. Preserve negative evidence and correct erroneous summaries with explicit provenance. New directions or material designs use verified prior art and counterevidence first; fresh evidence may be reused.
+Use [idea-to-paper](../idea-to-paper/SKILL.md) to frame an economic question, [research workflow](../../../research/README.md) for team continuity, and [the review standard](../../../docs/research-plan-review-standard.zh.md) for acceptance. Reuse the existing complete task, evidence and cumulative budgets.
 
-For new economic hypotheses, material scientific changes or genuinely new scope, use independent `research-plan-reviewer`. Ordinary implementation, authorized exploration, same-semantics repair and recovery reuse the approved package. The owner may change tools, prompts and organization within scope; no fixed limit on variables per loop. Frozen scientific definitions and OOS exposure remain binding.
-
-## Native tools, selected by purpose
-
-| Purpose | Existing entry |
+| Purpose | Native entry or specialist |
 |---|---|
-| Strategy behavior | Load or draft a StrategySpec, then `uv run oc spec validate <spec>` before strategy code/Pine. |
-| Strategy risk and required evidence | `uv run oc harness plan <spec>`; apply its actual risk-domain requirements. |
-| Data readiness | `uv run oc spec capabilities <spec> --json`; capability tests when needed. Sample/trial/fallback inputs do not establish paper readiness. |
-| Unstable external claims | `source-researcher` and verified source cards; applicable to the actual design. |
-| Admitted candidate evaluation | Existing iteration/campaign/knowledge gates, bounded registered search and trial accounting; `uv run oc strategy parameter-sweep <spec>` only when that search is appropriate and admitted. |
-| Refresh strategy evidence | `uv run oc strategy evidence <spec>` after relevant artifact changes; avoid the deprecated hidden `research-control` path. |
-| Optimized strategy validity | `backtest-forensics`, matched benchmark family, costs, power and multiple-testing evidence appropriate to the contract. |
-| Execution reality | `execution-reality-reviewer` when daily_open_execution, leveraged_etf or paper_auto applies. |
-| Promotion or paper readiness | `uv run oc strategy promotion-report <spec>` or `uv run oc paper readiness <spec>` when that lifecycle step is actually requested/admitted. |
+| Strategy behavior | Draft/load a StrategySpec; `uv run --no-sync oc spec validate <spec>` before strategy code/Pine. |
+| Risk-dependent artifacts | `uv run --no-sync oc harness plan <spec>`; read its detected domains and requirements. |
+| Required inputs | `uv run --no-sync oc spec capabilities <spec> --json`; [data review](../data-capability-reviewer/SKILL.md). Use [capability-evaluator](../capability-evaluator/SKILL.md) for registry/fixture hygiene. |
+| Unstable external claims | [source-researcher](../source-researcher/SKILL.md). |
+| Economic admission | `uv run --no-sync oc research direction-check <path>` and `uv run --no-sync oc research iteration validate <iter_id>`; apply campaign and knowledge gates where the contract requires them. |
+| Bounded candidate evaluation | Registered search and trial accounting; `uv run --no-sync oc strategy parameter-sweep <spec>` only for an admitted search. |
+| Refresh evidence | `uv run --no-sync oc strategy evidence <spec>` after relevant artifact changes; do not use the deprecated hidden `research-control` path. |
+| Optimized strategy validity | [backtest-forensics](../backtest-forensics/SKILL.md). |
+| Daily-open, leveraged-ETF or paper-auto execution | [execution-reality-reviewer](../execution-reality-reviewer/SKILL.md). |
+| Lifecycle assessment | `uv run --no-sync oc strategy promotion-report <spec>` or `uv run --no-sync oc paper readiness <spec>` when applicable. |
+| Paper activation | `uv run --no-sync oc harness verify <spec>` and [paper-auto-safety-reviewer](../paper-auto-safety-reviewer/SKILL.md), within effective order authorization. |
 
-This table is a tool reference, not a required ordering for every task. Dependencies still apply: validate actual inputs and obtain applicable economic admission before dependent computation. Missing data can justify a bounded preparation task rather than an empty strategy.
+The table is a reference, not a mandatory sequence. Dependent computation requires its actual input and economic admission; bounded preparation can resolve gaps without an empty StrategySpec.
 
-## Evidence and completion
+Use native outputs where consumers require them: `reports/harness/plans/{strategy}.json`, research briefs/evidence manifests under `reports/research/`, and existing task state under `reports/research/control/`. [Risk domains](../../../harness/risk_domains.yaml), [artifact contracts](../../../harness/artifact_contracts.yaml), and [skill routing](../../../harness/skill_manifest.yaml) define the actual consumer requirements. Preserve frozen definitions, seen OOS and cumulative exposure; a harness pass does not grant resource or order permission.
 
-Reuse native outputs when their consumer needs them: harness plans at `reports/harness/plans/{strategy}.json`, research briefs and evidence manifests under `reports/research/`, and existing control state/memory under `reports/research/control/`. Do not create all of these for unrelated component or method work.
-
-Report factual results, limits, cumulative exposure and a reasoned next action. Keep workflow_pass, research_pass, ml_contribution_pass, llm_contribution_pass and paper_ready_pass distinct. Budget is an upper bound; stopping further investment is distinct from scientifically refuting a mechanism. New plans choose depth by the claim and evidence, while existing frozen studies retain their standards.
-
-Paper activation requires `oc harness verify <spec>`, relevant execution/safety checks and effective owner authorization. Passing a harness is not itself authority for orders, paid compute or real-money broker writes. Do not change live paper code in the shared working tree.
-
-Use `harness/risk_domains.yaml`, `harness/artifact_contracts.yaml` and `harness/skill_manifest.yaml` for actual risk/consumer contracts. Skills and methods can be updated from outcomes; do not turn this orchestrator into a second execution engine or fixed hierarchy.
+Deliver results through [owner reporting](../../../docs/owner-reporting.zh.md). Components may have different useful endpoints; do not create a second execution engine, fixed role hierarchy or deployment requirement for them.

@@ -28,7 +28,7 @@ from open_composer.storage import append_jsonl, write_json
 ITER_ID = "mom_multiasset_multimodal_r3"
 OUTPUT_DIR = Path("reports/research/iterations") / ITER_ID
 DEFAULT_PACKET_PATH = OUTPUT_DIR / "multimodal-feature-packets.jsonl"
-DEFAULT_PROMPT_PATH = Path("prompts/momentum_multimodal_grounded_v1.txt")
+DEFAULT_PROMPT_PATH = Path("config/momentum_multimodal_grounded_v1.txt")
 SEC_DATA_DIR = Path("data/research/momentum_multimodal/sec")
 FORWARD_EPOCH = datetime(2026, 7, 15, tzinfo=UTC)
 FEATURE_FIELDS = (

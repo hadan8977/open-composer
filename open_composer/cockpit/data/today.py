@@ -33,6 +33,7 @@ from open_composer.cockpit.data.reports import (
 )
 from open_composer.cockpit.security import secret_scrub
 from open_composer.reports.owner_digest import (
+    QUEUE_FILE,
     CURRENT_VIEW,
     DigestData,
     SleeveRow,
@@ -49,6 +50,8 @@ from open_composer.reports.owner_digest import (
 TODAY_REFRESH_SECONDS = 300.0
 PAPER_SESSIONS_NEEDED = 10
 _HEADLINE_BULLETS = 3
+#: Sources older than this are labelled with their as-of date on the page.
+STALE_DAYS = 3
 _DECISION_PREFIX = "待你决定"
 
 
@@ -87,6 +90,7 @@ class SleeveLine:
     sessions: int
     spark: tuple[float, ...]  # value / budget - 1 per observed close, oldest first
     holdings: tuple[tuple[str, float], ...]
+    market_as_of: date | None = None
 
     @property
     def href(self) -> str:
@@ -163,7 +167,7 @@ class Engine:
 @dataclass(frozen=True)
 class Headline:
     """The newest judgement: a lead-round report, else the newest dated
-    section of ``docs/current-view.zh.md``."""
+    section of ``reports/research/control/current-view-through-20261011.zh.md``."""
 
     source: str  # "round" | "view"
     label: str  # "Lead round" | "Exec round" | "Current view"
@@ -197,6 +201,19 @@ class TodayReport:
     track_updated_at: str | None
     track_rule: str | None
     errors: tuple[str, ...]
+    queue_at: datetime | None = None  # mtime of the task queue file
+
+    @property
+    def track_stale(self) -> bool:
+        """The live-track file (engines, candidates) is older than STALE_DAYS."""
+        when = _date(self.track_updated_at)
+        return when is None or (self.generated_at.date() - when).days > STALE_DAYS
+
+    @property
+    def queue_stale(self) -> bool:
+        return self.queue_at is None or (
+            (self.generated_at - self.queue_at).total_seconds() > STALE_DAYS * 86400
+        )
 
     @property
     def loading(self) -> bool:
@@ -304,12 +321,37 @@ def build_money(data: DigestData | None, track: dict[str, Any] | None) -> MoneyB
         )
     sessions = data.sessions
     total, day, week = combined_returns(data.sleeves, sessions)
+
+    # nav_on deliberately carries values for report continuity. The dashboard
+    # must not label mixed/stale sessions as a synchronized portfolio return.
+    def aligned(day: date) -> bool:
+        return bool(data.sleeves) and all(
+            day < row.start_session or any(d == day for d, _ in row.navs) for row in data.sleeves
+        )
+
+    if sessions:
+        if not aligned(sessions[-1]):
+            total = day = week = None
+        elif len(sessions) >= 2:
+            if not aligned(sessions[-2]):
+                day = None
+            if not aligned(sessions[-6] if len(sessions) >= 6 else sessions[0]):
+                week = None
     spy_day, spy_week = spy_returns(data.spy_closes, sessions)
     budget_total = sum(row.budget for row in data.sleeves) or None
     since = (total / budget_total - 1.0) if total is not None and budget_total else None
     sleeves = []
     for row in data.sleeves:
         s_day, s_week = sleeve_returns(row, sessions)
+        observed = {d for d, _ in row.navs}
+        if sessions and sessions[-1] not in observed:
+            s_day = s_week = None
+        elif len(sessions) >= 2:
+            if sessions[-2] >= row.start_session and sessions[-2] not in observed:
+                s_day = None
+            base = sessions[-6] if len(sessions) >= 6 else sessions[0]
+            if base >= row.start_session and base not in observed:
+                s_week = None
         sleeves.append(
             SleeveLine(
                 name=row.name,
@@ -324,6 +366,7 @@ def build_money(data: DigestData | None, track: dict[str, Any] | None) -> MoneyB
                 sessions=len(row.navs),
                 spark=sleeve_spark(row),
                 holdings=row.holdings,
+                market_as_of=row.last_session,
             )
         )
     book = tuple(
@@ -393,14 +436,27 @@ def build_engines(track: dict[str, Any] | None) -> tuple[Engine, ...]:
 def build_headline(
     root: Path, index: ReportIndex, sections: tuple[ViewSection, ...]
 ) -> Headline | None:
-    entry: ReportEntry | None = index.latest_lead_round or (
-        index.rounds[0] if index.rounds else None
-    )
+    # The newest owner-facing report wins: lead rounds stopped on 2026-10-11
+    # while the daily/weekly reports kept coming, so a lead-round-only
+    # headline showed a month-old report.
+    candidates = [
+        e
+        for e in (
+            index.latest_lead_round or (index.rounds[0] if index.rounds else None),
+            index.daily[0] if index.daily else None,
+            index.weekly[0] if index.weekly else None,
+        )
+        if e is not None
+    ]
+    entry: ReportEntry | None = max(candidates, key=lambda e: e.at) if candidates else None
     if entry is not None:
         text = latest_report_text(root, entry)
+        label = {"daily": "Daily", "weekly": "Weekly"}.get(
+            entry.kind, "Lead round" if entry.is_lead else "Exec round"
+        )
         return Headline(
-            source="round",
-            label="Lead round" if entry.is_lead else "Exec round",
+            source="round" if entry.kind == "rounds" else entry.kind,
+            label=label,
             title=entry.title,
             bullets=report_bullets(text, _HEADLINE_BULLETS),
             at=entry.at,
@@ -466,7 +522,15 @@ def build_today_report(
         track_updated_at=_text((track or {}).get("updated_at")) or None,
         track_rule=_text((track or {}).get("rule")) or None,
         errors=tuple(errors),
+        queue_at=_mtime(root / QUEUE_FILE),
     )
+
+
+def _mtime(path: Path) -> datetime | None:
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+    except OSError:
+        return None
 
 
 # ---------------------------------------------------------------------------

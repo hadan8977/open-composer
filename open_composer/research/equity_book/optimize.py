@@ -60,7 +60,6 @@ U3000, no exposures) cannot enter the optimisation and are closed (``forced_exit
 
 from __future__ import annotations
 
-import resource
 import time
 import warnings
 from collections.abc import Callable, Mapping, Sequence
@@ -93,6 +92,7 @@ from open_composer.research.equity_book.risk import (
     RiskModel,
     ewma_beta,
 )
+from open_composer.research.runtime_metrics import process_usage
 
 TRADING_DAYS = 252
 SCALE = 100.0  # internal variable v = SCALE * w (percent of equity)
@@ -843,7 +843,7 @@ AlphaSource = Callable[[pd.Timestamp, BookState, pd.Index], pd.Series]
 
 
 def peak_rss_mb() -> float:
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+    return process_usage().ru_maxrss / 1024.0
 
 
 class BookDecider:

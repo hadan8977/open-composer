@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "scope": "Read-only display identities, not trading authorization or activation",
+  "candidates": [
+    {
+      "task_id": "BASE-CURRENT-INITIALIZATION-20261019",
+      "label": "Ridge stock model",
+      "kind": "standalone model",
+      "snapshot": "reports/paper/validation/BASE.json",
+      "policy": "BASE"
+    },
+    {
+      "task_id": "H5-LEARNED-SWING-PAPER-VALIDATION-20261019",
+      "label": "H5 learned swing",
+      "kind": "standalone model",
+      "snapshot": "reports/paper/validation/H5.json",
+      "policy": "H5"
+    },
+    {
+      "task_id": "CROSS-ASSET-LSTM-PAPER-VALIDATION-20261019",
+      "label": "Cross-asset LSTM",
+      "kind": "standalone model",
+      "snapshot": "reports/paper/validation/LSTM.json",
+      "policy": "LSTM"
+    },
+    {
+      "task_id": "BASE-STATE-BUDGET-PAPER-VALIDATION-20261019",
+      "label": "Ridge with state allocation",
+      "kind": "synthesis",
+      "snapshot": "reports/paper/validation/BASE_STATE_BUDGET.json",
+      "policy": "BASE_STATE_BUDGET"
+    },
+    {
+      "task_id": "MULTI-EQUAL-PAPER-VALIDATION-20261019",
+      "label": "Six-sleeve equal capital",
+      "kind": "synthesis",
+      "snapshot": "reports/paper/validation/MULTI_EQUAL.json",
+      "policy": "MULTI_EQUAL"
+    },
+    {
+      "task_id": "MULTI-HIERARCHICAL-PAPER-VALIDATION-20261019",
+      "label": "Six-sleeve grouped allocation",
+      "kind": "synthesis",
+      "snapshot": "reports/paper/validation/MULTI_HIERARCHICAL.json",
+      "policy": "MULTI_HIERARCHICAL"
+    }
+  ],
+  "service_state": "runtime/paper/six/runtime-state.json",
+  "performance_activities": "reports/paper/diagnostics/fresh-dashboard-owner-audit-20261027/history-v1/reconciled-six-fill-activities-v1.json",
+  "performance_activities_sha256": "7ecef3686b1aa27d9fa688303459547638847fa94b3dacc84722a06f9aaf3389"
+}

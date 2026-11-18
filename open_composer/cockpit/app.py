@@ -91,11 +91,18 @@ from open_composer.cockpit.data.overview import (
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
     build_account_equity_history,
-    build_paper_report,
     build_rehearsal_countdown,
     build_strategy_detail,
     discover_strategy_names,
 )
+from open_composer.cockpit.data.paper_comparison import build_paper_comparison
+from open_composer.cockpit.data.paper_dashboard import (
+    build_paper_dashboard,
+    find_ledger_detail,
+    get_dashboard_report,
+)
+from open_composer.cockpit.data.paper_history import load_paper_history
+from open_composer.cockpit.data.paper_overview import load_paper_overview
 from open_composer.cockpit.data.queue import load_queue_glance
 from open_composer.cockpit.data.quota import (
     QUOTA_DISABLED_REASON,
@@ -157,7 +164,12 @@ class _ImmutableStaticFiles(StaticFiles):
 def _asset_version() -> str:
     """Short content hash of the stylesheet and script, computed once per process."""
     digest = hashlib.sha256()
-    for name in ("css/cockpit.css", "js/cockpit.js"):
+    for name in (
+        "css/cockpit.css",
+        "js/cockpit.js",
+        "css/paper-comparison.css",
+        "js/paper-comparison.mjs",
+    ):
         digest.update((STATIC_DIR / name).read_bytes())
     return digest.hexdigest()[:12]
 
@@ -648,13 +660,10 @@ def _start_warm_thread() -> threading.Thread | None:
 def create_app(*, warm: bool = True) -> FastAPI:
     """Build the cockpit's FastAPI app.
 
-    `warm`, default `True`: start the T10 background thread that keeps the
-    429-calibration/usage-estimate/live-quota caches refreshed off the
-    request path (see `_warm_loop`). The real `oc cockpit serve` entry point
-    always wants this; tests that care about the thread's absence construct
-    the app with `warm=False` explicitly (most tests do not need to, since
-    `_warm_loop` is already a no-op without a real `~/.claude/projects`
-    tree -- see its docstring).
+    `warm`, default `True`, starts the quota, Today, research-overview and
+    paper-equity cache warmers off the request path. `warm=False` disables
+    every warmer, including the overview/equity loops that have no transcript
+    guard. Production serving keeps the default; isolated tests use False.
     """
     app = FastAPI(
         title="Open Composer Cockpit",
@@ -718,8 +727,14 @@ def create_app(*, warm: bool = True) -> FastAPI:
         context["report"] = today_report_for(
             root, now=datetime.now(UTC), cache=get_default_today_cache()
         )
-        context["equity"] = get_default_paper_equity_cache().get()
+        context["paper_overview"] = load_paper_overview(root)
         context["research_overview"] = get_default_research_overview_cache().get()
+        context["dashboard"] = build_paper_dashboard(
+            context["paper_overview"], get_dashboard_report(root)
+        )
+        context["comparison"] = build_paper_comparison(
+            load_paper_history(root), context["paper_overview"], context["dashboard"], root=root
+        )
         context["refresh_seconds"] = int(TODAY_REFRESH_SECONDS)
         return templates.TemplateResponse(request, "today.html", context)
 
@@ -922,6 +937,50 @@ def create_app(*, warm: bool = True) -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    @app.get("/research/overview", response_class=HTMLResponse)
+    def research_overview_page(request: Request) -> HTMLResponse:
+        root = project_root()
+        context = _base_context(request, "research")
+        context["report"] = today_report_for(
+            root, now=datetime.now(UTC), cache=get_default_today_cache()
+        )
+        context["research_overview"] = get_default_research_overview_cache().get()
+        return templates.TemplateResponse(request, "research_overview.html", context)
+
+    @app.get("/paper/accounts", response_class=HTMLResponse)
+    def paper_accounts_page(request: Request) -> HTMLResponse:
+        root = project_root()
+        context = _base_context(request, "paper")
+        context.update(
+            paper_tab="accounts",
+            report=get_dashboard_report(root),
+            paper_overview=load_paper_overview(root),
+            paper_history=load_paper_history(root),
+            equity=build_account_equity_history(root),
+        )
+        return templates.TemplateResponse(request, "paper_accounts.html", context)
+
+    @app.get("/paper/history", response_class=HTMLResponse)
+    def paper_history_page(request: Request) -> HTMLResponse:
+        context = _base_context(request, "paper")
+        context.update(paper_tab="history", paper_history=load_paper_history(project_root()))
+        return templates.TemplateResponse(request, "paper_history.html", context)
+
+    @app.get("/paper/ledger/{ledger_id:path}", response_class=HTMLResponse)
+    def paper_ledger_page(request: Request, ledger_id: str) -> HTMLResponse:
+        root = project_root()
+        report = get_dashboard_report(root)
+        overview = load_paper_overview(root)
+        dashboard = build_paper_dashboard(overview, report)
+        detail = find_ledger_detail(dashboard, ledger_id, report)
+        if detail is None:
+            raise HTTPException(status_code=404, detail="unknown ledger")
+        context = _base_context(request, "paper")
+        context.update(ledger=detail, dashboard=dashboard)
+        if detail["sleeve"] is not None:
+            context["strategy_detail"] = build_strategy_detail(root, detail["sleeve"].name)
+        return templates.TemplateResponse(request, "paper_ledger.html", context)
+
     @app.get("/paper", response_class=HTMLResponse)
     def paper_index_page(request: Request) -> HTMLResponse:
         """Screen 4: paper trading (plan section 4, "模拟盘").
@@ -931,13 +990,14 @@ def create_app(*, warm: bool = True) -> FastAPI:
         groups or filters by symbol.
         """
         root = project_root()
-        report = build_paper_report(root)
+        report = get_dashboard_report(root)
         context = _base_context(request, "paper")
         context["report"] = report
-        context["equity"] = build_account_equity_history(
-            root, strategy_names=tuple(s.name for s in report.strategies)
+        context["paper_overview"] = load_paper_overview(root)
+        context["dashboard"] = build_paper_dashboard(context["paper_overview"], report)
+        context["comparison"] = build_paper_comparison(
+            load_paper_history(root), context["paper_overview"], context["dashboard"], root=root
         )
-        context["auth_state_labels"] = AUTH_STATE_LABELS
         return templates.TemplateResponse(request, "paper.html", context)
 
     @app.get("/paper/{strategy}", response_class=HTMLResponse)

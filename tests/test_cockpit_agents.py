@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from cockpit_contract_fixture import cockpit_workspace as cockpit_workspace
 from fastapi.testclient import TestClient
 
 from open_composer.cockpit.app import create_app
@@ -177,7 +179,7 @@ def test_allowlisted_parse_never_carries_the_bearer_token(tmp_path: Path) -> Non
 
 
 def test_bearer_token_never_reaches_rendered_html_or_the_sse_stream(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cockpit_workspace: Path
 ) -> None:
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
@@ -212,7 +214,7 @@ def test_bearer_token_never_reaches_rendered_html_or_the_sse_stream(
     monkeypatch.setattr("open_composer.cockpit.data.agents.PASEO_AGENTS_DIR", agents_root)
     monkeypatch.setattr("open_composer.cockpit.data.agents.CLAUDE_PROJECTS_DIR", claude_root)
 
-    client = TestClient(create_app())
+    client = TestClient(create_app(warm=False))
 
     board = client.get("/agents")
     assert bearer_secret not in board.text
@@ -404,7 +406,7 @@ def test_summarize_activity_last_text_is_the_latest_assistant_text_first_160_cha
 
 
 def test_thinking_blocks_are_ignored_and_reasoning_never_rendered(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cockpit_workspace: Path
 ) -> None:
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
@@ -432,7 +434,7 @@ def test_thinking_blocks_are_ignored_and_reasoning_never_rendered(
     assert detail.entries[0].kind == "text"
     assert "sig-not-reasoning-abc" not in (detail.entries[0].detail or "")
 
-    client = TestClient(create_app())
+    client = TestClient(create_app(warm=False))
     response = client.get(f"/agents/{AGENT_RUNNING}")
     assert response.status_code == 200
     assert "reasoning" not in response.text.lower()
@@ -669,19 +671,19 @@ def test_find_agent_record_refuses_a_traversal_shaped_id_without_touching_disk(
 
 
 def test_agent_detail_route_404s_for_malformed_id(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cockpit_workspace: Path
 ) -> None:
     monkeypatch.setattr("open_composer.cockpit.data.agents.PASEO_AGENTS_DIR", tmp_path)
-    client = TestClient(create_app())
+    client = TestClient(create_app(warm=False))
     response = client.get("/agents/not-a-valid-id")
     assert response.status_code == 404
 
 
 def test_agent_detail_route_404s_for_unknown_but_well_formed_id(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cockpit_workspace: Path
 ) -> None:
     monkeypatch.setattr("open_composer.cockpit.data.agents.PASEO_AGENTS_DIR", tmp_path)
-    client = TestClient(create_app())
+    client = TestClient(create_app(warm=False))
     response = client.get(f"/agents/{AGENT_RUNNING}")
     assert response.status_code == 404
 
@@ -746,7 +748,7 @@ def test_heavy_jobs_filters_to_the_research_capped_slice(tmp_path: Path) -> None
 
 
 def test_agents_routes_are_get_only() -> None:
-    app = create_app()
+    app = create_app(warm=False)
     agent_routes = [r for r in app.routes if getattr(r, "path", "").startswith("/agents")]
     assert agent_routes
     for route in agent_routes:
@@ -756,13 +758,16 @@ def test_agents_routes_are_get_only() -> None:
 
 
 def test_agents_board_has_no_cjk_chrome_when_empty(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cockpit_workspace: Path
 ) -> None:
     monkeypatch.setattr("open_composer.cockpit.data.agents.PASEO_AGENTS_DIR", tmp_path)
-    client = TestClient(create_app())
+    client = TestClient(create_app(warm=False))
     response = client.get("/agents")
     assert response.status_code == 200
-    cjk = [ch for ch in response.text if "一" <= ch <= "鿿"]
+    assert "总览" in response.text and "模拟盘" in response.text
+    content = re.sub(r"<nav\b[^>]*>.*?</nav>", "", response.text, flags=re.S)
+    content = re.sub(r'<header class="mobile-head[^>]*>.*?</header>', "", content, flags=re.S)
+    cjk = [ch for ch in content if "一" <= ch <= "鿿"]
     assert not cjk
 
 
@@ -961,7 +966,7 @@ def test_load_subagent_tasks_caps_entries_per_task_and_reports_the_total(tmp_pat
 
 
 def test_agent_detail_page_header_shows_capped_of_total_entries_as_numbers(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cockpit_workspace: Path
 ) -> None:
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"

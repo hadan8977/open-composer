@@ -3,11 +3,10 @@
 
 Why this exists (2026-09-28): this box has 3.9 GB RAM and no GPU. Panel-scale
 factor builds, model training, and batch backtests either don't fit or run
-one-at-a-time for hours. The owner approved Modal's $30/month free credit for
-that class of job. This script is the one door all of those jobs go through:
-budget check -> allowlisted code upload -> data volume sync -> run with
-threads matched to the requested cores -> results copied back -> actual cost
-logged.
+one-at-a-time for hours. The owner authorizes Modal credits for that class of
+job. This script is the one door all of those jobs go through: usage record ->
+allowlisted code upload -> data volume sync -> run with threads matched to the
+requested cores -> results copied back -> actual cost logged.
 
 Usage:
     python3 scripts/modal_run.py --job NAME --cpu 4 --memory-gib 16 \\
@@ -32,9 +31,8 @@ script that partitions its own candidate list by `--shard {shard} --nshards
 `<local-out>/shard_<i>/`, and a failure in one shard is reported, never
 silently dropped.
 
-Every launch calls `scripts/modal_budget.py check` first, with the worst case
-multiplied by `--shards` (`--count`) since each shard is billed
-independently; exit code 2 there aborts before anything is uploaded.
+Every launch first records its worst case with `scripts/modal_budget.py check`,
+multiplied by `--shards` (`--count`) since each shard is billed independently.
 
 Code is shipped by allowlist, never a full repo copy: `open_composer/`,
 `scripts/`, `strategy_specs/`, `capabilities/`, `config/` (excluding any
@@ -95,7 +93,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import modal_budget  # noqa: E402
 
-# Memory cap of the local `modal run` driver (run_capped.sh --mem). One shard's
+from open_composer.research.platform_runtime import capped_command  # noqa: E402
+
+# Memory cap of the local `modal run` driver (capped_command). One shard's
 # output tarball must fit; larger outputs belong on the volume, not in the return.
 MODAL_DRIVER_MEM = "1G"
 
@@ -269,7 +269,7 @@ def scan_dir_stat(path: Path) -> dict[str, list[float]]:
         if p.is_dir() or _excluded(p):
             continue
         st = p.stat()
-        out[str(p.relative_to(path))] = [float(st.st_size), st.st_mtime]
+        out[p.relative_to(path).as_posix()] = [float(st.st_size), st.st_mtime]
     return out
 
 
@@ -285,8 +285,13 @@ def read_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
 
 
 def write_manifest(manifest: dict[str, Any], path: Path = MANIFEST_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    # Merge only this upload's updates into the current shared manifest.
+    with modal_budget.ledger_lock(modal_budget.LEDGER):
+        current = read_manifest(path)
+        current.update(manifest)
+        temporary = path.with_name(path.name + ".tmp")
+        temporary.write_text(json.dumps(current, indent=2, sort_keys=True), encoding="utf-8")
+        temporary.replace(path)
 
 
 def sync_data(data_paths: list[str], manifest_path: Path = MANIFEST_PATH) -> list[str]:
@@ -298,6 +303,7 @@ def sync_data(data_paths: list[str], manifest_path: Path = MANIFEST_PATH) -> lis
     """
     manifest = read_manifest(manifest_path)
     synced: list[str] = []
+    updates = {}
     for rel in data_paths:
         local = ROOT / rel
         if not local.exists():
@@ -308,12 +314,13 @@ def sync_data(data_paths: list[str], manifest_path: Path = MANIFEST_PATH) -> lis
         # No trailing slash: `modal volume put` then mirrors `local`'s content (file
         # or directory) directly at `rel`, matching the container-side symlink target.
         subprocess.run(
-            ["modal", "volume", "put", "oc-data", str(local), rel, "-f"],
+            [modal_budget.modal_cli(), "volume", "put", "oc-data", str(local), rel, "-f"],
             check=True,
         )
-        manifest[rel] = stat
+        updates[rel] = stat
         synced.append(rel)
-    write_manifest(manifest, manifest_path)
+    if updates:
+        write_manifest(updates, manifest_path)
     return synced
 
 
@@ -331,8 +338,7 @@ def stage_code(dest_dir: Path, extra_dirs: list[str] | None = None) -> list[Path
             + "\n".join(violations)
         )
     for f in files:
-        rel = f.relative_to(ROOT)
-        out = dest_dir / rel
+        out = dest_dir / f.relative_to(ROOT)
         out.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, out)
     return files
@@ -362,41 +368,26 @@ def parse_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument("--fetch-to", default=None)
     parser.add_argument("--shards", type=int, default=1)
     parser.add_argument("--extra-dir", action="append", default=[])
+    parser.add_argument("--driver-wait-min", type=int, default=30)
+    parser.add_argument("--keep-remote-output", action="store_true")
+    parser.add_argument("--resource-limits", action="store_true")
     ns = parser.parse_args(own_argv)
     if ns.shards < 1:
         raise SystemExit("--shards must be >= 1")
+    if ns.driver_wait_min < 0:
+        raise SystemExit("--driver-wait-min must be >= 0")
     return ns, command
 
 
 def check_budget(ns: argparse.Namespace) -> None:
-    cmd = [
-        sys.executable,
-        str(ROOT / "scripts" / "modal_budget.py"),
-        "check",
-        "--job",
-        ns.job,
-        "--cpu",
-        str(ns.cpu),
-        "--memory-gib",
-        str(ns.memory_gib),
-        "--timeout-min",
-        str(ns.timeout_min),
-        "--count",
-        str(ns.shards),
-    ]
-    if ns.gpu:
-        cmd += ["--gpu", ns.gpu]
-    proc = subprocess.run(cmd)
-    if proc.returncode == 2:
-        raise SystemExit(f"modal_budget refused job {ns.job!r} -- see output above")
-    if proc.returncode != 0:
-        raise SystemExit(f"modal_budget check exited {proc.returncode} unexpectedly")
+    argv = ["check", "--job", ns.job, "--cpu", str(ns.cpu), "--memory-gib", str(ns.memory_gib)]
+    argv += ["--timeout-min", str(ns.timeout_min), "--count", str(ns.shards)]
+    modal_budget.main(argv + (["--gpu", ns.gpu] if ns.gpu else []))
 
 
 def append_actuals(row: dict[str, Any], path: Path = LEDGER_ACTUALS_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(row) + "\n")
+    with modal_budget.ledger_lock(modal_budget.LEDGER), path.open("a", encoding="utf-8") as out:
+        out.write(json.dumps(row) + "\n")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -434,7 +425,10 @@ def main(argv: list[str] | None = None) -> int:
                 "OC_DATA_DIRS": json.dumps(ns.data),
                 "OC_OUT_DIR": str(local_dest.resolve()),
                 "OC_LOG_PATH": str(log_path),
+                "OC_RUN_ID": log_path.stem,
                 "OC_SHARD_COMMANDS": json.dumps(shard_commands),
+                "OC_KEEP_REMOTE_OUTPUT": "1" if ns.keep_remote_output else "0",
+                "OC_RESOURCE_LIMITS": "1" if ns.resource_limits else "0",
             }
         )
         print(
@@ -444,19 +438,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         t0 = time.time()
         # The local driver runs inside the project memory budget (owner 2026-10-07,
-        # docs/runbook-memory.zh.md): it holds one shard's output tarball at a time.
+        # docs/local-vps-migration.zh.md): it holds one shard's output tarball at a time.
+        # Detach keeps submitted remote work alive if this client disappears;
+        # the local entrypoint still waits, fetches outputs and records costs normally.
         proc = subprocess.run(
-            [
-                str(ROOT / "scripts" / "run_capped.sh"),
-                "--mem",
+            capped_command(
+                ROOT,
+                [modal_budget.modal_cli(), "run", "--detach", str(APP_TEMPLATE)],
                 MODAL_DRIVER_MEM,
-                "--wait-min",
-                "30",
-                "--",
-                "modal",
-                "run",
-                str(APP_TEMPLATE),
-            ],
+                wait_min=ns.driver_wait_min,
+            ),
             cwd=str(ROOT),
             env=env,
         )

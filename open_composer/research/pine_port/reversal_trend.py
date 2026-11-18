@@ -1,4 +1,4 @@
-"""Python port of ``docs/inputs/pine/reversal_trend_0522.pine`` (Pine v6,
+"""Python port of ``strategy_specs/reference/reversal_trend_0522.pine`` (Pine v6,
 indicator "Reversal Trend").
 
 Plan: ``docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md``

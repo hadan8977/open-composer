@@ -99,6 +99,7 @@ def test_deflated_sharpe_wrapper_runs() -> None:
 HAVE_SIP = (ROOT / "data/sip/daily").exists()
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(not HAVE_SIP, reason="SIP daily not available")
 def test_k2_edges_call_screen_lane_and_flag_thresholds() -> None:
     ctx = ev.load_s3_context()
@@ -117,6 +118,7 @@ def test_k2_edges_call_screen_lane_and_flag_thresholds() -> None:
     assert k2b["edge"]["anchor"] > 0.05
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(not HAVE_SIP, reason="SIP daily not available")
 def test_session_convention_guard_rejects_a_series_shifted_by_one_session() -> None:
     ctx = ev.load_s3_context()

@@ -61,10 +61,8 @@ def make_cost_fn(
     """Cost function for ``BookConfig.cost_fn`` using the spread snapshot ``snapshot``."""
     m = model if model is not None else load_model()
 
-    def cost_fn(trades: pd.DataFrame, state: Any = None) -> dict[str, float]:
-        if len(trades) == 0:
-            return {"spread": 0.0, "impact": 0.0, "fees": 0.0}
-        notional = np.abs(trades["dollar_trade"].to_numpy("float64"))
+    def prepare(trades: pd.DataFrame, state: Any = None):
+        """Cache order-invariant regressors for native funding probes."""
         is_etf = trades["symbol"].isin(etf_symbols).to_numpy()
         n = len(trades)
         adv = _col(trades, "dollar_adv_21", n)
@@ -76,16 +74,25 @@ def make_cost_fn(
             hs = half_spread_bp(price, adv, vol, year, snapshot, m)
         hs = np.where(np.isfinite(hs), hs, missing_half_spread_bp)
         hs = np.where(is_etf, etf_half_spread_bp, hs)
-        imp = np.zeros(n)
-        if include_impact:
-            raw = impact_bp(notional, adv, vol, impact_y)
-            imp = np.where(is_etf | ~np.isfinite(raw), 0.0, raw)
-        return {
-            "spread": float(np.sum(notional * hs / 1e4)),
-            "impact": float(np.sum(notional * imp / 1e4)),
-            "fees": float(np.sum(notional) * fees_bp / 1e4),
-        }
+        def evaluate(dollar_trade):
+            notional = np.abs(np.asarray(dollar_trade, dtype="float64"))
+            imp = np.zeros(n)
+            if include_impact:
+                raw = impact_bp(notional, adv, vol, impact_y)
+                imp = np.where(is_etf | ~np.isfinite(raw), 0.0, raw)
+            return {
+                "spread": float(np.sum(notional * hs / 1e4)),
+                "impact": float(np.sum(notional * imp / 1e4)),
+                "fees": float(np.sum(notional) * fees_bp / 1e4),
+            }
+        return evaluate
 
+    def cost_fn(trades: pd.DataFrame, state: Any = None) -> dict[str, float]:
+        if len(trades) == 0:
+            return {"spread": 0.0, "impact": 0.0, "fees": 0.0}
+        return prepare(trades, state)(trades["dollar_trade"].to_numpy("float64"))
+
+    cost_fn.prepare = prepare
     return cost_fn
 
 

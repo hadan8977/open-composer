@@ -183,10 +183,9 @@ def test_frozen_gross_pushes_gross_leverage_over_its_limit() -> None:
     assert not check(over, "gross_leverage")["passed"]
 
 
-def test_frozen_name_with_fractional_quantity_is_not_a_fractional_block() -> None:
+def test_frozen_name_with_fractional_quantity_is_only_frozen() -> None:
     plan = plan_with({"ACQ": 12.5}, {"ACQ": 40.0}, {"ACQ": DEAD})
-    assert check(plan, "whole_share_positions")["passed"]
-    assert plan.status == "ok"
+    assert plan.status == "ok" and "fractional_held" not in plan.payload
 
 
 def test_inactive_status_freezes_even_when_tradable_flag_is_true() -> None:
@@ -254,12 +253,7 @@ def test_end_to_end_with_fake_client_freezes_an_acquired_name() -> None:
     assert make_asset_lookup(client)("ACQ").tradable is False
 
 
-def test_plan_without_frozen_names_is_byte_identical_to_the_previous_engine() -> None:
-    # golden plan hashes computed with plan.py of commit 6014b82 on the same fixtures
-    flat = plan_for(make_target(), all_etb_client())
-    assert flat.payload["plan_sha256"] == (
-        "6ea797dc67b351eedba1ec9e1deee884943280cdf463a2f8ec1f62323652c234"
-    )
+def test_plan_without_frozen_names_has_no_frozen_fields() -> None:
     target = make_target()
     target = seal_target(
         target.model_copy(
@@ -270,9 +264,6 @@ def test_plan_without_frozen_names_is_byte_identical_to_the_previous_engine() ->
         )
     )
     held = plan_for(target, all_etb_client(positions={"L1": 150, "S1": -250, "X9": 40}))
-    assert held.payload["plan_sha256"] == (
-        "23bf2de8880c47b2e195361c949ef49c983a9c9a42d8065acb5ee4ad412d6ba5"
-    )
     assert "frozen" not in held.payload
     assert all("reference_price_source" not in o for o in held.orders)
 

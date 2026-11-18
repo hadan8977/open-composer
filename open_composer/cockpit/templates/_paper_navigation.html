@@ -1,0 +1,5 @@
+<nav class="paper-nav" aria-label="模拟盘视图">
+{% for key, href, label in [('strategies', '/paper', '策略'), ('accounts', '/paper/accounts', '账户'), ('history', '/paper/history', '历史')] %}
+  <a href="{{ href }}"{% if paper_tab|default('strategies') == key %} aria-current="page"{% endif %}>{{ label }}</a>
+{% endfor %}
+</nav>

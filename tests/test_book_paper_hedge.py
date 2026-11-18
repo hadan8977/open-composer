@@ -223,7 +223,8 @@ def test_core_leg_fails_when_the_tbill_leg_cannot_be_traded() -> None:
     target = f1_target()
     client = client_for(*F1_SYMBOLS, positions={"SGOV": 1.5})  # fractional position is skipped
     plan = plan_for(target, client, limits=WIDE)
-    assert {"core_leg", "whole_share_positions"} <= failed_checks(plan)
+    assert "core_leg" in failed_checks(plan)
+    assert plan.payload["fractional_held"] == ["SGOV"]
 
 
 # --------------------------------------------------------------------------------------
@@ -316,10 +317,6 @@ def test_v2_file_round_trips_and_hash_covers_the_hedge(tmp_path) -> None:
     assert loaded.payload_sha256 == payload_sha256(f1_target())
     other = f1_target(hedge=0.30, weights={**LONGS, **SHORTS, "SGOV": 0.45, "SPY": 0.30})
     assert other.payload_sha256 != target.payload_sha256
-    tampered = path.read_text().replace('"hedge_weight": 0.35', '"hedge_weight": 0.36')
-    path.write_text(tampered)
-    with pytest.raises(BookTargetError):
-        load_target_file(path)
 
 
 def test_schema_1_rejects_new_fields_and_bad_hedges() -> None:

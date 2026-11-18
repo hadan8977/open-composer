@@ -1,0 +1,21 @@
+# Windows私有备份
+
+使用既有gdrive和opencomposer-restic凭据档案，备份到独立仓库rclone:gdrive:agent-data/backups/opencomposer-windows-control-v1。旧VPS备份保持原样，凭据留在vault及进程环境。
+
+当前恢复基线是7fb47280cc75开头的快照，包含私有Git历史、研究/运行证据和首段分钟数据。授权补充快照bab061590042包含FOXA一次性授权和计时器记录。两个快照都已实际恢复过；完整近期RAW分钟版本与后续代码增量已备份到8ccfc8bed9b186124a0ed53cb1e96951f9ec47006a0939ccbf5282781d795c19，详情见C:/OpenComposer/ops/backup/complete-minute-backup-receipt-20261118.json；精确ID及范围见C:/OpenComposer/ops/backup/windows-private-backup-receipt.json和foxa-owner-authorization-backup-receipt-20261118.json。
+
+它们是原数据基线加接管增量，不包含全部原始行情。完整恢复还需 Drive 原档、market-data 和 archive 中的保留原件，以及实际 VPS 运行绑定。不能用Restic的latest替代明确快照ID，因为最新快照可能只有一份授权增量。
+
+重复的本地封存中转已删除，清单及Git引用列表保留在C:/OpenComposer/ops/backup/private-checkpoint-manifests。后续只备份新增内容，不再重复复制、校验和恢复不变的整个项目。
+
+2026-11-18起，本机现有rclone被Windows应用控制拦截。新的小型控制增量使用原生Restic本地仓库加密，再通过现有Google Drive上传工具保存；不改变系统保护。首包位于[控制增量目录](https://drive.google.com/drive/folders/1VABJuUb-MJm61igW9w5VRFdYdn_oc_im)，文件opencomposer-control-20261118T031015Z.tar，501,760字节。明确快照为652eb456294e1a2fbc19018ba31d96a11a276079181c7591087e67e2cb8d2353，Git增量从7ebb9453延伸至9d42bfe6，依赖原8ccfc8be基线。它包含新研究定义、冻结观察/控制表及交接和精简记录，不包含正在运行的账户结果。收据见C:/OpenComposer/ops/backup/control-capsule-receipt-20261118.json。
+
+该小包恢复时先下载到独立目录并解开tar，沿用opencomposer-restic凭据档案，对其中repository运行Restic restore并指定上述快照及独立目标目录，再接收Git bundle。它是独立加密仓库，不能当作原云端仓库中的快照ID使用。原有大数据备份和授权增量仍按各自明确快照恢复。
+
+66个账户首轮的完整结果已另存到同一目录：martin-followthrough-20261118d-1.tar.part001与part002，分别83,886,080和21,094,400字节。恢复时按001、002顺序二进制拼回原tar再解开，明确Restic快照为e2e74526301d222420e6b48f82dfea91deec2f9e5a1d26e7b03085422963a069。该包包含首轮完整运行目录、失败尝试、实际账户、报告与独立接收，原始负载约2.92GB，加密压缩后约105MB；不包含后续仍在运行的诊断。收据及云端文件ID在C:/OpenComposer/ops/backup/martin-followthrough-20261118d-1-backup-receipt.json。
+
+现有上传工具的本地文件传输上限是100MiB，以上分片用于满足该实际限制。原始结果保留在研究目录；上传确认后已移除同一包多余的本地加密仓库和未分片tar，保留本地分片及恢复说明。这不计作旧项目内容精简。
+
+恢复先放到独立目录。不要用旧快照覆盖VPS当前订单、授权、持仓或尝试回执，也不要据此重建交易计时器；先读取当前运行状态。私有历史不向公开GitHub仓库直接推送。
+
+后续两个独立加密增量已上传同一目录：owner-pause-code-cleanup-20261118.tar（快照9eebdc520dd847b047ae07a0ba9278bfdcd21c856ded6498ee6b3a7234b7ae02）保留第2、3轮、暂停的第4轮和机主不联系客户支持的决定；latest-daily-code-cleanup-20261118.tar（快照68e95ba22760b735bd3a2e324635dd11a63eee42e7859433bc86bd9f65778c23）保留独立最新日线版本及代码清理。精确文件ID与Git范围见C:/OpenComposer/ops/backup 内同名-backup-receipt.json。它们沿用上述独立目录解包、指定快照恢复的方法；接收旧进度不能清除当前研究暂停。原数据和恢复收据保留；云端独立增量按各自快照恢复。

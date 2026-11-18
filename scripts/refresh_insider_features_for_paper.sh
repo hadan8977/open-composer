@@ -54,7 +54,7 @@ mkdir -p logs
 
 log() { echo "[$(date -u +%FT%TZ)] $*"; }
 
-# --class paper: paper-rehearsal data, outside the research memory budget (docs/runbook-memory.zh.md).
+# --class paper: paper-rehearsal data, outside the research memory budget (docs/local-vps-migration.zh.md).
 CAP=(./scripts/run_capped.sh --class paper --mem 1.8G --)
 if [ "${OC_ALREADY_CAPPED:-0}" = "1" ]; then
     CAP=()

@@ -1,48 +1,10 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/UserPromptSubmit-harness-context.sh"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/PreToolUse-paper-write-guard.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/Stop-artifact-summary.sh"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(uv run oc *)",
       "Bash(uv run ruff format .)",
       "Bash(uv run ruff check .)",
       "Bash(uv run pytest*)",
-      "Bash(uv run python scripts/check-agent-parity.py)",
-      "Bash(uv run python scripts/sync-agent-skills.py)",
-      "Bash(make agent-parity)",
       "Bash(make verify)",
       "Bash(git add *)",
       "Bash(git commit *)",

@@ -7,7 +7,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from open_composer.book_paper.accounts import BOOK_ACCOUNTS, make_trading_client
+from open_composer.book_paper.accounts import make_trading_client
 
 
 def capture_account_valuation(
@@ -17,8 +17,6 @@ def capture_account_valuation(
     *,
     client: Any | None = None,
 ) -> Path:
-    if account_alias not in BOOK_ACCOUNTS:
-        raise ValueError("unknown book account alias")
     client = client or make_trading_client(account_alias)
     started = datetime.now(UTC)
     account = client.get_account()

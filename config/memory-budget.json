@@ -1,5 +1,5 @@
 {
-  "owner_rule": "Owner 2026-10-07: this project must never take the whole box; always leave about 500 MB free for the owner's other projects (Hermes), their own conversations and the proxy (xray/hysteria). Budgets are planned against this file, never against the 3.9 GB total. Owner 2026-10-08: 3 agents and 1.2 GB per job were too strict; ceilings doubled to 6 and 2.4 GB, made to fit by compressing idle memory (zswap) and a second swap file, while the project's RAM limit (2.2 GB) and the 500 MB reserve stay. docs/runbook-memory.zh.md",
+  "owner_rule": "Owner 2026-10-07: this project must never take the whole box; always leave about 500 MB free for the owner's other projects (Hermes), their own conversations and the proxy (xray/hysteria). Budgets are planned against this file, never against the 3.9 GB total. Owner 2026-10-08: 3 agents and 1.2 GB per job were too strict; ceilings doubled to 6 and 2.4 GB, made to fit by compressing idle memory (zswap) and a second swap file, while the project's RAM limit (2.2 GB) and the 500 MB reserve stay. docs/local-vps-migration.zh.md",
   "reserve_mb": 500,
   "target_available_mb": 650,
   "relax_above_mb": 950,
@@ -15,7 +15,8 @@
   "job_default_mb": 900,
   "job_max_mb": 2458,
   "heavy_job_mb": 200,
-  "background_agents_max": 6,
+  "background_agents_max": 8,
+  "background_agents_note": "Owner 2026-11-10 requests more parallel substantive research. Root raises the concurrency ceiling from6 to8 for two independent questions; the2200MiB project limit,500MiB reserve and existing admission checks remain binding. This is capacity, not a target to fill or a research stopping count.",
   "agent_admit_headroom_mb": 200,
   "escalate_after_s": 30,
   "gate_pause_after_s": 300,

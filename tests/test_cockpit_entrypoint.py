@@ -38,7 +38,7 @@ def test_entrypoint_does_not_import_the_cli_or_the_heavy_stack() -> None:
         "import sys;"
         "import open_composer.cockpit.__main__;"
         "from open_composer.cockpit.app import create_app;"
-        "create_app();"
+        "create_app(warm=False);"
         "leaked=[m for m in ('open_composer.cli',)+"
         f"{HEAVY_MODULES!r} if m in sys.modules];"
         "print(','.join(leaked))"

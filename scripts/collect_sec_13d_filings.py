@@ -7,18 +7,17 @@ What this collects
 ------------------
 Every Schedule 13D / 13D/A / 13G / 13G/A filing from 2016-01 onward whose
 *subject company* (the issuer, not the filer) is a member of our
-point-in-time top-N ADV universe, with the one timestamp that makes the
-table point-in-time: the EDGAR ``<ACCEPTANCE-DATETIME>`` out of the filing
-header.
+historical top-N ADV universe. The EDGAR ``<ACCEPTANCE-DATETIME>`` is retained
+from the filing header as a submission clock, not a historical public
+first-delivery certificate.
 
-Why acceptance datetime and not ``Date Filed``: EDGAR disseminates a filing
-accepted by 17:30 ET on the same business day and stamps anything later with
-the *next* business day. ``Date Filed`` in the quarterly index is therefore
-already a "next business day" value for late filings, but it carries no time
-of day at all, so it cannot tell a 09:45 ET filing (tradable that session)
-from a 16:40 ET one (not tradable until the next open). The acceptance
-timestamp does, which is the whole point of this card -- 13D drift studies
-die on exactly this kind of half-session look-ahead.
+Why retain acceptance datetime separately from ``Date Filed``: the index date
+has no time of day. For Schedule 13D/G, the same-business-day filing-date
+cutoff was 17:30 ET before 2024-02-05 and is 22:00 ET from that date under
+FR2023-22678 section II.A.5. That rule assigns a filing date; it does not
+measure public dissemination latency. Acceptance, actual public availability,
+retrieval and computation clocks must remain distinct. Historical header bytes
+alone do not certify first-seen PIT or an attainable contemporaneous fill.
 
 Stages (each resumable; rerunning skips finished work)
 -----------------------------------------------------

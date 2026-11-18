@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -59,3 +60,24 @@ def test_fetch_error_returns_2(tmp_path: Path) -> None:
 def test_fred_missing_marker_dropped() -> None:
     s = fv.parse_fred("observation_date,VIXCLS\n2025-01-02,15.0\n2025-01-03,.\n")
     assert list(s.index.strftime("%Y-%m-%d")) == ["2025-01-02"]
+
+
+def test_fred_outage_falls_back_to_previous_file(tmp_path: Path) -> None:
+    vals = [20.0 + i for i in range(len(DAYS))]
+    assert fv.run(tmp_path, _getter(_fred(DAYS[:-2], vals[:-2]), _cboe(DAYS[:-2], vals[:-2]))) == 0
+
+    def fred_down(url: str) -> str:
+        if url == fv.FRED_URL:
+            raise TimeoutError("timed out")
+        return _cboe(DAYS, vals)
+
+    assert fv.run(tmp_path, fred_down) == 0
+    meta = json.loads((tmp_path / "VIXCLS.meta.json").read_text())
+    assert meta["fred_source"] == "previous_file" and meta["last_date"] == DAYS[-1].date().isoformat()
+
+
+def test_fred_outage_without_previous_file_returns_2(tmp_path: Path) -> None:
+    def fred_down(url: str) -> str:
+        raise TimeoutError("timed out")
+
+    assert fv.run(tmp_path, fred_down) == fv.EXIT_FETCH

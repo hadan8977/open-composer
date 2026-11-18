@@ -496,6 +496,7 @@ def test_newey_west_t_matches_plain_t_for_iid_and_shrinks_for_persistent_series(
 _BUILT = sg.SIGNALS_DIR / "2024.parquet"
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(not _BUILT.exists(), reason="signals/2024.parquet not built")
 def test_built_year_file_invariants() -> None:
     import pyarrow.parquet as pq

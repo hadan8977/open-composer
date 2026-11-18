@@ -204,6 +204,7 @@ def test_identical_candidates_collapse_to_one_effective_trial() -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(
     not SIP_DAILY_ROOT.is_dir(),
     reason="local SIP daily archive (data/sip/daily) is not present",

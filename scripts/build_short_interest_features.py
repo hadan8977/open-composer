@@ -102,6 +102,7 @@ sys.path.insert(0, str(ROOT))
 
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
+import pyarrow as pa  # noqa: E402
 
 from open_composer.market_calendar import us_equity_session_dates  # noqa: E402
 from open_composer.research.features.short_interest import (  # noqa: E402
@@ -165,7 +166,14 @@ def load_records(
             f"no parsed FINRA archive at {PARSED_PATH}; run "
             "scripts/collect_finra_short_interest.py --stage download then --stage parse"
         )
-    frame = pd.read_parquet(PARSED_PATH, columns=list(READ_COLUMNS))
+    frame = pd.read_parquet(
+        PARSED_PATH,
+        columns=list(READ_COLUMNS),
+        filters=[("symbol", "in", sorted(symbols) or pa.array([], type=pa.string()))]
+        if symbols is not None
+        else None,
+        use_threads=False,
+    )
     if symbols is not None:
         frame = frame.loc[frame["symbol"].isin(symbols)]
     frame = frame.copy()
@@ -220,6 +228,7 @@ def load_adv_shares(year: int, symbols: set[str]) -> pd.DataFrame:
         return pd.DataFrame(columns=["symbol", "trade_date", "adv_shares_63"])
     frame = pd.read_parquet(path, columns=["symbol", "trade_date", "close", "dollar_adv_63"])
     frame = frame.loc[frame["symbol"].isin(symbols)]
+    frame["trade_date"] = pd.to_datetime(frame["trade_date"])
     close = frame["close"].where(frame["close"] > 0)
     frame["adv_shares_63"] = frame["dollar_adv_63"] / close
     return frame[["symbol", "trade_date", "adv_shares_63"]]

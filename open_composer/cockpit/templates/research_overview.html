@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}研究资产 · Quant{% endblock %}
+{% block content %}<div class="page-head"><h1>研究资产</h1><a href="/research">研究 ↗</a></div>
+{% set ov = research_overview %}
+<section class="tile tile--evidence overview-evidence">
+  <header class="tile-head">
+    <span class="tile-label">收益线与证据</span>
+    <span class="tile-meta"></span>
+  </header>
+  {% if ov.loading %}
+  <div class="well empty">正在读取研究资产</div>
+  {% else %}
+  <div class="overview-metrics num">
+    <span><b>{{ ov.strategy_count }}</b> 策略</span>
+    <span><b>{{ ov.model_count }}</b> 模型角色</span>
+    <span><b>{{ ov.factor_count }}</b> 因子</span>
+    <span><b>{{ ov.market_timing_report_count }}</b> 择时研究</span>
+    <span><b>{{ ov.alternative_data_report_count }}</b> 另类数据</span>
+    <span><b>{{ ov.paper_strategy_count }}</b> 纸面收益线</span>
+    <span><b>{{ ov.research_blocked_count }}</b> 研究阻塞</span>
+  </div>
+  <div class="overview-roles num">
+    {% for role, count in ov.model_roles|dictsort %}<span>{{ role|replace("_", " ") }} <b>{{ count }}</b></span>{% endfor %}
+  </div>
+  <div class="overview-table-wrap">
+    <table class="t overview-table">
+      <thead><tr><th>收益线</th><th>角色</th><th>回测证据</th><th>研究门</th><th>纸面结果</th><th>纸面门</th><th>因子</th><th>阻塞</th></tr></thead>
+      <tbody>
+      {% for row in ov.rows %}
+        {% set paper = namespace(sleeve=none) %}
+        {% for sleeve in report.money.sleeves if sleeve.name == row.name %}{% set paper.sleeve = sleeve %}{% endfor %}
+        <tr>
+          <td><span class="text">{{ row.name|replace("_", " ") }}</span><span class="row-sub">{{ row.lifecycle }}</span></td>
+          <td>{{ row.model_role|replace("_", " ") }}</td>
+          <td class="num">{% if row.latest_sharpe is not none %}SR {{ "%.2f"|format(row.latest_sharpe) }}{% else %}N/A{% endif %}<span class="row-sub">{{ row.evidence_level or "no bound evidence" }}</span></td>
+          <td><span class="chip chip--{{ 'ok' if row.research_status == 'pass' else 'warn' if row.research_status in ('warning', 'blocked') else 'unknown' }}">{{ '通过' if row.research_status == 'pass' else '阻塞' if row.research_status == 'blocked' else '警告' if row.research_status == 'warning' else '未知' }}</span></td>
+          <td class="num">{% if paper.sleeve %}{{ paper.sleeve.since|pct }}<span class="row-sub">{{ paper.sleeve.sessions }} sessions</span>{% else %}N/A{% endif %}</td>
+          <td><span class="chip chip--{{ 'ok' if row.paper_status == 'pass' else 'warn' if row.paper_status in ('warning', 'blocked') else 'unknown' }}">{{ '通过' if row.paper_status == 'pass' else '阻塞' if row.paper_status == 'blocked' else '警告' if row.paper_status == 'warning' else '未知' }}</span></td>
+          <td class="num">{{ row.factor_count }}</td>
+          <td class="row-sub">{{ row.blocker or "—" }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8">没有可展示的 approved/active 收益线</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="foot-row num"><span>catalog {{ ov.catalog_at|ago if ov.catalog_at else "unknown" }}{% if ov.stale %} · stale{% endif %}</span><span></span></div>
+  {% endif %}
+</section>
+
+{% endblock %}

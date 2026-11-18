@@ -94,12 +94,12 @@ def bind_consumer(root: Path, config: dict, name: str, dependencies: list[Path])
         frozen = frozen_directory / (before + p.suffix)
         frozen.parent.mkdir(parents=True, exist_ok=True)
         if not frozen.exists():
-            # Universe builders use copy2, so these snapshots must be independent.
+            # Mutable source caches/builders write in place; freeze independent bytes.
             if (
                 "universe" in p.parts
                 or "universe_broad" in p.parts
                 or p.suffix == ".py"
-                or p.name == "facts.parquet"
+                or p.name in {"facts.parquet", "company_tickers.json"}
             ):
                 shutil.copyfile(p, frozen)
             else:
@@ -135,6 +135,7 @@ def disk_admission(
     stages: list[str],
     year: int,
     fetch: bool,
+    source_fetch_bound_bytes: int | None = None,
 ) -> dict:
     # This is a conservative declared bound, not an assertion that file growth
     # cannot occur. Per-stage rechecks and subprocess spill limits remain required.
@@ -161,6 +162,10 @@ def disk_admission(
         if fetch and any(t.name == "sec_fundamentals_facts" for t in tables)
         else 0
     )
+    if source_fetch_bound_bytes is not None:
+        if not fetch or source_fetch_bound_bytes < 0:
+            raise ValueError("explicit source-fetch bound requires a nonnegative fetch stage")
+        fetch_bound = max(fetch_bound, source_fetch_bound_bytes)
     spill = int(config.get("disk_spill_bound_bytes", 2 * 1024**3))
     # Backups, retained natural products, composed replacement, monthly outputs,
     # current-bulk download, fixed spill, and owner-service reserve all counted.

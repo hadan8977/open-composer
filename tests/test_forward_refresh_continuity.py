@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 from datetime import date
@@ -35,6 +36,52 @@ def config(root, old, name="daily"):
         "runtime_context_manifest": str(manifest),
         "runtime_source_manifest": str(manifest),
     }
+
+
+def test_ticker_witness_survives_inplace_refresh_and_publication_rejects_drift(tmp_path):
+    old = tmp_path / "features/fundamental/2026.parquet"
+    frame(old, ["2026-10-13"], [1.0])
+    cfg = config(tmp_path, old, "sec_fundamentals_daily")
+    ticker = tmp_path / "data/raw/sec_xbrl/company_tickers.json"
+    ticker.parent.mkdir(parents=True)
+    ticker.write_text('{"A": 1}')
+    digest = sha256(ticker)
+    manifest = io.bind_consumer(tmp_path, cfg, "sec_fundamentals_daily", [ticker])
+    binding = json.loads(manifest.read_text())["producer_dependencies"][0]
+    frozen = Path(binding["path"])
+    assert not os.path.samefile(frozen, ticker)
+    ticker.write_text('{"A": 2}')  # same write_bytes/write-in-place behavior as the cache refresh
+    assert sha256(frozen) == digest == binding["sha256"]
+    candidate = tmp_path / "candidate.parquet"
+    frame(candidate, ["2026-10-13", "2026-10-14"], [1.0, 2.0])
+    with pytest.raises(ValueError, match="producer consumed dependency changed"):
+        publish_forward_table(
+            tmp_path, "sec_fundamentals_daily", old, candidate, old, date(2026, 10, 14), cfg
+        )
+    assert sha256(frozen) == digest
+    assert pd.read_parquet(old)["value"].tolist() == [1.0]
+
+
+def test_ticker_change_during_freeze_is_still_rejected(tmp_path, monkeypatch):
+    context = tmp_path / "source-manifest.json"
+    context.write_text(json.dumps({"corrected_bindings": []}))
+    cfg = {"runtime_context_manifest": str(context)}
+    ticker = tmp_path / "company_tickers.json"
+    ticker.write_bytes(b'{"A": 1}')
+    digest = sha256(ticker)
+    copy = io.shutil.copyfile
+
+    def racing_copy(source, destination):
+        result = copy(source, destination)
+        source.write_bytes(b'{"A": 2}')
+        return result
+
+    monkeypatch.setattr(io.shutil, "copyfile", racing_copy)
+    with pytest.raises(ValueError, match="dependency changed while freezing"):
+        io.bind_consumer(tmp_path, cfg, "sec_fundamentals_daily", [ticker])
+    frozen = tmp_path / "producer-frozen" / (digest + ".json")
+    assert sha256(frozen) == digest and sha256(ticker) != digest
+    assert not list(tmp_path.glob("consumer-*.json"))
 
 
 def test_dependency_snapshot_after_actual_monthly_update(tmp_path, monkeypatch):

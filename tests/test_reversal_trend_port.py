@@ -597,6 +597,7 @@ def test_symbol_grouping_runs_state_machine_independently_per_symbol() -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(
     not (default_sip_root() / "daily").is_dir(),
     reason="local SIP daily archive (data/sip/daily) is not present",

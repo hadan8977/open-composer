@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install the open-composer memory budget (owner 2026-10-07: always leave the owner
 # >=500 MB free). Idempotent; every replaced system file is backed up first to
-# /root/backups/memory-budget/<UTC stamp>/. Rules: docs/runbook-memory.zh.md.
+# /root/backups/memory-budget/<UTC stamp>/. Rules: docs/local-vps-migration.zh.md.
 #
 #   deploy/memory/install.sh            # units, governor, OOM scripts, earlyoom, maintenance
 #   deploy/memory/install.sh --paseo    # also point Paseo's claude provider at the wrapper

@@ -1,9 +1,8 @@
 """Tests for the read-only JSON API (Step 18/plan-two-frontends T11).
 
-Mirrors the shape of ``tests/test_cockpit_app.py`` (same ``client`` fixture
-pattern, ``warm=False`` so the T10 background thread never starts) and relies
-on the same ``tests/conftest.py`` autouse fixture to keep every quota/agent
-lookup off the real network and off this box's real credentials/transcripts.
+Uses a synthetic repository shared with ``tests/test_cockpit_app.py``.
+``warm=False`` disables every background warmer; credential/transcript roots
+remain isolated by ``tests/conftest.py`` and the local contract fixture.
 
 Covers, per the T11 brief:
 
@@ -30,6 +29,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from cockpit_contract_fixture import AGENT_ID, CARD_ID, STRATEGY
+from cockpit_contract_fixture import cockpit_workspace as cockpit_workspace
 from fastapi.testclient import TestClient
 
 from open_composer.cockpit.api import to_jsonable
@@ -38,9 +39,7 @@ from open_composer.cockpit.security import secret_scrub
 
 
 @pytest.fixture
-def client() -> TestClient:
-    # `warm=False`: matches `tests/test_cockpit_app.py`'s fixture -- this
-    # suite does not exercise the T10 background warm thread.
+def client(cockpit_workspace: Path) -> TestClient:
     return TestClient(create_app(warm=False))
 
 
@@ -58,8 +57,8 @@ def test_every_api_route_is_get_only() -> None:
     """
     app = create_app(warm=False)
     api_routes = [r for r in app.routes if getattr(r, "path", "").startswith("/api/")]
-    # 10 from T11 plus today.json, reports.json and reports/{kind}/{id}.json (2026-10-04)
-    assert len(api_routes) == 13, f"expected 13 /api/ routes, found {len(api_routes)}"
+    # Includes the published research overview in addition to the original mirrors.
+    assert len(api_routes) == 15, f"expected 15 /api/ routes, found {len(api_routes)}"
     for route in api_routes:
         methods = getattr(route, "methods", None)
         assert methods == {"GET"}, (
@@ -116,7 +115,20 @@ LIST_ENDPOINTS: tuple[tuple[str, frozenset[str]], ...] = (
             }
         ),
     ),
-    ("/api/paper.json", frozenset({"generated_at", "report", "auth_state_labels"})),
+    (
+        "/api/paper.json",
+        frozenset(
+            {
+                "generated_at",
+                "report",
+                "auth_state_labels",
+                "account_equity",
+                "paper_history",
+                "paper_overview",
+                "dashboard",
+            }
+        ),
+    ),
     ("/api/quota.json", frozenset({"generated_at", "report"})),
     ("/api/health.json", frozenset({"generated_at", "report"})),
 )
@@ -138,8 +150,7 @@ def test_list_endpoint_shape(client: TestClient, path: str, expected_keys: froze
 
 
 # --------------------------------------------------------------------------
-# Shape: the three detail endpoints, driven by whatever id the corresponding
-# list endpoint actually returns on this box (skip, don't fail, if empty).
+# Shape: seeded native files make every detail contract execute on every run.
 # --------------------------------------------------------------------------
 
 
@@ -149,8 +160,7 @@ def test_hypothesis_detail_endpoint_shape(client: TestClient) -> None:
         (card["id"] for lane in listing["lanes"] for card in lane["cards"]),
         None,
     )
-    if card_id is None:
-        pytest.skip("no hypothesis cards on this box")
+    assert card_id == CARD_ID
     response = client.get(f"/api/hypotheses/{card_id}.json")
     data = _assert_common_response_shape(response)
     assert set(data.keys()) == {
@@ -169,9 +179,9 @@ def test_hypothesis_detail_endpoint_shape(client: TestClient) -> None:
 def test_agent_detail_endpoint_shape(client: TestClient) -> None:
     listing = client.get("/api/agents.json").json()
     agents = listing["agents"]
-    if not agents:
-        pytest.skip("no agents on this box")
+    assert len(agents) == 1
     agent_id = agents[0]["record"]["id"]
+    assert agent_id == AGENT_ID
     response = client.get(f"/api/agents/{agent_id}.json")
     data = _assert_common_response_shape(response)
     assert set(data.keys()) == {"generated_at", "detail"}
@@ -181,9 +191,9 @@ def test_agent_detail_endpoint_shape(client: TestClient) -> None:
 def test_paper_detail_endpoint_shape(client: TestClient) -> None:
     listing = client.get("/api/paper.json").json()
     strategies = listing["report"]["strategies"]
-    if not strategies:
-        pytest.skip("no paper strategies on this box")
+    assert len(strategies) == 1
     name = strategies[0]["name"]
+    assert name == STRATEGY
     response = client.get(f"/api/paper/{name}.json")
     data = _assert_common_response_shape(response)
     assert set(data.keys()) == {"generated_at", "detail", "chart", "auth_state_labels"}

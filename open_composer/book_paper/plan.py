@@ -2,11 +2,11 @@
 
 ``build_plan`` is pure given an :class:`AccountState` (read-only broker snapshot), an asset lookup
 and the target file.  It never sends anything.  ``submit_plan`` is the only function that writes to
-the broker; it needs an unblocked plan, the CLS submission window, a clear kill switch and a client
-created by the strict paper factory, and it is idempotent through deterministic
-``client_order_id``s.  Failing any pre-trade check blocks the whole plan; nothing is trimmed
-silently (names rejected by the easy-to-borrow filter are removed and reported, and the residual
-exposure goes through the same checks).
+the broker; it needs an unblocked plan, the submission window, a clear kill switch and a paper
+client, and it is idempotent through deterministic ``client_order_id``s.  A failed pre-trade risk
+check blocks the whole plan (names rejected by the easy-to-borrow filter are removed and reported,
+and the residual exposure goes through the same checks).  A fractional broker position gets no
+order; it is listed under ``fractional_held`` as a warning and does not block the plan.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ ORDER_PAGE_LIMIT = 500
 
 
 class BookEngineError(RuntimeError):
-    """Refusal to build or send a plan (window, blocked plan, unverified client, ...)."""
+    """Refusal to build or send a plan (window, blocked plan, ...)."""
 
 
 @dataclass(frozen=True)
@@ -146,13 +146,17 @@ def read_account_state(client: Any) -> AccountState:
 
 def _position_price(position: Any, qty: float) -> float | None:
     """Broker price of a position: ``current_price``, else ``|market_value / qty|``."""
-    price = _optional_float(getattr(position, "current_price", None))
-    if price is None or not math.isfinite(price) or price <= 0:
+    price = _valid_price(getattr(position, "current_price", None))
+    if price is None:
         market_value = _optional_float(getattr(position, "market_value", None))
         if market_value is None or not qty:
             return None
-        price = abs(market_value / qty)
-    return price if math.isfinite(price) and price > 0 else None
+        price = _valid_price(abs(market_value / qty))
+    return price
+
+
+def _not_found(exc: Exception) -> bool:
+    return getattr(exc, "status_code", None) == 404 or exc.__class__.__name__ == "NotFoundError"
 
 
 def make_asset_lookup(client: Any) -> Callable[[str], AssetInfo | None]:
@@ -162,10 +166,7 @@ def make_asset_lookup(client: Any) -> Callable[[str], AssetInfo | None]:
         try:
             asset = client.get_asset(symbol)
         except Exception as exc:
-            if (
-                getattr(exc, "status_code", None) == 404
-                or exc.__class__.__name__ == "NotFoundError"
-            ):
+            if _not_found(exc):
                 return None
             raise
         return AssetInfo(
@@ -180,7 +181,7 @@ def make_asset_lookup(client: Any) -> Callable[[str], AssetInfo | None]:
 
 
 class OrderLookup:
-    """Idempotency lookup: broker orders of the execution day by ``client_order_id``."""
+    """Broker orders of the execution day by ``client_order_id`` (one page, then per-id reads)."""
 
     def __init__(self, client: Any, execution_date: date) -> None:
         from alpaca.common.enums import Sort
@@ -202,20 +203,17 @@ class OrderLookup:
         self._by_id = {str(getattr(o, "client_order_id", "")): o for o in orders}
         self._truncated = len(orders) >= ORDER_PAGE_LIMIT
 
-    def find(self, client_order_id: str) -> Any | None:
-        if client_order_id in self._by_id:
+    def find(self, client_order_id: str, *, fresh: bool = False) -> Any | None:
+        if not fresh and client_order_id in self._by_id:
             return self._by_id[client_order_id]
-        if not self._truncated or not hasattr(self._client, "get_order_by_client_id"):
+        if not (fresh or self._truncated) or not hasattr(self._client, "get_order_by_client_id"):
             return None
         try:
             return self._client.get_order_by_client_id(client_order_id)
         except Exception as exc:
-            if (
-                getattr(exc, "status_code", None) == 404
-                or exc.__class__.__name__ == "NotFoundError"
-            ):
+            if _not_found(exc):
                 return None
-            raise BookEngineError(f"broker order lookup failed: {exc}") from exc
+            raise
 
     def ids(self) -> frozenset[str]:
         return frozenset(self._by_id)
@@ -229,6 +227,11 @@ class OrderLookup:
 def round_half_away(x: float) -> int:
     """Whole shares, halves away from zero; longs and shorts alike."""
     return int(math.copysign(math.floor(abs(x) + 0.5), x)) if x else 0
+
+
+def _whole_shares(qty: float) -> int:
+    """Whole-share part of a broker quantity, toward zero (10.6 -> 10, -0.4 -> 0)."""
+    return int(qty + math.copysign(1e-9, qty))
 
 
 def client_order_id(
@@ -260,11 +263,12 @@ def build_plan(
     )
     frozen_symbols = {row["symbol"] for row in frozen}
     prices.update(closeout_prices)
-    fractional_held = [
+
+    fractional_held = sorted(
         s
         for s, q in state.positions.items()
         if abs(q - round(q)) > 1e-9 and s not in frozen_symbols
-    ]
+    )
 
     # 1. whole-share targets and raw deltas
     target_qty: dict[str, int] = {}
@@ -412,8 +416,11 @@ def build_plan(
         "checks": [asdict(c) for c in checks],
         "post_trade_qty": {s: q for s, q in sorted(post_qty.items()) if q},
     }
-    if frozen:  # key absent otherwise, so a plan without frozen names serializes as before
+    # optional keys are absent when empty, so an ordinary plan serializes as before
+    if frozen:
         payload["frozen"] = frozen
+    if fractional_held:
+        payload["fractional_held"] = fractional_held
     payload["plan_sha256"] = _plan_hash(payload)
     return OrderPlan(payload)
 
@@ -591,8 +598,10 @@ def _risk_checks(
     )
 
     short_names = [s for s, q in post_qty.items() if q < 0]
+    equity_ok = _valid_price(state.equity) is not None
     account_ok = (
-        state.status == "ACTIVE"
+        equity_ok
+        and state.status == "ACTIVE"
         and not state.trading_blocked
         and (state.shorting_enabled or not short_names)
     )
@@ -603,6 +612,7 @@ def _risk_checks(
             f"status={state.status} trading_blocked={state.trading_blocked} "
             f"shorting_enabled={state.shorting_enabled}",
             "ACTIVE, not blocked, shorting enabled when short",
+            "" if equity_ok else "account equity must be finite and positive",
         )
     )
     results.append(
@@ -610,15 +620,8 @@ def _risk_checks(
             "reference_prices_complete", not unpriced, len(unpriced), 0, ", ".join(unpriced)
         )
     )
-    results.append(
-        CheckResult(
-            "whole_share_positions",
-            not fractional_held,
-            len(fractional_held),
-            0,
-            ", ".join(fractional_held),
-        )
-    )
+    if not fractional_held:  # kept as a passed entry so ordinary plans serialize as before
+        results.append(CheckResult("whole_share_positions", True, 0, 0, ""))
     foreign = sorted(
         {
             sym
@@ -751,18 +754,14 @@ def _risk_checks(
     return results
 
 
+
 # --------------------------------------------------------------------------------------
 # submission window and submit
 # --------------------------------------------------------------------------------------
 
 
-SUBMIT_TIF_MODES = ("close", "market")
-
-
 def require_submission_window(now: datetime, execution_date: date) -> None:
     """Refuse before 09:30 ET on the execution date and at or after close - 15 min (15:45 ET)."""
-    if now.tzinfo is None:
-        raise BookEngineError("submission time must be timezone-aware")
     local = now.astimezone(NEW_YORK)
     close = us_equity_session_close(execution_date)
     if close is None:
@@ -791,93 +790,108 @@ def submit_plan(
     kill_switch_check: Callable[[], None] | None = None,
     pace_seconds: float = 0.0,
     tif_mode: str = "close",
+    clock: Callable[[], datetime] | None = None,
 ) -> dict[str, Any]:
-    """Send the plan's CLS market orders.  Needs an unblocked plan and a verified paper client.
+    """Send the plan's market orders.  Needs an unblocked plan and a verified paper client.
 
-    ``pace_seconds`` spaces consecutive submissions (the CLI passes ``SUBMIT_PACE_SECONDS``): the
-    first v1.2 day builds the whole book (1,502 + 1,295 orders in the 10-05 dry run) and Alpaca
-    allows about 200 requests a minute per key; alpaca-py only retries a 429 three times.
+    ``pace_seconds`` spaces consecutive submissions (the CLI passes ``SUBMIT_PACE_SECONDS``):
+    Alpaca allows about 200 requests a minute per key; alpaca-py only retries a 429 three times.
 
     ``tif_mode``: ``close`` (default, the contract's closing-auction CLS market orders) or
-    ``market`` (DAY market orders; T-20261005-02: paper accepts CLS but fills it like a market
-    order at the closing quote with random partial fills whose remainder expires seconds after
-    the close -- the 10-05 one-share short expired unfilled)."""
-    if tif_mode not in SUBMIT_TIF_MODES:
-        raise BookEngineError(f"tif_mode must be one of {SUBMIT_TIF_MODES}, got {tif_mode!r}")
+    ``market`` (DAY market orders; T-20261005-02: paper fills CLS like a market order at the
+    closing quote with random partial fills).  Orders already at the broker (same deterministic
+    ``client_order_id``) are skipped, so a rerun only sends what is missing."""
+    import time as _time
+
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import MarketOrderRequest
 
-    from open_composer.adapters.broker.alpaca_paper import (
-        PaperOrderError,
-        _require_verified_paper_client,
-    )
+    from open_composer.adapters.broker.alpaca_paper import _require_verified_paper_client
+    from open_composer.book_paper.reversal import reversal_legs, submit_reversal
 
     if str(plan.payload.get("book_id", "")).startswith("synthetic"):
         raise BookEngineError("synthetic dry-run targets are never submitted")
     if plan.status != "ok":
         raise BookEngineError("plan is blocked: " + ", ".join(plan.payload.get("blocked_by", [])))
     require_submission_window(now, plan.execution_date)
-    try:
-        _require_verified_paper_client(client)
-    except PaperOrderError as exc:
-        raise BookEngineError(str(exc)) from exc
+    _require_verified_paper_client(client)
     if kill_switch_check is not None:
-        try:
-            kill_switch_check()
-        except Exception as exc:
-            raise BookEngineError(f"kill switch blocks submission: {exc}") from exc
+        kill_switch_check()
 
+    started = _time.monotonic()
+    live_clock = clock or (lambda: now + timedelta(seconds=_time.monotonic() - started))
     lookup = OrderLookup(client, plan.execution_date)
-    sent: list[dict[str, Any]] = []
-    skipped: list[dict[str, Any]] = []
-    failed: list[dict[str, Any]] = []
-    ordered = sorted(plan.orders, key=lambda o: (o["side"] != "sell", o["symbol"]))  # sells first
-    for order in ordered:
-        cid = order["client_order_id"]
-        if lookup.find(cid) is not None:
-            skipped.append(
-                {"symbol": order["symbol"], "client_order_id": cid, "reason": "already at broker"}
+    tif = "day" if tif_mode == "market" else "cls"
+    report: dict[str, Any] = {
+        "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "plan_sha256": plan.payload["plan_sha256"],
+        "time_in_force": tif,
+        "sent": [],
+        "skipped_existing": [],
+        "failed": [],
+        "deferred": [],
+        "reversals": [],
+    }
+
+    def guard() -> None:
+        """Live admission of a staged reversal leg (it depends on an earlier fill)."""
+        require_submission_window(live_clock(), plan.execution_date)
+        if kill_switch_check is not None:
+            kill_switch_check()
+
+    def send(order: dict[str, Any]) -> Any | None:
+        row = {k: order[k] for k in ("symbol", "client_order_id", "qty", "side")}
+        if "stage" in order:
+            row.update(
+                logical_client_order_id=order["logical_client_order_id"], stage=order["stage"]
             )
-            continue
+        if pace_seconds > 0 and (report["sent"] or report["failed"]):
+            _time.sleep(pace_seconds)
         request = MarketOrderRequest(
             symbol=order["symbol"],
             qty=order["qty"],
             side=OrderSide.BUY if order["side"] == "buy" else OrderSide.SELL,
-            time_in_force=TimeInForce.CLS if tif_mode == "close" else TimeInForce.DAY,
-            client_order_id=cid,
+            time_in_force=TimeInForce.DAY if tif == "day" else TimeInForce.CLS,
+            client_order_id=order["client_order_id"],
         )
-        if pace_seconds > 0 and (sent or failed):
-            import time as _time
-
-            _time.sleep(pace_seconds)
         try:
             result = client.submit_order(request)
         except Exception as exc:
-            failed.append(
-                {
-                    "symbol": order["symbol"],
-                    "client_order_id": cid,
-                    "error": exc.__class__.__name__,
-                    "message": broker_error_text(exc),
-                }
+            status = getattr(exc, "status_code", None)
+            rejected = isinstance(status, int) and 400 <= status < 500 and status not in (408, 429)
+            row.update(
+                error=exc.__class__.__name__,
+                message=broker_error_text(exc),
+                outcome="submission_rejected" if rejected else "acknowledgement_unknown",
+            )
+            report["failed"].append(row)
+            return None
+        row.update(
+            broker_order_id=str(getattr(result, "id", "")),
+            status=_text(getattr(result, "status", "")),
+        )
+        report["sent"].append(row)
+        return result
+
+    for order in sorted(plan.orders, key=lambda o: (o["side"] != "sell", o["symbol"])):
+        if reversal_legs(order):
+            submit_reversal(
+                order,
+                lookup=lookup,
+                send=send,
+                guard=guard,
+                report=report,
+                pace_seconds=pace_seconds,
             )
             continue
-        sent.append(
-            {
-                "symbol": order["symbol"],
-                "client_order_id": cid,
-                "broker_order_id": str(getattr(result, "id", "")),
-                "status": _text(getattr(result, "status", "")),
-            }
-        )
-    return {
-        "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "plan_sha256": plan.payload["plan_sha256"],
-        "time_in_force": "cls" if tif_mode == "close" else "day",
-        "sent": sent,
-        "skipped_existing": skipped,
-        "failed": failed,
-    }
+        cid = order["client_order_id"]
+        if lookup.find(cid) is not None:
+            report["skipped_existing"].append(
+                {"symbol": order["symbol"], "client_order_id": cid, "reason": "already at broker"}
+            )
+            continue
+        send(order)
+    return report
 
 
 # --------------------------------------------------------------------------------------
@@ -904,7 +918,12 @@ def next_orders_receipt_path(root: Path, account: str, execution_date: date, now
     if not first.exists():
         return first
     stamp = now.astimezone(UTC).strftime("%H%M%S")
-    return first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}.json")
+    candidate = first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}.json")
+    suffix = 0
+    while candidate.exists():
+        suffix += 1
+        candidate = first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}-{suffix}.json")
+    return candidate
 
 
 _TOKEN_LIKE = re.compile(r"[A-Za-z0-9_\-]{32,}")
@@ -925,49 +944,19 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> Path:
 
 
 def write_plan_file(root: Path, plan: OrderPlan) -> Path:
-    """Write the plan file without ever replacing a submitted plan.
-
-    Reconcile reads this file after the close. A rebuilt plan with the same orders keeps the
-    existing file (only ``created_at_utc`` differs). A different plan for an execution date
-    that already has an orders receipt is refused (T-20261005-20, E3).
-    """
-    account = plan.payload["account"]
-    path = plan_path(root, account, plan.execution_date)
-    if path.exists():
-        try:
-            existing = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            existing = None
-        submitted = orders_receipt_path(root, account, plan.execution_date).exists()
-        same_orders = isinstance(existing, dict) and existing.get("orders") == plan.payload.get(
-            "orders"
-        )
-        if submitted and same_orders:
-            return path
-        if submitted:
-            raise BookEngineError(
-                f"plan for {plan.execution_date.isoformat()} already has an orders receipt; "
-                "refusing to overwrite the submitted plan"
-            )
-        # Equal order quantities do not imply equal account, safety or input
-        # state. Refresh an unsubmitted plan when those facts have changed.
-        ignored = {"created_at_utc", "plan_sha256"}
-        if isinstance(existing, dict) and (
-            {k: v for k, v in existing.items() if k not in ignored}
-            == {k: v for k, v in plan.to_dict().items() if k not in ignored}
-        ):
-            return path
-    return write_json_atomic(path, plan.to_dict())
+    """Write the plan file; reconcile reads it after the close.  Once an orders receipt exists the
+    CLI reuses the stored plan, so a submitted plan is only ever rewritten with itself."""
+    return write_json_atomic(
+        plan_path(root, plan.payload["account"], plan.execution_date), plan.to_dict()
+    )
 
 
 def load_plan_file(path: Path) -> OrderPlan:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    if payload.get("plan_sha256") != _plan_hash(payload):
-        raise BookEngineError(f"plan file hash mismatch: {Path(path).name}")
-    return OrderPlan(payload)
+    return OrderPlan(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
 def _plan_hash(payload: dict[str, Any]) -> str:
+    """Plan identifier (the cockpit and reconcile match plan and daily files by it)."""
     body = {k: v for k, v in payload.items() if k != "plan_sha256"}
     return hashlib.sha256(
         json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
@@ -1035,18 +1024,6 @@ def read_open_orders(client: Any) -> list[Any]:
     )
 
 
-def _require_verified_client(client: Any) -> None:
-    from open_composer.adapters.broker.alpaca_paper import (
-        PaperOrderError,
-        _require_verified_paper_client,
-    )
-
-    try:
-        _require_verified_paper_client(client)
-    except PaperOrderError as exc:
-        raise BookEngineError(str(exc)) from exc
-
-
 def _order_row(order: Any) -> dict[str, str]:
     return {
         "symbol": str(getattr(order, "symbol", "")),
@@ -1074,11 +1051,9 @@ def cancel_open_orders(
     receipt lists the ids asked, the broker answer per id and the orders still open after a
     re-read (for example ones the exchange no longer accepts cancels for).
     """
-    if not reason.strip():
-        raise BookEngineError("cancel needs a reason")
-    if now.tzinfo is None:
-        raise BookEngineError("cancel time must be timezone-aware")
-    _require_verified_client(client)
+    from open_composer.adapters.broker.alpaca_paper import _require_verified_paper_client
+
+    _require_verified_paper_client(client)
     scope = "plan" if plan is not None else "all_book"
     day = execution_date or (plan.execution_date if plan is not None else None)
     if day is None:
@@ -1163,12 +1138,6 @@ def flatten_plan(
     fractional remainders (below one share, or the part after whole shares) go to
     ``residual_fractional``.  Raises while any open order remains: cancel first.
     """
-    if mode not in FLATTEN_MODES:
-        raise BookEngineError(f"flatten mode must be one of {FLATTEN_MODES}, got {mode!r}")
-    if not reason.strip():
-        raise BookEngineError("flatten needs a reason")
-    if attempt < 1:
-        raise BookEngineError("attempt must be >= 1")
     if state.open_orders:
         names = ", ".join(sorted({f"{s}:{c[:12]}" for s, c in state.open_orders}))
         raise BookEngineError(
@@ -1196,7 +1165,7 @@ def flatten_plan(
                 }
             )
             continue
-        whole = int(math.floor(abs(qty) + 1e-9))
+        whole = abs(_whole_shares(qty))
         fraction = round(abs(qty) - whole, 9)
         if fraction > 1e-9:
             residual.append({"symbol": symbol, "qty": math.copysign(fraction, qty)})
@@ -1218,31 +1187,31 @@ def flatten_plan(
             }
         )
     orders.sort(key=lambda o: (o["side"] != "sell", o["symbol"]))
-    payload: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
-        "kind": "flatten",
-        "account": account,
-        "execution_date": execution_date.isoformat(),
-        "mode": mode,
-        "time_in_force": tif,
-        "attempt": attempt,
-        "reason": reason.strip(),
-        "kill_switch": dict(kill_switch) if kill_switch is not None else None,
-        "account_status": state.status,
-        "status": "ok" if orders else "nothing_to_close",
-        "orders": orders,
-        "skipped": skipped,
-        "residual_fractional": residual,
-        "summary": {
-            "n_orders": len(orders),
-            "n_sell": sum(1 for o in orders if o["side"] == "sell"),
-            "n_buy": sum(1 for o in orders if o["side"] == "buy"),
-            "n_skipped": len(skipped),
-            "n_residual_fractional": len(residual),
-        },
-    }
-    payload["plan_sha256"] = _plan_hash(payload)
-    return OrderPlan(payload)
+    return OrderPlan(
+        {
+            "schema_version": SCHEMA_VERSION,
+            "kind": "flatten",
+            "account": account,
+            "execution_date": execution_date.isoformat(),
+            "mode": mode,
+            "time_in_force": tif,
+            "attempt": attempt,
+            "reason": reason.strip(),
+            "kill_switch": dict(kill_switch) if kill_switch is not None else None,
+            "account_status": state.status,
+            "status": "ok" if orders else "nothing_to_close",
+            "orders": orders,
+            "skipped": skipped,
+            "residual_fractional": residual,
+            "summary": {
+                "n_orders": len(orders),
+                "n_sell": sum(1 for o in orders if o["side"] == "sell"),
+                "n_buy": sum(1 for o in orders if o["side"] == "buy"),
+                "n_skipped": len(skipped),
+                "n_residual_fractional": len(residual),
+            },
+        }
+    )
 
 
 def require_flatten_window(now: datetime, execution_date: date, mode: str) -> None:
@@ -1250,25 +1219,19 @@ def require_flatten_window(now: datetime, execution_date: date, mode: str) -> No
     if mode == "close":
         require_submission_window(now, execution_date)
         return
-    if mode != "market":
-        raise BookEngineError(f"flatten mode must be one of {FLATTEN_MODES}, got {mode!r}")
-    if now.tzinfo is None:
-        raise BookEngineError("submission time must be timezone-aware")
     local = now.astimezone(NEW_YORK)
     close = us_equity_session_close(execution_date)
-    if close is None:
-        raise BookEngineError("execution date is not a US equity session")
-    if local.date() != execution_date:
+    if close is None or local.date() != execution_date:
         raise BookEngineError(
             f"market flatten only on the session day {execution_date.isoformat()} "
             f"(ET date is {local.date().isoformat()})"
         )
-    if local < datetime.combine(execution_date, MARKET_OPEN, NEW_YORK):
-        raise BookEngineError("market flatten is refused before 09:30 ET (regular hours only)")
-    if local >= datetime.combine(execution_date, close, NEW_YORK):
-        raise BookEngineError(
-            "market flatten is refused at or after the close (regular hours only)"
-        )
+    if not (
+        datetime.combine(execution_date, MARKET_OPEN, NEW_YORK)
+        <= local
+        < datetime.combine(execution_date, close, NEW_YORK)
+    ):
+        raise BookEngineError("market flatten is refused outside regular hours")
 
 
 def flatten_dry_run_receipt(plan: OrderPlan, *, now: datetime) -> dict[str, Any]:
@@ -1292,24 +1255,18 @@ def flatten_dry_run_receipt(plan: OrderPlan, *, now: datetime) -> dict[str, Any]
 def submit_flatten(client: Any, plan: OrderPlan, *, now: datetime) -> dict[str, Any]:
     """Send a flatten plan.  Allowed with the kill switch on (it only reduces risk).
 
-    Needs the mode's window, a client from the strict paper factory and no open order at the
-    broker; idempotent through the deterministic ``bk1-flat-`` client order ids.
+    Needs the mode's window and a paper client; idempotent through the deterministic
+    ``bk1-flat-`` client order ids.
     """
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import MarketOrderRequest
 
-    if plan.payload.get("kind") != "flatten":
-        raise BookEngineError("not a flatten plan")
+    from open_composer.adapters.broker.alpaca_paper import _require_verified_paper_client
+
     mode = plan.payload["mode"]
     day = plan.execution_date
     require_flatten_window(now, day, mode)
-    _require_verified_client(client)
-    open_now = read_open_orders(client)
-    if open_now:
-        raise BookEngineError(
-            f"refusing to flatten with {len(open_now)} open orders at the broker; "
-            "run `oc book-paper cancel` first"
-        )
+    _require_verified_paper_client(client)
     tif = TimeInForce.CLS if mode == "close" else TimeInForce.DAY
     lookup = OrderLookup(client, day)
     sent: list[dict[str, Any]] = []

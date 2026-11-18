@@ -7,6 +7,7 @@ __pycache__/
 .env
 config/notifications.yaml
 .codex/config.toml
+/.claude/skills
 .audit-*.txt
 tmp_nt_test*/
 data/cache/
@@ -19,6 +20,7 @@ reports/*
 !reports/
 !reports/research/
 !reports/harness/
+reports/harness/data/*-capability-review.json
 !reports/owner/
 reports/owner/*
 !reports/owner/weekly/
@@ -57,9 +59,6 @@ reports/research/control/*
 !reports/research/intel/*.md
 !reports/research/knowledge/
 !reports/research/knowledge/index.json
-!reports/research/program/
-reports/research/program/**/cache/
-reports/research/program/**/*.parquet
 signal_logs/
 strategies_pine/generated/
 strategies_python/generated/
@@ -214,6 +213,8 @@ reports/research/iterations/h20260916_07_short_interest/logs/
 data/sip/
 data/sip-hist
 data/sip-delisted/
+data/sip-raw-repair/
+data/sip-raw-recent/
 # Step 11 feature store (universe/intraday_daily/daily/labels parquet under
 # data/features/): fully reproducible from data/sip/ + scripts/build_*.py,
 # same "don't commit bulk market data" convention as the SIP archives above.
@@ -224,6 +225,9 @@ data/_duckdb_tmp/
 # reproducible from data/sip/minute/ + scripts/build_hourly_bars.py, same
 # "don't commit bulk market data" convention as data/sip/ and data/features/.
 data/bars/
+data/live/
+data/sec/
+data/forward/
 
 # daily observation-cycle cron logs (runtime output, not evidence)
 logs/
@@ -242,3 +246,32 @@ data/wikipedia_pageviews/
 data/sec_ftd/
 # Option-chain snapshots (T-20261005-33): irreplaceable, backed up to Drive, never committed
 data/options/
+
+# Derived catalog lookup index (rebuild with consolidate.py)
+research/knowledge_consolidation_20261115/catalog/index.sqlite3
+
+# Keep received run payloads and historical recovery pointers local.
+/research/*/*
+!/research/lab/**
+!/research/schemas/**
+!/research/templates/**
+!/research/*/brief*.md
+!/research/*/scope*.md
+!/research/*/economic-protocol.md
+!/research/*/report.md
+!/research/*/report.zh.md
+!/research/*/StrategySpec*.yaml
+!/research/*/decisions.tsv
+!/research/*/trials.jsonl
+!/research/*/results.json
+/reports/research/intel/sources/
+/reports/research/harvest/raw/
+/reports/owner/*/*.status.json
+/reports/owner/rounds/*-research-inventory.json
+ARCHIVE-RESTORE.json
+
+# Existing archive receipt directories, which Git cannot traverse on Windows.
+/reports/research/harvest/directions.jsonl
+/reports/research/iterations/mom_multiasset_ai_r2/evaluation-report.json
+/reports/research/iterations/mom_stock_intraday_codesign_q1/parent-universe.json
+/research/lab/validation-20261028/

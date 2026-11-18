@@ -104,6 +104,10 @@ class BookConfig:
     signal_dates: Sequence[pd.Timestamp] | None = None  # overrides freq/offset
     trade_attrs: TradeAttrs | None = None  # (decision_date, symbols) -> frame indexed by symbol
     snapshots: bool = True
+    # Opt-in execution policy. Cost functions passed to it must be pure: probes
+    # are not executions. Legacy books do not use either hook.
+    trade_funding: Callable | None = None
+    trade_observer: Callable | None = None
 
 
 @dataclass
@@ -124,6 +128,19 @@ class BookState:
     panel: PricePanel
     decision_date: pd.Timestamp | None = None
     exec_price: str = "open"
+
+
+@dataclass(frozen=True)
+class BookCloseAnchor:
+    """Native close state, before deciding the next action.
+
+    Dollar holdings retain their last valid marks. This engine has immediate
+    net cash funding, so it has no separate settlement/reservation queue.
+    """
+
+    date: pd.Timestamp
+    equity: float
+    holdings: Mapping[str, float]
 
 
 @dataclass
@@ -176,7 +193,11 @@ def _resolve_sleeve(panel: PricePanel, symbols: Sequence[str], i: int, priced: n
     return -1
 
 
-def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = None) -> BookResult:
+def run_book(
+    panel: PricePanel, decide: DecideFn, config: BookConfig | None = None, *,
+    initial_close: BookCloseAnchor | None = None,
+    terminal_open: pd.Timestamp | None = None,
+) -> BookResult:
     """Run a decision function through the daily accounting.  See the module docstring."""
     cfg = config or BookConfig()
     dates = panel.dates
@@ -207,6 +228,21 @@ def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = No
 
     h = np.zeros(n_sym)  # dollar holdings
     equity = float(cfg.initial_equity)
+    if initial_close is not None:
+        if start_pos < 1 or dates[start_pos - 1] != pd.Timestamp(initial_close.date):
+            raise ValueError("Close anchor must immediately precede the run start")
+        if cfg.initial_weights is not None:
+            raise ValueError("Close anchor and initial weights are mutually exclusive")
+        if not np.isfinite(initial_close.equity) or initial_close.equity <= 0:
+            raise ValueError("Close anchor needs positive finite equity")
+        equity = float(initial_close.equity)
+        for s, value in initial_close.holdings.items():
+            if not panel.has(s) or not np.isfinite(value):
+                raise ValueError("Invalid anchored holding")
+            h[panel.col(s)] = value
+    if terminal_open is not None:
+        if cfg.exec_price != "open" or pd.Timestamp(terminal_open) != dates[end_pos]:
+            raise ValueError("Terminal open must be the final open-execution session")
     if cfg.initial_weights:
         for s, w in cfg.initial_weights.items():
             sc = (
@@ -336,12 +372,25 @@ def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = No
                     if c not in tdf.columns:
                         tdf[c] = att[c].to_numpy()
             st = make_state(i, e_pre, decision)
+            if cfg.trade_funding is not None:
+                adjusted = cfg.trade_funding(tdf.copy(), st, cost_fn)
+                if not adjusted.index.equals(tdf.index) or not adjusted["symbol"].equals(tdf["symbol"]):
+                    raise ValueError("Funding hook cannot change order identities")
+                actual = adjusted["dollar_trade"].to_numpy("float64")
+                if not np.isfinite(actual).all():
+                    raise ValueError("Nonfinite funded orders")
+                tdf = adjusted
+                trades[nz] = actual
+                target = h + trades
+                turnover = float(np.abs(actual).sum() / e_pre) if e_pre else 0.0
             res = cost_fn(tdf, st)
             if isinstance(res, Mapping):
                 for k, v in res.items():
                     comps[k if k in comps else "spread"] += float(v)
             else:
                 comps["spread"] += float(res)
+            if cfg.trade_observer is not None:
+                cfg.trade_observer(tdf, st, comps.copy())
         h = target
         return turnover, float(sum(comps.values())), comps
 
@@ -350,6 +399,14 @@ def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = No
             nz = np.flatnonzero(h)
             snaps[date] = pd.Series(h[nz] / e if e > 0 else h[nz], index=syms[nz])
 
+    if initial_close is not None:
+        prev_date = pd.Timestamp(initial_close.date)
+        if start_pos - 1 in sig:
+            raw = decide(prev_date, make_state(start_pos - 1, equity))
+            if raw is not None:
+                pending, pending_decision = dict(raw), prev_date
+
+    completed_days = n_days
     for i in range(start_pos, end_pos + 1):
         date = dates[i]
         k = i - start_pos
@@ -382,6 +439,15 @@ def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = No
         # overnight leg
         equity += float(h @ ov_i)
         h = h * (1.0 + ov_i)
+        if terminal_open is not None and date == pd.Timestamp(terminal_open):
+            st = make_state(i, equity)
+            info["terminal_open_pre_action"] = {
+                "date": str(date), "equity": equity, "cash": st.cash,
+                "holdings": st.holdings.to_dict(),
+                "pending_decision": str(pending_decision) if pending_decision is not None else None,
+            }
+            completed_days = k
+            break
         if is_trade and cfg.exec_price == "open":
             e_open_pre = equity
             turnover, cost, comps = trade(i, equity, pending_decision)
@@ -441,6 +507,6 @@ def run_book(panel: PricePanel, decide: DecideFn, config: BookConfig | None = No
                 pending = dict(raw)
                 pending_decision = date
 
-    daily = pd.DataFrame(out, index=dates[start_pos : end_pos + 1], columns=cols)
+    daily = pd.DataFrame(out[:completed_days], index=dates[start_pos : start_pos + completed_days], columns=cols)
     daily["is_trade_day"] = daily["is_trade_day"].fillna(0.0).astype(bool)
     return BookResult(daily=daily, holdings=snaps, config=cfg, info=info)

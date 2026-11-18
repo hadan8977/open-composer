@@ -266,7 +266,7 @@ day, the live agent session, the research pipeline, fresh-token burn, system
 health and a 24-hour model-call meter. The other screens are Hypotheses
 (`/hypotheses`), Lineage, Agents, Paper, Quota and Health; `⌘1`–`⌘7` (Ctrl on
 Linux/Windows) switch between them, and on a phone a bottom tab bar groups
-them. Design rationale: `docs/cockpit/design-instrument-2026-09-24.zh.md`.
+them. See [operations](local-vps-migration.zh.md) for the deployed service.
 
 The Cockpit has **no application-level authentication** by design and refuses
 to bind `0.0.0.0`/`::`/`*`. Remote (e.g. mobile) access goes through a
@@ -277,7 +277,7 @@ configured in the Cloudflare Zero Trust dashboard — there is no
 `deploy-vps.sh` or bundled CLI flag for this). The Cockpit issues no commands
 of its own; remote instructions still go through your existing agent session
 (Paseo), never through the Cockpit UI. Full rationale and acceptance criteria:
-`docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md`.
+[operations](local-vps-migration.zh.md).
 
 An optional second front end, "Cockpit v2" (React + Vite, reads the same
 read-only JSON API), builds with:

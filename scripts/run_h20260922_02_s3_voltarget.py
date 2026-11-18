@@ -143,6 +143,8 @@ def simulate(
     brake: bool,
     forced_brake: np.ndarray | None = None,
 ) -> tuple[pd.Series, pd.Series, np.ndarray]:
+    from open_composer.lab.accounting import open_close_step
+
     cols = list(weights.columns)
     cash_i = cols.index(CASH)
     wb = weights.to_numpy(dtype=float)
@@ -167,9 +169,7 @@ def simulate(
         risk[cash_i] = 0.0
         w = risk * m
         w[cash_i] = row[cash_i] + (1.0 - m) * risk.sum()
-        gross = float(w_prev @ lo[i] + w @ lc[i])
-        turnover = float(np.abs(w - w_prev).sum())
-        r = gross - turnover * cost_bps / 10_000.0
+        r, turnover = open_close_step(w_prev, w, lo[i], lc[i], cost_bps)
         rets[i] = r
         turns[i] = turnover
         equity *= 1.0 + r

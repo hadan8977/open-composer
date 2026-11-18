@@ -2,14 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-import pytest
 
-from open_composer.research import autonomy
+from open_composer.research.agent_workflow import run_round
 from open_composer.research.direction import (
     TEXT_FIELDS,
     direction_review_template,
@@ -198,179 +195,76 @@ def test_new_iteration_gate_cannot_omit_direction_review(tmp_path: Path) -> None
     )
 
 
-def test_chinese_prompt_injects_documented_context_not_rewritten_prompt(tmp_path: Path) -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / ".claude/hooks/UserPromptSubmit-harness-context.sh"
-    )
-    result = subprocess.run(
-        ["bash", str(script)],
-        input=json.dumps({"prompt": "继续优化策略，尽快盈利"}),
-        text=True,
-        capture_output=True,
-        check=True,
-        env={**os.environ, "OC_ROOT": str(tmp_path)},
-    )
-    output = json.loads(result.stdout)
-    assert "prompt" not in output
-    assert output["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
-    assert "research-mission.zh.md" in output["hookSpecificOutput"]["additionalContext"]
-
-
-def setup_queue(tmp_path: Path, monkeypatch) -> dict:
-    config = {
-        "enabled": True,
-        "engine": "claude",
-        "daily_fresh_tokens": 10000,
-        "rolling_5h_fresh_tokens": 10000,
-        "interactive_reserve_fresh_tokens": 3000,
-        "max_task_fresh_tokens": 1000,
-        "max_task_seconds": 30,
-        "max_tasks_per_day": 3,
-    }
-    prompt = tmp_path / "prompt.md"
-    prompt.write_text("Read the mission and research a primary source.")
-    task = {
-        "id": "scout_one",
-        "kind": "scout",
-        "prompt_path": "prompt.md",
-        "prompt_sha256": hashlib.sha256(prompt.read_bytes()).hexdigest(),
-        "depends_on": [],
-    }
-    write_json(tmp_path / autonomy.CONFIG_PATH, config)
-    write_json(tmp_path / autonomy.QUEUE_PATH, {"tasks": [task]})
-    monkeypatch.setattr(
-        autonomy,
-        "usage_snapshot",
-        lambda: {
-            "observed_at": datetime.now(UTC).isoformat(),
-            "fresh_5h": 500,
-            "observable": True,
-            "retry_after": None,
-            "unknown_throttle_reset": False,
-        },
-    )
-    return config
-
-
-def test_dry_run_does_not_spawn_or_reserve_and_completed_task_is_not_repeated(
-    tmp_path, monkeypatch
-) -> None:
-    setup_queue(tmp_path, monkeypatch)
-    calls = []
-
-    def worker(argv, root, output, config):
-        calls.append(argv)
-        persisted = json.loads((root / autonomy.STATE_DIR / "state.json").read_text())
-        assert persisted["tasks"]["scout_one"]["status"] == "started"
-        assert "Bash" not in " ".join(argv)
-        return {"exit_code": 0, "stop_reason": None}
-
-    monkeypatch.setattr(autonomy, "_run_worker", worker)
-    assert autonomy.tick(tmp_path)["mode"] == "dry_run"
-    assert calls == []
-    assert not (tmp_path / autonomy.STATE_DIR).exists()
-    assert autonomy.tick(tmp_path, execute=True)["status"] == "completed"
-    assert autonomy.tick(tmp_path, execute=True)["status"] == "idle"
-    assert len(calls) == 1
-
-
-def test_unknown_budget_and_interactive_reserve_prevent_dispatch(tmp_path, monkeypatch) -> None:
-    config = setup_queue(tmp_path, monkeypatch)
-    config["daily_fresh_tokens"] = None
-    write_json(tmp_path / autonomy.CONFIG_PATH, config)
-    assert "explicit_absolute_budget_required" in autonomy.tick(tmp_path, execute=True)["blocked"]
-    config["daily_fresh_tokens"] = 10000
-    usage = autonomy.usage_snapshot()
-    usage["fresh_5h"] = 6500
-    assert "interactive_reserve_or_5h_budget" in autonomy.budget_blockers(
-        config, {"tasks": {}}, usage, datetime.now(UTC)
-    )
-
-
-def test_crashed_task_blocks_new_work_and_keeps_reservation(tmp_path, monkeypatch) -> None:
-    setup_queue(tmp_path, monkeypatch)
+def test_chinese_brief_is_preserved_in_neutral_workflow(tmp_path: Path, repo_root: Path) -> None:
+    write_json(tmp_path / "control.json", {"draft": False, "research": True})
     write_json(
-        tmp_path / autonomy.STATE_DIR / "state.json",
-        {
-            "tasks": {
-                "old_task": {
-                    "status": "started",
-                    "started_at": datetime.now(UTC).isoformat(),
-                    "reserved_fresh_tokens": 1000,
-                },
-            }
-        },
+        tmp_path / "config/memory-budget.json",
+        json.loads((repo_root / "config/memory-budget.json").read_text(encoding="utf-8")),
     )
-    assert (
-        "unfinished_task_requires_reconciliation"
-        in autonomy.tick(tmp_path, execute=True)["blocked"]
-    )
-
-
-def test_active_429_pauses_even_with_unused_budget(tmp_path, monkeypatch) -> None:
-    config = setup_queue(tmp_path, monkeypatch)
-    usage = autonomy.usage_snapshot()
-    usage["retry_after"] = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
-    assert "rate_limited" in autonomy.budget_blockers(
-        config, {"tasks": {}}, usage, datetime.now(UTC)
-    )
-
-
-def test_429_arriving_before_spawn_prevents_the_model_call(tmp_path, monkeypatch) -> None:
-    config = setup_queue(tmp_path, monkeypatch)
-    usage = autonomy.usage_snapshot()
-    usage["retry_after"] = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
-    monkeypatch.setattr(autonomy, "usage_snapshot", lambda: usage)
-    monkeypatch.setattr(
-        autonomy.subprocess, "Popen", lambda *a, **kw: pytest.fail("must not spawn")
-    )
-    result = autonomy._run_worker(["claude"], tmp_path, tmp_path / "out.log", config)
-    assert "rate_limited" in result["stop_reason"]
-
-
-def test_empty_or_error_claude_json_does_not_complete_task(tmp_path: Path) -> None:
-    path = tmp_path / "result.json"
-    for payload in (
-        {},
-        {"type": "result", "subtype": "success", "is_error": True, "result": "error"},
-    ):
-        write_json(path, payload)
-        assert not autonomy._claude_result_success(path)
+    workflow = json.loads((repo_root / "research/workflow.json").read_text())
+    write_json(tmp_path / "research/workflow.json", workflow)
+    for role in workflow["roles"].values():
+        prompt_path = tmp_path / role["prompt"]
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_bytes((repo_root / role["prompt"]).read_bytes())
+    brief = tmp_path / "research/chinese_fixture/brief.md"
+    brief.parent.mkdir()
+    original = "继续优化策略，尽快盈利\nContext: docs/research-mission.zh.md\n".encode()
+    brief.write_bytes(original)
+    # The blocked-worker policy keeps routine checkpoints out of Lead rounds, so
+    # this neutral workflow fixture uses a real completed worker result instead.
+    write_json(tmp_path / "research/chinese_fixture/raw.json", {"fixture_profit": 2})
     write_json(
-        path,
+        tmp_path / "research/chinese_fixture/results.json",
         {
-            "type": "result",
-            "subtype": "success",
-            "is_error": False,
-            "result": "Evidence and proposal",
+            "direction": "chinese_fixture",
+            "kind": "diagnostic",
+            "engine": "synthetic fixture",
+            "source_artifacts": ["research/chinese_fixture/raw.json"],
+            "data_and_exposure": "fixture only",
+            "costs": "not a financial result",
+            "baseline": "fixture",
+            "n_trials": 0,
+            "net_profit_usd": None,
+            "baseline_net_profit_usd": None,
+            "dsr": None,
+            "dsr_note": "not applicable to a fixture",
+            "limitations": ["No economic evidence"],
         },
     )
-    assert autonomy._claude_result_success(path)
+    prompts = {}
 
+    def transport(_command, prompt, folder, _timeout):
+        phase = folder.name
+        prompts[phase] = prompt
+        reference = next(
+            line.removeprefix("Brief: ")
+            for line in prompt.splitlines()
+            if line.startswith("Brief: ")
+        )
+        assert (tmp_path / reference).read_bytes() == original
+        write_json(
+            folder / "reply.json",
+            {
+                "status": "complete",
+                "summary": "Synthetic transport only; no model or research execution",
+                "decision": "continue" if phase == "worker" else "park",
+                "results": ("research/chinese_fixture/results.json" if phase == "worker" else None),
+                "next_brief": None,
+                "checkpoint": None,
+            },
+        )
+        return {"exit_code": 0, "session": f"fixture-{phase}", "usage": None}
 
-def test_state_symlink_cannot_write_outside_workspace(tmp_path: Path, monkeypatch) -> None:
-    root = tmp_path / "repo"
-    root.mkdir()
-    setup_queue(root, monkeypatch)
-    outside = tmp_path / "outside"
-    outside.mkdir()
-    state_dir = root / autonomy.STATE_DIR
-    state_dir.parent.mkdir(parents=True)
-    state_dir.symlink_to(outside, target_is_directory=True)
-    with pytest.raises(ValueError):
-        autonomy.tick(root, execute=True)
-    assert list(outside.iterdir()) == []
+    state = run_round(tmp_path, "chinese_fixture", "r1", 30, execute_fn=transport)
 
-
-def test_corrupt_transcript_is_unknown_usage_not_zero_budget(tmp_path, monkeypatch) -> None:
-    from open_composer.cockpit.data import quota
-
-    transcript = tmp_path / "workspace" / "session.jsonl"
-    transcript.parent.mkdir()
-    transcript.write_text("not-json\n")
-    monkeypatch.setattr(quota, "CLAUDE_PROJECTS_DIR", tmp_path)
-    monkeypatch.setattr(quota, "SUBAGENT_TASKS_ROOT", tmp_path / "no-subagents")
-    assert autonomy.usage_snapshot()["observable"] is False
+    assert state["status"] == "round_finished"
+    assert set(prompts) == {"worker", "lead"}
+    assert brief.read_bytes() == original
+    assert (brief.parent / "runs/r1/brief.md").read_bytes() == original
+    worker = workflow["roles"]["worker"]
+    assert prompts["worker"].startswith((repo_root / worker["prompt"]).read_text())
+    assert "继续优化策略" not in prompts["worker"]  # Read the file; do not inject/rewrite it.
 
 
 def test_claim_cannot_be_replaced_or_refreshed_without_new_source_receipt(tmp_path: Path) -> None:
@@ -412,34 +306,3 @@ def test_partial_historical_directory_cannot_exempt_new_dossier(tmp_path: Path) 
         "direction_review_missing_or_invalid"
         in validate_iteration_dossier("test_direction", tmp_path).blocked
     )
-
-
-def test_a_rejection_lifted_by_a_later_success_does_not_block(tmp_path, monkeypatch) -> None:
-    # 2026-10-07: the weekly limit said "resets Oct 11" but the owner upgraded at 14:20; the
-    # round preflight kept skipping until the old reset time
-    from types import SimpleNamespace
-
-    from open_composer.cockpit.data import quota
-
-    at = datetime(2026, 10, 7, 8, 23, tzinfo=UTC)
-    resets = datetime(2099, 10, 11, tzinfo=UTC)
-    weekly = SimpleNamespace(
-        status="rejected", at=at, resets_at=resets, rate_limit_type="seven_day"
-    )
-    opus = SimpleNamespace(
-        status="rejected", at=at, resets_at=resets, rate_limit_type="seven_day_opus"
-    )
-    estimate = SimpleNamespace(
-        generated_at=datetime.now(UTC), fresh_total=1, by_role_model={"m": 1}, cache_read_total=0
-    )
-    monkeypatch.setattr(quota, "build_usage_estimate", lambda: estimate)
-    monkeypatch.setattr(quota, "find_all_throttle_events", lambda: (weekly,))
-    ledger = tmp_path / "usage-ledger.json"
-    assert autonomy.usage_snapshot(ledger)["retry_after"] == resets.isoformat()  # no ledger
-    ledger.write_text(json.dumps({"last_success": {"sonnet": "2026-10-07T14:21:00+00:00"}}))
-    snapshot = autonomy.usage_snapshot(ledger)
-    assert snapshot["retry_after"] is None and snapshot["lifted_rejections"] == 1
-    monkeypatch.setattr(quota, "find_all_throttle_events", lambda: (opus,))
-    assert autonomy.usage_snapshot(ledger)["retry_after"] == resets.isoformat()  # sonnet != opus
-    ledger.write_text(json.dumps({"last_success": {"opus": "2026-10-07T08:22:00+00:00"}}))
-    assert autonomy.usage_snapshot(ledger)["retry_after"] == resets.isoformat()  # before it

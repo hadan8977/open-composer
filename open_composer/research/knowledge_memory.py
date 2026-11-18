@@ -122,6 +122,13 @@ def claim_fingerprint(value: str) -> str:
 
 def build_knowledge_index(root: Path | None = None) -> KnowledgeBuildResult:
     base = root or project_root()
+    # Archived placeholders can resolve to directories. Never write through an
+    # index symlink (including context/scout's implicit rebuild).
+    target = base / KNOWLEDGE_ROOT / "index.json"
+    if any(p.is_symlink() for p in (target, *target.parents) if p != base.parent):
+        raise ValueError("Legacy knowledge index is archived/symlinked; use research_tools index")
+    if target.exists() and not target.is_file():
+        raise ValueError("Legacy knowledge index is not a file; use research_tools index")
     source_rows = _collect_sources(base)
     sources = _group_source_rows(source_rows)
     empirical = _collect_empirical_memory(base)

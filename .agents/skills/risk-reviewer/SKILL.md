@@ -3,9 +3,6 @@ name: risk-reviewer
 description: Review a candidate signal, strategy report, and market context for manual or paper-trading risk.
 ---
 
-1. Treat review output as advisory.
-2. Cover catalyst, evidence, risks, invalidation, and action suggestion.
-3. Use structured review-card schema output.
-4. Distinguish workflow_pass, research_pass, llm_contribution_pass, and paper_ready_pass before recommending any next action.
-5. Flag sample, fixture, cache fallback, trial data, missing benchmark family, short sample, low trade count, and LLM fallback as evidence limits.
-6. Never recommend real-money automatic execution.
+Produce an advisory [ReviewCard](../../../open_composer/models/review_card.py) linked to the existing `signal_id`: catalyst, evidence, risks, invalidation, action suggestion, and a `consider`, `avoid` or `wait` verdict. Preserve required identity, timestamp, confidence and model fields.
+
+Flag sample/fixture/cache-fallback/trial data, missing benchmark families, short samples, low trade counts and LLM fallback as evidence limits. Use [the reporting definitions](../../../docs/owner-reporting.zh.md) to separate workflow, research, model contribution and paper readiness before recommending a next action. Real-money automatic execution remains out of scope.

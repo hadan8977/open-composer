@@ -145,35 +145,14 @@ def legs(close: pd.DataFrame, open_: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
     return (open_ / prev_c - 1.0).fillna(0.0), (close / open_ - 1.0).fillna(0.0)
 
 
-def simulate(
-    weights: pd.DataFrame,
-    leg_open: pd.DataFrame,
-    leg_close: pd.DataFrame,
-    scale: np.ndarray,
-    cost_bps: float,
-) -> tuple[pd.Series, pd.Series]:
-    cols = list(weights.columns)
-    cash_i = cols.index(CASH)
-    wb = weights.to_numpy(dtype=float)
-    lo = leg_open[cols].to_numpy(dtype=float)
-    lc = leg_close[cols].to_numpy(dtype=float)
-    n = len(wb)
-    rets = np.zeros(n)
-    turns = np.zeros(n)
-    w_prev = np.zeros(wb.shape[1])
-    for i in range(n):
-        m = scale[i]
-        row = wb[i]
-        risk = row.copy()
-        risk[cash_i] = 0.0
-        w = risk * m
-        w[cash_i] = row[cash_i] + (1.0 - m) * risk.sum()
-        gross = float(w_prev @ lo[i] + w @ lc[i])
-        turnover = float(np.abs(w - w_prev).sum())
-        rets[i] = gross - turnover * cost_bps / 10_000.0
-        turns[i] = turnover
-        w_prev = w
-    return pd.Series(rets, index=weights.index), pd.Series(turns, index=weights.index)
+def simulate(weights, leg_open, leg_close, scale, cost_bps):
+    from open_composer.lab.accounting import scaled_weights, simulate_effective
+
+    columns = list(weights.columns)
+    effective = scaled_weights(weights.to_numpy(dtype=float), scale, columns.index(CASH))
+    return simulate_effective(
+        effective, columns, leg_open, leg_close, cost_bps, reduction="dot", index=weights.index
+    )
 
 
 def vol_scale(

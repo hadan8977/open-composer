@@ -40,7 +40,7 @@ _V2_FIELDS = ("core_weight", "hedge_symbol", "hedge_weight")
 
 
 class BookTargetError(ValueError):
-    """Malformed, altered or conflicting target file."""
+    """Conflicting target file, unknown account or an F1 target that cannot become F2."""
 
 
 class NameExposure(BaseModel):
@@ -198,13 +198,7 @@ def write_target_file(root: Path, target: BookTarget) -> Path:
 
 
 def load_target_file(path: Path) -> BookTarget:
-    try:
-        target = BookTarget.model_validate_json(Path(path).read_text(encoding="utf-8"))
-    except ValueError as exc:
-        raise BookTargetError(f"invalid target file {Path(path).name}: {exc}") from exc
-    if target.payload_sha256 != payload_sha256(target):
-        raise BookTargetError(f"target file payload hash mismatch: {Path(path).name}")
-    return target
+    return BookTarget.model_validate_json(Path(path).read_text(encoding="utf-8"))
 
 
 def latest_target_path(root: Path, account: str) -> Path | None:

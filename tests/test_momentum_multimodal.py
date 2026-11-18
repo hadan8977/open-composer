@@ -253,6 +253,6 @@ def _document(document_id: str, published_at: str, fetched_at: str) -> dict[str,
 
 
 def _write_prompt(root: Path) -> None:
-    path = root / "prompts/momentum_multimodal_grounded_v1.txt"
+    path = root / "config/momentum_multimodal_grounded_v1.txt"
     path.parent.mkdir(parents=True)
     path.write_text("Use only quoted document evidence and return the schema.\n", encoding="utf-8")

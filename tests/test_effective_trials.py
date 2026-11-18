@@ -560,6 +560,7 @@ def _sip_close_frame(symbols: list[str], years: list[int]):
     return wide
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(not SIP_DAILY_ROOT.is_dir(), reason="data/sip/daily is not present")
 def test_end_to_end_effective_trials_on_real_sip_daily_data() -> None:
     symbols = ["QQQ", "SPY", "TQQQ", "IWM", "XLK"]

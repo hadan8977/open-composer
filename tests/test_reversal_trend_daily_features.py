@@ -177,6 +177,7 @@ def test_build_reversal_trend_features_empty_universe_returns_empty_typed_frame(
     assert len(result) == 0
 
 
+@pytest.mark.research_snapshot
 @pytest.mark.skipif(
     not (default_sip_root() / "daily").is_dir(),
     reason="local SIP daily archive (data/sip/daily) is not present",

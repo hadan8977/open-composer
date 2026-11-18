@@ -28,6 +28,9 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 Set-Location $repoRoot
+if (-not $DryRun -and -not (Test-Path .claude\skills)) {
+    New-Item -ItemType Junction -Path .claude\skills -Target (Join-Path $repoRoot ".agents\skills") -ErrorAction Stop | Out-Null
+}
 
 # ---------- helpers ----------
 $Total = 6

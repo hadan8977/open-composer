@@ -1,6 +1,7 @@
-"""Assemble a research handoff from the current role prompt and an existing brief.
+"""Retired handoff reader retained for historical fixtures.
 
-This renders instructions only: no agent, provider call, authorization or job is started.
+New work uses scripts/research_round.py and research/workflow.json.
+The CLI no longer emits SHA-bound agent handoffs.
 """
 
 from __future__ import annotations
@@ -42,12 +43,12 @@ def build_handoff(root: Path, role: str, brief: Path) -> dict[str, Any]:
         )
         texts.append(value)
     prompt = (
-        f"# 当前角色方法\n\n{texts[0]}\n\n# 本任务上下文\n\n{texts[1]}\n\n"
-        "# 接续\n\n"
-        "本brief中的实验前提也需要证据，不因Root写入而免于质疑。"
-        "发现目标与实验错位时主动提出受影响修订；普通执行留给完整owner。"
-        "本消息不新增费用、设备或订单授权，不回改旧冻结结果；"
-        "动态许可和累计预算读取现行权威文件。"
+        f"# Current role\n\n{texts[0]}\n\n# Task context\n\n{texts[1]}\n\n"
+        "# Continuation\n\n"
+        "Challenge unsupported premises even when the main agent wrote the brief. "
+        "Resolve ordinary research and implementation choices within the complete task team. "
+        "This handoff grants no new spending, device or order authority and does not rewrite "
+        "frozen results; read current authority and cumulative budgets from their actual records."
     )
     return {
         "role": role,
@@ -85,4 +86,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("Retired: use scripts/research_round.py; see research/README.md")

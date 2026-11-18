@@ -23,7 +23,7 @@ no credential:
    free. While the memory governor (scripts/memory_budget.py) reports the live
    background agents at their cap, or too little headroom for a new agent for
    ``gate_pause_after_s``, the rounds pause; they resume once that clears
-   (config/memory-budget.json, docs/runbook-memory.zh.md).
+   (config/memory-budget.json, docs/local-vps-migration.zh.md).
 
 It resumes only schedules it paused itself, so a manual pause stays paused. One pass
 per call; it prints only when it acts.

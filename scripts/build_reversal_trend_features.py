@@ -62,7 +62,7 @@ LOOKBACK_YEARS = 1
 DEFAULT_SYMBOL_BATCH_SIZE = 300
 
 SOURCE_LIBRARY = (
-    "User-provided Pine script docs/inputs/pine/reversal_trend_0522.pine, ported to "
+    "User-provided Pine script strategy_specs/reference/reversal_trend_0522.pine, ported to "
     "Python by the Track P agent (open_composer/research/pine_port/reversal_trend.py, "
     "compute_reversal_trend -- reused here, not reimplemented) per "
     "docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md "

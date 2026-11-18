@@ -19,7 +19,6 @@ from open_composer.adapters.data.longbridge import (
     DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
     MAX_LONGBRIDGE_CANDLESTICKS,
 )
-from open_composer.book_paper.cli import book_paper_app
 from open_composer.config import project_root
 from open_composer.research import build_promotion_report, run_hybrid_adaptive_router_research
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
@@ -82,6 +81,9 @@ from open_composer.research.router_replay_audit import (
     DEFAULT_OUT_DIR as ROUTER_REPLAY_AUDIT_DEFAULT_OUT_DIR,
 )
 from open_composer.strategy_capabilities import StrategyCapabilityReport
+
+if os.name != "nt":
+    from open_composer.book_paper.cli import book_paper_app
 
 app = typer.Typer(no_args_is_help=True)
 spec_app = typer.Typer(no_args_is_help=True)
@@ -146,7 +148,17 @@ app.add_typer(project_app, name="project")
 app.add_typer(agent_app, name="agent")
 app.add_typer(factor_app, name="factor")
 app.add_typer(research_app, name="research")
-app.add_typer(book_paper_app, name="book-paper")
+if os.name == "nt":
+    @app.command(
+        "book-paper",
+        help="Book paper operations run on the VPS; this Windows workspace is for research.",
+        context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    )
+    def _book_paper_vps_only():
+        typer.echo("Book paper operations run on the VPS, not this Windows workspace.", err=True)
+        raise typer.Exit(2)
+else:
+    app.add_typer(book_paper_app, name="book-paper")
 research_app.add_typer(research_campaign_app, name="campaign")
 research_app.add_typer(research_iteration_app, name="iteration")
 research_app.add_typer(research_knowledge_app, name="knowledge")
@@ -1029,22 +1041,6 @@ def research_direction_check_command(path: Path) -> None:
     )
     if blocked:
         raise typer.Exit(1)
-
-
-@research_app.command("autonomy-tick")
-def research_autonomy_tick_command(
-    execute: Annotated[
-        bool, typer.Option("--execute", help="Run one ready task within configured budget.")
-    ] = False,
-) -> None:
-    """Inspect the autonomous research queue; default is a non-executing dry run."""
-    from open_composer.research.autonomy import tick
-
-    try:
-        result = tick(project_root(), execute=execute)
-    except (OSError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    sys.stdout.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
 
 
 @research_iteration_app.command("validate")

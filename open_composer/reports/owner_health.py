@@ -18,7 +18,11 @@ def report_event_health(root: Path, event_id: str) -> dict[str, Any]:
     }
     try:
         hold = json.loads((root / "reports/research/control/owner-compute-hold.json").read_text())
-        allowed = hold.get("reporting", {}).get("allowed")
+        reporting = hold.get("reporting", {})
+        allowed = reporting.get("allowed")
+        actions = reporting.get("actions")
+        if allowed is True and isinstance(actions, dict):
+            allowed = actions.get(event_id.split("-", 1)[0], False) is True
         if allowed is False:
             return {**result, "status": "not_authorized"}
         if allowed is not True:

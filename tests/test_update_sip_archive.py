@@ -279,7 +279,7 @@ def test_append_new_symbols_is_a_noop_when_nothing_is_new(tmp_path: Path) -> Non
 
 def test_exclusive_lock_refuses_a_concurrent_run(tmp_path: Path) -> None:
     with _exclusive_lock(tmp_path):
-        with pytest.raises(UpdateLockedError, match="already exists"):
+        with pytest.raises(UpdateLockedError, match="held by another"):
             with _exclusive_lock(tmp_path):
                 pass  # pragma: no cover - must raise on __enter__
 
@@ -292,6 +292,13 @@ def test_exclusive_lock_releases_on_success_and_on_exception(tmp_path: Path) -> 
     with pytest.raises(ValueError):
         with _exclusive_lock(tmp_path):
             raise ValueError("boom")
+    assert not (tmp_path / "_update_sip_archive.lock").exists()
+
+
+def test_exclusive_lock_ignores_a_leftover_file_from_a_killed_run(tmp_path: Path) -> None:
+    (tmp_path / "_update_sip_archive.lock").write_text("673518 2026-11-11T22:00:12Z\n")
+    with _exclusive_lock(tmp_path):
+        pass
     assert not (tmp_path / "_update_sip_archive.lock").exists()
 
 
@@ -682,3 +689,79 @@ def test_pending_queue_is_drained_in_sleeve_first_then_alphabetical_order(
 def test_load_sleeve_symbols_reads_the_four_sleeve_specs() -> None:
     symbols = update_sip_archive.load_sleeve_symbols()
     assert {"SHY", "XLK", "UPRO", "SPY", "QQQ"} <= set(symbols)
+
+
+@pytest.mark.parametrize(
+    "now, expected",
+    [
+        (datetime(2026, 11, 17, 22, tzinfo=UTC), "2026-11-17T05:00:00Z"),
+        (datetime(2026, 7, 7, 22, tzinfo=UTC), "2026-07-07T04:00:00Z"),
+        (datetime(2026, 11, 18, 1, tzinfo=UTC), "2026-11-17T05:00:00Z"),
+    ],
+)
+def test_daily_history_cutoff_uses_ny_date_and_dst(now, expected):
+    assert update_sip_archive._daily_history_cutoff(now) == pd.Timestamp(expected)
+
+
+@pytest.mark.parametrize("historical_change", [False, True])
+def test_daily_partial_bar_is_merged_without_false_history_rewrite(
+    tmp_path,
+    monkeypatch,
+    historical_change,
+):
+    out = tmp_path / "sip"
+    path = out / "daily/2026/shard-0000.parquet"
+    _write_shard(
+        path, [("MSFT", "2026-11-16T05:00:00", 100.0), ("MSFT", "2026-11-17T05:00:00", 101.0)]
+    )
+    historical = 50.0 if historical_change else 100.0
+    fetched = _bars_frame(
+        [("MSFT", "2026-11-16T05:00:00", historical), ("MSFT", "2026-11-17T05:00:00", 102.0)]
+    )
+    monkeypatch.setattr(update_sip_archive, "_fetch_batch", lambda *a, **k: fetched)
+    update_existing_shards(
+        object(),
+        out,
+        "daily",
+        {0: ["MSFT"]},
+        now=datetime(2026, 11, 17, 22, tzinfo=UTC),
+        rewrite_budget_min=0,
+    )
+    current = _read_shard_frame(path)
+    assert (
+        current.loc[current.timestamp.eq(pd.Timestamp("2026-11-17T05:00:00Z")), "close"].iloc[0]
+        == 102.0
+    )
+    assert (
+        current.loc[current.timestamp.eq(pd.Timestamp("2026-11-16T05:00:00Z")), "close"].iloc[0]
+        == historical
+    )
+    queued = update_sip_archive._read_pending(out)
+    assert sorted(queued) == (["MSFT"] if historical_change else [])
+
+
+def test_full_window_repair_ignores_only_today_then_incremental_merges_it(tmp_path, monkeypatch):
+    out = tmp_path / "sip"
+    path = out / "daily/2026/shard-0000.parquet"
+    _write_shard(
+        path, [("MSFT", "2026-11-16T05:00:00", 100.0), ("MSFT", "2026-11-17T05:00:00", 101.0)]
+    )
+    starts = []
+
+    def fetch(data_client, symbols, start, end, kind):
+        starts.append(start)
+        return _bars_frame(
+            [("MSFT", "2026-11-16T05:00:00", 100.0), ("MSFT", "2026-11-17T05:00:00", 102.0)]
+        )
+
+    monkeypatch.setattr(update_sip_archive, "_fetch_batch", fetch)
+    now = datetime(2026, 11, 17, 22, tzinfo=UTC)
+    assert update_sip_archive.repair_full_window(object(), out, {0: ["MSFT"]}, now=now) == []
+    update_existing_shards(object(), out, "daily", {0: ["MSFT"]}, now=now)
+    current = _read_shard_frame(path)
+    assert (
+        current.loc[current.timestamp.eq(pd.Timestamp("2026-11-17T05:00:00Z")), "close"].iloc[0]
+        == 102.0
+    )
+    assert starts and all(start.year == 2026 for start in starts)
+    assert update_sip_archive._read_pending(out) == {}

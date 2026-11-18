@@ -2,13 +2,60 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
 import sys
 import time
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 import modal_run as mr  # noqa: E402
+
+
+@pytest.mark.parametrize("driver_code,shard_code", [(0, 0), (0, 9), (7, 0)])
+def test_detached_launch_keeps_normal_fetch_and_actuals_path(
+    tmp_path, monkeypatch, driver_code, shard_code
+):
+    calls, actuals = [], []
+    monkeypatch.setattr(mr, "ROOT", tmp_path)
+    monkeypatch.setattr(mr, "check_budget", lambda ns: None)
+    monkeypatch.setattr(mr, "stage_code", lambda stage, extra: [])
+    monkeypatch.setattr(mr, "append_actuals", actuals.append)
+    monkeypatch.setattr(mr.modal_budget, "modal_cli", lambda: "/installed/bin/modal")
+
+    def run(command, *, cwd, env):
+        calls.append(command)
+        dest = Path(env["OC_OUT_DIR"])
+        assert dest == tmp_path / "fetched"
+        assert json.loads(env["OC_SHARD_COMMANDS"])[0]["out_rel"] == "remote-out"
+        assert env["OC_RUN_ID"] == Path(env["OC_LOG_PATH"]).stem
+        assert "\\" not in env["OC_RUN_ID"]
+        (dest / "_modal_shards.json").write_text(json.dumps([{"returncode": shard_code}]))
+        return subprocess.CompletedProcess(command, driver_code)
+
+    monkeypatch.setattr(mr.subprocess, "run", run)
+    result = mr.main([
+        "--job", "detach-fixture", "--cpu", "1", "--memory-gib", "1",
+        "--timeout-min", "1", "--out", "remote-out", "--fetch-to", "fetched",
+        "--", "true",
+    ])
+    assert result == (0 if driver_code == shard_code == 0 else 1)
+    assert len(calls) == len(actuals) == 1
+    assert calls[0] == mr.capped_command(
+        tmp_path,
+        ["/installed/bin/modal", "run", "--detach", str(mr.APP_TEMPLATE)],
+        mr.MODAL_DRIVER_MEM,
+        wait_min=30,
+    )
+    assert calls[0][-4:] == ["/installed/bin/modal", "run", "--detach", str(mr.APP_TEMPLATE)]
+    assert actuals[0]["job"] == "detach-fixture"
+    assert actuals[0]["modal_run_exit_code"] == driver_code
+    assert actuals[0]["shards_failed"] == int(shard_code != 0)
+    assert actuals[0]["wall_seconds"] >= 0
+    assert actuals[0]["actual_cost_usd_estimate"] >= 0
 
 
 def test_substitute_command_replaces_shard_and_nshards() -> None:
@@ -33,7 +80,7 @@ def test_substitute_command_leaves_plain_tokens_untouched() -> None:
 def test_config_file_allowed_excludes_non_example_yaml() -> None:
     assert not mr.config_file_allowed(Path("config/giants_sweep/manifest.yaml"))
     assert mr.config_file_allowed(Path("config/notifications.yaml.example"))
-    assert mr.config_file_allowed(Path("config/research-autonomy.json"))
+    assert mr.config_file_allowed(Path("config/memory-budget.json"))
 
 
 def test_config_file_allowed_excludes_key_secret_token_named_files() -> None:
@@ -57,7 +104,7 @@ def test_iter_allowlisted_files_skips_pycache_and_config_yaml(tmp_path: Path) ->
     (tmp_path / "uv.lock").write_text("")
 
     files = mr.iter_allowlisted_files(tmp_path)
-    rels = {str(p.relative_to(tmp_path)) for p in files}
+    rels = {p.relative_to(tmp_path).as_posix() for p in files}
 
     assert "open_composer/mod.py" in rels
     assert not any("__pycache__" in r for r in rels)
@@ -72,7 +119,7 @@ def test_iter_allowlisted_files_includes_extra_dir(tmp_path: Path) -> None:
     (tmp_path / "extra_pkg").mkdir()
     (tmp_path / "extra_pkg" / "m.py").write_text("x = 1\n")
     files = mr.iter_allowlisted_files(tmp_path, extra_dirs=["extra_pkg"])
-    rels = {str(p.relative_to(tmp_path)) for p in files}
+    rels = {p.relative_to(tmp_path).as_posix() for p in files}
     assert "extra_pkg/m.py" in rels
 
 
