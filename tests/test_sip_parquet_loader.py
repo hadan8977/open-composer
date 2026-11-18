@@ -5,6 +5,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from open_composer.adapters.data import sip_parquet
+
 from open_composer.adapters.data.sip_parquet import (
     ACQUISITION_TIER,
     DATA_SOURCE_MODE,
@@ -295,6 +297,7 @@ def test_available_sip_years(archive: Path) -> None:
 
 
 @requires_real_daily
+@pytest.mark.research_snapshot
 def test_real_archive_daily_qqq_window() -> None:
     frame = load_sip_bars("QQQ", frequency="daily", start="2022-01-01", end="2022-12-31")
     assert 240 <= len(frame) <= 256
@@ -306,6 +309,7 @@ def test_real_archive_daily_qqq_window() -> None:
 
 
 @requires_real_minute
+@pytest.mark.research_snapshot
 def test_real_archive_minute_is_partial_but_finer_than_daily() -> None:
     """The minute tape is still being fetched, so assert shape, not row counts."""
     years = available_sip_years("minute")
@@ -332,3 +336,41 @@ def test_real_archive_minute_is_partial_but_finer_than_daily() -> None:
     )
     assert len(frame) > len(daily)
     assert set(frame["timestamp"]) & set(daily["timestamp"]) == set()
+
+
+def test_local_view_keeps_price_bases_and_source_priority(tmp_path, monkeypatch):
+    monkeypatch.setattr(sip_parquet, "MARKET_DATA", tmp_path)
+    dates = pd.date_range("2026-11-16 05:00", periods=3, freq="D", tz="UTC")
+    _write_shard(
+        tmp_path / "sip-all/daily/2026/shard-0000.parquet",
+        _bars("AAA", dates[:1]),
+    )
+    _write_shard(
+        tmp_path / "daily-all-20261118T0430Z/daily/2026/shard-0000.parquet",
+        _bars("AAA", dates[:2], base=200),
+    )
+    _write_shard(
+        tmp_path / "delisted-daily/by_year/2026/delisted-0000.parquet",
+        _bars("TWTR", dates[:1]),
+    )
+    _write_shard(
+        tmp_path / "sip-raw-repair/daily/2022/01/query.parquet",
+        _bars("AAA", dates, base=800),
+    )
+    _write_shard(
+        tmp_path / "sip-raw-daily/2026-11-18/daily/shard-0000.parquet",
+        _bars("AAA", dates[2:], base=900),
+    )
+
+    all_bars = load_sip_bars(["AAA", "TWTR"], adjustment="all")
+    assert all_bars["source_version"].tolist() == [
+        "sip-all",
+        "daily-all-20261118T0430Z",
+        "delisted-daily",
+    ]
+    assert all_bars["open"].tolist() == [100, 201, 100]
+    raw_bars = load_sip_bars(["AAA", "TWTR"], start="2026-11-17", adjustment="raw")
+    assert raw_bars["source_version"].tolist() == ["sip-raw-repair", "sip-raw-daily"]
+    assert raw_bars["open"].tolist() == [801, 900]
+    assert raw_bars.attrs["data_source_missing_symbols"] == ["TWTR"]
+    assert load_sip_bars("AAA", start="2026-11-18", adjustment="all").empty
