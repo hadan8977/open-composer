@@ -10,6 +10,25 @@ version: 1
 
 artifacts:
 
+  # For lab contracts {strategy} is the registered research direction.
+  family_spec:
+    description: Frozen adapter, experiment and arguments for the selectable family and its controls.
+    path: research/{strategy}/experiment.json
+    format: json
+    required_fields: [adapter, experiment, parameters]
+
+  family_trials:
+    description: Direction ledger with preregistered starts, failed attempts and inherited exposure.
+    path: research/{strategy}/trials.jsonl
+    format: jsonl
+    required_fields: [event, trial_id, candidate, counts_as_trial]
+
+  family_results:
+    description: Bounded engine packet linking the trial snapshot and native fit, account and attribution evidence.
+    path: research/{strategy}/results.json
+    format: json
+    required_fields: [direction, kind, engine, data_and_exposure, costs, baseline, n_trials, source_artifacts]
+
   source_cards:
     description: >
       Point-in-time citations for every unstable external claim (broker API,
@@ -91,8 +110,8 @@ artifacts:
 
   trial_ledger:
     description: >
-      Append-only record of every parameter set trialed during optimization.
-      Enables PBO/DSR risk assessment and prevents silent overfitting.
+      Strategy optimization export of all selectable configurations and their dispositions.
+      Lab batches retain the native family_trials stream and its batch snapshot.
     path: reports/research/{strategy}-trial-ledger.jsonl
     format: jsonl
     required_fields:
@@ -131,7 +150,8 @@ artifacts:
 
   walk_forward_report:
     description: >
-      Walk-forward or OOS validation evidence for optimized strategies.
+      Fold cutoffs, mature labels, scored windows and net results. For a registered
+      batch inspect fits and scores linked from family_results against its sealed windows.
     path: reports/research/{strategy}-walk-forward.json
     format: json
     required_fields:
@@ -172,8 +192,8 @@ artifacts:
 
   marginal_lift_report:
     description: >
-      Comparison of strategy performance with vs. without LLM/news signal,
-      proving the alternative data adds value over a deterministic baseline.
+      Costed comparison with and without the added information. Use linked batch accounts
+      to measure recent net dollars over the matched price-only fit and rule control.
     path: reports/research/{strategy}-marginal-lift.json
     format: json
     required_fields:
@@ -185,8 +205,7 @@ artifacts:
 
   missing_modality_robustness_report:
     description: >
-      Evidence that the strategy degrades gracefully when LLM/news/macro
-      input is unavailable or delayed.
+      Observed coverage by window and account effects when an input is missing or late.
     path: reports/research/{strategy}-modality-robustness.json
     format: json
     required_fields:

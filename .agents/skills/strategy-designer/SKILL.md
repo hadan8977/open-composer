@@ -1,8 +1,8 @@
 ---
 name: strategy-designer
-description: Create or revise Open Composer StrategySpec YAML files from natural-language trading ideas.
+description: Design registered model comparisons and express tradable behavior in StrategySpec YAML.
 ---
 
-Write drafts under `strategy_specs/drafts/`. Capture universe, timeframe, entry/exit, risk, execution, data source, broker, LLM review and assumptions. For choices the idea leaves open, conservative defaults are `manual_signal`, bar-close confirmation, next-bar-open fills, long-only and no leverage. Explicit timing, direction and leverage requirements take precedence; record unresolved choices in `notes.open_questions`.
+For a new alpha family, choose the dated non-price information, trained policy and economic decision before reading outcomes. Specify the practitioner rule and price-only fit, matched capital and execution, recent primary window, earlier weights, selectable trials, correction and seal. Bind the frozen design to the shared adapter in a compact `experiment.json`. [Executed example](../../../research/proof_a3_exposure/experiment.json)
 
-Add `notes.research_design` with method/factor variants, parameter ranges, frequency assumptions, candidate cap and selection objective. Declare benchmark assumptions: same-symbol buy-and-hold, equal-weight universe, market, sector/theme and cash proxies, plus ex-post best symbol where available. Validate with `uv run --no-sync oc spec validate <spec>` before strategy code or Pine generation.
+For strategy code or Pine, validate the StrategySpec in `strategy_specs/drafts/` with `oc spec validate <spec>`. Set universe, timeframe, signal, fills, risk, costs and authority explicitly. Use `model` for the fitted policy, `research_design` for the candidate budget and selection objective, and `notes.open_questions` for unresolved choices. Preserve native execution clocks and benchmark assumptions.

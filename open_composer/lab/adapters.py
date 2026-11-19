@@ -5,8 +5,9 @@ from __future__ import annotations
 import importlib
 import math
 import sys
+from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -123,24 +124,43 @@ def book_engine(
     *,
     config: BookConfig,
 ) -> EngineResult:
-    """Native daily book costs/borrow/margin, with required matrix hygiene defaults.
+    """Native daily book with forward price segments and last-mark break exits.
 
-    Any split-like trigger session suppresses a new decision. It does not use the
-    subsequent holding return to decide eligibility. Historical source engines must
-    instead be adapted explicitly if this hygiene changes their frozen definition.
+    Decisions on a break session are suppressed. The decision panel starts each
+    affected symbol's history at its current segment; externally built features
+    must follow the same boundaries.
     """
     if not close.index.equals(open_.index) or not close.columns.equals(open_.columns):
         raise ValueError("Close/open matrices must share the same calendar and symbols")
     if close.empty or close.index.has_duplicates or not close.index.is_monotonic_increasing:
         raise ValueError("Price matrices need unique increasing sessions")
-    clean_close, clean_open, hygiene = sanitize_price_matrices(close, open_)
-    assert clean_open is not None
-    excluded = {b.first_session_after for b in hygiene.breaks if b.kind == "jump"}
+    _, _, hygiene = sanitize_price_matrices(close, open_, preserve_history=True, break_at_open=True)
+    panel = PricePanel.from_frames(open_, close)
+    breaks = defaultdict(list)
+    for b in hygiene.breaks:
+        if b.masked:
+            breaks[b.first_session_after].append(b.symbol)
+    pending = iter(sorted(breaks))
+    boundary = next(pending, None)
+    history_open, history_close = panel.open, panel.close
 
     def clean_decide(date, state):
-        return None if date in excluded else decide(date, state)
+        nonlocal boundary, history_open, history_close
+        if date in breaks:
+            return None
+        if boundary is not None and boundary < date and history_open is panel.open:
+            history_open, history_close = panel.open.copy(), panel.close.copy()
+        while boundary is not None and boundary < date:
+            stop = panel.dates.get_loc(boundary)
+            columns = panel.symbols.get_indexer(breaks[boundary])
+            history_open[:stop, columns] = np.nan
+            history_close[:stop, columns] = np.nan
+            boundary = next(pending, None)
+        end = state.pos + 1
+        visible = PricePanel(panel.dates[:end], panel.symbols, history_open[:end], history_close[:end])
+        return decide(date, replace(state, panel=visible))
 
-    result = run_book(PricePanel.from_frames(clean_open, clean_close), clean_decide, config)
+    result = run_book(panel, clean_decide, config, regime_breaks=breaks)
     native_config = {k: v for k, v in asdict(config).items()
                      if k not in ("cost_fn", "trade_attrs", "trade_funding", "trade_observer")}
     native_config["cost_fn"] = "native flat_cost" if config.cost_fn is None else "custom callable"
@@ -156,7 +176,7 @@ def book_engine(
             "info": result.info,
             "holdings": {str(k): v.to_dict() for k, v in result.holdings.items()},
             "price_hygiene": hygiene.manifest(),
-            "excluded_trigger_sessions": sorted(str(x) for x in excluded),
+            "excluded_trigger_sessions": sorted(str(x) for x in breaks),
         },
         ledger=result.daily,
         net_returns=result.net,

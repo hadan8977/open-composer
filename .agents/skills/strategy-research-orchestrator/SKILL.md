@@ -10,7 +10,7 @@ description: >
 
 ## Continuous series
 
-Use the native finite follow series; do not build a custom supervisor:
+Dispatch the registered family through the native finite series:
 `research_round.py run|resume <direction> --run-id <id> --timeout-seconds 86400
 --follow` on native Windows. Choose the command from the [research workflow](../../../research/README.md).
 Read the installed research switch and effective owner authority before launching
@@ -25,14 +25,14 @@ Use [idea-to-paper](../idea-to-paper/SKILL.md) to frame an economic question, [r
 | Required inputs | `uv run --no-sync oc spec capabilities <spec> --json`; [data review](../data-capability-reviewer/SKILL.md). Use [capability-evaluator](../capability-evaluator/SKILL.md) for registry/fixture hygiene. |
 | Unstable external claims | [source-researcher](../source-researcher/SKILL.md). |
 | Economic admission | `uv run --no-sync oc research direction-check <path>` and `uv run --no-sync oc research iteration validate <iter_id>`; apply campaign and knowledge gates where the contract requires them. |
-| Bounded candidate evaluation | Registered search and trial accounting; `uv run --no-sync oc strategy parameter-sweep <spec>` only for an admitted search. |
+| Registered family | Worker writes the phase’s `experiment.json` for the shared adapter. The driver resolves it, launches the detached numerical batch and waits without model calls. The original Worker validates the terminal packet; a fresh Lead receives its costed comparisons and linked ledgers together. |
 | Refresh evidence | `uv run --no-sync oc strategy evidence <spec>` after relevant artifact changes; do not use the deprecated hidden `research-control` path. |
 | Optimized strategy validity | [backtest-forensics](../backtest-forensics/SKILL.md). |
 | Daily-open, leveraged-ETF or paper-auto execution | [execution-reality-reviewer](../execution-reality-reviewer/SKILL.md). |
 | Lifecycle assessment | `uv run --no-sync oc strategy promotion-report <spec>` or `uv run --no-sync oc paper readiness <spec>` when applicable. |
 | Paper activation | `uv run --no-sync oc harness verify <spec>` and [paper-auto-safety-reviewer](../paper-auto-safety-reviewer/SKILL.md), within effective order authorization. |
 
-The table is a reference, not a mandatory sequence. Dependent computation requires its actual input and economic admission; bounded preparation can resolve gaps without an empty StrategySpec.
+Choose the entries required at this stage. Freeze selectable models and the multiplicity rule before outcomes. Use separate decisive-result review where the contract requires it.
 
 Use native outputs where consumers require them: `reports/harness/plans/{strategy}.json`, research briefs/evidence manifests under `reports/research/`, and existing task state under `reports/research/control/`. [Risk domains](../../../harness/risk_domains.yaml), [artifact contracts](../../../harness/artifact_contracts.yaml), and [skill routing](../../../harness/skill_manifest.yaml) define the actual consumer requirements. Preserve frozen definitions, seen OOS and cumulative exposure; a harness pass does not grant resource or order permission.
 

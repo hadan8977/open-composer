@@ -35,7 +35,7 @@ def test_actual_fit_window_blocks_before_packet_or_admission(at, tmp_path, monke
     assert not (tmp_path / "model").exists()
 
 
-def test_new_month_uses_new_BASE_and_same_causal_STATE_input(tmp_path, monkeypatch):
+def test_new_month_uses_new_BASE_and_keeps_H5_independent(tmp_path, monkeypatch):
     if not (producer.T / "input/BASE/output.json").exists():
         pytest.skip("requires retained accepted metadata only")
     original = producer.load(producer.T / "input/BASE/output.json")
@@ -48,7 +48,7 @@ def test_new_month_uses_new_BASE_and_same_causal_STATE_input(tmp_path, monkeypat
     dump(packet / "current-source.json", source)
     model_binding = dump(tmp_path / "new-model.json", dict(eligible=[True] * 28))
     prior = tmp_path / "prior"
-    for policy in ["BASE", "H5", "BASE_STATE_BUDGET"]:
+    for policy in ["BASE", "H5"]:
         dump(prior / "targets" / (policy + ".json"), dict(symbols=[], weights=[]))
     # Same weights in a different month remain a genuine rebalance event.
     dump(prior / "targets/BASE.json", dict(symbols=[symbols[26]], weights=[0.2], held_model_origin={"private": "old-month"}))
@@ -93,12 +93,8 @@ def test_new_month_uses_new_BASE_and_same_causal_STATE_input(tmp_path, monkeypat
     assert b["portfolio_action"] == "rebalance" and b["new_monthly_model_adoption"] is True
     current = producer.load(packet / "current-base-input.json")
     assert current["monthly_forecast"] == model_binding and "model_design" not in current
-    state = producer.load(packet / "targets/BASE_STATE_BUDGET.json")
-    assert state["symbols"] == [symbols[26]] and state["weights"] == pytest.approx([0.08])
-    assert state["held_model_origins"][0] == model_binding
-    assert state["portfolio_action"] == "rebalance" and state["new_monthly_model_adoption"] is True
-    assert state["causal_inputs"]["BASE"] == monthly._binding(packet / "targets/BASE.json")
-    assert state["causal_inputs"]["H5"] == monthly._binding(packet / "targets/H5.json")
+    assert h["K"] == 2 and h["portfolio_action"] == "hold"
+    assert {p.stem for p in (packet / "targets").glob("*.json")} == {"BASE", "H5"}
 
 
 @pytest.mark.parametrize("app", ["2026-11-03", "2026-12-01"])

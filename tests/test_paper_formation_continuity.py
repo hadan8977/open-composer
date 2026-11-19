@@ -110,14 +110,14 @@ def test_original_phase_and_request_selection():
     assert formed["formation_due"] and formed["raw_support_start"] == "2026-09-30"
     plan = f.load(producer.N / "next-session-source-plan-M1.json")
     menu = f.request_menu(plan, formed)
-    assert len(menu) == 6
+    assert {(g, r["key"]) for g, r in menu} == {
+        ("core", "raw-bars"),
+        ("core", "actions"),
+        ("core", "adjusted-tail"),
+    }
     assert (
         next(r for g, r in menu if (g, r["key"]) == ("core", "raw-bars"))["params"]["start"]
         == "2026-09-30T00:00:00Z"
-    )
-    assert (
-        next(r for g, r in menu if (g, r["key"]) == ("ETF", "raw-reference"))["params"]["start"]
-        == "2026-10-22T00:00:00Z"
     )
     for g, row in menu:
         original = (
@@ -401,44 +401,21 @@ def test_per_policy_core_missing_H5_preserves_BASE(previous, tmp_path, monkeypat
         not (root / "targets/H5.json").exists()
         and not (root / "targets/BASE_STATE_BUDGET.json").exists()
     )
-    dump(root / "current-marks.json", marks)
-    dump(
-        root / "current-constituents.json",
-        {k: dict(private=True) for k in ["S1", "S2", "S3", "C2", "BASE"]},
-    )
-    monkeypatch.setattr(producer, "receive_current_paper_maintenance", lambda: None)
-    producer.assemble(root)
-    blocked = {
-        **f.load(root / "prepare-dependencies.json"),
-        **f.load(root / "assembly-dependencies.json"),
-    }
-    assert set(blocked) == {"H5", "BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL"}
+    blocked = f.load(root / "prepare-dependencies.json")
+    assert set(blocked) == {"H5"}
     assert f.partition({"BASE": {}, "LSTM": {}}, blocked)
-    assert set(f.load(root / "current-constituents.json")) == {
-        "S1",
-        "S2",
-        "S3",
-        "C2",
-        "BASE",
-    }  # No invented H5 child.
     with pytest.raises(AssertionError):
-        f.partition(
-            {"BASE": {}, "LSTM": {}, "MULTI_EQUAL": {}},
-            {p: "missing" for p in ["H5", "BASE_STATE_BUDGET", "MULTI_HIERARCHICAL"]},
-        )
+        f.partition({"BASE": {}, "LSTM": {}, "MULTI_EQUAL": {}}, blocked)
 
 
 def test_month_boundary_keeps_ready_LSTM_and_H5_partition():
     ready = {"LSTM": {}, "H5": {}}
-    blocked = {
-        p: "November BASE model/design absent"
-        for p in ["BASE", "BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL"]
-    }
+    blocked = {"BASE": "November BASE model/design absent"}
     assert f.partition(ready, blocked)
     with pytest.raises(AssertionError):
         f.partition(
             {"LSTM": {}, "H5": {}, "MULTI_EQUAL": {}},
-            {p: "absent" for p in ["BASE", "BASE_STATE_BUDGET", "MULTI_HIERARCHICAL"]},
+            blocked,
         )
 
 
@@ -681,10 +658,7 @@ def test_partial_packet_real_pure_receiver_and_private_publication(tmp_path, mon
         )
         value["reference_marks"] = {s: 100.0 for s in value["reference_marks"]}
         rows[policy] = dump(root / "targets" / (policy + ".json"), value)
-    blocked = {
-        p: "Private H5 required historical support is missing"
-        for p in ["H5", "BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL"]
-    }
+    blocked = {"H5": "Private H5 required historical support is missing"}
     deps = dump(
         root / "policy-dependencies.json",
         dict(blocked=blocked, source=f.binding(root / "current-source.json")),
@@ -699,17 +673,12 @@ def test_partial_packet_real_pure_receiver_and_private_publication(tmp_path, mon
             dependency_manifest=deps,
         ),
     )
-    # Exact host pure target/cents receiver, extracted without a financial import.
+    # Exact host pure target receiver, extracted without a financial import.
     path = REPO / "open_composer/intraday_runner/six_paper_service.py"
     tree = ast.parse(path.read_bytes())
     nodes = []
     for n in tree.body:
         if isinstance(n, ast.FunctionDef) and n.name in ["instant", "validate_target"]:
-            nodes.append(n)
-        if isinstance(n, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id in ["CHILDREN", "CHILD_CAPITAL", "CHILD_STOPS"]
-            for t in n.targets
-        ):
             nodes.append(n)
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "SixPaperService")
     nodes.append(
@@ -825,52 +794,6 @@ def test_frozen_BASE_action_anchor_survives_date_translation():
             batch(dict(event, id="PRIVATE-unreceived", ex_date="2026-10-18")),
             call.args[-1].value,
         )
-
-
-def test_actual_assembly_to_dependency_with_capital_wrapper(tmp_path, monkeypatch):
-    root = tmp_path / "assembled"
-    root.mkdir()
-    source = dump(
-        root / "current-source.json",
-        dict(reference_day="2026-10-23", application_day="2026-10-26", private=True),
-    )
-    common = dict(
-        source=source,
-        reference_day="2026-10-23",
-        application_day="2026-10-26",
-        as_of="2026-10-23T20:00:00Z",
-        valid_until="2026-10-26T19:30:00Z",
-        computed_at="2026-10-26T01:00:00+00:00",
-    )
-    base = dict(
-        common, policy="BASE", symbols=["AAPL"], weights=[0.2], private_upstream_received=True
-    )
-    h5 = dict(
-        common, policy="H5", symbols=["INTC"], weights=[0.2], K=5, private_upstream_received=True
-    )
-    children = {
-        n: dict(name=n, symbols=["SPY"], weights=[1.0], source=source)
-        for n in ["S1", "S2", "S3", "C2"]
-    }
-    children.update(BASE=dict(base, name="BASE"), H5=dict(h5, name="H5"))
-    dump(root / "current-constituents.json", children)
-    dump(root / "current-marks.json", dict(AAPL=100.0, INTC=100.0, SPY=100.0))
-    monkeypatch.setattr(producer, "receive_current_paper_maintenance", lambda: None)
-    monkeypatch.setattr(producer, "receive_action_lineage", lambda root: dict(private=True))
-    dump(root / "frozen-symbols.json", {})
-    producer.assemble(root)  # Actual unchanged assembly and target storage, private directory only.
-    targets = dict(BASE=base, H5=h5)
-    targets.update(
-        {p: f.load(root / "targets" / (p + ".json")) for p in ["MULTI_EQUAL", "MULTI_HIERARCHICAL"]}
-    )
-    assert not f.load(root / "assembly-dependencies.json")
-    for policy, expected in [
-        ("MULTI_EQUAL", [333334, 333334, 333333, 333333, 333333, 333333]),
-        ("MULTI_HIERARCHICAL", [166667, 166667, 166666, 500000, 500000, 500000]),
-    ]:
-        assert [row["capital_usd"] for row in targets[policy]["children"]] == [
-            c / 100 for c in expected
-        ]
 
 
 def test_november_model_pair_changes_at_formation_and_remains_held(

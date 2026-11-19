@@ -35,9 +35,11 @@ ranked; always obey them.
   Martin-style methods a low win rate carried by a few large winners is a
   design; other systems may aim for a high win rate. Neither is a goal in
   itself. Short horizon does not mean many trades.
-- Models take part from the start of design, chosen for the problem. Do not
-  bolt ML onto a finished rule or fill a method grid. If training is worth
-  doing, train and look at the result.
+- Models and non-price information take part from the first round of every
+  direction, chosen for the problem; a rule on price bars alone is a baseline,
+  not a candidate. Do not bolt ML onto a finished rule or fill a method grid.
+  If training is worth doing, train and look at the result. Reports state for
+  each strategy whether it is a rule or a trained model and which data it uses.
 - Edge comes from information or execution. Pure price patterns rarely suffice;
   "test an idea once" is retail thinking. Complexity must buy an edge, and the
   sample must be large enough to support it. Use a backtest to confirm a
@@ -49,6 +51,10 @@ ranked; always obey them.
   at scale with point-in-time timestamps; cheap models make bulk extraction
   affordable. Price-only rules and bar-trained models are the baseline to beat,
   not the default; keep finding new sources.
+- Long first. Shorting single stocks is hard to borrow and costly at our size:
+  use shorts only in large, easy-to-borrow stocks, or take the short view
+  through listed index or inverse ETFs. Judge feasibility (borrow, fees,
+  capacity, leveraged-ETF decay) before results.
 - Scope is everything the paper account can trade, including leveraged ETFs
   such as TQQQ, without lowering the bar. Any narrowing is your own choice; own
   it and undo it when it stops helping.
@@ -76,9 +82,15 @@ Two brakes against stubbornness:
   rules around them; if you cannot, call it unproven.
 - "An explanation is still untested" counts only if you name the next
   experiment and what it would distinguish.
-Change course when the failure is explained at trade level, no informative
-experiment remains, and recent rounds stopped changing our understanding (not
-merely the metric). Record what was learned and what evidence would justify
+A failed pre-registered test ends that hypothesis, not the line: progress is
+often non-linear, and one change can lift a system sharply. Keep iterating a
+line while a lever (opportunity choice, entry clock, exits, sizing and
+exposure, information, model) is untried and could plausibly change the money;
+a lever that already moved the money a lot is the first place to iterate.
+Change course when the failure is explained at trade level, the remaining
+levers are tried or shown irrelevant to that failure (list them in the
+decision), and recent rounds stopped changing our understanding (not merely
+the metric). Record what was learned and what evidence would justify
 returning. Owner pauses and resource limits stop work without being a
 scientific verdict.
 Success: recent, after-cost, meaningful money in one account that also holds on

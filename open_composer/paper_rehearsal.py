@@ -234,6 +234,7 @@ class RehearsalCycleResult:
     #: strategy's own sizing equity used for target quantities and the gross-
     #: exposure budget, in place of the whole account's equity.
     sizing_equity: float | None = None
+    preview_orders: list[dict[str, Any]] = field(default_factory=list)
 
     def counts(self) -> dict[str, int]:
         out: dict[str, int] = {}
@@ -773,7 +774,9 @@ def _unreconciled_symbols(rows: list[dict[str, Any]], session: date) -> dict[str
     }
 
 
-def _positions_from_fills_ledger(rows: list[dict[str, Any]]) -> dict[str, float]:
+def _positions_from_fills_ledger(
+    rows: list[dict[str, Any]], *, whole_shares: bool = True
+) -> dict[str, float]:
     """Net filled quantity per symbol from this strategy's own fills ledger:
     a ``buy`` fill adds shares, a ``sell`` fill subtracts them. Symbols whose
     net rounds to zero (fully round-tripped) are dropped -- they are not a
@@ -789,7 +792,9 @@ def _positions_from_fills_ledger(rows: list[dict[str, Any]]) -> dict[str, float]
         side = str(row.get("side") or "").lower()
         signed = filled_qty if side == "buy" else -filled_qty
         net[symbol] = net.get(symbol, 0.0) + signed
-    return {symbol: qty for symbol, qty in net.items() if round(qty) != 0}
+    if whole_shares:
+        return {symbol: qty for symbol, qty in net.items() if round(qty) != 0}
+    return {symbol: qty for symbol, raw in net.items() if (qty := round(raw, 9))}
 
 
 def _resolve_strategy_sizing_equity(summary: dict[str, Any]) -> float | None:
@@ -1071,7 +1076,7 @@ def _ledger_total_notional(root: Path, strategy_name: str, authorization_id: str
     return total
 
 
-def _submit(client: Any, plan: RehearsalOrderPlan, policy: dict[str, Any]) -> Any:
+def _order_request(plan: RehearsalOrderPlan, policy: dict[str, Any]) -> Any:
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
 
@@ -1079,27 +1084,25 @@ def _submit(client: Any, plan: RehearsalOrderPlan, policy: dict[str, Any]) -> An
     style = str(policy.get("order_style") or "").lower()
     tif = TimeInForce.DAY if style == "day_market" else TimeInForce.OPG
     if style in {"moo_market", "day_market"}:
-        request = MarketOrderRequest(
+        return MarketOrderRequest(
             symbol=plan.symbol,
             qty=plan.qty,
             side=side,
             time_in_force=tif,
             client_order_id=plan.client_order_id,
         )
-    else:
-        protection = policy.get("price_protection") or {}
-        offset = float(protection.get("limit_offset_bps") or 0.0) / 10_000.0
-        multiplier = 1 + offset if plan.side == "buy" else 1 - offset
-        plan.limit_price = round(plan.reference_price * multiplier, 2)
-        request = LimitOrderRequest(
-            symbol=plan.symbol,
-            qty=plan.qty,
-            side=side,
-            time_in_force=TimeInForce.OPG,
-            limit_price=plan.limit_price,
-            client_order_id=plan.client_order_id,
-        )
-    return client.submit_order(request)
+    protection = policy.get("price_protection") or {}
+    offset = float(protection.get("limit_offset_bps") or 0.0) / 10_000.0
+    multiplier = 1 + offset if plan.side == "buy" else 1 - offset
+    plan.limit_price = round(plan.reference_price * multiplier, 2)
+    return LimitOrderRequest(
+        symbol=plan.symbol,
+        qty=plan.qty,
+        side=side,
+        time_in_force=TimeInForce.OPG,
+        limit_price=plan.limit_price,
+        client_order_id=plan.client_order_id,
+    )
 
 
 def run_portfolio_paper_rehearsal(
@@ -1111,23 +1114,31 @@ def run_portfolio_paper_rehearsal(
     now: datetime | None = None,
     liquidate: bool = False,
     liquidation_reason: str | None = None,
+    preview: bool = False,
 ) -> RehearsalCycleResult:
     """Plan (and optionally submit) one session of a rehearsal book.
 
     ``liquidate=True`` winds a strategy down on a shared account: it plans
     against an empty target book, so every position in this strategy's own
-    fills ledger is sold and nothing is bought. It is refused unless the spec
-    declares ``position_scope: strategy_ledger`` (a ``broker_account``
-    liquidation would sell every other strategy's positions too) and needs a
-    reason, which is copied into the cycle report. The target weights artifact
+    fills ledger is sold and nothing is bought. The retirement list selects
+    the same path. Liquidation requires ``position_scope: strategy_ledger``
+    and copies the liquidation reason into the cycle report. The target weights artifact
     is not read. Authorization, kill switch, submission window, open-order and
-    ledger-reconciliation checks all still apply.
+    ledger-reconciliation checks all still apply. Preview runs the order
+    checks and builds the broker requests without writing or submitting them.
     """
+    if preview and allow_paper_orders:
+        raise RehearsalError("preview cannot be combined with --allow-paper-orders")
     base = root or project_root()
     stamp = now or datetime.now(UTC)
     spec = load_strategy_spec(spec_path)
     policy = validate_rehearsal_spec(spec, base)
+    control_path = base / "control.json"
+    control = json.loads(control_path.read_text(encoding="utf-8")) if control_path.is_file() else {}
+    retired = spec.name in control.get("paper", {}).get("etf", {}).get("retired", [])
     reason_text = (liquidation_reason or "").strip()
+    if retired:
+        liquidate, reason_text = True, "retired in control.json"
     if liquidate:
         if str(policy.get("position_scope") or "broker_account") != "strategy_ledger":
             raise RehearsalError(
@@ -1136,13 +1147,6 @@ def run_portfolio_paper_rehearsal(
             )
         if not reason_text:
             raise RehearsalError("liquidate requires a reason; it is copied into the cycle report")
-    unauthorized_dry_run = (
-        not allow_paper_orders and not rehearsal_authorization_path(base, spec.name).is_file()
-    )
-    if unauthorized_dry_run:
-        auth = _dry_run_placeholder_authorization(spec, stamp)
-    else:
-        auth = load_rehearsal_authorization(spec, base, now=stamp)
     timezone = spec.data_assumptions.timezone
     session = _next_session(stamp, timezone)
     result = RehearsalCycleResult(
@@ -1156,11 +1160,42 @@ def run_portfolio_paper_rehearsal(
         # declares strategy_ledger.
         position_scope=str(policy.get("position_scope") or "broker_account"),
     )
-    result.notes.append(f"rehearsal=below_contract; {auth.gate_status_note}")
     if liquidate:
         result.notes.append(
             f"liquidation: sell this strategy's whole ledger; reason: {reason_text}"
         )
+    if retired:
+        strategy_orders = _ledger_rows(base, spec.name)
+        fills_rows = _fills_ledger_rows(base, spec.name)
+        positions = _positions_from_fills_ledger(fills_rows, whole_shares=False)
+        result.scoped_positions = dict(positions)
+        terminal = TERMINAL_UNFILLED_STATUSES | {"filled"}
+        reconciled_ids = {
+            row["broker_order_id"]
+            for row in fills_rows
+            if row.get("broker_order_id") and row.get("status") in terminal
+        }
+        # A sell may already have filled even when the fills snapshot is stale.
+        pending = {
+            str(row["symbol"]).upper(): "unreconciled_order"
+            for row in strategy_orders
+            if row["broker_order_id"] not in reconciled_ids
+        }
+        if pending:
+            result.notes.append("awaiting reconciliation: " + ", ".join(sorted(pending)))
+        if not positions and not pending:
+            result.status = "no_orders"
+            return result
+
+    unauthorized_dry_run = (
+        not (allow_paper_orders or preview)
+        and not rehearsal_authorization_path(base, spec.name).is_file()
+    )
+    if unauthorized_dry_run:
+        auth = _dry_run_placeholder_authorization(spec, stamp)
+    else:
+        auth = load_rehearsal_authorization(spec, base, now=stamp)
+    result.notes.append(f"rehearsal=below_contract; {auth.gate_status_note}")
     if unauthorized_dry_run:
         result.notes.append(
             "no rehearsal authorization on file: plan-only dry run with DEFAULT_LIMITS; run "
@@ -1171,19 +1206,21 @@ def run_portfolio_paper_rehearsal(
     if kill_switch.enabled:
         result.status = "blocked_by_kill_switch"
         result.notes.append(f"paper kill switch enabled: {kill_switch.reason}")
-        _write_cycle_report(base, result, auth, policy)
+        if not preview:
+            _write_cycle_report(base, result, auth, policy)
         return result
 
     broker = client or _trading_client()
     _require_verified_paper_client(broker)
-    sync_paper_account(base, broker)
-    try:
-        sync_paper_orders(base, broker)
-    except PaperOrderError as exc:
-        # The router-era ledger (reports/paper/orders.jsonl) may reference orders
-        # from a paper account that has since been reset; that reconciliation is
-        # not this path's job. Open orders are still read directly from the broker.
-        result.notes.append(f"legacy order sync skipped: {exc}"[:300])
+    if not preview:
+        sync_paper_account(base, broker)
+        try:
+            sync_paper_orders(base, broker)
+        except PaperOrderError as exc:
+            # The router-era ledger (reports/paper/orders.jsonl) may reference orders
+            # from a paper account that has since been reset; that reconciliation is
+            # not this path's job. Open orders are still read directly from the broker.
+            result.notes.append(f"legacy order sync skipped: {exc}"[:300])
     account = broker.get_account()
     account_hash = _optional_broker_account_hash(getattr(account, "id", None))
     if not unauthorized_dry_run and account_hash != auth.broker_account_id_hash:
@@ -1197,12 +1234,11 @@ def run_portfolio_paper_rehearsal(
         broker_positions[symbol] = float(getattr(position, "qty", 0) or 0)
         price = getattr(position, "current_price", None)
         broker_position_prices[symbol] = float(price) if price else 0.0
-    scope_for_open_orders = str(policy.get("position_scope") or "broker_account")
     own_coids: set[str] | None = None
-    if scope_for_open_orders == "strategy_ledger":
+    if result.position_scope == "strategy_ledger":
         own_coids = {
             str(row["client_order_id"])
-            for row in _ledger_rows(base, spec.name)
+            for row in (strategy_orders if retired else _ledger_rows(base, spec.name))
             if row.get("client_order_id")
         }
     open_symbols = _open_order_symbols(broker, own_client_order_ids=own_coids)
@@ -1266,9 +1302,12 @@ def run_portfolio_paper_rehearsal(
     plan_equity = equity
     frozen = {}
     if position_scope == "strategy_ledger":
-        fills_rows = _fills_ledger_rows(base, spec.name)
-        frozen = _unreconciled_symbols(fills_rows, session)
-        positions = _positions_from_fills_ledger(fills_rows)
+        if retired:
+            frozen = pending | _unreconciled_symbols(fills_rows, session)
+        else:
+            fills_rows = _fills_ledger_rows(base, spec.name)
+            frozen = _unreconciled_symbols(fills_rows, session)
+            positions = _positions_from_fills_ledger(fills_rows)
         artifact_prices: dict[str, float] = {}
         for row in rows:
             row_symbol = str(row.get("symbol") or "").upper()
@@ -1276,7 +1315,7 @@ def run_portfolio_paper_rehearsal(
             if row_symbol and row_price is not None:
                 artifact_prices[row_symbol] = row_price
         for symbol, qty in positions.items():
-            if qty > broker_positions.get(symbol, 0.0) + 1e-6:
+            if qty > broker_positions.get(symbol, 0.0) + (0.0 if retired else 1e-6):
                 frozen[symbol] = "broker_quantity_mismatch"
         position_prices = {
             symbol: (
@@ -1351,7 +1390,7 @@ def run_portfolio_paper_rehearsal(
     prior_total = _ledger_total_notional(base, spec.name, auth.authorization_id)
     max_total = float(auth.limits["max_total_notional_usd"])
     window_ok = _in_opg_acceptance_window(stamp, timezone)
-    if allow_paper_orders and not window_ok:
+    if (allow_paper_orders or preview) and not window_ok:
         for plan in plans:
             if plan.decision == "submit":
                 plan.decision, plan.reason = (
@@ -1362,7 +1401,8 @@ def run_portfolio_paper_rehearsal(
     version_id = strategy_version_id(spec)
     signal_log = base / "signal_logs" / f"paper-rehearsal-{spec.name}.jsonl"
     ledger = rehearsal_ledger_path(base, spec.name)
-    ensure_dir(ledger.parent)
+    if not preview:
+        ensure_dir(ledger.parent)
     run_id = f"paper-rehearsal-{spec.name}-{session.isoformat()}"
     for plan in plans:
         if plan.decision != "submit":
@@ -1394,8 +1434,9 @@ def run_portfolio_paper_rehearsal(
             side_override=plan.side,  # type: ignore[arg-type]
         )
         plan.signal_id = signal.id
-        append_jsonl(signal_log, [signal])
-        if not allow_paper_orders:
+        if not preview:
+            append_jsonl(signal_log, [signal])
+        if not (allow_paper_orders or preview):
             plan.decision = "would_submit"
             continue
         existing = _broker_order_by_client_id(broker, plan.client_order_id)
@@ -1414,12 +1455,17 @@ def run_portfolio_paper_rehearsal(
                 f"max_total_notional_usd={max_total}",
             )
             continue
+        if preview:
+            result.preview_orders.append(_order_request(plan, policy).to_request_fields())
+            plan.decision = "would_submit"
+            prior_total += plan.notional
+            continue
         try:
             with paper_control_lock(base):
                 fresh = load_paper_kill_switch(base, require_control_file=True)
                 if fresh.enabled:
                     raise PaperOrderError("paper kill switch enabled")
-                order = _submit(broker, plan, policy)
+                order = broker.submit_order(_order_request(plan, policy))
         except Exception as exc:  # broker rejections are recorded, never raised past the loop
             plan.decision = "rejected"
             plan.reason = f"{exc.__class__.__name__}: {exc}"[:300]
@@ -1464,9 +1510,9 @@ def run_portfolio_paper_rehearsal(
         result.status = "partial" if counts.get("submitted") else "rejected"
     elif counts.get("submitted"):
         result.status = "submitted"
-    elif allow_paper_orders and counts.get("already_submitted"):
+    elif (allow_paper_orders or preview) and counts.get("already_submitted"):
         result.status = "already_submitted"
-    elif allow_paper_orders and counts.get("blocked_by_submission_window"):
+    elif (allow_paper_orders or preview) and counts.get("blocked_by_submission_window"):
         result.status = "blocked_by_submission_window"
     elif not allow_paper_orders:
         result.status = "dry_run_unauthorized" if unauthorized_dry_run else "dry_run"
@@ -1483,7 +1529,8 @@ def run_portfolio_paper_rehearsal(
             result.notes.append(f"drawdown exit complete: ledger flat; revoked -> {revoked.name}")
         except RehearsalError as exc:
             result.notes.append(f"drawdown exit: revoke failed: {exc}"[:300])
-    _write_cycle_report(base, result, auth, policy)
+    if not preview:
+        _write_cycle_report(base, result, auth, policy)
     return result
 
 

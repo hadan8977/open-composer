@@ -565,7 +565,9 @@ def _validate_paper_allowed(spec: StrategySpec, root: Path) -> PaperSubmissionCo
 
 def _trading_client() -> Any:
     try:
-        from alpaca.trading.client import TradingClient
+        from open_composer.adapters.broker.alpaca_exchange_compat import (
+            ExchangeCompatibleTradingClient as TradingClient,
+        )
     except ImportError as exc:
         raise PaperOrderError("alpaca-py is required for Alpaca Paper orders") from exc
     base_url = _require_configured_paper_origin()

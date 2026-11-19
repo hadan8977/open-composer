@@ -23,7 +23,10 @@ def test_watchdog_alerts_attention_without_restarting_healthy_service(tmp_path, 
     state = {
         "heartbeat_at": (NOW - timedelta(seconds=901) if problem == "heartbeat" else NOW).isoformat(),
         "status": "blocked" if problem == "blocked_service" else "running",
-        "policy_status": {"BASE": {"status": "blocked" if problem == "blocked_policy" else "ready"}},
+        "policy_status": {
+            "BASE": {"status": "blocked" if problem == "blocked_policy" else "ready"},
+            "MULTI_EQUAL": {"status": "blocked"},
+        },
     }
     state_path = tmp_path / "state.json"
     state_path.write_text(json.dumps(state))

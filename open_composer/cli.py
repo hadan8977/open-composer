@@ -8104,9 +8104,43 @@ def paper_rehearsal_run(
     reason: str = typer.Option(
         "", "--reason", help="Required with --liquidate; copied into the cycle report."
     ),
+    preview_at: str | None = typer.Option(
+        None,
+        "--preview-at",
+        help="Print ledger holdings and order payloads at an ISO 8601 submit time. Read only.",
+    ),
 ) -> None:
     """Plan (and optionally submit) opening-auction paper orders for a rehearsal book."""
     from open_composer.paper_rehearsal import RehearsalError, run_portfolio_paper_rehearsal
+
+    if preview_at is not None:
+        stamp = datetime.fromisoformat(preview_at)
+        if stamp.tzinfo is None:
+            raise typer.BadParameter("include a UTC offset or Z", param_hint="--preview-at")
+        result = run_portfolio_paper_rehearsal(
+            spec_path,
+            project_root(),
+            allow_paper_orders=allow_paper_orders,
+            liquidate=liquidate,
+            liquidation_reason=reason or None,
+            now=stamp,
+            preview=True,
+        )
+        console.print_json(
+            data={
+                "strategy": result.strategy_name,
+                "session": result.session,
+                "status": result.status,
+                "ledger_holdings": result.scoped_positions,
+                "orders": result.preview_orders,
+                "decisions": [
+                    {"symbol": plan.symbol, "decision": plan.decision, "reason": plan.reason}
+                    for plan in result.plans
+                ],
+                "notes": result.notes,
+            }
+        )
+        return
 
     try:
         result = run_portfolio_paper_rehearsal(

@@ -1,7 +1,8 @@
 """Sleeve orders and ownership inside the Quant1 paper account.
 
 Registry paths may use {decision_date} and {execution_date}. Each daily target has
-decision_date, execution_date and weights. The owner authorization JSON names the
+decision_date, execution_date and weights. Optional hold=true keeps shares in place.
+The owner authorization JSON names the
 account and sleeve and sets max_capital, max_gross_leverage, stop_equity and
 expires_at_utc. A disabled sleeve keeps its shares and cash until explicitly unwound.
 
@@ -34,6 +35,7 @@ from open_composer.book_paper.plan import (
     round_half_away,
 )
 from open_composer.book_paper.targets import BookTarget, book_dir
+from open_composer.market_sessions import next_us_equity_session
 
 BOOK = "book"
 SLEEVE_ORDER_PREFIX = "bk1-sl-"
@@ -96,7 +98,7 @@ def _authorization(root: Path, row: dict, ledger: dict, now: datetime) -> dict:
     return auth
 
 
-def _targets(root: Path, target: BookTarget, row: dict, ledger: dict, now: datetime) -> dict:
+def _targets(root: Path, target: BookTarget, row: dict, ledger: dict, now: datetime) -> dict | None:
     auth = _authorization(root, row, ledger, now)
     path = root / row["target_file"].format(
         decision_date=target.decision_date, execution_date=target.execution_date
@@ -116,7 +118,7 @@ def _targets(root: Path, target: BookTarget, row: dict, ledger: dict, now: datet
     }
     if sum(abs(w) for w in weights.values() if w is not None) > auth["max_gross_leverage"]:
         raise ValueError("authorization_gross_cap")
-    return weights
+    return None if signal.get("hold") is True else weights
 
 
 def live_freezes(root: Path, plan: OrderPlan, now: datetime) -> dict[str, str]:
@@ -148,7 +150,7 @@ def live_freezes(root: Path, plan: OrderPlan, now: datetime) -> dict[str, str]:
 
 
 def decision_closes(root: Path, day: date, symbols: set[str]) -> dict[str, float]:
-    """Read extra symbols from the same dated current-units view as Quant1."""
+    """Read physical-share marks for sleeve names outside the book's price panel."""
     pointer = root / "data/live/equity_book_current.json"
     if not symbols or not pointer.exists():
         return {}
@@ -157,11 +159,16 @@ def decision_closes(root: Path, day: date, symbols: set[str]) -> dict[str, float
         return {}
     import pandas as pd
 
-    view = Path(current["consumer_view_root"])
-    prices = view / "prices" / f"{day.year}.parquet"
+    view = Path(current["view_root"])
+    prices = view / "physical-gates" / f"{day}-for-{next_us_equity_session(day)}" / "raw.parquet"
     if not prices.is_file():
         return {}
-    filters = [("trade_date", "==", pd.Timestamp(day)), ("symbol", "in", sorted(symbols))]
+    start = pd.Timestamp(day, tz="UTC")
+    filters = [
+        ("timestamp", ">=", start),
+        ("timestamp", "<", start + pd.Timedelta(days=1)),
+        ("symbol", "in", sorted(symbols)),
+    ]
     frame = pd.read_parquet(prices, columns=["symbol", "close"], filters=filters)
     return {s: float(p) for s, p in zip(frame["symbol"], frame["close"], strict=True)}
 
@@ -252,14 +259,17 @@ def build_shared_plan(
                 raise ValueError("sleeve_disabled")
             if name == BOOK or row["capital"] != h["capital"]:
                 raise ValueError("invalid_sleeve_name_or_changed_capital")
-            signals[name] = _targets(root, target, row, h, now)
+            weights = _targets(root, target, row, h, now)
         except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
             sleeves[name]["hold_reason"] = str(exc)
             sleeves[name]["frozen"].update(dict.fromkeys(h["positions"], str(exc)))
             continue
         sleeves[name]["authorization"] = row["authorization"]
-        sleeves[name]["weights"] = signals[name]
-        symbols.update(signals[name])
+        if weights is None:
+            sleeves[name]["hold_reason"] = "target_hold"
+            continue
+        signals[name] = sleeves[name]["weights"] = weights
+        symbols.update(weights)
 
     decision = target.reference_prices | decision_closes(
         root, target.decision_date, symbols - set(target.reference_prices)
@@ -327,7 +337,7 @@ def build_shared_plan(
     for name, weights in signals.items():
         h = sleeves[name]
         positions = h["positions"]
-        capital = min(h["capital"], reserve)
+        capital = min(h["capital"], reserve, math.inf if h.get("equity") is None else h["equity"])
         reserve -= capital
         h["effective_capital"] = capital
         desired = {}
@@ -417,6 +427,8 @@ def build_shared_plan(
             "crossed": crossed,
             "decision_price": decision.get(symbol, price),
         }
+        if any(rows.get(name, {}).get("time_in_force") == "cls" for name in parts):
+            allocation[symbol]["time_in_force"] = "cls"
         current = state.positions.get(symbol, 0)
         account_post[symbol] = current + net
         book_post[symbol] = book_qty.get(symbol, 0) + parts.get(BOOK, 0)

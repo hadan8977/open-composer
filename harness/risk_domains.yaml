@@ -5,8 +5,7 @@ version: 1
 # artifacts are required for a given spec — rather than using a static
 # per-stage list.
 #
-# Triggers are evaluated against the loaded StrategySpec. If any trigger
-# matches, the domain is activated and its requirements apply.
+# StrategySpec triggers match together unless a domain specifies match: any.
 
 risk_domains:
 
@@ -62,12 +61,22 @@ risk_domains:
           completed gap_stress_report and leveraged_etf_risk_note.
         blocks: paper_ready_pass
 
+  trained_model:
+    description: >
+      Review fold-local transforms, input availability, matured labels, sealed scores
+      and costed incremental lift. For registered research, use the fit and account
+      ledgers linked by family_results. Strategy promotion retains its native gates.
+    triggers:
+      has_trained_model: true
+    required_skills: [data-capability-reviewer, backtest-forensics]
+    required_artifacts: []
+    blocking_rules: []
+
   # ── Parameter search / optimization ─────────────────────────────────────────
   parameter_search:
     description: >
-      Strategy has adjustable parameters or was produced by an optimizer.
-      Without a bounded search space and trial ledger, the reported backtest
-      metrics represent an upper bound, not a realistic expectation.
+      Review the preregistered selection rule, all selectable trials and the chosen
+      family correction. Report accounting views and nonselectable controls separately.
     triggers:
       has_adjustable_parameters: true
     required_skills:

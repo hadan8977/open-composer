@@ -199,10 +199,12 @@ def run_book(
     panel: PricePanel, decide: DecideFn, config: BookConfig | None = None, *,
     initial_close: BookCloseAnchor | None = None,
     terminal_open: pd.Timestamp | None = None,
+    regime_breaks: Mapping[pd.Timestamp, Sequence[str]] | None = None,
 ) -> BookResult:
     """Run a decision function through the daily accounting.  See the module docstring."""
     cfg = config or BookConfig()
     dates = panel.dates
+    regime_breaks = regime_breaks or {}
     t_n, n_sym = panel.close.shape
     priced = np.isfinite(panel.close) & (panel.close > 0)
     delist_pos = delist_positions(priced) if cfg.delist_dates is None else None
@@ -328,7 +330,7 @@ def run_book(
         )
 
     def trade(
-        i: int, e_pre: float, decision: pd.Timestamp | None
+        i: int, e_pre: float, decision: pd.Timestamp | None, broken: list[int]
     ) -> tuple[float, float, dict[str, float]]:
         """Move holdings to the pending target at ``exec_price``.  Returns (turnover, cost dollars,
         cost components)."""
@@ -352,6 +354,7 @@ def run_book(
                 info["nonfinite_weights"] += 1
                 continue
             target[j] += w * e_pre
+        target[broken] = 0.0
         can = open_priced[i] if strict_open else priced[i] & np.isfinite(px_row)
         # a symbol that cannot be priced today keeps its holding (halted / not yet listed)
         frozen = ~can & ((h != 0) | (target != 0))
@@ -424,6 +427,11 @@ def run_book(
             cost_margin = cost_borrow = 0.0
         equity -= cost_margin + cost_borrow
 
+        # The old segment exits at its carrying value before the new mark.
+        broken = [panel.col(s) for s in regime_breaks.get(date, ())]
+        h[broken] = 0.0
+        last_close[broken] = np.nan
+
         # delistings: leave at the last valid close, longs take the optional haircut
         if delist_pos is None:
             dl = [panel.col(s) for s in cfg.delist_dates.get(date, ()) if h[panel.col(s)]]
@@ -459,7 +467,7 @@ def run_book(
             break
         if is_trade and cfg.exec_price == "open":
             e_open_pre = equity
-            turnover, cost, comps = trade(i, equity, pending_decision)
+            turnover, cost, comps = trade(i, equity, pending_decision, broken)
             equity -= cost
             e_open_post = equity
             info["n_rebalances"] += 1
@@ -469,7 +477,7 @@ def run_book(
         h = h * (1.0 + intra_i)
         if is_trade and cfg.exec_price == "close":
             e_open_pre = equity
-            turnover, cost, comps = trade(i, equity, pending_decision)
+            turnover, cost, comps = trade(i, equity, pending_decision, broken)
             equity -= cost
             e_open_post = equity
             info["n_rebalances"] += 1

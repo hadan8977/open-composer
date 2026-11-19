@@ -1111,6 +1111,23 @@ def validate_reply(root: Path, reply: Reply, kind: str, direction: str) -> None:
             raise ReplyFormatError("Continuing work requires a concrete next brief")
 
 
+def launch_experiment(root, run, folder, session, batch_id=None):
+    from open_composer.lab.experiment import resolve_spec
+
+    spec = folder / "experiment.json"
+    experiment, _ = resolve_spec(root, spec, batch_id or run.name)
+    if experiment.direction != run.parents[1].name:
+        raise ValueError("Experiment must belong to the assigned direction")
+    command = capped_command(root, [sys.executable, "-m", "open_composer.lab.experiment",
+                                    str(spec), batch_id or run.name, "--terminal"], "2400M")
+    with (folder / "batch.log").open("x", encoding="utf-8") as log:
+        child = subprocess.Popen(command, cwd=root, stdin=subprocess.DEVNULL, stdout=log,
+                                 stderr=subprocess.STDOUT, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    process = folder / "batch-process.json"
+    write_json(process, identity(child.pid))
+    return WaitSpec(session=session, local_only=True, process=process.relative_to(root).as_posix(),
+                    completion_marker=(folder / "batch-results.json").relative_to(root).as_posix())
+
 def reconcile_event_attempts(root: Path, run: Path, state: dict, deadline: float) -> None:
     """Receive started event continuations under the direction lock; never dispatch."""
     for name, phase in state.get("phases", {}).items():
@@ -1231,6 +1248,7 @@ def run_round(
     brief_name: str | None = None,
     _locked: bool = False,
     resume: bool = False,
+    repaired_spec: str | None = None,
 ) -> dict:
     root = root.resolve()
     identifier(direction)
@@ -1284,6 +1302,16 @@ def run_round(
                 if len(identities) > 1:
                     raise ValueError(f"Saved session conflicts with original event log: {name}")
                 prior.update({key: value for key, value in observed.items() if value is not None})
+            if repaired_spec:
+                prior = state["phases"][latest_phase(state, "worker")]
+                if prior["status"] != "blocked" or prior.get("wait_state", {}).get("state") == "waiting":
+                    raise ValueError("Repair requires a reconciled, blocked worker")
+                spec = local_path(root, repaired_spec)
+                if spec.name != "experiment.json" or not spec.is_relative_to(run):
+                    raise ValueError("Repair spec must be experiment.json inside this run")
+                batch_id = f"{run.name}-repair-{attempt}"
+                wait = launch_experiment(root, run, spec.parent, prior["session"], batch_id)
+                prior["wait_state"] = bind_wait(root, run, wait)
             review_plan, review_result = state["review_plan"], state["review_result"]
             previous_elapsed = state.get("elapsed_seconds", 0)
             state.update(status="running", active_phase=None)
@@ -1568,8 +1596,13 @@ def run_round(
                     if event_record:
                         event_record["state"] = "received"
                         state["phases"][phase]["event_attempt"]["state"] = "received"
-                    if reply.wait is not None:
-                        state["phases"][phase]["wait_state"] = bind_wait(root, run, reply.wait)
+                    wait = reply.wait
+                    if kind == "worker" and reply.status == "blocked" and reply.checkpoint == (
+                        folder / "experiment.json"
+                    ).relative_to(root).as_posix() and wait is None:
+                        wait = launch_experiment(root, run, folder, session)
+                    if wait is not None:
+                        state["phases"][phase]["wait_state"] = bind_wait(root, run, wait)
                         if reply.checkpoint:
                             state["phases"][phase]["checkpoint_availability"] = checkpoint_status(
                                 root, run, reply.checkpoint, session
@@ -1578,7 +1611,7 @@ def run_round(
                         state[f"latest_{kind}_phase"] = phase
                     state["active_phase"] = None
                     write_json(run / "run.json", state)
-                    if kind == "worker" and reply.wait is not None:
+                    if kind == "worker" and wait is not None:
                         prior_name, prior = phase, state["phases"][phase]
                         changed_upstream = False
                         recovery_reason = "event_ready"

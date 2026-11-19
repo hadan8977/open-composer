@@ -35,26 +35,14 @@ POLICIES = {
     "BASE": "BASE-CURRENT-INITIALIZATION-20261019",
     "H5": "H5-LEARNED-SWING-PAPER-VALIDATION-20261019",
     "LSTM": "CROSS-ASSET-LSTM-PAPER-VALIDATION-20261019",
-    "BASE_STATE_BUDGET": "BASE-STATE-BUDGET-PAPER-VALIDATION-20261019",
-    "MULTI_EQUAL": "MULTI-EQUAL-PAPER-VALIDATION-20261019",
-    "MULTI_HIERARCHICAL": "MULTI-HIERARCHICAL-PAPER-VALIDATION-20261019",
 }
 #: Policy -> original October book directory under reports/paper/intraday/.
 ORIGINAL_BOOKS = {
     "BASE": "dia-base-initialization-20261019",
     "H5": "h5-learned-swing-validation-20261019",
     "LSTM": "lstm-crossasset-validation-20261019",
-    "BASE_STATE_BUDGET": "base-state-budget-validation-20261019",
-    "MULTI_EQUAL": "multi-equal-validation-20261019",
-    "MULTI_HIERARCHICAL": "multi-hierarchical-validation-20261019",
 }
-CHILDREN = ("S1", "S2", "S3", "C2", "BASE", "H5")
-CHILD_CAPITAL = {
-    "MULTI_EQUAL": (3333.34, 3333.34, 3333.33, 3333.33, 3333.33, 3333.33),
-    "MULTI_HIERARCHICAL": (1666.67, 1666.67, 1666.66, 5000.0, 5000.0, 5000.0),
-}
-RETIRING_POLICIES = ("BASE_STATE_BUDGET", "BASE", *CHILD_CAPITAL)
-CHILD_STOPS = dict(zip(CHILDREN, (0.12, 0.15, 0.25, 0.12, 0.25, 0.25), strict=True))
+RETIRING_POLICIES = ("BASE",)
 TERMINAL = {"filled", "expired", "canceled", "cancelled", "rejected"}
 #: Share drift worth trading on a ``hold`` instruction, as a fraction of the
 #: book's capital. ``hold`` used to mean "never touch this book", and because the
@@ -136,7 +124,7 @@ def write_state(path, state):
     os.replace(temp, path)
 
 
-def validate_target(value, policy, now, *, max_weight=None):
+def validate_target(value, policy, now):
     if value["policy"] != policy or not instant(value["as_of"]) <= now < instant(
         value["valid_until"]
     ):
@@ -148,16 +136,11 @@ def validate_target(value, policy, now, *, max_weight=None):
         raise ValueError("duplicate/incomplete targets")
     if any(not isinstance(s, str) or not s or len(s) > 10 for s in symbols):
         raise ValueError("invalid symbol")
-    maximum = (
-        max_weight
-        if max_weight is not None
-        else (1.0 if policy in CHILD_CAPITAL and "children" in value else 0.2)
-    )
     if (
         any(
             isinstance(w, bool)
             or not math.isfinite(float(w))
-            or not 0 <= float(w) <= maximum + 1e-12
+            or not 0 <= float(w) <= 0.2 + 1e-12
             for w in weights
         )
         or sum(map(float, weights)) > 1 + 1e-12
@@ -263,9 +246,6 @@ def initialize(root):
                 "path": str(revision),
                 "journal": str(directory / "dispatch"),
             }
-        elif policy in CHILD_CAPITAL:
-            for name, capital in zip(CHILDREN, CHILD_CAPITAL[policy], strict=True):
-                value["books"][policy + "/" + name] = new_book(root, capital)
         else:
             value["books"][policy] = new_book(root, 20000)
     return value
@@ -571,25 +551,7 @@ class SixPaperService:
 
     def target_books(self, policy, target, now):
         validate_target(target, policy, now)
-        if policy not in CHILD_CAPITAL:
-            return [(policy, target, 20000.0, 0.25)]
-        rows = target["children"]
-        if isinstance(rows, list):
-            rows = {r["name"]: r for r in rows}
-        if set(rows) != set(CHILDREN):
-            raise ValueError("all six segregated children required")
-        result = []
-        for name, capital in zip(CHILDREN, CHILD_CAPITAL[policy], strict=True):
-            child = dict(target)
-            child.update(rows[name], policy=policy)
-            child.pop("children", None)
-            if "capital_usd" in child and abs(float(child["capital_usd"]) - capital) > 0.001:
-                raise ValueError("child capital changed")
-            validate_target(
-                child, policy, now, max_weight=1.0 if name in {"S1", "S2", "S3", "C2"} else 0.2
-            )
-            result.append((policy + "/" + name, child, capital, CHILD_STOPS[name]))
-        return result
+        return [(policy, target, 20000.0, 0.25)]
 
     def submit(
         self,
@@ -739,29 +701,6 @@ class SixPaperService:
             and (mark := _valid_price(p.get("current_price"))) is not None
         }
         day = now.astimezone(NEW_YORK).date().isoformat()
-        parent_killed = False
-        if policy in CHILD_CAPITAL:
-            total = 0.0
-            fully_marked = True
-            for book, _, _, _ in rows:
-                child_state, _, _, _ = restore(self.root, self.state["books"][book])
-                fully_marked &= all(
-                    s in marks
-                    for s in child_state.cashbook.lots
-                    if child_state.cashbook.quantity(s)
-                )
-                total += child_state.cashbook.nav_cash() + sum(
-                    child_state.cashbook.quantity(s) * marks.get(s, 0.0)
-                    for s in child_state.cashbook.lots
-                    if child_state.cashbook.quantity(s)
-                )
-            parent = self.state.setdefault("parent_risk", {}).setdefault(
-                policy, {"high_water": 20000.0, "killed": False}
-            )
-            if fully_marked:
-                parent["high_water"] = max(parent["high_water"], total)
-                parent["killed"] = parent["killed"] or total <= parent["high_water"] * 0.75
-            parent_killed = parent["killed"]
         for book, instruction, capital, drawdown in rows:
             state, fills, fees, evidence = restore(self.root, self.state["books"][book])
             held = {s: state.cashbook.quantity(s) for s in state.cashbook.lots}
@@ -800,7 +739,6 @@ class SixPaperService:
                 risk["high_water"] = max(float(risk["high_water"]), nav)
             risk["killed"] = (
                 bool(risk.get("killed"))
-                or parent_killed
                 or (not unmarked and nav <= risk["high_water"] * (1 - drawdown))
             )
             risk["halted"] = (
@@ -919,7 +857,8 @@ class SixPaperService:
             return
         for cid, record in self.state["orders"].items():
             if (
-                record["status"] in TERMINAL
+                record["book"] not in POLICIES
+                or record["status"] in TERMINAL
                 or record.get("cancel_attempted")
                 or not record.get("observation", {}).get("id")
             ):
@@ -940,11 +879,6 @@ class SixPaperService:
             weights=[],
             reference_marks={},
         )
-        if policy in CHILD_CAPITAL:
-            target["children"] = {
-                name: dict(portfolio_action="hold", symbols=[], weights=[], reference_marks={})
-                for name in CHILDREN
-            }
         self.operate(policy, target, positions, now, new_risk=False, frozen_symbols=frozen_symbols)
 
     def publish_dashboard(self):
@@ -1042,9 +976,6 @@ class SixPaperService:
                 policy_frozen = frozen
                 if target.get("application_day") == now.astimezone(NEW_YORK).date().isoformat():
                     policy_frozen = frozen | target.get("frozen_symbols", {})
-                    children = target.get("children", [])
-                    for child in children.values() if isinstance(children, dict) else children:
-                        policy_frozen.update(child.get("frozen_symbols", {}))
                 if rth:
                     self.protective(policy, positions, now, frozen_symbols=policy_frozen)
                 self.target_books(policy, target, now)

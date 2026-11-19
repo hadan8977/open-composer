@@ -204,10 +204,10 @@ def _check_single_trigger(key: str, value: object, spec: object, _get) -> bool:
             return False
         return any(isinstance(v, dict) and ("range" in v or "step" in v) for v in params.values())
 
+    if key == "has_trained_model":
+        return (_get("model") is not None) == bool(value)
     if key == "llm_review_enabled":
-        llm_review = _get("llm_review")
-        enabled = getattr(llm_review, "enabled", False) if llm_review else False
-        return bool(enabled) == bool(value)
+        return bool(getattr(_get("llm_review"), "enabled", False)) == bool(value)
 
     if key == "required_capability_kinds":
         needed_kinds = set(value) if isinstance(value, list) else set()

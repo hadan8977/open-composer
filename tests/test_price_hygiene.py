@@ -182,8 +182,8 @@ def test_kernel_no_longer_books_a_fabricated_return_across_a_break(
     symbol: str, fabricated_return: float
 ) -> None:
     """Hold the broken name across its break: with hygiene off the book
-    earns the fabricated move (this is the AZUL/WW defect), with hygiene on
-    the position is priced as absent (the kernel's cash residual) instead.
+    earns the fabricated move. With hygiene on, pre-break returns are
+    preserved and the position stops earning returns at the boundary.
     """
     close = _close_frame()
     spy_returns = pd.Series(0.0, index=SESSIONS)
@@ -207,7 +207,12 @@ def test_kernel_no_longer_books_a_fabricated_return_across_a_break(
         cost_bps_per_side=0.0,
         include_hedge=False,
     )
-    assert hygienic.abs().max() < 0.05
+    boundary = next(b.first_session_after for b in price_hygiene.detect_price_breaks(close)
+                    if b.symbol == symbol)
+    before = hygienic.index < boundary
+    expected = close[symbol].pct_change(fill_method=None).reindex(hygienic.index).fillna(0.0)
+    np.testing.assert_allclose(hygienic[before], expected[before], atol=1e-12)
+    np.testing.assert_allclose(hygienic[~before], 0.0, atol=1e-12)
     assert loop.LAST_PRICE_HYGIENE_MANIFEST["symbols_masked"] == 2
     assert symbol in loop.LAST_PRICE_HYGIENE_MANIFEST["breaks_by_symbol"]
 

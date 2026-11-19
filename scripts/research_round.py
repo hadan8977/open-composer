@@ -57,6 +57,7 @@ def main() -> int:
     recover.add_argument(
         "--follow", action="store_true", help="Resume the original series and continue"
     )
+    recover.add_argument("--repaired-spec", help="Run-bound spec after reconciliation of a failed local batch")
     sub.add_parser("preview")
     sub.add_parser("schemas")
     args = parser.parse_args()
@@ -90,6 +91,11 @@ def main() -> int:
         print(json.dumps(commands, indent=2))
     else:
         runner = run_series if args.follow else run_round
+        extra = {}
+        if getattr(args, "repaired_spec", None):
+            if args.follow:
+                parser.error("--repaired-spec resumes a single round")
+            extra["repaired_spec"] = args.repaired_spec
         result = runner(
             ROOT,
             args.direction,
@@ -100,6 +106,7 @@ def main() -> int:
             review_result=getattr(args, "review_result", False)
             or getattr(args, "review", "reuse") in ("result", "both"),
             resume=args.command == "resume",
+            **extra,
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

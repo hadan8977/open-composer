@@ -46,8 +46,8 @@ economic direction when another batch belongs to it.
   The event adapter currently supports the native long-only single-symbol policy
   and cannot score a separate warmup boundary.
 - `book_engine(close, open_, decide, config=BookConfig(...))` calls the existing
-  daily equity-book engine. It applies `sanitize_price_matrices` with defaults and
-  suppresses new decisions on split-like trigger sessions. Costs, borrowing,
+  daily equity-book engine. It segments prices forward and suppresses new decisions
+  on price-break sessions. Costs, borrowing,
   margin, holdings and exposures remain in the native ledger. It does not select
   names using future holding-period outcomes. Use an admitted native consumer for
   source replications whose frozen price treatment differs.

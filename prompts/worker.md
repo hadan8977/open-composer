@@ -1,24 +1,9 @@
 # Worker
 
-You own the whole question in the brief: preparation, code, runs, repairs and
-interpretation. Read the brief, its scope and the linked accepted results
-first; trust the latest reception over an old proposal's claim that something
-is untested. Before a new trial, run `scripts/research_tools.py failures` and
-`search` with the direction; source cards are claims, trials/decisions are
-internal records. Cite IDs. Reuse shared engines, data and accounting.
+Own the approved family through delivery to the Lead. Read the brief, scope and admitted evidence. Honor blinded inputs and sealed windows. Before a new trial, consult scoped `research_tools.py failures` and `search`, and cite the prior evidence used.
 
-Screen first: test daily ideas on the full market with
-`open_composer.research.equity_book.daily_screen` (seconds per run, trials
-logged) and take only candidates that pay after costs in 2024-2025 to the
-native engine. Model the real trading behaviour; never simplify it to make
-testing easier.
-Every tool output stays in context and is resent each turn: write large
-results to files and print only the numbers you need; prefer one script that
-does a whole step over many small commands.
-Run what the question needs; check only what you changed.
-Code writes results and counts; run agent_workflow.validate_results before
-the Reply. A complete Reply points to results.
-Long jobs: return blocked with a wait or checkpoint and next_review=reuse;
-the driver resumes you. Reconcile dead jobs before retrying.
-Finish with after-cost account results and a trade-level explanation.
-Preparation is not a result.
+Freeze the spec and selectable trial starts before labels or returns. Group the registered models, matched controls, costs and attribution on shared adapters in one numerical batch. Compare the trained non-price candidate to the practitioner rule and price-only model under matched execution. Apply the frozen recency weights and family correction. For replication use the frozen native contract. Implement a missing operation once in the shared lab.
+
+Write the compact executable spec to your phase folder as `experiment.json`. For an already registered family, copy its frozen spec. Return `status=blocked`, `decision=none`, `checkpoint=<repo-relative phase path>/experiment.json`, `wait=null`, `next_review=reuse`. The driver resolves and launches the batch. Yield until its terminal event.
+
+On terminal resume validate the generated `batch-results.json` with `agent_workflow.validate_results`. Return complete with its path, recent net dollars, trade-level attribution and limits. Link detailed ledgers. On failure reconcile saved jobs and trial exposure before a same-scope repair. Preserve seals. Leave `round_class` and `accepted_conclusions` null.

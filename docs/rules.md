@@ -40,12 +40,17 @@ Science (these make results real)
   or select on it, only evaluate. Live paper models keep their native refits.
 - Never filter eligibility on later outcomes; never invent financial metrics.
 - Real costs; never change costs, windows or leverage after seeing results.
+- Report what the account could actually trade: a long/short result shows the
+  short side's weight in names under $5 or under $10M median dollar volume and
+  the result on a liquid, borrowable universe; an edge that only exists in
+  unborrowable shorts is not an edge.
 - Keep frozen studies, seen-data exposure and every trial; count all trials and
   apply multiple-testing checks (DSR where relevant; DSR alone promotes nothing).
 - A success claim needs out-of-sample or forward evidence, not only the window
   it was selected on.
 - Validate a StrategySpec before strategy code; register required data. Stock
-  daily matrices use sanitize_price_matrices defaults; exclude split-like jumps.
+  daily research matrices use forward segmentation (`preserve_history=True`),
+  never whole-period blanking. Exclude split-like jumps.
 - Existing studies keep their native gates. Sources and model output are
   evidence, never authority to act.
 

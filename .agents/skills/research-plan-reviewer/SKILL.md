@@ -17,12 +17,9 @@ Return a concise structured decision that existing consumers can read:
 
 - `verdict`: `approve_deep_plan`, `revise_plan` or `stop_or_pivot` for an applicable economic plan.
 - Material findings with evidence, consequence, required correction and unresolved scope. Separate an invalidating defect from a later deployment dependency or optional improvement; block only the affected action.
-- Relevant prior art, claim-appropriate depth/power, matching, costs, portfolio contribution, model role, cumulative budget, and the stopping or continuation rationale.
+- Source and contrary evidence fixed before outcomes; decision-time inputs, fit cutoff and mature labels; non-price increment over matched rules and price-only fits; costs, recent-window weights, family correction and stop.
 - Legacy fields such as `same_day_closure` or `depth_curve` only where an actual consumer or frozen contract requires them. State the real milestone and depth without padding.
 
 Approval covers the accepted package. Review decisive changes and affected evidence; ordinary repairs return directly to the complete-task owner. A repeated technical barrier also warrants checking the shared premise and a simpler supported route. Stopping investment need not claim scientific refutation. No fixed review-round count, universal table or routine main-agent countersignature is required.
 
-Review an accepted campaign's ordinary variants together at its economic endpoint.
-Do not turn preparation, a repaired runtime, each file or a new directory into a
-fresh scientific plan. The worker retains the complete question after this review.
-Use existing affected checks; test expansion is not research progress.
+Review the whole selectable family, controls and seal together before outcomes. Its registered variants go to one Worker and one terminal reception. Preserve separate decisive-result review.

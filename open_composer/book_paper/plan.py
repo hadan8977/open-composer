@@ -782,6 +782,7 @@ def submit_plan(
     live_clock = clock or (lambda: now + timedelta(seconds=_time.monotonic() - started))
     lookup = OrderLookup(client, plan.execution_date)
     tif = "day" if tif_mode == "market" else "cls"
+    allocation = plan.payload.get("shared", {}).get("allocation", {})
     report: dict[str, Any] = {
         "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "plan_sha256": plan.payload["plan_sha256"],
@@ -792,10 +793,10 @@ def submit_plan(
         "deferred": [],
         "reversals": [],
     }
-    if shared := plan.payload.get("shared"):
+    if "shared" in plan.payload:
         report["internal_crosses"] = {
-            row["client_order_id"]: tif
-            for symbol, row in shared["allocation"].items()
+            row["client_order_id"]: row.get("time_in_force", tif)
+            for symbol, row in allocation.items()
             if row["crossed"] and symbol not in (frozen_symbols or {})
         }
 
@@ -807,6 +808,9 @@ def submit_plan(
 
     def send(order: dict[str, Any]) -> Any | None:
         row = {k: order[k] for k in ("symbol", "client_order_id", "qty", "side")}
+        order_tif = allocation.get(order["symbol"], {}).get("time_in_force", tif)
+        if order_tif != tif:
+            row["time_in_force"] = order_tif
         if "stage" in order:
             row.update(
                 logical_client_order_id=order["logical_client_order_id"], stage=order["stage"]
@@ -817,7 +821,7 @@ def submit_plan(
             symbol=order["symbol"],
             qty=order["qty"],
             side=OrderSide.BUY if order["side"] == "buy" else OrderSide.SELL,
-            time_in_force=TimeInForce.DAY if tif == "day" else TimeInForce.CLS,
+            time_in_force=TimeInForce.DAY if order_tif == "day" else TimeInForce.CLS,
             client_order_id=order["client_order_id"],
         )
         try:

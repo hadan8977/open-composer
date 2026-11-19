@@ -55,6 +55,7 @@ class Variant:
     evaluate: Callable[[], EngineResult]
     counts_as_trial: bool = True
     exposure_note: str = "Selectable research variant"
+    registered_trial_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -106,6 +107,12 @@ def run_batch(
             if e.event == "started"
             and not any(r.event == "finished" and r.trial_id == e.trial_id for r in existing)
         ]
+        for variant in variants:
+            if variant.registered_trial_id is not None:
+                start, = (e for e in existing if e.event == "started" and e.trial_id == variant.registered_trial_id)
+                if start.candidate != variant.id or start.counts_as_trial != variant.counts_as_trial:
+                    raise ValueError("Registered trial does not match the variant")
+                unresolved.remove(start.trial_id)
         if unresolved:
             raise ValueError(
                 "Reconcile unfinished trials before new starts; exposure remains counted: "
@@ -132,17 +139,18 @@ def run_batch(
         failures: dict[str, str] = {}
         for variant in variants:
             require_research(root)
-            trial_id = f"{batch_id}/{variant.id}"
+            trial_id = variant.registered_trial_id or f"{batch_id}/{variant.id}"
             trial_folder = folder / variant.id
             trial_folder.mkdir()
-            ledger.start(
-                trial_id,
-                batch=batch_id,
-                candidate=variant.id,
-                parameters=variant.parameters,
-                counts_as_trial=variant.counts_as_trial,
-                note=variant.exposure_note,
-            )
+            if variant.registered_trial_id is None:
+                ledger.start(
+                    trial_id,
+                    batch=batch_id,
+                    candidate=variant.id,
+                    parameters=variant.parameters,
+                    counts_as_trial=variant.counts_as_trial,
+                    note=variant.exposure_note,
+                )
             try:
                 output = variant.evaluate()
                 if output.return_frequency != "session":
@@ -211,7 +219,8 @@ def run_batch(
                 baseline=experiment.baseline,
                 n_trials=n_trials,
                 net_profit_usd=output.net_profit_usd,
-                baseline_net_profit_usd=experiment.baseline_net_profit_usd,
+                baseline_net_profit_usd=(output.baseline_net_profit_usd if output.baseline_net_profit_usd is not None
+                                         else experiment.baseline_net_profit_usd),
                 dsr=statistic["dsr"],
                 dsr_note=json.dumps(statistic, ensure_ascii=False, allow_nan=False),
                 limitations=limitations,

@@ -32,7 +32,7 @@ STATE = ROOT / "runtime/paper/six/runtime-state.json"
 TARGETS = ROOT / "runtime/paper/six/targets"
 RUNS = ROOT / "reports/paper/diagnostics/dated-target-refresh"
 UNIT = "oc-six-paper-validation.service"
-POLICIES = ("BASE", "H5", "LSTM", "BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL")
+POLICIES = ("BASE", "H5", "LSTM")
 RATE_FILE = ROOT / "runtime/paper/six/restart-rate.json"
 MAX_RESTARTS_PER_HOUR = 3
 ALERT_FILE = ROOT / "runtime/paper/six/alert-rate.json"
@@ -158,7 +158,7 @@ def health(args) -> dict:
         heartbeat_at=state.get("heartbeat_at"),
         heartbeat_age_s=None if age is None else round(age),
         status=state.get("status"),
-        policies={k: (v or {}).get("status") for k, v in (state.get("policy_status") or {}).items()},
+        policies={k: (v or {}).get("status") for k, v in (state.get("policy_status") or {}).items() if k in POLICIES},
         stale_targets=stale_targets,
         target_errors=target_errors,
         restarted=False,

@@ -275,22 +275,17 @@ def request_menu(plan, contract):
         )
         == contract
     )
-    menu = [(g, copy.deepcopy(r)) for g in ["core", "ETF"] for r in plan[g]["requests"]]
+    menu = [("core", copy.deepcopy(r)) for r in plan["core"]["requests"]]
     tail = copy.deepcopy(plan["core"]["conditional_request"])
     tail.pop("condition")
     menu.append(("core", tail))
-    calendar = us_equity_session_dates(
-        date.fromisoformat(contract["reference_day"]) - timedelta(days=12),
-        date.fromisoformat(contract["application_day"]),
-    )
-    previous = calendar[-3].isoformat()
-    app = contract["application_day"]
-    for group, row in menu:
-        if row["key"] in ["raw-bars", "raw-reference"]:
-            start = contract["raw_support_start"] if group == "core" else previous
-            row["params"].update(start=start + "T00:00:00Z", end=app + "T00:00:00Z")
-        elif row["key"] in ["adjusted-tail", "adjusted-history"]:
-            row["params"]["end"] = app + "T00:00:00Z"
+    start = contract["raw_support_start"] + "T00:00:00Z"
+    end = contract["application_day"] + "T00:00:00Z"
+    for _, row in menu:
+        if row["key"] == "raw-bars":
+            row["params"].update(start=start, end=end)
+        elif row["key"] == "adjusted-tail":
+            row["params"]["end"] = end
     return menu
 
 
@@ -565,12 +560,10 @@ def h5_decision(
 
 
 def partition(ready, blocked):
-    policies = {"BASE", "H5", "LSTM", "BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL"}
+    policies = {"BASE", "H5", "LSTM"}
     assert set(ready).isdisjoint(blocked) and set(ready) | set(blocked) == policies
     assert isinstance(blocked, dict) and all(type(v) is str and v for v in blocked.values())
     assert ready, "No independently usable dated policy packet"
-    if set(ready) & {"BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL"}:
-        assert {"BASE", "H5"} <= set(ready), "Dependent policy lacks a current BASE/H5 instruction"
     return True
 
 

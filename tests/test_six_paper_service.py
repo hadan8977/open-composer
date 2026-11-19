@@ -48,14 +48,11 @@ def target(policy="BASE"):
     )
 
 
-def test_initialization_segregates_all_children_and_capital(tmp_path):
+
+def test_initialization_creates_three_books_with_20000_each(tmp_path):
     state = service.initialize(tmp_path)
-    assert len(state["books"]) == 16
-    assert sum(b["cashbook"]["cash"] for b in state["books"].values()) == pytest.approx(120000)
-    for parent in service.CHILD_CAPITAL:
-        assert sum(
-            state["books"][parent + "/" + c]["cashbook"]["cash"] for c in service.CHILDREN
-        ) == pytest.approx(20000)
+    assert state["books"].keys() == {"BASE", "H5", "LSTM"}
+    assert all(book["cashbook"]["cash"] == 20000 for book in state["books"].values())
 
 
 @pytest.mark.parametrize(
@@ -79,7 +76,7 @@ def test_migration_preserves_checkpoint_ids_holds_lots_and_file(tmp_path):
     folder = (
         tmp_path
         / "reports/paper/intraday"
-        / service.ORIGINAL_BOOKS["BASE_STATE_BUDGET"]
+        / service.ORIGINAL_BOOKS["BASE"]
         / service.ACCOUNT
         / "checkpoints"
     )
@@ -103,20 +100,15 @@ def test_migration_preserves_checkpoint_ids_holds_lots_and_file(tmp_path):
     (folder / "revision-00000004.json").write_bytes(original)
     (folder / "head.json").write_text(json.dumps(dict(generation=4)))
     result = service.initialize(tmp_path)
-    assert result["books"]["BASE_STATE_BUDGET"] == book
+    assert result["books"]["BASE"] == book
     assert (folder / "revision-00000004.json").read_bytes() == original
 
 
-def test_one_bad_policy_does_not_block_five_others(tmp_path, monkeypatch):
+def test_one_bad_policy_does_not_block_two_others(tmp_path, monkeypatch):
     import json
 
     for policy in service.POLICIES:
         value = target(policy)
-        if policy in service.CHILD_CAPITAL:
-            value["children"] = {
-                name: dict(symbols=["SPY"], weights=[0.2], reference_marks={"SPY": 600.0})
-                for name in service.CHILDREN
-            }
         (tmp_path / (policy + ".json")).write_text(json.dumps(value))
     (tmp_path / "BASE.json").write_text("bad json")
     runtime = service.SixPaperService(
@@ -135,7 +127,7 @@ def test_one_bad_policy_does_not_block_five_others(tmp_path, monkeypatch):
     assert runtime.state["policy_status"]["BASE"]["status"] == "blocked"
     assert (
         sum(r["status"] == "ready_waiting_rth" for r in runtime.state["policy_status"].values())
-        == 5
+        == 2
     )
     assert not runtime.state["orders"]
 
@@ -157,7 +149,12 @@ def test_protective_cancel_has_no_signal_or_financial_reconciliation_dependency(
     runtime = service.SixPaperService(
         tmp_path, {}, tmp_path / "state.json", client, clock=lambda: NOW
     )
-    runtime.state["orders"] = {"own": dict(status="new", observation={"id": "own-broker-id"})}
+    runtime.state["orders"] = {
+        "own": dict(book="BASE", status="new", observation={"id": "own-broker-id"}),
+        "historical": dict(
+            book="MULTI_EQUAL/S1", status="new", observation={"id": "historical-broker-id"}
+        ),
+    }
     runtime.cancel_due(NOW, NOW)
     runtime.cancel_due(NOW, NOW)
     assert calls == ["own-broker-id"]
@@ -210,7 +207,7 @@ def test_nonterminal_does_not_release_principal(tmp_path):
     assert state.cash_reserved() == pytest.approx(600.6)
 
 
-def test_actual_six_current_targets_are_accepted(tmp_path):
+def test_actual_current_targets_are_accepted(tmp_path):
     import json
     from pathlib import Path
 
@@ -226,7 +223,7 @@ def test_actual_six_current_targets_are_accepted(tmp_path):
         value = json.loads((folder / (policy + ".json")).read_text())
         fixture_now = service.instant(value["valid_until"]) - timedelta(minutes=1)
         rows = runtime.target_books(policy, value, fixture_now)
-        assert len(rows) == (6 if policy in service.CHILD_CAPITAL else 1)
+        assert len(rows) == 1
 
 
 def test_actual_durable_unreached_tail_releases_without_reusing_ids(tmp_path):
@@ -250,10 +247,6 @@ def test_actual_durable_unreached_tail_releases_without_reusing_ids(tmp_path):
     assert set(after["consumed_ids"]) == set(before["LSTM"]["consumed_ids"])
     assert len(after["evidence"].get("service_no_submit_dispositions", {})) >= 8
     assert len(after["pending"]) < len(before["LSTM"]["pending"])
-    assert (
-        runtime.state["books"]["BASE_STATE_BUDGET"]["cashbook"]["lots"]
-        == before["BASE_STATE_BUDGET"]["cashbook"]["lots"]
-    )
 
 
 def test_terminal_canceled_sell_releases_its_unsold_share_lock(tmp_path):

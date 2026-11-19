@@ -63,7 +63,7 @@ def register_security_evidence(con, symbols):
 # The type is selected at the next regular open, strictly after its evidence.
 # A known fund filing overrides an operating or foreign-issuer filing.
 TYPED_MEMBERS = f"""
-    SELECT m.*, c.session, c.known_at,
+    SELECT m.*, c.session, c.known_at, l.cik AS issuer_cik,
            CASE
                WHEN regexp_matches(m.symbol, '{INSTRUMENT_SUFFIX}') THEN 'other'
                WHEN f.fund < c.decision_at THEN 'fund'
@@ -80,7 +80,7 @@ TYPED_MEMBERS = f"""
     FROM members m
     JOIN calendar c USING (trade_date)
     LEFT JOIN security_links l
-      ON m.symbol = l.symbol AND l.link_at < c.decision_at
+      ON m.issuer_symbol = l.symbol AND l.link_at < c.decision_at
       AND coalesce(l.next_link_at, 'infinity'::TIMESTAMPTZ) >= c.decision_at
     LEFT JOIN security_filings f USING (cik)
 """

@@ -1,18 +1,19 @@
 ---
 name: data-capability-reviewer
 description: >
-  Review strategy data dependencies before promotion or paper readiness. Use for
-  new required capabilities, LLM/news/event/macro inputs or llm_or_news_signal;
-  check compatibility, PIT metadata and non-paper-ready data caveats.
+  Review dated inputs for trained models, external feature packets and strategy capabilities.
+  Check coverage at the research decision clock and applicable paper-readiness limits.
 ---
 
 # Strategy capability review
 
-Read the StrategySpec's `required_capabilities`, factors using `llm_feature`/`feature_packet`, and [the registry](../../../capabilities/registry.yaml). Run `uv run --no-sync oc spec capabilities <spec> --json` for compatibility. Use [capability-evaluator](../capability-evaluator/SKILL.md) when registry fixtures or provider coverage need checking.
+For a family, inspect the spec and the adapter's consumed versions. Trace a dated feature through release, revisions, identity and lookback to the decision instant. Compare eligible and covered counts by window and around archive changes. Record the usable interval and missing-input behavior in the linked batch evidence.
+
+For a StrategySpec, read its `required_capabilities`, factors using `llm_feature`/`feature_packet`, and [the registry](../../../capabilities/registry.yaml). Run `uv run --no-sync oc spec capabilities <spec> --json` for compatibility. Use [capability-evaluator](../capability-evaluator/SKILL.md) when registry fixtures or provider coverage need checking.
 
 For each required capability, assess timeframe support, `strict_behavior` and actual evidence quality. `workflow_only` is `sample_evidence` and needs a `sample_data_caveat`. Sample, fixture, cache fallback and trial/research-only inputs cannot establish paper readiness. Every LLM/news/event/macro feature-packet schema must include `visible_at`, `published_at`, `fetched_at`, `source`, `input_hash` and `prompt_hash`.
 
-Write `reports/harness/data/{strategy}-capability-review.json`:
+When the strategy harness requires it, write `reports/harness/data/{strategy}-capability-review.json` with the fields below.
 
 ```json
 {

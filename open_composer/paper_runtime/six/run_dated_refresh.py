@@ -21,14 +21,13 @@ from open_composer.paper_runtime.paths import repo_root, runtime_root
 
 REPO = repo_root()
 HERE = Path(__file__).resolve().parent
-# All four reviewed input scripts are installed together beside this entrypoint.
 
 from open_composer.paper_runtime.six.formation_continuity import partition
 from open_composer.paper_runtime.six.paper_target_input_controls import (
     receive_current_paper_maintenance,
 )
 
-POLICIES = {"BASE", "H5", "LSTM", "BASE_STATE_BUDGET", "MULTI_EQUAL", "MULTI_HIERARCHICAL"}
+POLICIES = {"BASE", "H5", "LSTM"}
 TARGETS = runtime_root(REPO) / "targets"
 RUNS = REPO / "reports/paper/diagnostics/dated-target-refresh"
 
@@ -146,19 +145,6 @@ def commands(output, application_day):
             ],
         ),
         (
-            "assemble",
-            200,
-            [
-                str(py),
-                "-m",
-                "open_composer.paper_runtime.six.produce_targets",
-                "--output",
-                str(output),
-                "--phase",
-                "assemble",
-            ],
-        ),
-        (
             "finish",
             200,
             [
@@ -243,8 +229,6 @@ def publish_packet(output, *, now):
 def write_liquidation_targets(application_day):
     from open_composer.intraday_runner.current_initialization_controls import session
     from open_composer.intraday_runner.six_paper_service import (
-        CHILD_CAPITAL,
-        CHILDREN,
         RETIRING_POLICIES,
         write_state,
     )
@@ -264,11 +248,6 @@ def write_liquidation_targets(application_day):
             application_day=application_day,
             reference_day=reference_day,
         )
-        if policy in CHILD_CAPITAL:
-            target["children"] = {
-                name: dict(cash, capital_usd=capital)
-                for name, capital in zip(CHILDREN, CHILD_CAPITAL[policy], strict=True)
-            }
         write_state(targets / (policy + ".json"), target)
 
 

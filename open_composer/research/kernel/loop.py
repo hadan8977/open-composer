@@ -73,6 +73,7 @@ import json
 import logging
 import math
 import os
+from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -700,7 +701,8 @@ def build_weight_schedule(
 #: bridged multi-session gap as one day's return (measured: a weekly
 #: small-cap book printed 154% CAGR from two symbols). The tag changes so the
 #: two can never be compared without the difference being visible in the row.
-PORTFOLIO_RETURNS_CONTRACT = "portfolio_returns.buy_and_hold_drift_price_hygiene.v3"
+#: ``.v4`` keeps earlier marks and exits old holdings when a break is visible.
+PORTFOLIO_RETURNS_CONTRACT = "portfolio_returns.buy_and_hold_drift_price_hygiene.v4"
 
 #: The hygiene manifest from the most recent ``returns_from_weight_schedule``
 #: call with ``price_hygiene_enabled=True`` -- a module-level record (not a
@@ -730,103 +732,45 @@ def returns_from_weight_schedule(
     until the next rebalance, generalized to an optional SPY hedge leg and
     (Wave B item 4) a choice of execution price.
 
-    **2026-09-10 fix (Step 13 Track M, coordinator-directed reconciliation
-    against an independent from-scratch check)**: this function previously
-    recomputed every day's portfolio return as
-    ``sum_s weight_s * one_day_return_s(t)`` using the *same*, never-updated
-    ``weight_s`` for every day of the holding window -- mathematically
-    identical to rebalancing the book back to those exact target weights
-    every single trading day, not buying once at the start of the window and
-    holding. The two formulas are provably identical whenever the held names
-    have zero return dispersion within the window (see
-    ``tests/test_kernel_loop.py``'s degenerate-case regression test) --
-    which is why this went unnoticed in any single-asset or single-day sanity
-    check and only shows up as a compounding drift over many multi-day,
-    multi-name windows. For a concentrated, high-dispersion, positively-
-    trending book (exactly what a top-20 momentum portfolio is),
-    daily-rebalance-to-constant-weight harvests a real "volatility pumping"
-    premium over true buy-and-hold: verified by feeding an independent,
-    from-scratch weekly close-to-close check's own 133 real Friday
-    signals/picks (real prices, no costs, ``docs/`` ledger note has the CSV
-    reference) through this exact function -- the pre-fix formula overstated
-    CAGR by ~8.6 percentage points versus that check's ground truth (0.3213
-    vs. 0.235) on identical symbols/dates/prices. Every ``close_marked``/
-    ``next_open`` number this module has ever produced (every B0-B3
-    experiment -- the old docstring's now-corrected "byte-for-byte
-    unchanged" claim) was computed under the old, inflating formula and
-    should be treated as upper-biased until re-run.
-    ``scripts/evaluate_cross_sectional_momentum_liquid500.py``'s
-    ``_cohort_daily_returns`` (Step 10 Wave 2; archived 2026-09-14 to git branch
-    ``archive/rounds-2026-09``) implements the same pre-fix
-    constant-weight-per-day formula independently -- flagged to the Step 13
-    coordinator, not changed here (outside Track M's owned files).
+    The September 10 drift fix replaced daily rebalancing to constant weights
+    with buy-and-hold compounding. See
+    ``reports/research/control/step13-recent-high-return-2026-09.md`` for the
+    reconciliation and affected historical results.
 
-    ``execution="close_marked"`` (default) marks to market with
-    **close-to-close** daily returns starting the trading day after the
-    Friday signal date -- see module docstring's "execution-path
-    simplification" note.
+    Close-marked books start earning close-to-close returns on the session
+    after the signal. Next-open books fill at the following session's open
+    and start earning open-to-open returns from that fill. The cost is
+    charged on the session after the signal in both modes.
 
-    ``execution="next_open"`` instead fills the Friday close signal at the
-    *following* trading day's **open** (plan's "周五收盘信号 → 周一开盘成交 →
-    下一个周一开盘换仓"), requiring ``open_wide`` (same shape/index/columns
-    contract as ``price_wide``, priced off ``open`` instead of ``close``).
-    An order filled at Monday's open cannot capture Monday's own open-to-
-    close move for the *new* weights -- that session's move is still the old
-    position's exposure right up to the fill -- so the earliest full trading
-    day of realized P&L under the new weights is the day *after* the fill.
-    Concretely this is the identical event-window logic as
-    ``close_marked``, shifted by exactly one trading day, using
-    **open-to-open** daily returns (``open_wide.pct_change()``) instead of
-    close-to-close ones; the two modes share one code path below via
-    ``window_lag`` (0 for close_marked, 1 for next_open), which is why
-    close_marked's output is provably unchanged by this generalization.
-
-    Trading cost is charged on the day the order actually executes
-    (``dates[entry_pos]``, the trading day right after the Friday signal --
-    the first day of the close_marked return window, but the day *before*
-    the next_open return window starts) in both modes: written as a
-    get-or-create update to ``all_returns`` after the window is filled,
-    rather than being special-cased to "day zero of this iteration's
-    window" the way the original close_marked-only implementation did --
-    for close_marked those two descriptions name the same day (so the
-    output is identical), but only writing it this way makes next_open's
-    cost land on the fill day rather than a day late.
-
-    **2026-09-17 price hygiene (on by default)**: before anything is priced,
-    both matrices go through
-    ``features.price_hygiene.sanitize_price_matrices`` -- every symbol's
-    history up to and including its last unadjusted regime break (a one-day
-    price ratio beyond ``price_hygiene_max_one_day_price_ratio``, or a hole
-    of ``price_hygiene_max_gap_sessions`` sessions or more) is blanked,
-    because such a join is a different security or a different share basis,
-    not a return, and the factor that would splice them is not in the panel.
-    Daily returns are then taken with
-    ``price_hygiene.daily_returns_no_pad``: ``pct_change()``'s default
-    ``fill_method="pad"`` bridged ``NaN`` holes and booked a multi-session
-    move as one day (+1,730% on AZUL, found by H-20260916-05, whose first
-    tradability run printed a 154% CAGR that was two symbols' worth of
-    fabricated prices). Pass ``price_hygiene_enabled=False`` to reproduce a
-    pre-fix (``...buy_and_hold_drift.v2``) number; the manifest of what was
-    masked is left in :data:`LAST_PRICE_HYGIENE_MANIFEST` for the caller to
-    record.
+    Price hygiene preserves every earlier mark. At a regime break, the old
+    holding exits at its last pre-break mark and the new segment can enter
+    only from a later signal. Decisions on break dates are skipped. Daily
+    returns leave missing prices unfilled. Pass ``price_hygiene_enabled=False``
+    to reproduce the legacy v2 gap-padding behavior.
     """
+    breaks = defaultdict(list)
+    excluded = set()
     if price_hygiene_enabled:
-        price_wide, open_wide, hygiene_report = price_hygiene.sanitize_price_matrices(
+        _, _, hygiene_report = price_hygiene.sanitize_price_matrices(
             price_wide,
             open_wide,
             max_one_day_price_ratio=price_hygiene_max_one_day_price_ratio,
             max_gap_sessions=price_hygiene_max_gap_sessions,
+            preserve_history=True,
+            break_at_open=execution == "next_open",
         )
+        for b in hygiene_report.breaks:
+            if b.masked:
+                breaks[b.symbol].append(price_wide.index.get_loc(b.first_session_after))
+                excluded.add(b.first_session_after)
         LAST_PRICE_HYGIENE_MANIFEST.clear()
         LAST_PRICE_HYGIENE_MANIFEST.update(hygiene_report.manifest())
         if hygiene_report.symbols_masked:
             logger.info(
-                "price hygiene: masked %d symbols at a regime break (%d jumps, %d gaps; "
-                "%d price cells)",
+                "price hygiene: segmented %d symbols (%d last breaks were jumps, %d were gaps)",
                 hygiene_report.symbols_masked,
                 hygiene_report.symbols_masked_for_jump,
                 hygiene_report.symbols_masked_for_gap,
-                hygiene_report.price_cells_masked,
             )
     else:
         LAST_PRICE_HYGIENE_MANIFEST.clear()
@@ -863,9 +807,13 @@ def returns_from_weight_schedule(
     cost_rate = cost_bps_per_side / 10_000.0
     all_returns: dict[pd.Timestamp, float] = {}
     previous_weights: dict[str, float] = {}
-    active = [event for event in schedule if event.selected]
+    active = [event for event in schedule if event.selected and pd.Timestamp(event.date) not in excluded]
     for i, event in enumerate(active):
+        event_date = pd.Timestamp(event.date)
+        entry_pos = dates.searchsorted(event_date, side="right")
         weights = dict(event.selected)
+        if window_lag:
+            weights = {s: w for s, w in weights.items() if entry_pos not in breaks.get(s, ())}
         if not include_hedge:
             weights.pop("__SPY_HEDGE__", None)
         symbols_touched = set(weights) | set(previous_weights)
@@ -875,10 +823,6 @@ def returns_from_weight_schedule(
         )
         cost = turnover * cost_rate
 
-        event_date = pd.Timestamp(event.date)
-        # entry_pos: the trading day the order executes on, regardless of
-        # execution mode -- the day right after the Friday signal.
-        entry_pos = dates.searchsorted(event_date, side="right")
         start = entry_pos + window_lag
         end = (
             dates.searchsorted(pd.Timestamp(active[i + 1].date), side="right") + window_lag - 1
@@ -908,6 +852,13 @@ def returns_from_weight_schedule(
             if held_columns
             else pd.DataFrame(index=window.index)
         )
+        for symbol in held_columns:
+            boundary = next((p for p in breaks.get(symbol, ()) if entry_pos <= p <= end), None)
+            if boundary is not None:
+                gross.loc[dates[boundary]:, symbol] = (
+                    gross.at[dates[boundary - 1], symbol] if boundary > start else 1.0
+                )
+                weights.pop(symbol)
         invested_value = (
             gross.mul(weight_series, axis=1).sum(axis=1)
             if held_columns

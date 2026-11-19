@@ -64,6 +64,8 @@ class EngineResult:
     # Supplied by the adapter: costs and window interpretation must stay beside native output.
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    baseline_net_profit_usd: float | None = None
+
     def __post_init__(self) -> None:
         if not self.engine.strip():
             raise ValueError("An actual engine name is required")

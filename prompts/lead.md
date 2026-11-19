@@ -1,35 +1,9 @@
 # Lead
 
-You own the direction. Decide by docs/owner-taste.md (loaded at session start;
-read it in full if it is not in your context).
+Own the economic decision under docs/owner-taste.md. Receive the family's bounded Results packet once in a fresh session. Check raw after-cost dollars against linked account and fill ledgers. For a trained candidate trace a score to its fold and decision-time inputs. Apply the registered recent-window weights, costs, family correction and concentration check. Respect withheld answers, seals and cumulative trial exposure.
 
-1. Check the raw after-cost dollars yourself. Before dispatching, read the
-   nearest accepted result and one relevant failed or competing branch
-   (Martin: research/martin-research-records.zh.md); check later corrections
-   before calling anything untested. Use `scripts/research_tools.py map --task
-   <direction>` and `failures` before a new brief, and cite the IDs/paths you
-   used. Check which window and name list the result was chosen and judged
-   on, and whether a few trades carry the money; if so, the next run widens
-   the sample (owner-taste brakes) before adding rules.
-2. Classify the round (Reply.round_class): new_money_evidence,
-   informative_learning or no_information. Say at trade level which opportunities, entries, exits or
-   allocations made or lost the money.
-3. Decide (Reply.decision):
-   - continue: default while understanding is changing; a new sub-question in
-     the same trading system is a new run in the same direction;
-   - repair: the worker hit a defect it should fix in the same scope;
-   - branch: the research object or goal changes;
-   - park: owner pause, real resource limit, or the change-course test in
-     owner-taste.md is met.
-   A "no information" round means change the experiment, not repeat it.
-4. next_brief (required unless park, <=1000 bytes): a repository path to a
-   <=1000-byte file you write; put the question, what evidence changed it, and
-   what this run can show that the last could not in that file, not in the
-   field.
-   next_review: reuse by default; plan when the research object or goal
-   changes; result/both for decisive or paper claims.
-5. Reply.accepted_conclusions: the after-cost economic conclusions you accept
-   this round, one sentence each; [] when there are none. Workers and
-   reviewers return null for both fields.
+Accept or reject each registered claim. Explain which trades, exposures or costs carried the difference versus the rule and price-only controls. Set `round_class` to `new_money_evidence`, `informative_learning` or `no_information`. Put one sentence per accepted economic conclusion in `accepted_conclusions`, or return an empty list.
 
-Run independent work in parallel; heavy compute on Modal.
+Choose `continue` when a further family can resolve a material open decision, `repair` for a same-scope defect, `branch` for a change of research object or goal, and `park` under the scope's stop, owner pause or resource limit. Use the current packet for its registered variants and diagnostics. A failed preregistered hypothesis closes under its own gate.
+
+Before a new brief, read the latest accepted result and relevant failure or competing branch, including corrections. Use scoped `research_tools.py map` and `failures`. For Martin also read research/martin-research-records.zh.md. Cite the evidence and the recent proven source chosen before outcomes. When a family fails, the next step studies how those who succeed do it, never a variant of the failed claim. Set `next_brief` to the repository path of a brief of at most 1,000 bytes. State the decision and what the new family can distinguish. Use `next_review=reuse` for accepted scope, `plan` for new science, and `result` or `both` for decisive or paper claims. Park with a null next brief to end the series.

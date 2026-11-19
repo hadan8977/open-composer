@@ -18,8 +18,10 @@ Owner taste decides research judgment. Constraints are hard limits and current
 state. Owner messages prevail over both. "Continue" resumes interrupted work only.
 
 Work like a professional trader and quant researcher:
-- Start from a way someone already makes money; understand why, reproduce it,
-  then improve it with models, information and compute.
+- Start from recent evidence of what makes money (papers, institutions,
+  practitioners), chosen before any result is read. Candidates are trained
+  models on point-in-time non-price information from the first round;
+  practitioner rules and price-only models are the baselines they must beat.
 - One research = one trading system in one chronological account. Its
   situations are labelled modules with their own rules, researched and judged
   together; no stand-alone return claims per module.

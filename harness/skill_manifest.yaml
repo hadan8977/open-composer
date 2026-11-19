@@ -13,16 +13,15 @@ skills:
 
   strategy-research-orchestrator:
     description: >
-      Coordinates strategy research, optimization and lifecycle decisions using
-      applicable native gates; adapts methods to the research object and stage.
-      Component or agent-method work does not require an unrelated strategy.
+      Routes registered families to shared adapters, the driver's finite wait and fresh Lead reception.
+      Strategy promotion and paper readiness retain their native gates.
     triggers:
       - user requests strategy research, optimization, or evaluation
       - user requests strategy promotion or paper readiness
     primary_outputs:
       - reports/harness/plans/{strategy}.json
-      - reports/research/{strategy}-research-brief.json
-      - reports/research/{strategy}-evidence-manifest.json
+      - research/{direction}/runs/{run}/worker/experiment.json
+      - research/{direction}/results.json
     skill_path: .agents/skills/strategy-research-orchestrator/SKILL.md
 
   idea-to-paper:
@@ -32,9 +31,9 @@ skills:
       documentation and agent-method maintenance do not use this workflow.
     triggers:
       - owner states an investment or strategy-research idea or challenge
-      - a new economic research direction is opened
+      - a sourced non-price candidate and its matched controls need a family decision
     primary_outputs:
-      - reports/research/control/briefs/{task}.md
+      - research/{direction}/brief.md
       - reports/research/iterations/{iteration}/direction-review.json
       - reports/research/intel/sources/{topic}/
     skill_path: .agents/skills/idea-to-paper/SKILL.md
@@ -48,7 +47,7 @@ skills:
       - any strategy needing broker / order type verification
       - any strategy needing exchange auction rule verification
       - any strategy referencing external data providers
-      - any strategy using backtest methodology claims
+      - a family binds a source mechanism and counterevidence before outcomes
       - risk domain broker_specific or daily_open_execution is active
     primary_outputs:
       - reports/harness/source_cards/{strategy}.jsonl
@@ -77,7 +76,7 @@ skills:
       strategies and before promotion.
     triggers:
       - strategy has adjustable parameters or uses an optimizer
-      - risk domain parameter_search is active
+      - risk domain trained_model or parameter_search is active
       - promotion gate is being evaluated
       - user asks about overfitting, PBO, DSR, or walk-forward
     primary_outputs:
@@ -89,10 +88,10 @@ skills:
     description: >
       Evaluates data capability registry against strategy requirements. Flags
       sample / fixture / cache-fallback data as non-paper-ready. Checks PIT
-      metadata for LLM/news/event/macro features.
+      metadata and decision-time coverage for fitted features and external packets.
     triggers:
       - new data source or timeframe added to strategy
-      - risk domain llm_or_news_signal is active
+      - risk domain trained_model or llm_or_news_signal is active
       - user asks about data coverage, PIT, or feature packets
       - capability.status == trial
     primary_outputs:
@@ -125,17 +124,15 @@ skills:
 
   python-backtest-writer:
     description: >
-      Implement or update deterministic Python signal, scanner, and backtest
-      behavior for a StrategySpec.
+      Implement shared model, signal and account adapters that emit a bounded Results packet.
     triggers:
       - strategy.lifecycle in [draft, research]
-      - user requests Python backtest implementation
+      - a registered experiment needs a shared numerical operation
     skill_path: .agents/skills/python-backtest-writer/SKILL.md
 
   strategy-designer:
     description: >
-      Create or revise Open Composer StrategySpec YAML files from natural-language
-      trading ideas.
+      Design a trained non-price candidate, its price baselines and their native execution.
     triggers:
       - user gives a new trading idea
       - user requests spec revision
@@ -156,7 +153,7 @@ skills:
       definition changes or work beyond approved scope. Routine authorized
       execution and same-semantics repair use relevant diff/result acceptance.
     triggers:
-      - a new economic hypothesis requires independent review
+      - a new preregistered family requires independent review before outcomes
       - a material scientific definition or approved research scope changes
     skill_path: .agents/skills/research-plan-reviewer/SKILL.md
 

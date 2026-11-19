@@ -90,6 +90,12 @@ capabilities:
     fixture: data/fixtures/capabilities/alpaca_qqq_15m.csv
     env: [ALPACA_API_KEY_ID, ALPACA_API_SECRET_KEY, ALPACA_DATA_FEED]
     min_score: 0.85
+    proof_a_2016_2025_inputs:
+      daily_universe: ../market-data/derived/daily-us-stock-universe.parquet
+      rank_version: research/martin_source_rebuild_20261119/runs/ms-20261119-2-1/ranks-dev.parquet
+      price_versions: [sip-all, delisted-daily]
+      close_check_only: sip-all regular-session minute and daily archives, 2020-01-03
+      availability: Use daily inputs known by midnight ET ending the formation session (inclusive).
     caveats:
       - free IEX feed is not consolidated full-market SIP data
 
@@ -217,6 +223,13 @@ capabilities:
     fixture: data/fixtures/capabilities/sec_filings.jsonl
     env: [SEC_USER_AGENT]
     min_score: 0.9
+    proof_a_2016_2025_inputs:
+      companyfacts: data/raw/sec_xbrl/companyfacts-shares-current.zip
+      submissions: data/raw/sec_submissions/submissions-current.zip
+      issuer_observations: data/raw/sec_ma/cik_symbol_history.parquet
+      class_sources: [martin_learning_peer_identity_repair_20261110, economic-links-follow-20261110-1]
+      family: ../market-data/derived/proof-a-2016-2025/filings.parquet
+      availability: Through formation midnight ET inclusive, with a dated issuer link supported by an observed Form 4. Same-class covers are a sensitivity.
     caveats:
       - filings are official but not equivalent to broad news coverage
       - acceptanceDateTime is used when present; filings without it are visible only from collector fetch time

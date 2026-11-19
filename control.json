@@ -15,6 +15,10 @@
     "etf": {
       "authorization_root": "reports/paper/rehearsal",
       "filename": "{strategy}-authorization.json",
+      "retired": [
+        "us_etf_growth_rotation_blend_top2_monthly",
+        "us_etf_sector_rotation_252_top2_weekly"
+      ],
       "expires_at": {
         "us_etf_eom_sector_blend_monthly": "2027-06-30T00:00:00+00:00",
         "us_etf_growth_rotation_blend_top2_monthly": "2027-06-30T00:00:00+00:00",
@@ -28,17 +32,11 @@
       "policies": [
         "BASE",
         "H5",
-        "LSTM",
-        "BASE_STATE_BUDGET",
-        "MULTI_EQUAL",
-        "MULTI_HIERARCHICAL"
+        "LSTM"
       ],
       "expires_at": "2027-06-30T00:00:00Z",
       "retiring": [
-        "BASE_STATE_BUDGET",
-        "BASE",
-        "MULTI_EQUAL",
-        "MULTI_HIERARCHICAL"
+        "BASE"
       ]
     },
     "quant1": {
@@ -52,6 +50,15 @@
         "capital": 10000,
         "target_file": "reports/paper/book/quant1/sleeves/test_two_name_long/targets/{decision_date}.json",
         "authorization": "reports/paper/book/quant1/sleeves/test_two_name_long/replay-only.json",
+        "enabled": false
+      },
+      {
+        "name": "levered_trend_c3",
+        "account": "quant1",
+        "capital": 15000,
+        "target_file": "reports/paper/book/quant1/sleeves/levered_trend_c3/targets/{decision_date}.json",
+        "authorization": "reports/paper/book/quant1/sleeves/levered_trend_c3/authorization.json",
+        "time_in_force": "cls",
         "enabled": false
       }
     ],

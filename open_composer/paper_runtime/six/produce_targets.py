@@ -1,5 +1,5 @@
 # ruff: noqa: E402 -- Runtime paths and frozen-source imports initialize in order.
-"""Date-bound maintenance adapter for the existing six frozen paper policies.
+"""Date-bound maintenance adapter for the remaining intraday paper policies.
 
 Stages write only diagnostics. The sole native paper operator integrates targets.
 No fits, account calls, funding, scheduling, or service invocation are present.
@@ -436,36 +436,6 @@ def prepare_core(root, source, obj, control, previous, normalized, raw, marks, b
         )
     except FormationDependency as error:
         blocked["H5"] = str(error)
-    if b is not None and h is not None:
-        monthly_event = (
-            dict(portfolio_action="rebalance", new_monthly_model_adoption=True)
-            if b.get("new_monthly_model_adoption")
-            else {}
-        )
-        target(
-            root,
-            "BASE_STATE_BUDGET",
-            base_symbols,
-            [w * h["K"] / 5 for w in base["allocation"]["weights"]],
-            marks,
-            source,
-            ref,
-            app,
-            K=h["K"],
-            duplicates_BASE_now=h["K"] == 5,
-            held_model_origins=[b["held_model_origin"], h["signal_forecast"]],
-            causal_inputs=dict(
-                BASE=bind(root / "targets/BASE.json"), H5=bind(root / "targets/H5.json")
-            ),
-            cash_cause="causal_H5_K_scaling_of_current_BASE",
-            frozen_symbols=bad | h["frozen_symbols"],
-            allocation_intent="complete_unfulfilled_initial_allocation_only_after_operating_prefix_acceptance",
-            **monthly_event,
-        )
-    else:
-        blocked["BASE_STATE_BUDGET"] = (
-            "Current BASE and causal H5 K are both required; no cash or stale-K replacement"
-        )
     save(root / "prepare-dependencies.json", blocked)
     return b, h
 
@@ -482,11 +452,6 @@ def prepare(root):
     obj = pages(source)
     frozen = {}
     raw = bars(obj["core", "raw-bars"], frozen)
-    other = bars(obj["ETF", "raw-reference"], frozen)
-    for k, v in other.items():
-        if k in raw and any(raw[k][f] != v[f] for f in ("o", "c")):
-            frozen[k[0]] = "raw_source_unit_mismatch"
-    raw.update(other)
     symbols = sorted({s for s, d in raw})
     days = [prev, ref]
     close = pd.DataFrame(
@@ -509,8 +474,7 @@ def prepare(root):
     core = load(N / "next-session-source-plan-M1.json")["core"]["raw_symbols"]
     lineage = build_action_lineage(root, ref, app)
     frozen.update(lineage["frozen_symbols"])
-    planned_etf = load(N / "next-session-source-plan-M1.json")["ETF"]["symbols"]
-    for s in set(core) | set(planned_etf):
+    for s in core:
         if s not in marks:
             frozen.setdefault(s, "missing_raw_reference_bar")
     lineage_row = save(root / "action-lineage-QA.json", lineage)
@@ -581,7 +545,7 @@ def prepare(root):
     cl = pd.read_parquet(checked(accepted["ETF-sanitized-close.parquet"]))[syms]
     op = pd.read_parquet(checked(accepted["ETF-sanitized-open.parquet"]))[syms]
     adjusted = bars(obj["core", "adjusted-tail"], frozen)
-    prior_root, prior_target, oldsource = active_baseline()
+    prior_root, _, oldsource = active_baseline()
     oldobj = pages(oldsource)
     oldtail = bars(oldobj["core", "adjusted-tail"])
     from open_composer.paper_runtime.six.adjusted_history import (
@@ -653,188 +617,16 @@ def prepare(root):
             checkpoint_context=old["model_context"],
         ),
     )
-    # Original ETF recipes and original causal overlay schedule; no new thresholds.
-    from open_composer.adapters.execution import rotation_target_weights as rot
-    from open_composer.models.strategy_spec import load_strategy_spec
-
-    plan = load(N / "next-session-source-plan-M1.json")["ETF"]
-    ar = bars(obj["ETF", "adjusted-history"], frozen)
-    dates = us_equity_session_dates(date(2024, 1, 2), date.fromisoformat(ref))
-    ss = plan["symbols"]
-    for s in ss:
-        if any((s, d.isoformat()) not in ar for d in dates):
-            frozen.setdefault(s, "incomplete_etf_history")
-    oldar = bars(oldobj["ETF", "adjusted-history"])
-    prior_etf_qa = load(prior_root / "ETF-basis-QA.json")
-    if "canonical_close" in prior_etf_qa:
-        ec = pd.read_parquet(checked(prior_etf_qa["canonical_close"]))
-        eo = pd.read_parquet(checked(prior_etf_qa["canonical_open"]))
-        etf_scales = prior_etf_qa["divisors"]
-    else:
-        accepted_panel = pd.DataFrame(
-            [
-                dict(symbol=s, trade_date=pd.Timestamp(d), open=r["o"], close=r["c"])
-                for (s, d), r in oldar.items()
-            ]
-        )
-        ec = accepted_panel.pivot(index="trade_date", columns="symbol", values="close")
-        eo = accepted_panel.pivot(index="trade_date", columns="symbol", values="open")
-        etf_scales = {s: 1.0 for s in ec.columns}
-    eo, ec, etf_scales, etf_revision = append_adjusted_history(
-        eo,
-        ec,
-        oldar,
-        ar,
-        etf_scales,
-        cash_actions(obj["ETF", "actions"]),
-        prior_reference=oldsource["reference_day"],
-        reference=ref,
-        frozen=frozen,
-    )
-    ec.to_parquet(root / "ETF-canonical-close.parquet")
-    eo.to_parquet(root / "ETF-canonical-open.parquet")
-    save(
-        root / "ETF-basis-QA.json",
-        dict(
-            canonical_close=bind(root / "ETF-canonical-close.parquet"),
-            canonical_open=bind(root / "ETF-canonical-open.parquet"),
-            divisors=etf_scales,
-            source_revision=etf_revision,
-            prior_OC_cells_compared=len(oldar) * 2,
-            prior_canonical_cells_replaced=0,
-            first_session=dates[0].isoformat(),
-            last_session=dates[-1].isoformat(),
-            sessions=len(dates),
-            symbols=ss,
-        ),
-    )
-    ecl, eop, eqa = sanitize_price_matrices(ec, eo)
-    frozen.update(
-        {
-            b.symbol: "adjusted_etf_price_break"
-            for b in eqa.breaks
-            if b.as_dict()["first_session_after"] == ref
-        }
-    )
-    panel = pd.DataFrame(
-        [
-            dict(
-                symbol=s, trade_date=d.date(), open=float(eop.loc[d, s]), close=float(ecl.loc[d, s])
-            )
-            for s in ec.columns
-            for d in ec.index
-        ]
-    )
-    children = {}
-    for p in ["S1", "S2", "S3", "C2"]:
-        cfg = load_strategy_spec(checked(plan["specs"][p])).portfolio.etf_rotation
-        menu = [s for s in cfg.menu if s not in frozen]
-        cash = cfg.cash_symbol
-        series = {s: rot._symbol_series(panel, s) for s in plan["menus"][p]}
-        formation = rot.resolve_signal_session(dates, str(cfg.rebalance), dates[-1])
-        overlay = None
-        if p == "C2":
-            r = rot.eom_sector_blend_book(
-                series,
-                formation,
-                menu=menu,
-                cash_symbol=cash,
-                reversal_symbol=cfg.eom_sector_blend.reversal_symbol,
-                reversal_weight=float(cfg.eom_sector_blend.reversal_weight),
-                top_n=2,
-            )
-            for symbol in r.ineligible:
-                frozen.setdefault(symbol, "missing_etf_signal_history")
-            if r.reversal_reason:
-                frozen.setdefault(cfg.eom_sector_blend.reversal_symbol, r.reversal_reason)
-            weights = dict(r.weights)
-        else:
-            scores = {
-                s: rot.score_symbol(
-                    *series[s],
-                    signal_session=formation,
-                    lookbacks=list(cfg.lookbacks),
-                    min_history_sessions=cfg.min_history_sessions,
-                )
-                for s in menu
-            }
-            for symbol, score in scores.items():
-                if score.reason:
-                    frozen.setdefault(symbol, score.reason)
-            cashscore = rot.score_symbol(
-                *series[cash],
-                signal_session=formation,
-                lookbacks=list(cfg.lookbacks),
-                min_history_sessions=cfg.min_history_sessions,
-            )
-            picks, _ = rot.select_book(
-                {s: v.score for s, v in scores.items() if v.score is not None},
-                top_n=2,
-                cash_score=cashscore.score,
-                absolute_momentum_filter=True,
-            )
-            weights = rot.build_weights(
-                picks, top_n=2, cash_symbol=cash, unfilled_slot_policy="renormalize_survivors"
-            )
-            if p in ["S2", "S3"]:
-                d = rot._decide_overlay(
-                    panel,
-                    series,
-                    menu=menu,
-                    cash_symbol=cash,
-                    latest_session=dates[-1],
-                    lookbacks=list(cfg.lookbacks),
-                    top_n=2,
-                    rebalance=str(cfg.rebalance),
-                    absolute_momentum_filter=True,
-                    min_history_sessions=cfg.min_history_sessions,
-                    unfilled_slot_policy="renormalize_survivors",
-                    vol_cfg=cfg.vol_target,
-                )
-                weights = rot.apply_multiplier(weights, d.multiplier, cash)
-                overlay = dict(
-                    decision_session=d.decision_session.isoformat() if d.decision_session else None,
-                    updates_next_session=d.updates_next_session,
-                    multiplier=d.multiplier,
-                    boost_active=d.boost_active,
-                    target_annual_vol=d.target_annual_vol,
-                )
-        new_event = formation.isoformat() > oldsource["reference_day"] or (
-            overlay is not None
-            and overlay["decision_session"] is not None
-            and overlay["decision_session"] > oldsource["reference_day"]
-        )
-        children[p] = dict(
-            name=p,
-            symbols=list(weights),
-            weights=list(weights.values()),
-            reference_marks=marks,
-            formation_day=formation.isoformat(),
-            observed_through=ref,
-            overlay=overlay,
-            portfolio_action="rebalance" if new_event else "hold",
-            drawdown_exit_pct=float(cfg.drawdown_exit_pct),
-            source=bind(root / "current-source.json"),
-            stop_state_must_be_carried=True,
-        )
     save(root / "frozen-symbols.json", frozen)
-    b, h = prepare_core(root, source, obj, control, previous, normalized, raw, marks, frozen)
-    for row in children.values():
-        row["frozen_symbols"] = frozen
-    if b is not None:
-        children["BASE"] = dict(b, name="BASE")
-    if h is not None:
-        children["H5"] = dict(h, name="H5")
+    prepare_core(root, source, obj, control, previous, normalized, raw, marks, frozen)
     print(json.dumps({"frozen_symbols": frozen}), flush=True)
-    save(root / "current-constituents.json", children)
     save(
         root / "preparation-result.json",
         dict(
-            status="inputs_and_held_ETF_targets_prepared_LSTM_pending",
+            status="inputs_and_core_targets_prepared_LSTM_pending",
             reference_day=ref,
             application_day=app,
             raw_hygiene=qa.manifest(),
-            ETF_hygiene=eqa.manifest(),
             core_raw_rows=len(raw),
             source=bind(root / "current-source.json"),
             new_fits=0,
@@ -842,63 +634,7 @@ def prepare(root):
     )
 
 
-def assemble(root, *, received_children=None):
-    receive_current_paper_maintenance()
-    receive_action_lineage(root)
-    source = load(root / "current-source.json")
-    ref, app = source["reference_day"], source["application_day"]
-    children = (
-        load(root / "current-constituents.json") if received_children is None else received_children
-    )
-    marks = load(root / "current-marks.json")
-    blocked = {}
-    if set(children) != {"S1", "S2", "S3", "C2", "BASE", "H5"}:
-        blocked = {
-            p: "All six current child payloads are required; missing "
-            + ",".join(sorted({"S1", "S2", "S3", "C2", "BASE", "H5"} - set(children)))
-            for p in ["MULTI_EQUAL", "MULTI_HIERARCHICAL"]
-        }
-        save(root / "assembly-dependencies.json", blocked)
-        return
-    for p in ["MULTI_EQUAL", "MULTI_HIERARCHICAL"]:
-        fractions = {
-            x: 1 / 6 if p == "MULTI_EQUAL" else 1 / 12 if x in ["S1", "S2", "S3"] else 1 / 4
-            for x in children
-        }
-        cents = dict(
-            zip(
-                children,
-                [333334, 333334, 333333, 333333, 333333, 333333]
-                if p == "MULTI_EQUAL"
-                else [166667, 166667, 166666, 500000, 500000, 500000],
-                strict=True,
-            )
-        )
-        combined = {}
-        rows = []
-        for name, ch in children.items():
-            rows.append(dict(ch, name=name, capital_usd=cents[name] / 100))
-            for s, w in zip(ch["symbols"], ch["weights"], strict=True):
-                combined[s] = combined.get(s, 0) + w * fractions[name]
-        target(
-            root,
-            p,
-            list(combined),
-            list(combined.values()),
-            marks,
-            source,
-            ref,
-            app,
-            children=rows,
-            cross_child_lending=False,
-            outer_rebalance=False,
-            aggregate_display_only=True,
-            portfolio_action="hold",
-        )
-    save(root / "assembly-dependencies.json", blocked)
-
-
-def finish(root, *, received_prepare_dependencies=None):
+def finish(root):
     receive_current_paper_maintenance()
     receive_action_lineage(root)
     source = load(root / "current-source.json")
@@ -923,14 +659,7 @@ def finish(root, *, received_prepare_dependencies=None):
         new_inference_count=2,
         initial_missing_allocation_may_be_completed=False,
     )
-    blocked = {
-        **(
-            load(root / "prepare-dependencies.json")
-            if received_prepare_dependencies is None
-            else received_prepare_dependencies
-        ),
-        **load(root / "assembly-dependencies.json"),
-    }
+    blocked = load(root / "prepare-dependencies.json")
     rows = {p.stem: bind(p) for p in (root / "targets").glob("*.json")}
     partition(rows, blocked)
     dependency_row = save(
@@ -944,7 +673,7 @@ def finish(root, *, received_prepare_dependencies=None):
         dict(
             status="partial_current_targets_with_explicit_dependencies"
             if blocked
-            else "six_dated_staging_targets_completed_not_installed",
+            else "dated_staging_targets_completed_not_installed",
             at_utc=datetime.now(UTC).isoformat(),
             source=bind(root / "current-source.json"),
             reference_day=ref,
@@ -963,11 +692,11 @@ def finish(root, *, received_prepare_dependencies=None):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--output", type=Path, required=True)
-    p.add_argument("--phase", choices=["prepare", "assemble", "finish"], required=True)
+    p.add_argument("--phase", choices=["prepare", "finish"], required=True)
     a = p.parse_args()
     root = a.output.resolve()
     assert root.is_relative_to(REPO / "reports/paper/diagnostics")
-    {"prepare": prepare, "assemble": assemble, "finish": finish}[a.phase](root)
+    {"prepare": prepare, "finish": finish}[a.phase](root)
 
 
 if __name__ == "__main__":

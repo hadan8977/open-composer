@@ -1,0 +1,155 @@
+{
+  "buckets_et": [
+    "open (09:30-09:45)",
+    "morning (09:45-12:00)",
+    "midday (12:00 to last 30 minutes)",
+    "close (last 30 minutes)"
+  ],
+  "median_dollar_volume_20_edges": [
+    2000000,
+    20000000
+  ],
+  "printed_price_edges": [
+    5,
+    20
+  ],
+  "sample_sessions": [
+    "2023-03-01",
+    "2023-03-07",
+    "2023-03-15",
+    "2023-03-23",
+    "2023-03-29"
+  ],
+  "method": {
+    "liquidity": "Bin using the prior session's printed close and its trailing median dollar volume (20 completed sessions preceding that observation) from the PIT stock universe.",
+    "open_midday_close": "Evaluate cost_model_v1.json printed-price NBBO models (open, mid, close) at each bin's median prior printed close, trailing 21-session mean dollar volume and adjusted daily return standard deviation, with 2023 year effect and smearing. The reference sample uses the same symbol-sessions as morning.",
+    "morning": "Use SIP ALL minute OHLC. Within each symbol/session, divide the median (high-low)/(high+low) at 09:45-11:59 ET by its median at 12:00-15:29 ET. Require at least 30 positive-volume valid-price bars in each interval and a positive midday median. Multiply each bin's midday NBBO prediction by the bin median ratio. Relative bar ranges proxy for time-of-day shape and include price movement.",
+    "sample_source": "market-data/sip-all/minute/2023/03/*.parquet and market-data/derived/daily-us-stock-universe.parquet",
+    "row_order": "Outer rows follow ascending median dollar volume and inner rows ascending price. Each edge starts the next bin."
+  },
+  "rows": [
+    [
+      {
+        "symbol_sessions": 276,
+        "representative_printed_price": 1.12,
+        "representative_mean_dollar_volume_21": 1198854.93,
+        "representative_vol_21": 0.05825204,
+        "morning_to_midday_range_ratio": 1.057882,
+        "half_spread_bp": [
+          30.8886,
+          19.4526,
+          18.3882,
+          17.496
+        ]
+      },
+      {
+        "symbol_sessions": 96,
+        "representative_printed_price": 8.99,
+        "representative_mean_dollar_volume_21": 1902940.42,
+        "representative_vol_21": 0.03782544,
+        "morning_to_midday_range_ratio": 0.894989,
+        "half_spread_bp": [
+          67.5811,
+          20.6602,
+          23.0843,
+          16.1542
+        ]
+      },
+      {
+        "symbol_sessions": 14,
+        "representative_printed_price": 23.985,
+        "representative_mean_dollar_volume_21": 2155842.17,
+        "representative_vol_21": 0.03398993,
+        "morning_to_midday_range_ratio": 0.438624,
+        "half_spread_bp": [
+          112.946,
+          12.6655,
+          28.8755,
+          17.2059
+        ]
+      }
+    ],
+    [
+      {
+        "symbol_sessions": 469,
+        "representative_printed_price": 2.98,
+        "representative_mean_dollar_volume_21": 6158219.16,
+        "representative_vol_21": 0.04470935,
+        "morning_to_midday_range_ratio": 1.032096,
+        "half_spread_bp": [
+          15.7802,
+          10.0159,
+          9.7044,
+          8.9552
+        ]
+      },
+      {
+        "symbol_sessions": 965,
+        "representative_printed_price": 10.46,
+        "representative_mean_dollar_volume_21": 10228965.69,
+        "representative_vol_21": 0.02977772,
+        "morning_to_midday_range_ratio": 1.224003,
+        "half_spread_bp": [
+          19.1114,
+          10.9313,
+          8.9308,
+          7.0633
+        ]
+      },
+      {
+        "symbol_sessions": 784,
+        "representative_printed_price": 34.058955,
+        "representative_mean_dollar_volume_21": 14703108.3,
+        "representative_vol_21": 0.0233186,
+        "morning_to_midday_range_ratio": 1.000619,
+        "half_spread_bp": [
+          27.7701,
+          9.6733,
+          9.6673,
+          6.4733
+        ]
+      }
+    ],
+    [
+      {
+        "symbol_sessions": 103,
+        "representative_printed_price": 3.4,
+        "representative_mean_dollar_volume_21": 44593498.35,
+        "representative_vol_21": 0.03622409,
+        "morning_to_midday_range_ratio": 1.191304,
+        "half_spread_bp": [
+          3.663,
+          3.9146,
+          3.286,
+          3.5089
+        ]
+      },
+      {
+        "symbol_sessions": 922,
+        "representative_printed_price": 13.0259,
+        "representative_mean_dollar_volume_21": 58541539.6,
+        "representative_vol_21": 0.02809101,
+        "morning_to_midday_range_ratio": 1.443718,
+        "half_spread_bp": [
+          6.3042,
+          5.6635,
+          3.9229,
+          3.4217
+        ]
+      },
+      {
+        "symbol_sessions": 4712,
+        "representative_printed_price": 67.21,
+        "representative_mean_dollar_volume_21": 111231099.2,
+        "representative_vol_21": 0.01797227,
+        "morning_to_midday_range_ratio": 1.492987,
+        "half_spread_bp": [
+          8.814,
+          5.6492,
+          3.7838,
+          2.6725
+        ]
+      }
+    ]
+  ]
+}

@@ -257,6 +257,7 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
 
     from open_composer.research.equity_book.borrow import detect_reverse_splits, reverse_split_in_window
     from open_composer.market_sessions import NEW_YORK, next_us_equity_session, us_equity_session_dates
+    from open_composer.research.features.archive_handoffs import archive_handoffs
     from open_composer.research.features.daily_actions import (
         ACTIONS, ANCHORS, action_factors, join_action_bars, reconstruct_raw,
     )
@@ -292,6 +293,7 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
 
     pending = output.with_suffix(".partial")
     with _connect("500MB") as con:
+        con.execute(f"SET temp_directory={(stage / 'spill').as_posix()!r}")
         for view, basis in (("adj", "all"), ("raw", "raw")):
             path = (stage / f"{basis}-*.parquet").as_posix()
             con.execute(f"CREATE VIEW {view} AS SELECT * FROM read_parquet({path!r})")
@@ -300,7 +302,8 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
         first, last = con.sql(
             "SELECT min(trade_date), max(trade_date) FROM adj WHERE symbol = 'SPY'"
         ).fetchone()
-        actions, mapped_actions = action_factors(con, output.parent / ACTIONS, anchors, last)
+        action_path = output.parent / ACTIONS
+        actions, mapped_actions = action_factors(con, action_path, anchors, last)
         sessions = us_equity_session_dates(first.date(), last.date())
         dates = pd.DatetimeIndex(sessions)
         members = pd.Index(con.sql("SELECT DISTINCT symbol FROM adj ORDER BY 1").fetchnumpy()["symbol"])
@@ -317,31 +320,65 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
         })
         con.register("calendar", calendar)
         join_action_bars(con, "b.trade_date IN (SELECT trade_date FROM calendar)")
+        register_security_evidence(con, members)
+        switches, renames, aliases = archive_handoffs(con, action_path)
+        switch_keys = ["symbol", "trade_date"]
+        alias_mask = [(r.symbol, r.trade_date, r.source_version) in aliases for r in switches.itertuples()]
+        switches.loc[alias_mask, "status"] = "backfilled alias"
+        switches.loc[alias_mask, "factor"] = np.nan
+        alias_rows = pd.DataFrame(sorted(aliases), columns=["symbol", "trade_date", "source_version"])
+        con.register("aliases", alias_rows.astype({
+            "symbol": "string", "trade_date": "datetime64[ns]", "source_version": "string",
+        }))
+        removed_aliases = con.sql("""
+            SELECT count(*) FROM joined SEMI JOIN aliases USING (symbol, trade_date, source_version)
+        """).fetchone()[0]
+        factors = switches.set_index(switch_keys).factor
         batches = []
         for lo in range(0, len(members), 256):
             keys = members[lo:lo + 256].tolist()
-            f = con.execute("""
-                SELECT * FROM joined WHERE symbol BETWEEN ? AND ? ORDER BY symbol, trade_date
-            """, [keys[0], keys[-1]]).df()
+            extra = [new for new, (old, _) in renames.items() if old in keys and new not in keys]
+            extra_symbols = " OR j.symbol IN (" + ", ".join("?" for _ in extra) + ")" if extra else ""
+            f = con.execute(f"""
+                SELECT j.* FROM joined j ANTI JOIN aliases USING (symbol, trade_date, source_version)
+                WHERE j.symbol BETWEEN ? AND ? {extra_symbols}
+            """, [keys[0], keys[-1], *extra]).df()
             f["trade_date"] = f["trade_date"].astype("datetime64[ns]")
-            close = f.pivot(index="trade_date", columns="symbol", values="adjusted_close")
-            open_ = f.pivot(index="trade_date", columns="symbol", values="adjusted_open")
+            f["lineage"] = f.symbol
+            for new, (old, day) in renames.items():
+                f.loc[f.symbol.eq(new) & f.trade_date.ge(day), "lineage"] = old
+            f = f.loc[f.lineage.isin(keys)].sort_values(["lineage", "trade_date"]).reset_index(drop=True)
+            groups = f.groupby("lineage", sort=False)
+            previous_source = groups.source_version.shift()
+            source_change = previous_source.notna() & f.source_version.ne(previous_source)
+            factor = factors.reindex(pd.MultiIndex.from_frame(f[switch_keys])).to_numpy(dtype=float)
+            # A rename's first row inherits the old ticker's basis; its original
+            # source-switch candidate measured a different predecessor.
+            factor = np.where(source_change & f.symbol.eq(groups.symbol.shift()), factor, np.nan)
+            unlinked = source_change & np.isnan(factor)
+            scale = pd.Series(np.nan_to_num(factor, nan=1), index=f.index).groupby(f.lineage).cumprod()
+            prices = f[["trade_date", "lineage"]].assign(
+                close=f.adjusted_close * scale, open=f.adjusted_open * scale,
+            ).set_index(["trade_date", "lineage"])
+            close, open_ = prices.close.unstack(), prices.open.unstack()
             hygiene = sanitize_price_matrices(
                 close.reindex(dates), open_.reindex(dates), preserve_history=True, break_at_open=True,
             )[2]
             breaks = {(b.symbol, b.first_session_after) for b in hygiene.breaks if b.masked}
             f["regime_start"] = [
-                (s, d) in breaks for s, d in zip(f.symbol, f.trade_date, strict=True)
+                (s, d) in breaks for s, d in zip(f.lineage, f.trade_date, strict=True)
             ]
             f["session_pos"] = dates.get_indexer(f.trade_date)
-            last_break = f.session_pos.where(f.regime_start).groupby(f.symbol, sort=False).ffill()
-            groups = f.groupby("symbol", sort=False)
-            previous_source = groups.source_version.shift()
-            f["regime_start"] |= previous_source.notna() & f.source_version.ne(previous_source)
-            f["regime"] = groups["regime_start"].cumsum()
-            f["security_id"] = f.symbol + "@" + f.regime.astype(str)
+            # Reconstruct raw units on their native archive and ticker basis.
+            raw_break = f.regime_start | source_change | f.symbol.ne(groups.symbol.shift())
+            f["security_id"] = f.lineage + "@" + raw_break.groupby(f.lineage).cumsum().astype(str)
+            error_fields = ["close_error", "volume_error", "dollars_error"]
+            f[error_fields] = reconstruct_raw(f, actions, mapped_actions)
+            f["regime_start"] |= unlinked
+            f["security_id"] = f.lineage + "@" + groups.regime_start.cumsum().astype(str)
             life = f.groupby("security_id", sort=False)
             f["listing_date"] = life.trade_date.transform("first")
+            f["issuer_symbol"] = life.symbol.transform("first")
             rows = f.session_pos.to_numpy()
             ids = pd.Index(f.security_id.unique())
             cols = ids.get_indexer(f.security_id)
@@ -352,24 +389,20 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             rs = detect_reverse_splits(ro, rc)
             f["reverse_split_252"] = reverse_split_in_window(rs).to_numpy()[rows, cols]
             del ro, rc, rs
-            error_fields = ["close_error", "volume_error", "dollars_error"]
-            f[error_fields] = reconstruct_raw(f, actions, mapped_actions)
             f["dollar_volume"] = f.close * f.raw_volume
-            # The raw units agree across archive switches. Keep the history
-            # across those switches, but never across a security price break.
-            symbols = pd.Index(f.symbol.unique())
-            symbol_cols = symbols.get_indexer(f.symbol)
-            liquidity = pd.DataFrame(np.full((len(dates), len(symbols)), np.nan))
-            liquidity.values[rows, symbol_cols] = f.dollar_volume
-            median = liquidity.shift().rolling(20).median().to_numpy()[rows, symbol_cols]
-            f["median_dollar_volume_20"] = np.where(f.session_pos - last_break < 20, np.nan, median)
+            liquidity = pd.DataFrame(np.full(shape, np.nan))
+            liquidity.values[rows, cols] = f.dollar_volume
+            f["median_dollar_volume_20"] = liquidity.shift().rolling(20).median().to_numpy()[rows, cols]
+            f["adjusted_close"] *= scale
+            f["adjusted_open"] *= scale
             base = life.adjusted_close.transform("first")
             f["adjusted_close"] = (100 * f.adjusted_close / base).astype("float32")
             f["adjusted_open"] = (100 * f.adjusted_open / base).astype("float32")
             f["last_trade_date"] = pd.NaT
             f["is_member"] = True
-            exits = life.tail(1)[["symbol", "security_id", "listing_date", "trade_date", "session_pos"]].copy()
-            next_break = exits.symbol.eq(exits.symbol.shift(-1))
+            exits = life.tail(1)[["symbol", "issuer_symbol", "lineage", "security_id",
+                                  "listing_date", "trade_date", "session_pos"]].copy()
+            next_break = exits.lineage.eq(exits.lineage.shift(-1))
             following = life.session_pos.first().shift(-1).reindex(exits.security_id).to_numpy()
             expiry = exits.session_pos + DEFAULT_MASK_GAP_LONG_SESSIONS
             exits["session_pos"] = np.where(next_break, np.minimum(expiry, following), expiry).astype(int)
@@ -378,7 +411,7 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             exits["trade_date"] = dates[exits.session_pos]
             exits["is_member"] = False
             fields = [
-                "trade_date", "symbol", "security_id", "close", "adjusted_open", "adjusted_close",
+                "trade_date", "symbol", "issuer_symbol", "security_id", "close", "adjusted_open", "adjusted_close",
                 "raw_volume", "dollar_volume", "median_dollar_volume_20", "reverse_split_252",
                 "listing_date", "last_trade_date", "is_member", "source_version",
                 *error_fields,
@@ -389,11 +422,10 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             del f, groups, life, close, open_, liquidity
 
         con.execute("DROP TABLE joined")
-        register_security_evidence(con, members)
         con.execute(f"CREATE VIEW members AS SELECT * FROM read_parquet({batches!r})")
         con.execute(f"""
             COPY (
-                SELECT * EXCLUDE ({", ".join(error_fields)}) FROM ({TYPED_MEMBERS})
+                SELECT * EXCLUDE (issuer_symbol, issuer_cik, {", ".join(error_fields)}) FROM ({TYPED_MEMBERS})
                 ORDER BY trade_date, security_id
             ) TO {pending.as_posix()!r} (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 32768)
         """)
@@ -435,4 +467,12 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
         ],
         "symbols": len(members), "rows": n_rows, "first": str(dates[0].date()),
         "last": str(dates[-1].date()), "build_seconds": perf_counter() - started,
+        "archive_switches": [
+            dict(trade_date=str(day.date()), reason=reason, count=int(count))
+            for (day, reason), count in switches.groupby(["trade_date", "status"]).size().items()
+        ],
+        "ticker_changes": [
+            dict(old_symbol=old, symbol=new, trade_date=str(day.date())) for new, (old, day) in renames.items()
+        ],
+        "backfilled_alias_rows": removed_aliases,
     }

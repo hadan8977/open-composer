@@ -75,14 +75,13 @@ def test_entry_commands_use_versioned_modules_and_pinned_inference():
         "source",
         "prepare",
         "inference",
-        "assemble",
         "finish",
     ]
-    assert [cap for name, cap, cmd in rows] == [100, 600, 700, 200, 200]
+    assert [cap for name, cap, cmd in rows] == [100, 600, 700, 200]
     for name, _cap, cmd in rows:
         assert cmd[1] == "-m" and cmd[2].startswith("open_composer.paper_runtime.six.")
         if name == "inference":
-            assert cmd[0] == "/usr/bin/python3.12"
+            assert Path(cmd[0]).as_posix() == "/usr/bin/python3.12"
 
 
 def test_active_base_dependency_imports_execute_from_package():

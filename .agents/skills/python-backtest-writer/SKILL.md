@@ -1,10 +1,12 @@
 ---
 name: python-backtest-writer
-description: Implement or update deterministic Python signal, scanner, and backtest behavior for a StrategySpec.
+description: Implement shared research adapters for model fits, deterministic signals and native costed accounts.
 ---
 
-Implement the validated StrategySpec's signal confirmation and fill clock; preserve bar-close/next-bar-open semantics when specified. Do not introduce lookahead. LLM/news/event/macro factors replay PIT packets by `visible_at`, without future rows or live model calls.
+Resolve the compact experiment spec onto existing lab variants, adapters, trial ledger and native accounts. Add missing operations in shared code. For StrategySpec work validate the spec before implementation. Keep native signal, funding and fill clocks.
 
-For stock-level work on `data/sip/daily`, apply the price-hygiene requirements in [the data guide](../../../docs/data-layer-pitfalls-and-capabilities.zh.md). When results can influence promotion, report the benchmark family, data mode, fallback state, trial count and quality flags. Write signal logs before review or order submission.
+Join dated inputs at the declared decision instant. For SIP stocks use forward segmentation and inspect lookback coverage across archive switches. Replay LLM/news packets by `visible_at`. Fit transforms and models using matured training labels with the registered embargo. Score the same eligible decisions for matched controls.
 
-Run focused checks for changed signal, scanner or backtest behavior; shared production changes retain their applicable release checks.
+Run registered contrasts together at frozen costs and recent-window weights. Apply the specified correction to selectable trials. Numerical code writes one bounded Results packet linking fold evidence, fills, costs and NAV. The driver owns detached launch and terminal reception. [Worker handoff](../../../docs/research-tools.md#waiting-and-checkpoints)
+
+Run focused checks for changed behavior. Keep signal logs and applicable shared production and paper release checks.
