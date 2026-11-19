@@ -1,0 +1,16 @@
+{
+  "description": "Load the project rules at start and after compaction; ask for one self-review when a turn grows the code.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact|clear",
+        "hooks": [{"type": "command", "command": ".venv/Scripts/python.exe scripts/agent_context.py", "timeout": 30}]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{"type": "command", "command": ".venv/Scripts/python.exe scripts/code_budget.py --hook", "timeout": 60}]
+      }
+    ]
+  }
+}

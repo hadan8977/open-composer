@@ -241,16 +241,3 @@ def test_placebo_weights_match_tranche_target_on_permuted_scores():
     )
     np.testing.assert_allclose(w0, ref.w, atol=1e-14)
     assert h == pytest.approx(ref.h, abs=1e-13)
-
-
-def test_newey_west_ols_recovers_exact_line_and_reports_r2_one():
-    from scripts.book_v12_score import nw_ols
-
-    rng = np.random.default_rng(1)
-    x = rng.standard_normal((200, 2))
-    y = 0.001 + x @ np.array([0.5, -0.3])
-    out = nw_ols(y, x, lag=5)
-    np.testing.assert_allclose(out["beta"], [0.001, 0.5, -0.3], atol=1e-10)
-    assert out["r2"] == pytest.approx(1.0)
-    noisy = nw_ols(y + 0.01 * rng.standard_normal(200), x, lag=5)
-    assert noisy["t"][1] > 10

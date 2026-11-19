@@ -6,6 +6,9 @@ Authority
 - No real-money orders. Paper needs a written authorization with caps, stops
   and expiry; delegation does not create accounts or renew expired ones. Log
   signals before orders. Source authorizations prevail; control.json indexes them.
+- Within an authorization, paper is not strict: fix an unfilled or blocked
+  paper order directly with a plain order after checking it is not already
+  working. No quote gates, approval ceremonies or broker-support contact.
 - A research pause keeps authorized paper running. Owner chat alone does not
   pause authorized work.
 - No paid data, provider or budget without the owner. Modal: the owner authorizes
@@ -18,10 +21,15 @@ Authority
 - Protect credentials, gdrive:vps-backup and rclone.conf. Keep original market
   data and necessary trial/recovery evidence on Windows. VPS cleanup follows
   actual runtime and rollback dependencies, including archived paths still in use.
-  Ask before irreversible deletion or pushing to a remote the owner did not name.
+  Ask before irreversible deletion. Removing code tracked in git is reversible.
+- GitHub (origin, hadan8977/open-composer): push the working branch under its
+  own name (currently takeover/windows-research) after a credential and
+  account-ID scan; never push main or to another remote.
 
 Science (these make results real)
 - No look-ahead: match information arrival, labels, membership, execution.
+- Research: market data from 2026-09-01 on is out-of-sample; never train, tune
+  or select on it, only evaluate. Live paper models keep their native refits.
 - Never filter eligibility on later outcomes; never invent financial metrics.
 - Real costs; never change costs, windows or leverage after seeing results.
 - Keep frozen studies, seen-data exposure and every trial; count all trials and
@@ -38,8 +46,11 @@ Machine and repo
 - config/memory-budget.json; leave 500 MiB free. Use scripts/run_capped.py for
   heavy native Windows jobs, scripts/run_capped.sh for the existing Linux VPS
   runtime, and Modal for authorized heavy research.
-- Paper code changes: isolated worktree, review, interactive integration.
-- One pytest run for affected code; stage by path. English rules, Chinese reports.
+- Paper code changes: isolated worktree, review, interactive integration, then
+  deploy to the VPS the same day in the next safe gap (no paper job running;
+  restart six-strategy only outside 05:30-13:00 Pacific).
+- One pytest run for affected code; stage by path. English rules, Chinese
+  reports; owner-facing times in US Pacific (PST/PDT), UTC in brackets if useful.
   Canonical skills in .agents/skills/; .claude/skills links to that directory.
 
 Current state (update in place)

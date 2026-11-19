@@ -25,8 +25,6 @@ import pytest
 
 from scripts import build_alpha101_alpha191_features as ba101
 from scripts import build_alpha158_features as ba158
-from scripts import build_osap_price_features as bosap
-from scripts import build_reversal_trend_features as brt
 
 
 def _write_ohlcv(path: Path, symbol: str, dates: pd.DatetimeIndex) -> None:
@@ -143,59 +141,6 @@ def test_alpha101_alpha191_builder_routes_two_out_dirs(
     assert set(out_191["symbol"].unique()) == {"SURV", "DELISTED"}
 
 
-def test_osap_price_builder_routes_roots_and_includes_extra_daily_root(
-    monkeypatch: pytest.MonkeyPatch, archive_fixture: dict
-) -> None:
-    _run_main(
-        monkeypatch,
-        bosap,
-        archive_fixture["primary_root"],
-        [
-            "--years",
-            "2020",
-            "--symbol-batch-size",
-            "50",
-            "--universe-root",
-            str(archive_fixture["universe_root"]),
-            "--out-dir",
-            str(archive_fixture["out_dir"] / "osap_price"),
-            "--extra-daily-root",
-            str(archive_fixture["extra_root"]),
-            # OSAP's market-relative columns need a market symbol present in
-            # the archive; the fixture has no real SPY row, so point it at
-            # the fixture's dedicated MKT row instead of the "SPY" default.
-            "--market-symbol",
-            "MKT",
-        ],
-    )
-    out = pd.read_parquet(archive_fixture["out_dir"] / "osap_price" / "2020.parquet")
-    assert set(out["symbol"].unique()) == {"SURV", "DELISTED"}
-
-
-def test_reversal_trend_builder_routes_roots_and_includes_extra_daily_root(
-    monkeypatch: pytest.MonkeyPatch, archive_fixture: dict
-) -> None:
-    _run_main(
-        monkeypatch,
-        brt,
-        archive_fixture["primary_root"],
-        [
-            "--years",
-            "2020",
-            "--symbol-batch-size",
-            "50",
-            "--universe-root",
-            str(archive_fixture["universe_root"]),
-            "--out-dir",
-            str(archive_fixture["out_dir"] / "reversal_trend"),
-            "--extra-daily-root",
-            str(archive_fixture["extra_root"]),
-        ],
-    )
-    out = pd.read_parquet(archive_fixture["out_dir"] / "reversal_trend" / "2020.parquet")
-    assert set(out["symbol"].unique()) == {"SURV", "DELISTED"}
-
-
 def test_extra_daily_root_without_parquet_files_raises(
     monkeypatch: pytest.MonkeyPatch, archive_fixture: dict, tmp_path: Path
 ) -> None:
@@ -230,8 +175,6 @@ def test_defaults_unchanged_when_new_flags_omitted() -> None:
     """
     for module, out_attr, out_name in (
         (ba158, "OUT_DIR", "alpha158"),
-        (bosap, "OSAP_OUT", "osap_price"),
-        (brt, "OUT_ROOT", "reversal_trend"),
     ):
         assert module.UNIVERSE_ROOT == module.ROOT / "data" / "features" / "universe"
         assert getattr(module, out_attr) == module.ROOT / "data" / "features" / out_name

@@ -167,6 +167,8 @@ def codex_command(
         if session
         else ["codex", "exec", "--cd", str(root), "--sandbox", "danger-full-access"]
     )
+    # The repo's own .codex/hooks.json (rules at start, one self-review at stop).
+    prefix.append("--dangerously-bypass-hook-trust")
     return [
         *prefix,
         "--model",

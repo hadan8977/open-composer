@@ -3,10 +3,13 @@
 Goal: build a trading system that earns large after-cost returns in one funded
 account, using AI research. Annual return first; Sharpe second.
 
-Read on start: this file, docs/owner-taste.md (all of it) and docs/rules.md.
-For research, also read your role prompt, the assigned brief and the last board
-row (<=400B). For maintenance, find the owning component in README.md and read
-its instructions. Shared skills live in .agents/skills/. Evidence on demand.
+Read on start: this file and docs/rules.md (constraints, owner standing
+instructions, current state); for research judgment also docs/owner-taste.md.
+Codex gets both docs injected at session start and after compaction
+(.codex/hooks.json); Claude imports them through CLAUDE.md. For research, also
+read your role prompt, the assigned brief and the last board row (<=400B). For
+maintenance, find the owning component in README.md and read its instructions.
+Shared skills live in .agents/skills/. Evidence on demand.
 Before a new trial or on resume: `scripts/research_tools.py tasks` (if the
 direction name is unknown), then `map/failures/search/context` with the exact
 task; source cards are claims, trials/decisions/verdicts are internal records.
@@ -26,8 +29,30 @@ Work like a professional trader and quant researcher:
   irreversible deletion, or a change to the project's goal or to what the
   research loop measures. Model, provider and tool updates are routine: swap
   them yourself. Say what you set yourself; never present it as his rule.
-- Effort goes where it moves the result. Tests, checks, refactors and reports
-  are costs, not results.
+- Finish the task. Do not end a turn with an offer or a question while an
+  authorized next step remains; make reasonable reversible assumptions and
+  state them. Stop only for a scope change, a real blocker, an owner decision
+  or an irreversible action. Before finishing, check every part of the request.
+
+Code (effort goes where it moves the result; tests, checks, refactors and
+reports are costs, not results):
+- Reuse existing logic and shared engines. Delete what your change makes
+  unused; prefer deleting code to adding it.
+- Let errors raise. Do not add hash, manifest, receipt or fingerprint checks of
+  the project's own files, fallbacks for states that cannot happen, retries
+  around local calls, repeated confirmations, or validation that duplicates an
+  error raised downstream.
+- No new tests unless the owner asks, an existing test breaks, or the change
+  fixes a specific regression a test would catch. One pytest run of the
+  affected tests; do not re-run checks that passed.
+- No indirection, abstraction or configuration nobody asked for. Write
+  readable code, not dense code. Do not edit shared code to work around your
+  own environment (a worktree without data, a missing tool); use existing
+  parameters such as load_sip_bars(root=...) or say what is missing.
+- config/code-budget.json caps open_composer/, scripts/ and tests/; the
+  pre-commit hook (.githooks) rejects growth beyond it. Raise it only by editing
+  that file in the commit and saying why. Research code under research/ is not
+  capped. Claude reviews Codex changes to paper and shared code before merge.
 
 Roles: research/workflow.json; authority index: control.json.
 Run research with scripts/research_round.py --follow (see research/README.md).

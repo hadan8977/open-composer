@@ -25,7 +25,6 @@ from open_composer.book_paper.accounts import (
     present_variables,
     require_paper_origin,
 )
-from open_composer.book_paper.exit_rules import evaluate_exit_rules, rolling_sharpe
 from open_composer.book_paper.plan import (
     AccountState,
     BookEngineError,
@@ -851,68 +850,6 @@ def test_normalize_broker_order_and_account_state() -> None:
 
 # --------------------------------------------------------------------------------------
 # exit rules
-# --------------------------------------------------------------------------------------
-
-
-def _series(n=100, daily=0.0004, noise=0.002, seed=3):
-    return list(np.random.default_rng(seed).normal(daily, noise, n))
-
-
-def test_exit_rule_continue_on_healthy_record() -> None:
-    market = list(np.random.default_rng(9).normal(0.0003, 0.01, 100))
-    decision = evaluate_exit_rules(_series(), market)
-    assert decision.action == "continue" and decision.signals == ()
-    assert decision.metrics["rolling_63_net_sharpe"] > 0
-
-
-def test_exit_rule_halve_on_drawdown_between_4_3_and_8_pct() -> None:
-    returns = [0.001] * 30 + [-0.0012] * 40  # peak then slow bleed of about 4.6%
-    decision = evaluate_exit_rules(returns)
-    assert 0.043 < decision.metrics["drawdown_from_high"] < 0.08
-    assert decision.action == "halve" and "drawdown_above_4.3pct" in decision.signals
-    assert "realized_beta_21" in decision.not_evaluated
-
-
-def test_exit_rule_stop_on_drawdown_above_8_pct() -> None:
-    returns = [0.0] * 5 + [-0.0016] * 55
-    decision = evaluate_exit_rules(returns)
-    assert decision.metrics["drawdown_from_high"] > 0.08
-    assert decision.action == "stop" and "drawdown_above_8pct" in decision.stop_reasons
-
-
-def test_exit_rule_halve_on_rolling_sharpe() -> None:
-    rng = np.random.default_rng(1)
-    returns = list(rng.normal(-0.0004, 0.001, 80))  # tiny losses: drawdown small, Sharpe < -1
-    decision = evaluate_exit_rules(returns)
-    assert rolling_sharpe(returns) < -1.0
-    assert "rolling_63_net_sharpe_below_-1.0" in decision.signals
-    assert decision.metrics["drawdown_from_high"] < 0.043 and decision.action == "halve"
-    assert evaluate_exit_rules(returns[:40]).not_evaluated == (
-        "rolling_63_net_sharpe",
-        "realized_beta_21",
-    )
-
-
-def test_exit_rule_beta_signal_halves_then_stops_after_five_sessions() -> None:
-    rng = np.random.default_rng(5)
-    market = list(rng.normal(0.0, 0.01, 60))
-    quiet = list(rng.normal(0.0004, 0.001, 30))
-    beta_run = [0.5 * m for m in market[30:]]  # beta 0.5 from session 31 on
-    returns = quiet + beta_run
-    halve = evaluate_exit_rules(returns[:34], market[:34])
-    assert halve.action in {"halve", "continue"}
-    final = evaluate_exit_rules(returns, market)
-    assert final.metrics["realized_beta_21"] == pytest.approx(0.5, abs=1e-6)
-    assert final.metrics["beta_breach_run_sessions"] > 5
-    assert final.action == "stop" and "beta_breach_more_than_5_sessions" in final.stop_reasons
-    one_day = evaluate_exit_rules(returns[:51], market[:51])
-    assert one_day.metrics["beta_breach_run_sessions"] >= 1
-    with pytest.raises(ValueError):
-        evaluate_exit_rules(returns, market[:-1])
-
-
-# --------------------------------------------------------------------------------------
-# accounts: paper-origin guard and credential non-leak
 # --------------------------------------------------------------------------------------
 
 

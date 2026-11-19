@@ -39,5 +39,18 @@
       "Bash(printenv*)",
       "Bash(env*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.venv/Scripts/python.exe\" \"$CLAUDE_PROJECT_DIR/scripts/code_budget.py\" --hook",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
   }
 }

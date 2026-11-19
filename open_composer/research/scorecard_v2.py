@@ -56,7 +56,7 @@ _TIER_KEYS = {
 
 
 def load_config(path: Path | str = DEFAULT_CONFIG) -> dict[str, Any]:
-    return json.loads(Path(path).read_text())
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------

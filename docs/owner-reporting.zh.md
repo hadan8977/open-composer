@@ -1,6 +1,6 @@
 # Owner reporting
 
-This document defines reporting content and delivery. Research method and scientific thresholds live in their own references; a report does not authorize research, spending or orders. Write owner-facing reports in the owner's requested language, currently Chinese. English guidance does not require translating historical reports or quotations.
+This document defines reporting content and delivery. Research method and scientific thresholds live in their own references; a report does not authorize research, spending or orders. Write owner-facing reports in the owner's requested language, currently Chinese, with times in US Pacific (PST/PDT). English guidance does not require translating historical reports or quotations.
 
 ## 0. Editorial rules
 
@@ -31,7 +31,7 @@ Before reporting, check the action-specific hold. Read relevant task states and 
 | Output | Existing time/route |
 |---|---|
 | Round | Every even UTC hour at:05, covering the previous approximately2hours; persistent hub |
-| Daily | Writer00:05UTC; publication01:00UTC,09:00Beijing |
+| Daily | Writer00:05UTC; publication01:00UTC,17:00 PST previous day |
 | Weekly | Sunday, replacing that day's daily report |
 | Material blocker | One event when confirmed; coalesce unchanged repeats |
 
