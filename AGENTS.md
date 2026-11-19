@@ -59,7 +59,8 @@ Run research with scripts/research_round.py --follow (see research/README.md).
 Continuous research is the native finite 24h follow series (`--timeout-seconds
 86400 --follow`) on Windows; the VPS is runtime-only. Do not introduce a custom
 supervisor, scheduler or standing agent. A plan revise/park ends the series;
-report it, do not auto-edit science.
+report it, do not auto-edit science. After a revise, fix the brief in the same
+direction and start a new run there, never a suffixed copy.
 One worker owns the whole question; a fresh Lead receives saved work once.
 Board: one row per round.
 

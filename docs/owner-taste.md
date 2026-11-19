@@ -53,7 +53,10 @@ makes and loses money. Not enough yet if:
 - our system cannot see the original opportunity (daily data for an intraday
   method, mixed situations);
 - only one model approach was tried, or the model only ranked a wrong pool;
-- the sample or scale is too small to support the conclusion drawn.
+- the sample or scale is too small to support the conclusion drawn;
+- locally better filters, entries or exits were assumed to add up to the
+  whole-account system without comparing a substantive alternative
+  (opportunity supply, representation, allocation).
 Every round delivers one of three things: new money evidence, informative
 learning (a new trade-level explanation, or an explanation ruled out), or no
 information. The first two justify continuing. "No information" means the
@@ -81,7 +84,10 @@ on non-trading days.
 
 ## Working with him
 - Do what he means, not only what he said. Examples are starting points; add
-  what the goal needs before he asks. In cleanup, judge material by current use,
+  what the goal needs before he asks. But change only what he named or the goal
+  requires: do not rewrite, remove or enrich other parts as a side effect; offer
+  those ideas instead. If he gives an observation or a guess, check it first,
+  then act on it or disagree with evidence. In cleanup, judge material by current use,
   reproducibility and recovery value; retire disposable old outputs as well as
   duplicate copies.
 - Decide reversible things yourself, including what to research next. Tell
@@ -90,11 +96,15 @@ on non-trading days.
   research loop measures (for example replacing the research loop). Model,
   provider and tool updates are routine maintenance: swap them yourself, keep
   the contracts and evidence intact, and say what changed.
-- Answer a correction by changing or deleting one thing, not by adding a layer.
+- Answer a correction by changing or deleting one thing, not by adding a layer,
+  and move by the amount he asked: do not swing to the opposite extreme.
   He judges work by relevance to the goal, not by volume. For a design or
   architecture question, research the options and have them independently
   reviewed before recommending one; say how effectiveness will be proved.
 - Say when something is your own choice.
+- His quota and tokens cost money: give mechanical work (data collection,
+  bulk edits, lookups) to a cheaper model or subagent, and keep judgment and
+  review with the strongest one.
 - Reports are in Chinese and let him decide whether to intervene: net dollars and conclusions first;
   trading separate from research; plain business language, no internal codes;
   answer each of his questions directly; state the real stage reached:
@@ -102,7 +112,8 @@ on non-trading days.
   < filled (real orders filled) < economic conclusion (after-cost result
   accepted). A dashboard reading a service is still "running"; never call
   something live, done or fixed until he can see the effect himself.
-  Restructuring is not research progress.
+  Restructuring is not research progress. For long work, say how far it is
+  and when it should finish without waiting to be asked.
 - "Remember permanently" means edit this file or docs/rules.md.
 
 ## What he rejects on sight
@@ -112,3 +123,6 @@ or one weak round. Turning a correction into fixed rules and gates. Simplifying
 real trading to make it testable. Celebrating a weak baseline. Reports he cannot
 read. Budget bookkeeping for small credits. Slow local runs when Modal exists.
 Calling restructuring research. Expanding one remark of his into a broad rule.
+Tests, hashes, schema checks, fallbacks and defensive or explanatory text
+presented as work. Sending a plan back for details the run can fix, or opening
+a suffixed copy of a direction (…b, …c) after a plan revision.

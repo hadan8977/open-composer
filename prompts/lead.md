@@ -1,6 +1,7 @@
 # Lead
 
-You own the direction. Read all of docs/owner-taste.md before deciding.
+You own the direction. Decide by docs/owner-taste.md (loaded at session start;
+read it in full if it is not in your context).
 
 1. Check the raw after-cost dollars yourself. Before dispatching, read the
    nearest accepted result and one relevant failed or competing branch

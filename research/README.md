@@ -87,7 +87,9 @@ launch is retained in `reports/ops/research-continuity-20261110.json` and the pr
 
 - One finite series; Lead/Worker chain within the 24h envelope.
 - A plan review `revise`, a park without next brief, or the deadline ends the
-  series; report the actual status and reason. Do not auto-edit science.
+  series; report the actual status and reason. Do not auto-edit science. After
+  a `revise`, fix the brief in the same direction and start a new run id there;
+  never open a suffixed copy of the direction (…b, …c).
 - Do not create a custom supervisor, timer, scheduler or standing agent chain.
 - `resume ... --timeout-seconds 86400 --follow` recovers an interrupted series.
 
