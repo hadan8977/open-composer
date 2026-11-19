@@ -6,7 +6,7 @@ import argparse
 import json
 from collections import defaultdict
 from collections.abc import Callable, Mapping
-from datetime import time
+from datetime import time, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import perf_counter
@@ -102,7 +102,7 @@ class ScreenData:
 
 def run_daily_screen(
     data: ScreenData, decide: Decide, *, name: str, ledger: TrialLedger,
-    batch: str, frequency: str = "D", calibration: bool = False,
+    batch: str, frequency: str = "D", calibration: bool = False, oos: bool = False,
 ) -> dict:
     """Pass completed daily observations keyed by security_id to a pre-open decision.
 
@@ -110,7 +110,9 @@ def run_daily_screen(
     complete signed target weights for the following session's open,
     or None to skip that rebalance. The callback can use short_eligible to
     apply the borrow proxy. The book charges borrow on every open short.
-    The four windows are reports from one continuous account per cost setting.
+    The windows are reports from one continuous account per cost setting.
+    Development runs stop before 2026-09-01; pass oos=True only for a frozen
+    candidate's single out-of-sample evaluation (plan section I).
     """
     def target(date, state):
         rows = data.after_close(date)
@@ -124,6 +126,8 @@ def run_daily_screen(
     dates = data.panel.dates
     signals = [dates[i] for i in signal_positions(dates, frequency)
                if next_us_equity_session(dates[i].date()) == (dates[i + 1].date() if i + 1 < len(dates) else None)]
+    if not oos:
+        signals = [d for d in signals if d.date() < OOS_START]
     results = {}
     for bp in (10, 20):
         trial = f"{batch}-{name}-{bp}-{uuid4().hex[:8]}"
@@ -178,6 +182,7 @@ def run_daily_screen(
         try:
             book = run_book(data.panel, target, BookConfig(
                 freq=frequency, signal_dates=signals, cost_bp_per_side=bp,
+                end=None if oos else str(OOS_START - timedelta(days=1)),
                 borrow_bp_per_year=borrow_bp_per_year(True),
                 snapshots=False, delist_dates=data.delists, require_observed_open=True,
                 trade_observer=record,
@@ -230,7 +235,7 @@ def calibrate(universe: Path, ledger: TrialLedger, *, stock_only: bool = True) -
     for name, momentum in (("momentum-12-1", True), ("reversal-1", False)):
         runs[name] = run_daily_screen(
             data, lambda d, rows: deciles(d, rows, momentum=momentum),
-            name=name, ledger=ledger, batch=batch, frequency="M", calibration=True,
+            name=name, ledger=ledger, batch=batch, frequency="M", calibration=True, oos=True,
         )
     return {
         "stock_only": stock_only, "load_seconds": load_seconds,

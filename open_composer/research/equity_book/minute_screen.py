@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, time, timedelta
@@ -199,18 +200,14 @@ def _path(row, bars, daily, rule):
 def _replays(candidates, rule):
     counts = {label: Counter() for label in WINDOWS}
     replays, source_versions = [], Counter()
-    for symbols in batched(sorted(candidates.symbol.unique()), 8):
+    names = sorted(candidates.symbol.unique())
+    for batch, symbols in enumerate(batched(names, 6), start=1):
         requested = candidates[candidates.symbol.isin(symbols)]
         first, last = requested.session.min(), requested.session.max()
         bars = load_sip_bars(
             symbols, frequency="minute", start=_stamp(first, OPEN),
             end=_stamp(last, us_equity_session_close(last)), adjustment="raw",
         )
-        local = bars.timestamp.dt.tz_convert(NEW_YORK)
-        offset = local.dt.hour * 60 + local.dt.minute
-        bars = bars.loc[offset.between(570, 959)].assign(session=local.dt.date)
-        bars = bars.set_index("timestamp")
-        groups = bars.groupby(["symbol", "session"], sort=False, observed=True)
         daily = {}
         if rule.hold_sessions:
             for _ in range(rule.hold_sessions):
@@ -220,17 +217,30 @@ def _replays(candidates, rule):
             )
             days["session"] = days.timestamp.dt.tz_convert(NEW_YORK).dt.date
             daily = {sym: f.set_index("session") for sym, f in days.groupby("symbol")}
-        for row in requested.itertuples(index=False):
-            label = _window(row.session)
-            counts[label]["candidates"] += 1
-            key = (row.symbol, row.session)
-            minutes = groups.get_group(key) if key in groups.indices else None
-            status, replay = _path(row, minutes, daily.get(row.symbol), rule)
-            counts[label][status] += 1
-            if replay is not None:
-                replays.append(replay)
-                source_versions[minutes.at[replay.entry_time, "source_version"]] += 1
-        del bars, groups
+        # The loader sorts by symbol/time. Slice candidate sessions before copying
+        # any columns, since a broad symbol read can contain millions of rows.
+        for symbol, sessions in requested.groupby("symbol", sort=False):
+            start = bars.symbol.searchsorted(symbol, side="left")
+            end = bars.symbol.searchsorted(symbol, side="right")
+            timestamps = pd.DatetimeIndex(bars.timestamp.iloc[start:end])
+            for row in sessions.itertuples(index=False):
+                lo, hi = timestamps.searchsorted([
+                    _stamp(row.session, OPEN),
+                    _stamp(row.session, us_equity_session_close(row.session)),
+                ])
+                minutes = (
+                    bars.iloc[start + lo:start + hi].set_index("timestamp") if lo < hi else None
+                )
+                label = _window(row.session)
+                counts[label]["candidates"] += 1
+                status, replay = _path(row, minutes, daily.get(row.symbol), rule)
+                counts[label][status] += 1
+                if replay is not None:
+                    replays.append(replay)
+                    source_versions[minutes.at[replay.entry_time, "source_version"]] += 1
+        del bars
+        if batch % 10 == 0:
+            logging.info("Read %s/%s candidate symbols", batch * 6, len(names))
     return sorted(replays, key=lambda p: (p.entry_time, p.symbol)), counts, dict(source_versions)
 
 
@@ -458,6 +468,7 @@ def main():
     parser.add_argument("action", choices=["calibrate"])
     parser.add_argument("--universe", type=Path, default=UNIVERSE)
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     pa.set_cpu_count(2)
     pa.set_io_thread_count(2)
     print(json.dumps(calibrate(args.universe), indent=2, allow_nan=False))

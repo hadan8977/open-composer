@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import json
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
@@ -18,6 +17,7 @@ from open_composer.book_paper.accounts import (
 )
 from open_composer.config import project_root
 from open_composer.market_sessions import NEW_YORK
+from open_composer.research.file_lock import lock_file
 
 book_paper_app = typer.Typer(
     no_args_is_help=True, help="Short-capable book orders on Alpaca Paper."
@@ -50,6 +50,7 @@ def _kill_switch_check(root: Path):
 
 
 def _build(account: str, decision_date: str | None, as_of: str | None, min_notional: float):
+    from open_composer.book_paper import sleeves
     from open_composer.book_paper.plan import (
         OrderLookup,
         build_plan,
@@ -74,6 +75,51 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
     existing = lookup.ids()
     path = plan_path(root, account, target.execution_date)
     assets = make_asset_lookup(client)
+    prior = load_plan_file(path) if path.exists() else None
+    anchored = False
+    if prior:
+        from open_composer.book_paper.plan import orders_receipt_path
+        from open_composer.book_paper.reversal import reversal_legs
+
+        ids = {
+            leg["client_order_id"]
+            for order in prior.orders
+            for leg in [order, *reversal_legs(order)]
+        }
+        anchored = (
+            orders_receipt_path(root, account, target.execution_date).exists()
+            or bool(existing & ids)
+            or any(lookup.find(cid) is not None for cid in ids)
+        )
+        if anchored and prior.payload.get("shared"):
+            from open_composer.book_paper.plan import BookEngineError
+
+            if state.status != "ACTIVE" or state.trading_blocked or state.equity <= 0:
+                raise BookEngineError("account is unavailable for submission")
+            frozen = {s: "conflicting_open_order" for s, cid in state.open_orders if cid not in ids}
+            target = target.model_copy(update={"frozen_symbols": target.frozen_symbols | frozen})
+            return root, client, target, prior
+    if account == "quant1" and not anchored:
+        rows = sleeves.registry(root, account)
+        history = sleeves.sleeve_history(root, target)
+        if (
+            any(row["enabled"] for row in rows.values())
+            or history[1]
+            or any(h["positions"] for h in history[0].values())
+        ):
+            plan = sleeves.build_shared_plan(
+                root,
+                target,
+                state,
+                rows=rows,
+                history=history,
+                as_of=as_of_date,
+                now=now,
+                asset_lookup=assets,
+                min_notional=min_notional,
+                kill_switch_check=_kill_switch_check(root),
+            )
+            return root, client, target, plan
     plan = build_plan(
         target,
         state,
@@ -85,10 +131,9 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
         kill_switch_check=_kill_switch_check(root),
     )
     # Broker acknowledgements keep the original sizing stable across retries.
-    if path.exists():
+    if prior:
         from open_composer.book_paper.reversal import reversal_legs
 
-        prior = load_plan_file(path)
         for order in prior.orders:
             legs = reversal_legs(order) or [order]
             if any(lookup.find(leg["client_order_id"]) is not None for leg in legs):
@@ -128,6 +173,12 @@ def _print_plan(plan, path: Path) -> None:
         )
     if fractional_held := p.get("fractional_held"):
         console.print("WARNING: fractional holdings skipped: " + ", ".join(fractional_held))
+    for name, sleeve in p.get("shared", {}).get("sleeves", {}).items():
+        console.print(
+            f"sleeve {name} scale={sleeve.get('scale', 0):.4f} {sleeve.get('hold_reason', '')}"
+        )
+        for symbol, reason in sleeve["frozen"].items():
+            console.print(f"  FROZEN {symbol} ({reason})")
     for check in p["checks"]:
         console.print(
             f"  {'PASS' if check['passed'] else 'FAIL'} {check['name']} "
@@ -151,10 +202,12 @@ def book_paper_plan(
     from open_composer.book_paper.plan import write_plan_file
 
     try:
-        root, _client, _target, plan = _build(account, decision_date, as_of, min_notional)
+        with _submission_lock(project_root(), account):
+            root, _client, _target, plan = _build(account, decision_date, as_of, min_notional)
+            path = write_plan_file(root, plan)
     except (RuntimeError, ValueError) as exc:
         raise _fail(exc) from exc
-    _print_plan(plan, write_plan_file(root, plan))
+    _print_plan(plan, path)
 
 
 @contextmanager
@@ -165,7 +218,7 @@ def _submission_lock(root: Path, account: str):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+") as handle:
         try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lock_file(handle, blocking=False)
         except BlockingIOError as exc:
             raise BookEngineError("another book submission holds the account lock") from exc
         yield
@@ -190,6 +243,7 @@ def book_paper_submit(
         write_json_atomic,
         write_plan_file,
     )
+    from open_composer.book_paper.sleeves import live_freezes
 
     if not submit:
         raise typer.BadParameter("pass --submit to send orders; `plan` is the dry-run")
@@ -198,6 +252,9 @@ def book_paper_submit(
         with _submission_lock(project_root(), account):
             root, client, target, plan = _build(account, decision_date, None, min_notional)
             write_plan_file(root, plan)
+            frozen = target.frozen_symbols
+            if "shared" in plan.payload:
+                frozen = frozen | live_freezes(root, plan, now)
             report = submit_plan(
                 client,
                 plan,
@@ -205,7 +262,7 @@ def book_paper_submit(
                 kill_switch_check=_kill_switch_check(root),
                 pace_seconds=SUBMIT_PACE_SECONDS,
                 tif_mode=tif_mode,
-                frozen_symbols=target.frozen_symbols,
+                frozen_symbols=frozen,
             )
             path = write_json_atomic(
                 next_orders_receipt_path(root, account, plan.execution_date, now), report
@@ -249,24 +306,28 @@ def book_paper_reconcile(
         prices = json.loads(prices_file.read_text(encoding="utf-8"))
         client = make_trading_client(account)
         state = read_account_state(client)
+        receipts = [
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in (root / "reports/paper/book" / account / "orders").glob(f"{date_}*.json")
+        ]
+        broker_orders = fetch_broker_orders(client, plan)
         record = build_daily_record(
             plan,
             target,
-            broker_orders=fetch_broker_orders(client, plan),
+            broker_orders=broker_orders,
             positions=state.positions,
             equity=state.equity,
             last_equity=state.last_equity or state.equity,
             official_close=prices["official_close"],
             snapshot_1545=prices.get("snapshot_1545", {}),
             generated_at_utc=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            submission_receipts=[
-                json.loads(p.read_text())
-                for p in (root / "reports/paper/book" / account / "orders").glob(f"{date_}*.json")
-            ],
+            submission_receipts=receipts,
         )
     except (RuntimeError, ValueError, KeyError) as exc:
         raise _fail(exc) from exc
     path = write_daily_file(root, record)
+    for sleeve in record.get("shared", {}).get("sleeves", {}).values():
+        console.print(sleeve["summary"])
     rec, pnl = record["reconciliation"], record["pnl"]
     console.print(
         f"filled={rec['n_filled']} partial={rec['n_partial']} unfilled={rec['n_unfilled']} "

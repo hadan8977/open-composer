@@ -64,6 +64,7 @@ class AccountState:
     open_orders: tuple[tuple[str, str], ...] = ()  # (symbol, client_order_id)
     # broker position price per held symbol (``current_price``); empty when unknown
     position_prices: Mapping[str, float] = field(default_factory=dict)
+    regt_buying_power: float | None = None
 
 
 @dataclass(frozen=True)
@@ -141,6 +142,7 @@ def read_account_state(client: Any) -> AccountState:
             (str(o.symbol), str(getattr(o, "client_order_id", "") or "")) for o in open_orders
         ),
         position_prices=position_prices,
+        regt_buying_power=_optional_float(getattr(account, "regt_buying_power", None)),
     )
 
 
@@ -262,6 +264,7 @@ def build_plan(
     min_notional: float = 100.0,
     limits: RiskLimits | None = None,
     kill_switch_check: Callable[[], None] | None = None,
+    shared_account: bool = False,
 ) -> OrderPlan:
     limits = limits or RiskLimits()
     basis = target.equity_basis
@@ -408,6 +411,7 @@ def build_plan(
         frozen=frozen,
         limits=limits,
         kill_switch_check=kill_switch_check,
+        shared_account=shared_account,
     )
     blocked = [c.name for c in checks if not c.passed]
     final_drift = _one_sided_drift(target, post_qty, prices)
@@ -552,6 +556,7 @@ def _risk_checks(
     frozen: list[dict[str, Any]],
     limits: RiskLimits,
     kill_switch_check: Callable[[], None] | None,
+    shared_account: bool,
 ) -> list[CheckResult]:
     basis = target.equity_basis
     core = target.core_symbol
@@ -638,27 +643,28 @@ def _risk_checks(
     )
     frozen_gross = sum(row["value"] for row in frozen if row["value"] is not None) / basis
     leverage = sum(abs(w) for w in weights.values()) + frozen_gross
-    results.append(
-        CheckResult(
-            "gross_leverage",
-            leverage <= limits.max_gross_leverage + 1e-12,
-            round(leverage, 6),
-            limits.max_gross_leverage,
-            "long + short + core leg + hedge leg"
-            + (" + frozen names at broker price" if frozen else "")
-            + ", fraction of equity",
+    if not shared_account:
+        results.append(
+            CheckResult(
+                "gross_leverage",
+                leverage <= limits.max_gross_leverage + 1e-12,
+                round(leverage, 6),
+                limits.max_gross_leverage,
+                "long + short + core leg + hedge leg"
+                + (" + frozen names at broker price" if frozen else "")
+                + ", fraction of equity",
+            )
         )
-    )
-    # Freezing a few names is normal; this much frozen means the inputs are broken market-wide.
-    results.append(
-        CheckResult(
-            "frozen_share",
-            frozen_gross <= limits.max_frozen_gross + 1e-12,
-            round(frozen_gross, 6),
-            limits.max_frozen_gross,
-            "held names frozen today at broker price, fraction of equity basis",
+        # The legacy book uses frozen gross as its market-wide input check.
+        results.append(
+            CheckResult(
+                "frozen_share",
+                frozen_gross <= limits.max_frozen_gross + 1e-12,
+                round(frozen_gross, 6),
+                limits.max_frozen_gross,
+                "held names frozen today at broker price, fraction of equity basis",
+            )
         )
-    )
     stock_beta = sum(
         target.exposures[s].beta * w for s, w in stock.items() if s in target.exposures
     )
@@ -786,6 +792,12 @@ def submit_plan(
         "deferred": [],
         "reversals": [],
     }
+    if shared := plan.payload.get("shared"):
+        report["internal_crosses"] = {
+            row["client_order_id"]: tif
+            for symbol, row in shared["allocation"].items()
+            if row["crossed"] and symbol not in (frozen_symbols or {})
+        }
 
     def guard() -> None:
         """Live admission of a staged reversal leg (it depends on an earlier fill)."""

@@ -119,9 +119,12 @@ observed trade in the segment. An opening-price break, an ALL archive switch or 
 can flag an old segment for simulated retirement at the following open, using
 its last mark. Returns and earnings gaps do not cross ALL archive versions. These
 rows and the ALL price levels used for execution accounting stay outside the
-callback. Missing RAW close and dollar volume stay null, and the trailing median
-requires 20 completed RAW bars. An order needs an observed opening price. The
-book ends on the last ALL close.
+callback. Price floors and dollar volume use quoted close and share volume.
+Where SIP RAW is missing, the build undoes ALL adjustments with Alpaca actions
+and observed RAW/ALL ratios for the same security and archive. The liquidity
+median requires all 20 prior exchange sessions and can span an archive switch
+within a continuous security history. An order needs an observed opening price.
+The book ends on the last ALL close.
 
 Use SEC earnings `accepted_at` and Form 4 `known_at` for disclosure timing.
 `visible_date` gives the first eligible open. FINRA tables use publication
@@ -135,38 +138,16 @@ The two fixed calibration rules can be replayed with
 `.venv/Scripts/python.exe -m open_composer.research.equity_book.daily_screen calibrate`.
 Add `--all-securities` to calibrate the full SIP view. The `build` action
 materializes the parquet from local SIP archives, the existing SEC submissions
-snapshot and dated links. For calibration,
+snapshot and dated links. Refresh the local action cache with
+`agent-env run opencomposer-research .venv/Scripts/python.exe -m open_composer.research.features.daily_actions`.
+Run the same command with `--anchors` to refresh the sampled RAW bars and
+spin-off opening prices used to connect each archive's adjustment basis to
+quoted units. For calibration,
 each side is an equal-weight decile with 50% target gross exposure and
 assumed short availability. Turnover is cumulative traded notional over
 account equity at the fill. The top-five share uses the five largest
 positive realized closing-fill P&Ls over all positive realized closing-fill
 P&L, with entry/exit fees and excluding carry and synthetic exits.
-
-### Minute screen
-
-Call `run_minute_screen` in
-`open_composer.research.equity_book.minute_screen` with a `MinuteRule` and one
-row per `symbol, session` containing signed `side` (+1/-1), UTC `known_at` and
-`opening_half_spread_bp` estimated with `costs.half_spread_bp` from prior
-observations. Use a complete opening range or a limit trigger. The first
-eligible completed trigger submits for the exact next minute's RAW open. A
-limit requires that price or better. A breakout allows at most the declared
-adverse price guard. Entries cap at 1% of the trigger minute's volume. Stops
-win same-bar ties. Time exits use the final minute's close, or flag a stale
-mark when that minute is absent. Exits liquidate the position and flag any
-minute exit above the participation cap. Optional overnight holds use RAW
-daily bars and require observed continuation sessions.
-
-Replay the fixed earnings calibration with
-`.venv/Scripts/python.exe -m open_composer.research.equity_book.minute_screen calibrate`.
-It confirms the opening gap with the regular-session opening print, and uses
-the prior $20M trailing median-liquidity threshold and the dated stock-only
-view when present. One $100,000 account per cost view reserves gross entry
-notional against realized equity, with up to $10,000 per trade and assumed
-short availability. It charges 10/20 bp per side plus the modeled opening
-half-spread during the first 15 minutes. Reports use session-close equity
-drawdown and window-opening equity for returns. The two trade CSVs and summary
-JSON are recorded together in the daily screen's trial ledger.
 
 ```python
 from open_composer.lab import DSRConfig, Experiment, TrialLedger, Variant, run_batch
@@ -227,6 +208,36 @@ remains counted. Invalid ledger JSON fails closed and is not truncated. Duplicat
 batch/trial ids cannot overwrite evidence. Authority is checked before the batch
 and before each numerical start. No quota, paid-compute, paper or broker authority
 is created by this API.
+
+### Minute screen
+
+Call `run_minute_screen` in
+`open_composer.research.equity_book.minute_screen` with a `MinuteRule` and one
+row per `symbol, session` containing signed `side` (+1/-1), UTC `known_at` and
+`opening_half_spread_bp` estimated with `costs.half_spread_bp` from prior
+observations. Use a complete opening range or a limit trigger. The first
+eligible completed trigger submits for the exact next minute's RAW open. A
+limit requires that price or better. A breakout allows at most the declared
+adverse price guard. Entries cap at 1% of the trigger minute's volume. Stops
+win same-bar ties. Time exits use the final minute's close, or flag a stale
+mark when that minute is absent. Exits liquidate the position and flag any
+minute exit above the participation cap. Optional overnight holds use RAW
+daily bars and require observed continuation sessions.
+
+Replay the fixed earnings calibration on Windows.
+
+```powershell
+.venv/Scripts/python.exe scripts/run_capped.py --mem 2400M -- .venv/Scripts/python.exe -m open_composer.research.equity_book.minute_screen calibrate
+```
+
+The gap is available after the regular-session opening print. The rule uses
+the prior $20M trailing median-liquidity threshold and the dated stock-only
+view when present. One $100,000 account per cost view reserves gross entry
+notional against realized equity, with up to $10,000 per trade and assumed
+short availability. It charges 10/20 bp per side plus the modeled opening
+half-spread during the first 15 minutes. Reports use session-close equity
+drawdown and window-opening equity for returns. The two trade CSVs and summary
+JSON are recorded together in the daily screen's trial ledger.
 
 ## DSR and numerical meaning
 

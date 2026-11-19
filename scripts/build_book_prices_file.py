@@ -85,6 +85,10 @@ def symbols_from_payload(payload: dict[str, Any]) -> dict[str, set[str]]:
     add("target_core_hedge", [payload.get("core_symbol"), payload.get("hedge_symbol")])
     add("plan_orders", (o.get("symbol") for o in payload.get("orders") or []))
     add("plan_post_trade_qty", (payload.get("post_trade_qty") or {}).keys())
+    shared = payload.get("shared", {})
+    add("sleeve_allocations", shared.get("allocation", {}))
+    for sleeve in shared.get("sleeves", {}).values():
+        add("sleeve_holdings", sleeve["positions"])
     return found
 
 

@@ -1062,7 +1062,10 @@ def require_resolved_runs(task: Path) -> None:
         checkpoint = has_checkpoint(state) and not received_science_handoff(
             task.parent.parent, path.parent, state
         )
-        if (unresolved or checkpoint) and state.get("status") != "closed_after_recovery":
+        # A plan-review revise ends the run before any job starts (research/README.md).
+        if (unresolved or checkpoint) and state.get("status") not in (
+            "closed_after_recovery", "scope_needs_revision"
+        ):
             raise ValueError(f"Reconcile unfinished job/checkpoint before a new start: {path}")
 
 

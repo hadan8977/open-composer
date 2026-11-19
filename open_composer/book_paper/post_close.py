@@ -388,6 +388,14 @@ def build_daily_record(
     generated_at_utc: str,
     submission_receipts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    shared = {}
+    if "shared" in plan.payload:
+        from open_composer.book_paper.sleeves import reconcile_shared
+
+        plan, broker_orders, positions, accounting = reconcile_shared(
+            plan, broker_orders, positions, official_close, submission_receipts or []
+        )
+        shared = {"shared": accounting}
     rec = reconcile(plan, target, broker_orders, positions, official_close, submission_receipts)
     fills = rec["orders"]
     costs = shadow_costs(fills, target, positions, official_close, trade_date=plan.execution_date)
@@ -424,6 +432,7 @@ def build_daily_record(
         },
         "profit_ledgers": ledgers,
         "realized_exposures": exposures,
+        **shared,
     }
 
 

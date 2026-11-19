@@ -25,13 +25,14 @@ def reversal_legs(order: dict[str, Any]) -> list[dict[str, Any]]:
     if current * post >= 0:
         return []
     parent = order["client_order_id"]
+    prefix = parent.rsplit("-", 1)[0] + "-"
     return [
         {
             **order,
             "qty": abs(qty),
             "stage": stage,
             "logical_client_order_id": parent,
-            "client_order_id": "bk1-"
+            "client_order_id": prefix
             + hashlib.sha256(f"{parent}|{stage}".encode()).hexdigest()[:40],
         }
         for stage, qty in (("close", current), ("open", post))

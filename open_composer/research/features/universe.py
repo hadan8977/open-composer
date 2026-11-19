@@ -257,6 +257,9 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
 
     from open_composer.research.equity_book.borrow import detect_reverse_splits, reverse_split_in_window
     from open_composer.market_sessions import NEW_YORK, next_us_equity_session, us_equity_session_dates
+    from open_composer.research.features.daily_actions import (
+        ACTIONS, ANCHORS, action_factors, reconstruct_raw,
+    )
     from open_composer.research.features.panel import _connect, load_sip_daily_panel
     from open_composer.research.features.price_hygiene import (
         DEFAULT_MASK_GAP_LONG_SESSIONS,
@@ -292,9 +295,12 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
         for view, basis in (("adj", "all"), ("raw", "raw")):
             path = (stage / f"{basis}-*.parquet").as_posix()
             con.execute(f"CREATE VIEW {view} AS SELECT * FROM read_parquet({path!r})")
+        anchors = output.parent / ANCHORS
+        con.execute(f"CREATE VIEW anchors AS SELECT * FROM read_parquet({anchors.as_posix()!r})")
         first, last = con.sql(
             "SELECT min(trade_date), max(trade_date) FROM adj WHERE symbol = 'SPY'"
         ).fetchone()
+        actions, mapped_actions = action_factors(con, output.parent / ACTIONS, anchors, last)
         sessions = us_equity_session_dates(first.date(), last.date())
         dates = pd.DatetimeIndex(sessions)
         members = pd.Index(con.sql("SELECT DISTINCT symbol FROM adj ORDER BY 1").fetchnumpy()["symbol"])
@@ -310,13 +316,17 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             ], utc=True),
         })
         con.register("calendar", calendar)
-        con.execute("""
+        matched = "a.close > 0 AND b.open > 0 AND abs(a.open / a.close - b.open / b.close) <= 0.005"
+        con.execute(f"""
             CREATE TEMP TABLE joined AS
             SELECT b.symbol, b.trade_date, b.open AS adjusted_open, b.close AS adjusted_close,
-                   r.open AS raw_open, r.close, r.close * r.volume AS dollar_volume,
+                   r.open AS raw_open, r.close AS original_raw_close, b.volume AS adjusted_volume,
+                   coalesce(r.close, CASE WHEN {matched} THEN a.close END) AS close,
+                   coalesce(r.volume, CASE WHEN {matched} THEN a.volume END) AS raw_volume,
                    b.source_version
             FROM adj b
             LEFT JOIN raw r ON r.symbol = b.symbol AND r.trade_date = b.trade_date AND r.volume > 0
+            LEFT JOIN anchors a ON a.symbol = b.symbol AND a.trade_date = b.trade_date
             WHERE b.close > 0 AND b.trade_date IN (SELECT trade_date FROM calendar)
             ORDER BY b.symbol, b.trade_date
         """)
@@ -336,6 +346,8 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             f["regime_start"] = [
                 (s, d) in breaks for s, d in zip(f.symbol, f.trade_date, strict=True)
             ]
+            f["session_pos"] = dates.get_indexer(f.trade_date)
+            last_break = f.session_pos.where(f.regime_start).groupby(f.symbol, sort=False).ffill()
             groups = f.groupby("symbol", sort=False)
             previous_source = groups.source_version.shift()
             f["regime_start"] |= previous_source.notna() & f.source_version.ne(previous_source)
@@ -343,19 +355,27 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             f["security_id"] = f.symbol + "@" + f.regime.astype(str)
             life = f.groupby("security_id", sort=False)
             f["listing_date"] = life.trade_date.transform("first")
-            f["session_pos"] = dates.get_indexer(f.trade_date)
             rows = f.session_pos.to_numpy()
             ids = pd.Index(f.security_id.unique())
             cols = ids.get_indexer(f.security_id)
             shape = (len(dates), len(ids))
-            liquidity = pd.DataFrame(np.full(shape, np.nan))
-            liquidity.values[rows, cols] = f.dollar_volume
-            f["median_dollar_volume_20"] = liquidity.rolling(20).median().to_numpy()[rows, cols]
             ro = pd.DataFrame(np.full(shape, np.nan))
             rc = ro.copy()
-            ro.values[rows, cols], rc.values[rows, cols] = f.raw_open, f.close
+            ro.values[rows, cols], rc.values[rows, cols] = f.raw_open, f.original_raw_close
             rs = detect_reverse_splits(ro, rc)
             f["reverse_split_252"] = reverse_split_in_window(rs).to_numpy()[rows, cols]
+            del ro, rc, rs
+            error_fields = ["close_error", "volume_error", "dollars_error"]
+            f[error_fields] = reconstruct_raw(f, actions, mapped_actions)
+            f["dollar_volume"] = f.close * f.raw_volume
+            # The raw units agree across archive switches. Keep the history
+            # across those switches, but never across a security price break.
+            symbols = pd.Index(f.symbol.unique())
+            symbol_cols = symbols.get_indexer(f.symbol)
+            liquidity = pd.DataFrame(np.full((len(dates), len(symbols)), np.nan))
+            liquidity.values[rows, symbol_cols] = f.dollar_volume
+            median = liquidity.shift().rolling(20).median().to_numpy()[rows, symbol_cols]
+            f["median_dollar_volume_20"] = np.where(f.session_pos - last_break < 20, np.nan, median)
             base = life.adjusted_close.transform("first")
             f["adjusted_close"] = (100 * f.adjusted_close / base).astype("float32")
             f["adjusted_open"] = (100 * f.adjusted_open / base).astype("float32")
@@ -372,40 +392,59 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             exits["is_member"] = False
             fields = [
                 "trade_date", "symbol", "security_id", "close", "adjusted_open", "adjusted_close",
-                "dollar_volume", "median_dollar_volume_20", "reverse_split_252",
+                "raw_volume", "dollar_volume", "median_dollar_volume_20", "reverse_split_252",
                 "listing_date", "last_trade_date", "is_member", "source_version",
+                *error_fields,
             ]
             batch = stage / f"members-{lo}.parquet"
             pd.concat([f, exits], ignore_index=True)[fields].to_parquet(batch, index=False)
             batches.append(batch.as_posix())
-            del f, groups, life, close, open_, liquidity, ro, rc, rs
+            del f, groups, life, close, open_, liquidity
 
         con.execute("DROP TABLE joined")
         register_security_evidence(con, members)
         con.execute(f"CREATE VIEW members AS SELECT * FROM read_parquet({batches!r})")
         con.execute(f"""
             COPY (
-                {TYPED_MEMBERS}
+                SELECT * EXCLUDE ({", ".join(error_fields)}) FROM ({TYPED_MEMBERS})
                 ORDER BY trade_date, security_id
             ) TO {pending.as_posix()!r} (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 32768)
         """)
         report = con.execute("""
-            SELECT year(session) AS year, count(DISTINCT symbol) AS names,
-                   count(*) AS member_rows, count(close) AS raw_rows
+            SELECT year(trade_date) AS year, count(DISTINCT symbol) AS names,
+                   count(*) AS member_rows, count(close) AS priced_rows,
+                   count(*) FILTER (WHERE median_dollar_volume_20 >= 10000000) AS liquid_rows,
+                   count(DISTINCT security_id) FILTER (WHERE median_dollar_volume_20 >= 10000000) AS liquid_members,
+                   count(*) - count(close) AS missing_close, count(*) - count(raw_volume) AS missing_volume,
+                   count(*) - count(dollar_volume) AS missing_dollars,
+                   count(*) - count(median_dollar_volume_20) AS missing_median
             FROM read_parquet(?) WHERE is_member AND session IS NOT NULL GROUP BY 1 ORDER BY 1
         """, [str(pending)]).df().to_dict("records")
         type_report = con.execute("""
             SELECT year(session) AS year, security_type, count(*) AS member_rows,
-                   count(dollar_volume) AS raw_rows, sum(dollar_volume) AS dollar_volume
+                   count(dollar_volume) AS priced_rows, sum(dollar_volume) AS dollar_volume
             FROM read_parquet(?) WHERE is_member GROUP BY 1, 2 ORDER BY 1, 2
         """, [str(pending)]).fetchall()
         n_rows = con.execute("SELECT count(*) FROM read_parquet(?)", [str(pending)]).fetchone()[0]
+        quantiles = ", ".join(
+            f"count({field}) AS {field}_rows, quantile_cont({field}, [0.5, 0.99]) AS {field}"
+            for field in error_fields
+        )
+        errors = con.sql(f"""
+            SELECT coalesce(source_version, 'all sources') AS source, {quantiles}
+            FROM members WHERE is_member GROUP BY GROUPING SETS ((source_version), ())
+            ORDER BY source
+        """).fetchall()
     pending.replace(output)
     return {
         "by_year": report,
         "by_security_type": [
-            dict(year=year, security_type=kind, member_rows=rows, raw_rows=raw, dollar_volume=dollars)
-            for year, kind, rows, raw, dollars in type_report
+            dict(year=year, security_type=kind, member_rows=rows, priced_rows=priced, dollar_volume=dollars)
+            for year, kind, rows, priced, dollars in type_report
+        ],
+        "raw_overlap_errors": [
+            dict(zip(["source", *(key for field in error_fields for key in (f"{field}_rows", field))], row))
+            for row in errors
         ],
         "symbols": len(members), "rows": n_rows, "first": str(dates[0].date()),
         "last": str(dates[-1].date()), "build_seconds": perf_counter() - started,

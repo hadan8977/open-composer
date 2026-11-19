@@ -22,6 +22,9 @@ Modes (exactly one):
   rebuilt.  Exit 2: the archives hold no bar of D yet (the cron retries later); exit 3: no plan
   file of D.
 
+Quant1's existing plan, submit and reconcile commands also handle registered research sleeves
+in the same account, order window and daily file.
+
 Exit codes: 0 ok, 2 data not fresh, 3 targets refused, 4 submit not enabled, 5 plan/submit/reconcile
 command failed, 6 another run holds the lock.  Log: ``logs/book_v12_daily.log``.  Lock:
 ``logs/book_v12_daily.lock``.  The script makes no broker call itself; only the ``oc book-paper``
@@ -31,7 +34,6 @@ commands of ``--plan``/``--submit``/``--reconcile`` do.
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 import logging
 import os
@@ -63,6 +65,7 @@ from open_composer.market_sessions import (  # noqa: E402
     us_equity_session_close,
 )
 from open_composer.paper_freshness import latest_completed_us_equity_session  # noqa: E402
+from open_composer.research.file_lock import lock_file  # noqa: E402
 from scripts import build_book_prices_file as prices_builder  # noqa: E402
 
 LIVE_ROOT = ROOT / "data/live/equity_book"
@@ -141,7 +144,7 @@ def run_targets(
 
 
 def oc_command() -> list[str]:
-    venv = ROOT / ".venv/bin/oc"
+    venv = ROOT / (".venv/Scripts/oc.exe" if os.name == "nt" else ".venv/bin/oc")
     return [str(venv)] if venv.exists() else ["oc"]
 
 
@@ -321,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
     Path(args.lock_file).parent.mkdir(parents=True, exist_ok=True)
     with open(args.lock_file, "w") as lock:
         try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lock_file(lock, blocking=False)
         except OSError:
             log.error("another book_v12_daily run holds %s", args.lock_file)
             return EXIT_LOCKED
