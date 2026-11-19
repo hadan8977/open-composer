@@ -65,6 +65,23 @@ def action_factors(con, path: Path, anchors: Path, asof: pd.Timestamp) -> tuple[
     return _by_symbol(events), _by_symbol(pd.concat(mapped).drop_duplicates())
 
 
+def join_action_bars(con, selection: str):
+    matched = "a.close > 0 AND b.open > 0 AND abs(a.open / a.close - b.open / b.close) <= 0.005"
+    con.execute(f"""
+        CREATE OR REPLACE TEMP TABLE joined AS
+        SELECT b.symbol, b.trade_date, b.open AS adjusted_open, b.close AS adjusted_close,
+               r.open AS raw_open, r.close AS original_raw_close, b.volume AS adjusted_volume,
+               coalesce(r.close, CASE WHEN {matched} THEN a.close END) AS close,
+               coalesce(r.volume, CASE WHEN {matched} THEN a.volume END) AS raw_volume,
+               b.source_version
+        FROM adj b
+        LEFT JOIN raw r ON r.symbol = b.symbol AND r.trade_date = b.trade_date AND r.volume > 0
+        LEFT JOIN anchors a ON a.symbol = b.symbol AND a.trade_date = b.trade_date
+        WHERE b.close > 0 AND {selection}
+        ORDER BY b.symbol, b.trade_date
+    """)
+
+
 def _by_symbol(events: pd.DataFrame) -> dict:
     events = events.groupby(["symbol", "ex_date"], as_index=False).agg(
         split=("split", "prod"), cash=("cash", lambda values: values.sum(skipna=False)),
@@ -101,12 +118,14 @@ def _scales(ratios, edges, split, cash_over_close, train):
     return np.repeat(scales, stops - starts, axis=0)
 
 
-def reconstruct_raw(frame: pd.DataFrame, actions: dict, mapped_actions: dict) -> np.ndarray:
-    """Fill close and volume, returning independent RAW overlap errors."""
+def reconstruct_raw(
+    frame: pd.DataFrame, actions: dict, mapped_actions: dict, *, scales_only: bool = False,
+) -> np.ndarray:
+    """Fill daily raw units and measure holdout error, or return factors for intraday bars."""
     dates = frame.trade_date.to_numpy()
     adj = frame[["adjusted_close", "adjusted_volume"]].to_numpy(dtype=float)
     raw = frame[["close", "raw_volume"]].to_numpy(dtype=float)
-    errors = np.full((len(frame), 3), np.nan)
+    result = np.full((len(frame), 2 if scales_only else 3), np.nan)
     for indices in frame.groupby("security_id", sort=False).indices.values():
         start, stop = indices[0], indices[-1] + 1
         day, bars, known = dates[start:stop], adj[start:stop], raw[start:stop]
@@ -130,18 +149,22 @@ def reconstruct_raw(frame: pd.DataFrame, actions: dict, mapped_actions: dict) ->
         cash_over_close = cash / bars[positions - 1, 0]
         observed = (known > 0).all(axis=1) & (bars > 0).all(axis=1)
         ratios = np.divide(known, bars, out=np.full_like(known, np.nan), where=observed[:, None])
+        if scales_only:
+            result[start:stop] = _scales(ratios, edges, split, cash_over_close, observed)
+            continue
         held_out = observed & (frame.session_pos.to_numpy()[start:stop] % 2 == 1)
         if held_out.any():
             estimated = bars * _scales(ratios, edges, split, cash_over_close, observed & ~held_out)
             measured = estimated[held_out] / known[held_out]
-            errors[indices[held_out]] = np.abs(
+            result[indices[held_out]] = np.abs(
                 np.column_stack((measured, measured.prod(axis=1))) - 1
             )
         if not observed.all():
             estimated = bars * _scales(ratios, edges, split, cash_over_close, observed)
             raw[start:stop] = np.where(np.isfinite(known), known, estimated)
-    frame[["close", "raw_volume"]] = raw
-    return errors
+    if not scales_only:
+        frame[["close", "raw_volume"]] = raw
+    return result
 
 
 def alpaca_client() -> httpx.Client:

@@ -261,7 +261,7 @@ def build_plan(
     now: datetime,
     asset_lookup: Callable[[str], AssetInfo | None],
     existing_client_order_ids: Iterable[str] = (),
-    min_notional: float = 100.0,
+    min_notional: float = 25.0,
     limits: RiskLimits | None = None,
     kill_switch_check: Callable[[], None] | None = None,
     shared_account: bool = False,

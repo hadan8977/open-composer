@@ -258,7 +258,7 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
     from open_composer.research.equity_book.borrow import detect_reverse_splits, reverse_split_in_window
     from open_composer.market_sessions import NEW_YORK, next_us_equity_session, us_equity_session_dates
     from open_composer.research.features.daily_actions import (
-        ACTIONS, ANCHORS, action_factors, reconstruct_raw,
+        ACTIONS, ANCHORS, action_factors, join_action_bars, reconstruct_raw,
     )
     from open_composer.research.features.panel import _connect, load_sip_daily_panel
     from open_composer.research.features.price_hygiene import (
@@ -316,20 +316,7 @@ def build_daily_sip_universe(stage: Path, output: Path) -> dict:
             ], utc=True),
         })
         con.register("calendar", calendar)
-        matched = "a.close > 0 AND b.open > 0 AND abs(a.open / a.close - b.open / b.close) <= 0.005"
-        con.execute(f"""
-            CREATE TEMP TABLE joined AS
-            SELECT b.symbol, b.trade_date, b.open AS adjusted_open, b.close AS adjusted_close,
-                   r.open AS raw_open, r.close AS original_raw_close, b.volume AS adjusted_volume,
-                   coalesce(r.close, CASE WHEN {matched} THEN a.close END) AS close,
-                   coalesce(r.volume, CASE WHEN {matched} THEN a.volume END) AS raw_volume,
-                   b.source_version
-            FROM adj b
-            LEFT JOIN raw r ON r.symbol = b.symbol AND r.trade_date = b.trade_date AND r.volume > 0
-            LEFT JOIN anchors a ON a.symbol = b.symbol AND a.trade_date = b.trade_date
-            WHERE b.close > 0 AND b.trade_date IN (SELECT trade_date FROM calendar)
-            ORDER BY b.symbol, b.trade_date
-        """)
+        join_action_bars(con, "b.trade_date IN (SELECT trade_date FROM calendar)")
         batches = []
         for lo in range(0, len(members), 256):
             keys = members[lo:lo + 256].tolist()

@@ -44,6 +44,11 @@ ranked; always obey them.
   mechanism, not to search for one: first show at trade level which
   conditions carry the money, then test the rule built on them.
 - No paid data: find what is needed (AI native, not cost saving).
+- Look beyond price bars. Prefer systems that use alternative data and text
+  (filings, transcripts, news, social attention, web data) processed by LLMs
+  at scale with point-in-time timestamps; cheap models make bulk extraction
+  affordable. Price-only rules and bar-trained models are the baseline to beat,
+  not the default; keep finding new sources.
 - Scope is everything the paper account can trade, including leveraged ETFs
   such as TQQQ, without lowering the bar. Any narrowing is your own choice; own
   it and undo it when it stops helping.

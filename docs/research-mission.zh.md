@@ -19,8 +19,12 @@ reasons and dates are in C:\OpenComposer\ops\research-plan-20261119\plan.zh.md
     index trend gates against holding and the paper sleeve; two days.
   - research/event_driven_20261119: earnings-gap, insider-cluster and
     short-squeeze modules in one account, with date-shuffle placebos.
-- Next: Quant1 information upgrade; small-cap momentum once the minute screen
-  exists. Then market-state exposure, opportunity ranking, meta-labelling and
+- Next: an LLM alternative-data line (owner 2026-11-19: favour LLM-processed
+  alternative data over price-only work): bulk-read point-in-time text such as
+  8-K bodies, press releases and other free public sources with pi DeepSeek
+  V4.1 Flash, mask names and dates against model memory, and trade the
+  extracted events; Quant1 information upgrade; small-cap momentum (minute
+  screen ready, float table in progress). Then market-state exposure, opportunity ranking, meta-labelling and
   one-account allocation on the first batch's trade ledgers.
 - Screen daily ideas with open_composer.research.equity_book.daily_screen
   before the native engine. Use only inputs known before each decision.

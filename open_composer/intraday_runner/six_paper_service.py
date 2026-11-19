@@ -53,7 +53,7 @@ CHILD_CAPITAL = {
     "MULTI_EQUAL": (3333.34, 3333.34, 3333.33, 3333.33, 3333.33, 3333.33),
     "MULTI_HIERARCHICAL": (1666.67, 1666.67, 1666.66, 5000.0, 5000.0, 5000.0),
 }
-RETIRING_POLICIES = ("BASE_STATE_BUDGET", *CHILD_CAPITAL)
+RETIRING_POLICIES = ("BASE_STATE_BUDGET", "BASE", *CHILD_CAPITAL)
 CHILD_STOPS = dict(zip(CHILDREN, (0.12, 0.15, 0.25, 0.12, 0.25, 0.25), strict=True))
 TERMINAL = {"filled", "expired", "canceled", "cancelled", "rejected"}
 #: Share drift worth trading on a ``hold`` instruction, as a fraction of the

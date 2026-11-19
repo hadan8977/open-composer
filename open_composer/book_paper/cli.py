@@ -196,7 +196,7 @@ def book_paper_plan(
     as_of: str | None = typer.Option(
         None, "--as-of", help="calendar date to evaluate freshness on"
     ),
-    min_notional: float = typer.Option(100.0, "--min-notional"),
+    min_notional: float = typer.Option(25.0, "--min-notional"),
 ) -> None:
     """Dry-run plan from the target file: reads account, positions, orders and assets only."""
     from open_composer.book_paper.plan import write_plan_file
@@ -228,7 +228,7 @@ def _submission_lock(root: Path, account: str):
 def book_paper_submit(
     account: str = ACCOUNT_OPTION,
     decision_date: str | None = typer.Option(None, "--decision-date"),
-    min_notional: float = typer.Option(100.0, "--min-notional"),
+    min_notional: float = typer.Option(25.0, "--min-notional"),
     submit: bool = typer.Option(False, "--submit", help="required to send orders"),
     tif_mode: str = typer.Option(
         "close",

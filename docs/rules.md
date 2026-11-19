@@ -63,6 +63,6 @@ Machine and repo
 
 Current state (update in place)
 - Roles: research/workflow.json. Paper authorizations: control.json.
-- DeepSeek stays parked. New research roles use Codex/gpt-6.2-sol per owner2026-11-17, retaining existing efforts; old sessions retain their original model. Current priorities: docs/research-mission.zh.md.
+- Model tiers: judgment, plans, reviews and research roles use the strongest models (Claude main session; Codex gpt-6.2-sol, owner 2026-11-17). Simple low-judgment work where a smaller model does not change quality (crawling and refreshing public data, bulk text extraction or labelling, format conversion, routine lookups) goes to pi's DeepSeek V4.1 Flash (provider pi, model commandcode/deepseek/deepseek-v4.1-flash; owner 2026-11-19: cheap, tokens plentiful). The delegating agent spot-checks its output. Current priorities: docs/research-mission.zh.md.
 - Owner report format: docs/owner-reporting.zh.md.
 - Research resumed 2026-11-19 by the main session after the paper repairs (owner pause of 2026-11-18 ended); priorities in docs/research-mission.zh.md.

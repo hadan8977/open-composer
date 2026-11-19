@@ -53,6 +53,8 @@ reports are costs, not results):
   pre-commit hook (.githooks) rejects growth beyond it. Raise it only by editing
   that file in the commit and saying why. Research code under research/ is not
   capped. Claude reviews Codex changes to paper and shared code before merge.
+  Crawling, data refreshes and bulk text extraction go to pi DeepSeek V4.1
+  Flash (docs/rules.md, model tiers).
 
 Roles: research/workflow.json; authority index: control.json.
 Run research with scripts/research_round.py --follow (see research/README.md).
