@@ -39,7 +39,10 @@ ranked; always obey them.
   bolt ML onto a finished rule or fill a method grid. If training is worth
   doing, train and look at the result.
 - Edge comes from information or execution. Pure price patterns rarely suffice;
-  "test an idea once" is retail thinking. Complexity must buy an edge.
+  "test an idea once" is retail thinking. Complexity must buy an edge, and the
+  sample must be large enough to support it. Use a backtest to confirm a
+  mechanism, not to search for one: first show at trade level which
+  conditions carry the money, then test the rule built on them.
 - No paid data: find what is needed (AI native, not cost saving).
 - Scope is everything the paper account can trade, including leveraged ETFs
   such as TQQQ, without lowering the bar. Any narrowing is your own choice; own

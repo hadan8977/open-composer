@@ -177,6 +177,9 @@ def codex_command(
         'approval_policy="never"',
         "-c",
         f'model_reasoning_effort="{role["effort"]}"',
+        # Every stored tool output is resent on each later turn; keep it small.
+        "-c",
+        "tool_output_token_limit=4000",
         "--json",
         "--output-schema",
         str(schema),
@@ -761,7 +764,9 @@ def finalize_metrics(root: Path, run: Path, state: dict) -> None:
     wall_text = "?" if wall is None else f"{wall:.0f}"
     line = (
         f"| {state['run_id']} | {state['direction']} | {decision} "
-        f"executed E/A/F/V/P/D={count_text} tok={token_text} active_s={duration} "
+        f"executed E/A/F/V/P/D={count_text} class={metrics.get('round_class') or '?'} "
+        f"accepted={metrics.get('accepted_economic_conclusions') or 0} "
+        f"tok={token_text} active_s={duration} "
         f"wall_s={wall_text} | "
         f"{run.relative_to(root).as_posix()}/run.json |\n"
     )

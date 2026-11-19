@@ -8,6 +8,9 @@ is untested. Before a new trial, run `scripts/research_tools.py failures` and
 internal records. Cite IDs. Reuse shared engines, data and accounting.
 
 Model the real trading behaviour; never simplify it to make testing easier.
+Every tool output stays in context and is resent each turn: write large
+results to files and print only the numbers you need; prefer one script that
+does a whole step over many small commands.
 Run what the question needs; check only what you changed.
 Code writes results and counts; run agent_workflow.validate_results before
 the Reply. A complete Reply points to results.
