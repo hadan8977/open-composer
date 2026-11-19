@@ -42,7 +42,7 @@ from open_composer.reports.owner_style import (
     strategy_name,
 )
 
-BEIJING = ZoneInfo("Asia/Shanghai")
+PACIFIC = ZoneInfo("America/Los_Angeles")
 WEEKDAYS = "一二三四五六日"
 CURRENT_VIEW = Path("reports/research/control/current-view-through-20261011.zh.md")
 QUEUE_FILE = Path("reports/research/control/autonomous-queue.md")
@@ -244,8 +244,8 @@ def money(value: float | None) -> str:
     return "—" if value is None else f"${value:,.0f}"
 
 
-def beijing_label(moment: datetime) -> str:
-    local = moment.astimezone(BEIJING)
+def local_label(moment: datetime) -> str:
+    local = moment.astimezone(PACIFIC)
     return f"{local:%Y-%m-%d}（周{WEEKDAYS[local.weekday()]}）"
 
 
@@ -701,7 +701,7 @@ def render_internal_log(data: DigestData) -> str:
     """The old full digest: round logs, task ids, run health.  Attachment only."""
     title = "周报" if data.kind == "weekly" else "日报"
     generated = data.now.astimezone(UTC)
-    local = data.now.astimezone(BEIJING)
+    local = data.now.astimezone(PACIFIC)
     out: list[str] = []
     if data.kind == "weekly" and data.weekly_text:
         out.append(data.weekly_text.rstrip())
@@ -710,11 +710,11 @@ def render_internal_log(data: DigestData) -> str:
         out.append("")
         out.append(f"# 附：一周数据（脚本生成，{generated:%Y-%m-%d %H:%M} UTC）")
     else:
-        label = iso_week_label(data.now) if data.kind == "weekly" else beijing_label(data.now)
+        label = iso_week_label(data.now) if data.kind == "weekly" else local_label(data.now)
         out.append(f"# 运行记录（{title}附件，内部用语，供查证） · {label}")
         out.append("")
         out.append(
-            f"生成于 {generated:%Y-%m-%d %H:%M} UTC（北京 {local:%H:%M}），覆盖 "
+            f"生成于 {generated:%Y-%m-%d %H:%M} UTC（PST {local:%H:%M}），覆盖 "
             f"{data.window_start.astimezone(UTC):%m-%d %H:%M} UTC 以来。脚本生成，不含模型判断；"
             "口径见 `docs/owner-reporting.zh.md`。"
         )
@@ -1045,7 +1045,7 @@ def _attachment_line(data: DigestData) -> str:
 
 
 def render_daily_fallback(data: DigestData) -> str:
-    local = data.now.astimezone(BEIJING)
+    local = data.now.astimezone(PACIFIC)
     out = [
         f"# Open Composer 日报 · {local:%m-%d}（周{WEEKDAYS[local.weekday()]}）",
         "",
@@ -1103,7 +1103,7 @@ def digest_subject(data: DigestData) -> str:
     if data.kind == "weekly":
         head = f"[Open Composer] 周报 {iso_week_label(data.now)}"
     else:
-        local = data.now.astimezone(BEIJING)
+        local = data.now.astimezone(PACIFIC)
         head = f"[Open Composer] 日报 {local:%m-%d}（周{WEEKDAYS[local.weekday()]}）"
 
     periods = 5 if data.kind == "weekly" else 1

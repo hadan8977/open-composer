@@ -360,9 +360,11 @@ def test_incomplete_open_is_explicit_and_duplicate_invocation_never_adds_orders(
     plan = example("PK", -9, 2)
     client = ExecutionClient(plan, open_status=status)
     first = run(client, plan)
-    assert first["deferred"] and first["reversals"][0]["status"] == "deferred"
+    working = status in ("accepted", "partially_filled")
+    assert first["reversals"][0]["status"] == ("sent" if working else "deferred")
+    assert bool(first["deferred"]) != working
     second = run(client, plan)
-    assert second["deferred"] and len(client.submitted) == 2
+    assert bool(second["deferred"]) != working and len(client.submitted) == 2
     rec = reconcile(
         plan,
         make_target(),

@@ -8,7 +8,9 @@ read it in full if it is not in your context).
    (Martin: research/martin-research-records.zh.md); check later corrections
    before calling anything untested. Use `scripts/research_tools.py map --task
    <direction>` and `failures` before a new brief, and cite the IDs/paths you
-   used.
+   used. Check which window and name list the result was chosen and judged
+   on, and whether a few trades carry the money; if so, the next run widens
+   the sample (owner-taste brakes) before adding rules.
 2. Classify the round (Reply.round_class): new_money_evidence,
    informative_learning or no_information. Say at trade level which opportunities, entries, exits or
    allocations made or lost the money.

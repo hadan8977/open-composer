@@ -10,15 +10,7 @@ Use actual dated results, not plans or stale summaries. Address unresolved owner
 
 ### 0.1 Standard report structure
 
-Use the five semantic sections expected by `scripts/owner_report.py lint`, in the owner's language:
-
-1. Conclusions:3–6 concise points covering account outcomes, decisive progress, the main gap and any owner decision.
-2. Paper and live operations:ETF sleeves, equity long/short, intraday/HFT and live status; actual orders, fills, rejections, partial/missing receipts, reconciliation, PnL and data dates.
-3. Research:question, method, real numbers, economic meaning, limitations, next action and date.
-4. Progress on the owner's questions and requirements.
-5. Owner decisions:issue, impact, recommendation/options, deadline and what happens without a reply. State none when applicable.
-
-Append evidence paths and detailed inventories. Round reports prioritize the period's increment in roughly600–1200 Chinese characters; daily/weekly reports may expand. Do not repeat unchanged inventories every two hours.
+Daily and weekly e-mail reports follow prompts/owner-daily-weekly-writer.zh.md for order, length and style. Do not repeat unchanged inventories.
 
 ### 0.2 Writers and state
 

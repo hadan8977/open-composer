@@ -94,6 +94,15 @@ def submit_reversal(
             row["legs"].append(state)
         return state
 
+    def settle(opened: dict[str, Any] | None) -> None:
+        if _filled(opened, opening):
+            row["status"] = "filled"
+        elif opened is not None and opened["status"] in TERMINAL:
+            defer(f"opening leg {opened['status']}")
+        else:
+            # An accepted DAY market order fills in the session; reconcile confirms it.
+            row["status"] = "sent"
+
     if report["time_in_force"] != "day":
         defer("staged reversal needs DAY orders; CLS reversal not sent")
         return
@@ -106,10 +115,7 @@ def submit_reversal(
                     "reason": "opening leg at broker",
                 }
             )
-            if _filled(opened, opening):
-                row["status"] = "filled"
-            else:
-                defer("opening leg at broker is not fully filled")
+            settle(opened)
             return
         if observe(close) is None:
             guard()
@@ -130,9 +136,6 @@ def submit_reversal(
         if send(opening) is None:
             defer("opening submission not acknowledged; reconciliation required")
             return
-        if _filled(observe(opening), opening):
-            row["status"] = "filled"
-        else:
-            defer("opening acknowledged; not confirmed fully filled; reconciliation required")
+        settle(observe(opening))
     except Exception as exc:
         defer(f"{exc.__class__.__name__}: {broker_error_text(exc)}")
