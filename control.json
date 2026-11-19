@@ -16,10 +16,10 @@
       "authorization_root": "reports/paper/rehearsal",
       "filename": "{strategy}-authorization.json",
       "expires_at": {
-        "us_etf_eom_sector_blend_monthly": "2026-12-12T05:37:27.430258+00:00",
-        "us_etf_growth_rotation_blend_top2_monthly": "2026-12-12T05:37:30.926609+00:00",
-        "us_etf_levered_rotation_63_top2_monthly": "2026-12-12T05:37:33.886100+00:00",
-        "us_etf_sector_rotation_252_top2_weekly": "2026-12-12T05:37:36.633544+00:00"
+        "us_etf_eom_sector_blend_monthly": "2027-01-12T00:00:00+00:00",
+        "us_etf_growth_rotation_blend_top2_monthly": "2027-01-12T00:00:00+00:00",
+        "us_etf_levered_rotation_63_top2_monthly": "2027-01-12T00:00:00+00:00",
+        "us_etf_sector_rotation_252_top2_weekly": "2027-01-12T00:00:00+00:00"
       }
     },
     "six": {
@@ -33,12 +33,18 @@
         "MULTI_EQUAL",
         "MULTI_HIERARCHICAL"
       ],
-      "expires_at": "2026-12-12T00:00:00Z"
+      "expires_at": "2027-01-12T00:00:00Z",
+      "retiring": [
+        "BASE_STATE_BUDGET",
+        "MULTI_EQUAL",
+        "MULTI_HIERARCHICAL"
+      ]
     },
     "quant1": {
       "state": "restored_300k_original_scope",
       "config": "config/equity-book-forward.json"
-    }
+    },
+    "capital": "owner 2026-11-18: Quant1 stays at the 300k equity basis; the rest of each paper account (Quant1 equity minus 300k; settled cash freed by retiring six policies, in their own account) is reserve for the next paper strategy chosen from research. Accounts are not pooled. Plan: ops/paper-plan-20261118.zh.md"
   },
   "authorization": "reports/ops/research-owner-pause-20261118.json"
 }

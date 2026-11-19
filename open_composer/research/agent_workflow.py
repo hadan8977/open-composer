@@ -179,7 +179,7 @@ def codex_command(
         f'model_reasoning_effort="{role["effort"]}"',
         # Every stored tool output is resent on each later turn; keep it small.
         "-c",
-        "tool_output_token_limit=4000",
+        "tool_output_token_limit=10000",
         "--json",
         "--output-schema",
         str(schema),

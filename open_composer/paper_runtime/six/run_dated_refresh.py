@@ -440,6 +440,38 @@ def publish_packet(output, *, now):
     return published
 
 
+def write_liquidation_targets(application_day):
+    from open_composer.intraday_runner.current_initialization_controls import session
+    from open_composer.intraday_runner.six_paper_service import (
+        CHILD_CAPITAL,
+        CHILDREN,
+        RETIRING_POLICIES,
+        write_state,
+    )
+
+    clock = receive_clock(application_day)
+    reference_day = clock["reference_day"]
+    as_of = session(date.fromisoformat(reference_day))[1].isoformat()
+    config = json.loads((REPO / "config/paper/six-service.json").read_text())
+    targets = REPO / config["targets_root"]
+    cash = dict(portfolio_action="rebalance", symbols=[], weights=[], reference_marks={})
+    for policy in RETIRING_POLICIES:
+        target = dict(
+            cash,
+            policy=policy,
+            as_of=as_of,
+            valid_until=clock["expiry"].isoformat(),
+            application_day=application_day,
+            reference_day=reference_day,
+        )
+        if policy in CHILD_CAPITAL:
+            target["children"] = {
+                name: dict(cash, capital_usd=capital)
+                for name, capital in zip(CHILDREN, CHILD_CAPITAL[policy], strict=True)
+            }
+        write_state(targets / (policy + ".json"), target)
+
+
 def poll_refresh(job, *, now):
     """One nonblocking step called AFTER the existing service protective tick.
 
@@ -622,6 +654,7 @@ def main():
                 if produced["blocked_policies"]
                 else "complete_current_input_packet_published",
             )
+            write_liquidation_targets(args.application_day)
         status = 0
     except Exception as error:
         result.update(

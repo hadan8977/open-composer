@@ -53,6 +53,7 @@ CHILD_CAPITAL = {
     "MULTI_EQUAL": (3333.34, 3333.34, 3333.33, 3333.33, 3333.33, 3333.33),
     "MULTI_HIERARCHICAL": (1666.67, 1666.67, 1666.66, 5000.0, 5000.0, 5000.0),
 }
+RETIRING_POLICIES = ("BASE_STATE_BUDGET", *CHILD_CAPITAL)
 CHILD_STOPS = dict(zip(CHILDREN, (0.12, 0.15, 0.25, 0.12, 0.25, 0.25), strict=True))
 TERMINAL = {"filled", "expired", "canceled", "cancelled", "rejected"}
 #: Share drift worth trading on a ``hold`` instruction, as a fraction of the
@@ -62,6 +63,11 @@ TERMINAL = {"filled", "expired", "canceled", "cancelled", "rejected"}
 #: October roster for four sessions and H5 stayed in cash for a week. The same
 #: 5% band the deployed ETF sleeves use is the reference for the churn floor.
 HOLD_DRIFT_TOLERANCE_FRACTION = 0.05
+
+
+def whole_share_delta(quantity):
+    nearest = round(quantity)
+    return nearest if abs(quantity - nearest) <= 1e-9 else int(quantity)
 
 
 def hold_drift(desired, held, references, *, capital, nav, tolerance=HOLD_DRIFT_TOLERANCE_FRACTION):
@@ -74,7 +80,7 @@ def hold_drift(desired, held, references, *, capital, nav, tolerance=HOLD_DRIFT_
     floor = float(tolerance) * min(float(capital), float(nav))
     drift: dict[str, int] = {}
     for symbol, target_qty in desired.items():
-        delta = int(target_qty - held.get(symbol, 0))
+        delta = whole_share_delta(target_qty - held.get(symbol, 0))
         price = float(references.get(symbol) or 0.0)
         if not delta or price <= 0:
             continue
@@ -593,14 +599,15 @@ class SixPaperService:
         application_day=None,
         protective=False,
     ):
+        cid = "six-" + hashlib.sha256(f"{book}:{symbol}:{side}:{cycle}".encode()).hexdigest()[:36]
+        if cid in self.state["orders"]:
+            return
+
         from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import LimitOrderRequest
 
         from open_composer.paper_lock import paper_submission_lock
 
-        cid = "six-" + hashlib.sha256(f"{book}:{symbol}:{side}:{cycle}".encode()).hexdigest()[:36]
-        if cid in self.state["orders"]:
-            return
         state, fills, fees, evidence = restore(self.root, self.state["books"][book])
         day = self.clock().astimezone(NEW_YORK).date().isoformat()
         cash = source_module(self.root, "cash")
@@ -694,6 +701,10 @@ class SixPaperService:
         ):
             raise ValueError("late quantity-liability evidence requires focused reconciliation")
         cycle = hashlib.sha256(json.dumps(target, sort_keys=True).encode()).hexdigest()
+        retiring = policy in RETIRING_POLICIES
+        liquidating = (
+            retiring and target["portfolio_action"] == "rebalance" and not target["symbols"]
+        )
         marks = {s: float(p["current_price"]) for s, p in positions.items()}
         day = now.astimezone(NEW_YORK).date().isoformat()
         parent_killed = False
@@ -735,9 +746,9 @@ class SixPaperService:
             risk["last_nav"] = nav
             self.state["books"][book] = snapshot(state, fills, fees, evidence=evidence)
             self.save()
-            if risk["killed"]:
+            if risk["killed"] or (liquidating and new_risk):
                 desired = {s: 0 for s in held}
-            elif not new_risk or risk["halted"]:
+            elif retiring or not new_risk or risk["halted"]:
                 continue
             else:
                 import numpy as np
@@ -792,7 +803,7 @@ class SixPaperService:
                     )
                     cycle = cycle + ":drift"
             for symbol in sorted(desired, key=lambda s: desired[s] - held.get(s, 0)):
-                delta = int(desired[symbol] - held.get(symbol, 0))
+                delta = whole_share_delta(desired[symbol] - held.get(symbol, 0))
                 if not delta or any(
                     r["book"] == book
                     and r["symbol"] == symbol
@@ -951,12 +962,19 @@ class SixPaperService:
                     "net_pnl_certified": False,
                 }
             except Exception as exc:
+                previous = self.state["policy_status"].get(policy, {})
+                error = str(exc)[:200]
                 self.state["policy_status"][policy] = {
                     "status": "blocked",
                     "error_type": type(exc).__name__,
+                    "error": error,
                     "observed_at": now.isoformat(),
                 }
-                self.event("policy_blocked", policy=policy, error_type=type(exc).__name__)
+                # One event per change, not one per tick.
+                if previous.get("status") != "blocked" or previous.get("error") != error:
+                    self.event(
+                        "policy_blocked", policy=policy, error_type=type(exc).__name__, error=error
+                    )
         self.state["heartbeat_at"] = self.clock().isoformat()
         self.save()
         self.publish_dashboard()
