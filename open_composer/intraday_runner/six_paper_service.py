@@ -63,6 +63,11 @@ TERMINAL = {"filled", "expired", "canceled", "cancelled", "rejected"}
 #: October roster for four sessions and H5 stayed in cash for a week. The same
 #: 5% band the deployed ETF sleeves use is the reference for the churn floor.
 HOLD_DRIFT_TOLERANCE_FRACTION = 0.05
+#: Resizes of a held, still-targeted name below this fraction of book capital
+#: are skipped (1-share round trips were pure rounding noise).
+MIN_RESIZE_FRACTION = 0.02
+#: Limit orders are priced this far through the reference so they fill.
+MARKETABLE_BUFFER = 0.02
 
 
 def whole_share_delta(quantity):
@@ -612,7 +617,8 @@ class SixPaperService:
         day = self.clock().astimezone(NEW_YORK).date().isoformat()
         cash = source_module(self.root, "cash")
         due = cash.cash_due_date(day, cash.settlement_calendar())
-        price = float(limit_price(reference, exit_order=side == "sell"))
+        # Marketable limit: fills through an ordinary gap but caps a bad print.
+        price = round(float(reference) * (1 - MARKETABLE_BUFFER if side == "sell" else 1 + MARKETABLE_BUFFER), 2)
         if side == "buy":
             qty = min(qty, math.floor(state.available(due) / (price * 1.001)))
             if qty <= 0:
@@ -802,8 +808,18 @@ class SixPaperService:
                         tolerance=HOLD_DRIFT_TOLERANCE_FRACTION,
                     )
                     cycle = cycle + ":drift"
+                    desired = {s: held.get(s, 0) + d for s, d in drift.items()}
             for symbol in sorted(desired, key=lambda s: desired[s] - held.get(s, 0)):
                 delta = whole_share_delta(desired[symbol] - held.get(symbol, 0))
+                reference = instruction["reference_marks"].get(symbol, marks.get(symbol))
+                # No-trade band: small resizes of a name that is held and stays held.
+                if (
+                    delta
+                    and held.get(symbol)
+                    and desired[symbol]
+                    and abs(delta) * float(reference or 0) < MIN_RESIZE_FRACTION * capital
+                ):
+                    continue
                 if not delta or any(
                     r["book"] == book
                     and r["symbol"] == symbol
@@ -812,7 +828,6 @@ class SixPaperService:
                     for cid, r in self.state["orders"].items()
                 ):
                     continue
-                reference = instruction["reference_marks"].get(symbol, marks.get(symbol))
                 self.submit(
                     book,
                     symbol,
