@@ -77,9 +77,6 @@ def run(args):
     source = args.source_root.resolve()
     raw = source / "data/sip_reconcile"
     receipt_path = raw / "receipts" / f"{day}.json"
-    if receipt_path.exists():
-        print(json.dumps({"execution_day": str(day), "status": "already_received"}))
-        return
     with FileLock(ROOT / "data/live/.book_close_inputs.lock"):
         if args.update_daily:
             subprocess.run(

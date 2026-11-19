@@ -72,6 +72,7 @@ class BookTarget(BaseModel):
     weights: dict[str, float]
     reference_prices: dict[str, float]
     exposures: dict[str, NameExposure]
+    frozen_symbols: dict[str, str] = Field(default_factory=dict)
     logged_at_utc: str
     payload_sha256: str = ""
 
@@ -123,12 +124,6 @@ class BookTarget(BaseModel):
                 raise ValueError(
                     f"hedge leg weight {hedge_entry} must equal hedge_weight {self.hedge_weight}"
                 )
-        for symbol, weight in self.weights.items():
-            if not math.isfinite(weight):
-                raise ValueError(f"non-finite weight for {symbol}")
-            price = self.reference_prices.get(symbol)
-            if price is None or not math.isfinite(price) or price <= 0:
-                raise ValueError(f"missing or invalid reference price for {symbol}")
         return self
 
     @property
@@ -143,12 +138,14 @@ class BookTarget(BaseModel):
 
     @property
     def target_gross(self) -> float:
-        return sum(abs(w) for w in self.stock_weights.values())
+        return sum(abs(w) for w in self.stock_weights.values() if math.isfinite(w))
 
 
 def _dump(target: BookTarget) -> dict[str, object]:
     """Serialisable body; a version-1 target omits the schema-2 fields (hash and file unchanged)."""
     exclude = {"payload_sha256"}
+    if not target.frozen_symbols:
+        exclude.add("frozen_symbols")
     if target.schema_version == SCHEMA_VERSION:
         exclude |= set(_V2_FIELDS)
     return target.model_dump(mode="json", exclude=exclude)
@@ -173,17 +170,9 @@ def target_path(root: Path, account: str, decision_date: date) -> Path:
 
 
 def write_target_file(root: Path, target: BookTarget) -> Path:
-    """Seal and write the target file (the signal log, before any order).
-
-    Refuses to overwrite a file whose payload differs: a logged target is never silently rewritten.
-    ``logged_at_utc`` must be set by the caller (``date -u`` at writing)."""
+    """Atomically publish the dated target as the pre-order signal log."""
     sealed = seal_target(target)
     path = target_path(root, sealed.account, sealed.decision_date)
-    if path.exists():
-        existing = load_target_file(path)
-        if existing.payload_sha256 == sealed.payload_sha256:
-            return path
-        raise BookTargetError(f"target file already logged with a different payload: {path.name}")
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(

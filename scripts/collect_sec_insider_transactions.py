@@ -85,6 +85,7 @@ import zipfile
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
+from urllib.parse import urljoin
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -100,10 +101,7 @@ HOLDINGS_ROOT = PARSED_ROOT / "holdings"
 TAIL_INDEX_ROOT = RAW_ROOT / "tail" / "index"
 TAIL_PARSED_ROOT = RAW_ROOT / "tail" / "parsed"
 
-QUARTERLY_URL = (
-    "https://www.sec.gov/files/structureddata/data/"
-    "insider-transactions-data-sets/{quarter}_form345.zip"
-)
+QUARTERLY_INDEX = "https://www.sec.gov/data-research/sec-markets-data/insider-transactions-data-sets"
 DAILY_INDEX_URL = "https://www.sec.gov/Archives/edgar/daily-index/{year}/QTR{qtr}/form.{stamp}.idx"
 ARCHIVE_FILING_JSON = "https://www.sec.gov/Archives/edgar/data/{cik}/{nodash}/index.json"
 
@@ -300,13 +298,25 @@ def zip_is_readable(path: Path) -> bool:
 def stage_download(client: SecClient, quarters: list[Quarter]) -> dict[str, str]:
     RAW_ROOT.mkdir(parents=True, exist_ok=True)
     outcome: dict[str, str] = {}
+    links = None
     for quarter in quarters:
         target = RAW_ROOT / f"{quarter}.zip"
         if zip_is_readable(target):
             outcome[str(quarter)] = "already_present"
             log(f"{quarter}: already present ({target.stat().st_size / 1e6:.1f} MB)")
             continue
-        url = QUARTERLY_URL.format(quarter=quarter)
+        if links is None:
+            status, page = client.get(QUARTERLY_INDEX)
+            if status != 200:
+                raise RuntimeError(f"SEC quarterly download index returned HTTP {status}")
+            pattern = r'href="([^"\s]+/(\d{4}q[1-4])_form345\.zip)"'
+            links = {name: urljoin(QUARTERLY_INDEX, target)
+                     for target, name in re.findall(pattern, page.decode("utf-8"))}
+        url = links.get(str(quarter))
+        if url is None:
+            outcome[str(quarter)] = "not_published"
+            log(f"{quarter}: SEC quarterly archive not posted")
+            continue
         status, payload = client.get(url)
         if status == 404:
             outcome[str(quarter)] = "missing_404"

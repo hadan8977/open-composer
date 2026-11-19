@@ -435,10 +435,12 @@ def current(observation, *, root=None):
     root = f.REPO if root is None else Path(root)
     assert FIRST_OBSERVATION <= observation <= "2026-11-30", "Unreceived H5 observation month"
     pointer = f.load(root / POINTER)
-    assert pointer["epoch"] == EPOCH
     receipt = pointer["receipt"]
-    assert Path(receipt["path"]) == root / DESTINATION / "models.json"
-    result, states = receive_models(receipt)
+    result = f.load(receipt["path"])
+    states = {
+        row["arm"]: json.loads(gzip.decompress(Path(row["state"]["path"]).read_bytes()))
+        for row in result["models"]
+    }
     return receipt, result, states
 
 

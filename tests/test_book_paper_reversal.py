@@ -337,14 +337,17 @@ def test_stored_plan_survives_rebuild_and_receipts_are_append_only(monkeypatch, 
     first = orders_receipt_path(tmp_path, "quant1", DAY)
     write_json_atomic(first, {"plan_sha256": expected_hash})
     monkeypatch.setattr(cli, "project_root", lambda: tmp_path)
-    monkeypatch.setattr(cli, "make_trading_client", lambda _: ExecutionClient(plan))
+    client = ExecutionClient(plan)
+    run(client, plan)
+    monkeypatch.setattr(cli, "make_trading_client", lambda _: client)
+    monkeypatch.setattr(cli, "_kill_switch_check", lambda _: lambda: None)
     monkeypatch.setattr(
         "open_composer.book_paper.targets.target_path", lambda *a: tmp_path / "target"
     )
     (tmp_path / "target").touch()
     monkeypatch.setattr("open_composer.book_paper.targets.load_target_file", lambda _: target)
     # The stored plan is returned even though broker state has already changed.
-    assert cli._build("quant1", "2026-10-14", None, 100)[3].payload == plan.payload
+    assert cli._build("quant1", "2026-10-14", str(DAY), 100)[3].payload == plan.payload
     rerun = next_orders_receipt_path(tmp_path, "quant1", DAY, NOW)
     write_json_atomic(rerun, {"sent": []})
     assert next_orders_receipt_path(tmp_path, "quant1", DAY, NOW) != rerun
@@ -472,7 +475,7 @@ def test_real_cli_second_invocation_is_idempotent(
 
     monkeypatch.setattr(cli, "datetime", FrozenTime)
     monkeypatch.setattr(cli, "project_root", lambda: tmp_path)
-    monkeypatch.setattr(cli, "_build", lambda *args: (tmp_path, client, None, plan))
+    monkeypatch.setattr(cli, "_build", lambda *args: (tmp_path, client, make_target(), plan))
     monkeypatch.setattr(cli, "_kill_switch_check", lambda root: lambda: None)
     monkeypatch.setattr(cli, "SUBMIT_PACE_SECONDS", 0)
     first_path = orders_receipt_path(tmp_path, "quant1", DAY)
@@ -486,7 +489,7 @@ def test_real_cli_second_invocation_is_idempotent(
     assert len(list(first_path.parent.glob(f"{DAY}*.json"))) == 2
 
 
-def test_cli_deferred_stage_has_nonzero_exit_and_durable_pending_receipt(monkeypatch, tmp_path):
+def test_cli_deferred_stage_leaves_durable_pending_receipt(monkeypatch, tmp_path):
     from typer.testing import CliRunner
 
     from open_composer.book_paper import cli
@@ -501,13 +504,13 @@ def test_cli_deferred_stage_has_nonzero_exit_and_durable_pending_receipt(monkeyp
 
     monkeypatch.setattr(cli, "datetime", FrozenTime)
     monkeypatch.setattr(cli, "project_root", lambda: tmp_path)
-    monkeypatch.setattr(cli, "_build", lambda *args: (tmp_path, client, None, plan))
+    monkeypatch.setattr(cli, "_build", lambda *args: (tmp_path, client, make_target(), plan))
     monkeypatch.setattr(cli, "_kill_switch_check", lambda root: lambda: None)
     monkeypatch.setattr(cli, "SUBMIT_PACE_SECONDS", 0)
     result = CliRunner().invoke(
         cli.book_paper_app, ["submit", "--account", "quant1", "--submit", "--tif-mode", "market"]
     )
-    assert result.exit_code == 2 and "deferred" in result.output
+    assert result.exit_code == 0 and "deferred" in result.output
     receipt = json.loads(orders_receipt_path(tmp_path, "quant1", DAY).read_text())
     assert receipt["deferred"] and len(client.submitted) == 1
 

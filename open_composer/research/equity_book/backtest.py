@@ -108,6 +108,8 @@ class BookConfig:
     # are not executions. Legacy books do not use either hook.
     trade_funding: Callable | None = None
     trade_observer: Callable | None = None
+    delist_dates: Mapping[pd.Timestamp, Sequence[str]] | None = None
+    require_observed_open: bool = False
 
 
 @dataclass
@@ -203,7 +205,7 @@ def run_book(
     dates = panel.dates
     t_n, n_sym = panel.close.shape
     priced = np.isfinite(panel.close) & (panel.close > 0)
-    delist_pos = delist_positions(priced)
+    delist_pos = delist_positions(priced) if cfg.delist_dates is None else None
     start_pos = 0 if cfg.start is None else int(dates.searchsorted(pd.Timestamp(cfg.start)))
     end_pos = (
         t_n - 1 if cfg.end is None else int(dates.searchsorted(pd.Timestamp(cfg.end), "right")) - 1
@@ -214,6 +216,8 @@ def run_book(
         idx = start_pos - 1 - np.argmax(pre[::-1], axis=0)
         last_close = np.where(pre.any(axis=0), panel.close[idx, np.arange(n_sym)], np.nan)
     cost_fn = cfg.cost_fn or flat_cost(cfg.cost_bp_per_side)
+    strict_open = cfg.exec_price == "open" and cfg.require_observed_open
+    open_priced = np.isfinite(panel.open) & (panel.open > 0) if strict_open else None
 
     if cfg.signal_dates is not None:
         pos_of = {d: i for i, d in enumerate(dates)}
@@ -331,7 +335,7 @@ def run_book(
         nonlocal h
         tgt = pending or {}
         px_row = eo if cfg.exec_price == "open" else panel.close[i]
-        sleeve_col = _resolve_sleeve(panel, cfg.tbill_symbols, i, priced)
+        sleeve_col = _resolve_sleeve(panel, cfg.tbill_symbols, i, open_priced if strict_open else priced)
         target = np.zeros(n_sym)
         for s, w in tgt.items():
             if s == TBILL:
@@ -348,7 +352,7 @@ def run_book(
                 info["nonfinite_weights"] += 1
                 continue
             target[j] += w * e_pre
-        can = priced[i] & np.isfinite(px_row)
+        can = open_priced[i] if strict_open else priced[i] & np.isfinite(px_row)
         # a symbol that cannot be priced today keeps its holding (halted / not yet listed)
         frozen = ~can & ((h != 0) | (target != 0))
         info["frozen_halted_trades"] += int((frozen & (target != h)).sum())
@@ -421,7 +425,10 @@ def run_book(
         equity -= cost_margin + cost_borrow
 
         # delistings: leave at the last valid close, longs take the optional haircut
-        dl = np.flatnonzero((delist_pos == i) & (h != 0))
+        if delist_pos is None:
+            dl = [panel.col(s) for s in cfg.delist_dates.get(date, ()) if h[panel.col(s)]]
+        else:
+            dl = np.flatnonzero((delist_pos == i) & (h != 0))
         for j in dl:
             info["delist_exits"] += 1
             if h[j] > 0 and cfg.delist_long_haircut != 0.0:
@@ -435,7 +442,9 @@ def run_book(
         is_trade = pending is not None
         e_open_pre = e_open_post = np.nan
 
-        ov_i, intra_i, eo, _pr = day_legs(panel.open[i], panel.close[i], last_close)
+        ov_i, intra_i, eo, _pr = day_legs(
+            panel.open[i], panel.close[i], last_close, observed_open=strict_open,
+        )
         # overnight leg
         equity += float(h @ ov_i)
         h = h * (1.0 + ov_i)
@@ -468,6 +477,8 @@ def run_book(
         pending = None
         pending_decision = None
         last_close = np.where(priced[i], panel.close[i], last_close)
+        if strict_open:
+            last_close = np.where(~priced[i] & open_priced[i], panel.open[i], last_close)
 
         long_v, short_v, q_v, c_v = exposures(h, equity)
         c_prev, s_prev = c_v, short_v

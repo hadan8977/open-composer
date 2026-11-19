@@ -110,7 +110,10 @@ def fetch_alpaca_asset_metadata(*, include_inactive: bool = True) -> pd.DataFram
 def load_or_fetch_asset_metadata(
     cache_path: Path | str = DEFAULT_CACHE_PATH, *, refresh: bool = False
 ) -> pd.DataFrame:
-    """Load the cached metadata parquet, fetching and caching it once if absent."""
+    """Load a current asset snapshot, fetching and caching it once if absent.
+
+    The snapshot has no historical effective dates for names or classifications.
+    """
     path = Path(cache_path)
     if path.exists() and not refresh:
         return pd.read_parquet(path)

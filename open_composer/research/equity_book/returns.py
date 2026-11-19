@@ -57,7 +57,7 @@ class Legs:
 
 
 def day_legs(
-    open_row: np.ndarray, close_row: np.ndarray, last_close: np.ndarray
+    open_row: np.ndarray, close_row: np.ndarray, last_close: np.ndarray, *, observed_open=False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """One session of the return legs: ``(ov, intra, exec_open, priced)`` from the open/close rows
     and the last valid close of every symbol before this session (NaN if none).  The only place
@@ -67,8 +67,8 @@ def day_legs(
     has_open = np.isfinite(open_row) & (open_row > 0)
     with np.errstate(invalid="ignore", divide="ignore"):
         eo = np.where(has_open, open_row, last_close)
-        eo = np.where(priced, eo, np.nan)
-        ok_ov = priced & np.isfinite(last_close) & np.isfinite(eo)
+        eo = np.where(priced | (observed_open & has_open), eo, np.nan)
+        ok_ov = np.isfinite(last_close) & np.isfinite(eo)
         ov = np.where(ok_ov, eo / last_close - 1.0, 0.0)
         ok_in = priced & np.isfinite(eo)
         intra = np.where(ok_in, c / eo - 1.0, 0.0)

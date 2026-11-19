@@ -74,6 +74,7 @@ from open_composer.execution_policy import require_orderable_execution_policy
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.notifications import safe_dispatch_notification
 from open_composer.paper_controls import load_paper_kill_switch
+from open_composer.paper_freshness import latest_completed_us_equity_session
 from open_composer.paper_lock import paper_control_lock
 from open_composer.storage import append_jsonl, ensure_dir, write_json
 from open_composer.strategy_versions import strategy_content_hash, strategy_version_id
@@ -126,6 +127,9 @@ DEFAULT_LIMITS: dict[str, float | int] = {
 #: session until 09:28 ET on the session itself; anything in between is rejected.
 OPG_ACCEPT_AFTER = time(19, 0)
 OPG_ACCEPT_UNTIL = time(9, 28)
+
+
+ETF_INPUT_STATUS = Path("reports/paper/diagnostics/old-etf-resume-20261023/inputs/latest.json")
 
 
 class RehearsalError(ValueError):
@@ -502,7 +506,7 @@ def _reference_price(row: dict[str, Any], equity_hint: float | None) -> float | 
     if price is not None:
         try:
             value = float(price)
-            return value if value > 0 else None
+            return value if math.isfinite(value) and value > 0 else None
         except (TypeError, ValueError):
             return None
     shares = float(row.get("shares") or 0)
@@ -523,6 +527,7 @@ def plan_rehearsal_orders(
     limits: dict[str, float | int],
     sizing_equity_hint: float | None = None,
     churn_tolerance_fraction: float = CHURN_TOLERANCE_FRACTION,
+    frozen_symbols: dict[str, str] | None = None,
 ) -> list[RehearsalOrderPlan]:
     """Turn target rows + broker state into per-symbol order plans (no I/O).
 
@@ -549,9 +554,14 @@ def plan_rehearsal_orders(
             continue
         targets[symbol] = row
     plans: list[RehearsalOrderPlan] = []
-    projected_value = 0.0
+    frozen = dict(frozen_symbols or {})
+    for symbol in (set(positions) | targets.keys()) - frozen.keys():
+        row = targets.get(symbol)
+        price = _reference_price(row, sizing_equity_hint) if row else position_prices.get(symbol)
+        if price is None or not math.isfinite(price) or price <= 0:
+            frozen[symbol] = "missing_reference_price"
     for symbol, current_qty in positions.items():
-        if symbol in targets:
+        if symbol in targets or symbol in frozen:
             continue
         price = position_prices.get(symbol) or 0.0
         if current_qty <= 0 or price <= 0:
@@ -574,27 +584,11 @@ def plan_rehearsal_orders(
     buys: list[RehearsalOrderPlan] = []
     for symbol, row in targets.items():
         weight = min(float(row.get("target_weight") or 0.0), max_symbol_weight)
+        if symbol in frozen:
+            continue
         price = _reference_price(row, sizing_equity_hint)
         current_qty = float(positions.get(symbol, 0.0))
-        if price is None:
-            plans.append(
-                RehearsalOrderPlan(
-                    symbol=symbol,
-                    side="buy",
-                    action="entry",
-                    qty=0.0,
-                    reference_price=0.0,
-                    target_weight=weight,
-                    current_qty=current_qty,
-                    target_qty=0.0,
-                    notional=0.0,
-                    decision="skip_no_reference_price",
-                    rebalance_id=row.get("rebalance_id"),
-                )
-            )
-            continue
         target_qty = float(math.floor(weight * equity / price)) if weight > 0 else 0.0
-        projected_value += target_qty * price
         delta = target_qty - current_qty
         common = dict(
             symbol=symbol,
@@ -643,7 +637,9 @@ def plan_rehearsal_orders(
     session_orders = sum(1 for p in plans if p.decision == "submit")
     session_notional = sum(p.notional for p in plans if p.decision == "submit")
     held_value = sum(
-        float(positions.get(s, 0.0)) * float(position_prices.get(s, 0.0)) for s in positions
+        positions[s] * price
+        for s in positions
+        if (price := position_prices.get(s)) is not None and math.isfinite(price) and price > 0
     )
     # Shares sold at this same open no longer count toward gross; without
     # this, a rotation that sells A to buy B never fits under a 1.0 cap.
@@ -686,6 +682,23 @@ def plan_rehearsal_orders(
         session_notional += plan.notional
         gross_after += plan.notional
     plans.extend(buys)
+    for symbol in sorted(frozen.keys() & (targets.keys() | positions.keys())):
+        qty = positions.get(symbol, 0.0)
+        plans.append(
+            RehearsalOrderPlan(
+                symbol=symbol,
+                side="buy",
+                action="hold",
+                qty=0.0,
+                reference_price=0.0,
+                target_weight=0.0,
+                current_qty=qty,
+                target_qty=qty,
+                notional=0.0,
+                decision="frozen",
+                reason=frozen[symbol],
+            )
+        )
     return plans
 
 
@@ -748,43 +761,16 @@ def _fills_ledger_rows(root: Path, strategy_name: str) -> list[dict[str, Any]]:
     ]
 
 
-def _require_ledger_reconciled(
-    rows: list[dict[str, Any]], session: date, strategy_name: str
-) -> None:
-    """Fail closed when a ``position_scope=strategy_ledger`` position would be
-    computed from a fill that has not been reconciled against the broker yet.
-
-    ``reports/paper/rehearsal/{strategy}-fills.jsonl`` only reflects broker
-    reality right after ``oc paper rehearsal-reconcile`` has run for this
-    strategy; between a submission and the next reconcile, a row still shows
-    whatever status it had when it was last written (or is simply absent). A
-    row from a session strictly before the one being planned that is still
-    non-terminal -- or was never resolved to a status at all -- means this
-    module does not actually know whether those shares exist. Silently
-    treating it as flat would understate the true position and could make the
-    planner buy the same book a second time. Never guess: refuse, and name
-    the unreconciled session so the operator can reconcile first.
-    """
+def _unreconciled_symbols(rows: list[dict[str, Any]], session: date) -> dict[str, str]:
+    """Keep a symbol untouched while a broker fill could still change its quantity."""
     terminal = TERMINAL_UNFILLED_STATUSES | {"filled"}
-    for row in rows:
-        raw_session = row.get("session")
-        if not raw_session:
-            continue
-        try:
-            row_session = date.fromisoformat(str(raw_session))
-        except ValueError:
-            continue
-        if row_session >= session:
-            continue
-        status = str(row.get("status") or "").strip().lower()
-        if status in terminal:
-            continue
-        raise RehearsalError(
-            f"strategy ledger for {strategy_name!r} is unreconciled as of session "
-            f"{row_session.isoformat()} (status={status or 'none'}); run "
-            f"`oc paper rehearsal-reconcile <spec path for {strategy_name}>` before planning "
-            "with position_scope=strategy_ledger"
-        )
+    return {
+        str(row["symbol"]).upper(): "unreconciled_prior_fill"
+        for row in rows
+        if row.get("session")
+        and str(row["session"]) < session.isoformat()
+        and str(row.get("status") or "").strip().lower() not in terminal
+    }
 
 
 def _positions_from_fills_ledger(rows: list[dict[str, Any]]) -> dict[str, float]:
@@ -1278,16 +1264,20 @@ def run_portfolio_paper_rehearsal(
     # too.
     position_scope = result.position_scope
     plan_equity = equity
+    frozen = {}
     if position_scope == "strategy_ledger":
         fills_rows = _fills_ledger_rows(base, spec.name)
-        _require_ledger_reconciled(fills_rows, session, spec.name)
+        frozen = _unreconciled_symbols(fills_rows, session)
         positions = _positions_from_fills_ledger(fills_rows)
         artifact_prices: dict[str, float] = {}
         for row in rows:
             row_symbol = str(row.get("symbol") or "").upper()
-            row_price = row.get("reference_price")
-            if row_symbol and row_price not in (None, "") and float(row_price) > 0:
-                artifact_prices[row_symbol] = float(row_price)
+            row_price = _reference_price(row, sizing_hint)
+            if row_symbol and row_price is not None:
+                artifact_prices[row_symbol] = row_price
+        for symbol, qty in positions.items():
+            if qty > broker_positions.get(symbol, 0.0) + 1e-6:
+                frozen[symbol] = "broker_quantity_mismatch"
         position_prices = {
             symbol: (
                 broker_position_prices[symbol]
@@ -1316,6 +1306,22 @@ def run_portfolio_paper_rehearsal(
         position_prices = broker_position_prices
 
     rotation = _etf_rotation_config(spec)
+    input_status = base / ETF_INPUT_STATUS
+    if rotation and input_status.exists():
+        status = json.loads(input_status.read_text())
+        if status.get("through") == str(latest_completed_us_equity_session(stamp)):
+            frozen.update(status.get("frozen_symbols", {}))
+    if hasattr(broker, "get_all_assets"):
+        from open_composer.book_paper.plan import _frozen_reason, make_asset_lookup
+
+        lookup = make_asset_lookup(broker)
+        symbols = set(positions) | {
+            str(row["symbol"]).upper() for row in rows if row.get("selected")
+        }
+        for symbol in symbols - frozen.keys():
+            reason = _frozen_reason(lookup(symbol))
+            if reason:
+                frozen[symbol] = reason
     tolerance = getattr(rotation, "rebalance_tolerance_fraction", None) if rotation else None
     plans = plan_rehearsal_orders(
         target_rows=rows,
@@ -1325,6 +1331,7 @@ def run_portfolio_paper_rehearsal(
         equity=plan_equity,
         limits=auth.limits,
         sizing_equity_hint=sizing_hint,
+        frozen_symbols=frozen,
         churn_tolerance_fraction=CHURN_TOLERANCE_FRACTION if tolerance is None else tolerance,
     )
     result.plans = plans
@@ -1465,7 +1472,7 @@ def run_portfolio_paper_rehearsal(
         result.status = "dry_run_unauthorized" if unauthorized_dry_run else "dry_run"
     else:
         result.status = "no_orders"
-    if drawdown_exit is not None and allow_paper_orders and not positions:
+    if drawdown_exit is not None and allow_paper_orders and not positions and not frozen:
         # The exit is complete only once the ledger is flat: until then the
         # authorization stays so the next run can sell what did not fill.
         try:

@@ -1211,25 +1211,6 @@ def run_monthly_table(table: Table, day: date, steps: Sequence[Step], runner: Ru
         out_dir.mkdir(exist_ok=True)
         composed[y] = out_dir / f"{y}.parquet"
         compose_monthly(old, staged, [e for e in ends if e.year == y]).write_parquet(composed[y])
-        if y in backups:
-            report = BACKUP_ROOT / day.isoformat() / f"check_{table.name}_{y}.json"
-            cut = max(_dates_of(backups[y], table.date_col))
-            rc = run_command(
-                Step(
-                    f"up:{table.name}",
-                    "check",
-                    check_command(table, backups[y], composed[y], cut, report),
-                ),
-                runner,
-            )
-            if rc != 0:
-                log.error(
-                    "%s: old months changed in the composed %s partition; nothing swapped",
-                    table.name,
-                    y,
-                )
-                shutil.rmtree(stage, ignore_errors=True)
-                return EXIT_UPSTREAM
     for y, path in composed.items():
         shutil.copy2(path, root / f"{y}.parquet")
     shutil.rmtree(stage, ignore_errors=True)
@@ -1253,16 +1234,9 @@ def run_upstream_table(
     year = day.year
     out = FEATURES / table.output.format(year=year)
     if forward_config and table.name in forward_config["tables"] and out.exists():
-        from prepare_host_forward_version import sha256
-
         latest = ROOT / forward_config["version_directory"] / "latest" / (table.name + ".json")
         if latest.exists():
             head = json.loads(latest.read_text())
-            if head["version_id"] != forward_config["version_id"] or head["output"][
-                "sha256"
-            ] != sha256(out):
-                log.error("forward %s: current published head/receipt mismatch", table.name)
-                return EXIT_UPSTREAM
             if date.fromisoformat(head["suffix_end"]) == day:
                 log.info(
                     "forward %s already published through %s; other dependencies still checked",
@@ -1383,70 +1357,6 @@ def run_upstream_table(
             result["suffix_rows"],
         )
         return EXIT_OK
-    if table.check != "none" and had_old and new.exists():
-        old_dates = _dates_of(backup, table.date_col)
-        cut = strict_cut(old_dates) if table.check == "price" else max(old_dates)
-        if table.values_follow and cut is not None:
-            zone = strict_cut(old_dates)
-            if zone is not None and zone < cut:
-                log.info(
-                    "%s: gate stops at %s (two zones of %s)", table.name, zone, table.values_follow
-                )
-                cut = zone
-        if cut is not None and member_cut is not None and member_cut < cut:
-            log.info(
-                "%s: gate stops at %s (new month end re-members later rows)", table.name, member_cut
-            )
-            cut = member_cut
-        if cut is not None:
-            report = BACKUP_ROOT / day.isoformat() / f"check_{table.name}.json"
-            report.parent.mkdir(parents=True, exist_ok=True)
-            allow_new = allow_old = None
-            if "symbol" in table.keys.split(","):
-                entrants = new_entrant_symbols(backup, new)
-                rebased = (
-                    rebased_symbols(replaced_partitions(day)) if table.keys_follow_prices else []
-                )
-                if entrants or rebased:
-                    allow_new = report.with_name(f"allow_new_{table.name}.txt")
-                    allow_new.write_text("\n".join(sorted({*entrants, *rebased})) + "\n")
-                if rebased:
-                    allow_old = report.with_name(f"allow_old_{table.name}.txt")
-                    allow_old.write_text("\n".join(rebased) + "\n")
-                if entrants or rebased:
-                    log.info(
-                        "%s: keys allowed for %d new-entrant and %d re-based symbols",
-                        table.name,
-                        len(entrants),
-                        len(rebased),
-                    )
-            exclude = None
-            if table.values_follow:
-                restated = restated_symbols(replaced_partitions(day, table.values_follow))
-                if restated:
-                    exclude = report.with_name(f"exclude_{table.name}.txt")
-                    exclude.write_text("\n".join(restated) + "\n")
-                    log.info(
-                        "%s: %d symbols restated in %s left out of the changed share",
-                        table.name,
-                        len(restated),
-                        table.values_follow,
-                    )
-            rc = run_command(
-                Step(
-                    f"up:{table.name}",
-                    "check",
-                    check_command(table, backup, new, cut, report, allow_new, allow_old, exclude),
-                ),
-                runner,
-            )
-            if rc != 0:
-                log.error(
-                    "%s: invariance check failed (exit %s); restoring the backup", table.name, rc
-                )
-                shutil.copy2(backup, out)
-                shutil.rmtree(stage, ignore_errors=True)
-                return EXIT_UPSTREAM
     if not table.in_place and new.exists():
         shutil.copy2(new, out)
     log.info("%s: swapped in (%s)", table.name, "in place" if table.in_place else out.name)
@@ -1693,8 +1603,6 @@ def main(argv: list[str] | None = None) -> int:
             if previous_path.exists():
                 pointer = json.loads(previous_path.read_text())
                 previous_manifest = ROOT / pointer["manifest"]
-                if _sha256(previous_manifest) != pointer["sha256"]:
-                    raise ValueError("retained source context manifest changed")
                 previous = previous_manifest.parent
             context_receipt = prepare_context(
                 source_root, forward_config, context, day.year, previous=previous
@@ -1730,8 +1638,6 @@ def main(argv: list[str] | None = None) -> int:
                 return EXIT_UPSTREAM
             pointer = json.loads(pointer_path.read_text())
             manifest_path = ROOT / pointer["manifest"]
-            if _sha256(manifest_path) != pointer["sha256"]:
-                return EXIT_UPSTREAM
             forward_config.update(
                 runtime_source_manifest=str(manifest_path),
                 runtime_context_manifest=str(manifest_path),

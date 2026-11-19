@@ -61,6 +61,28 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 SHORT_INTEREST_ROOT = ROOT / "data" / "features" / "short_interest"
 
+
+def load_short_interest(root: Path = ROOT.parent / "market-data" / "derived", **kwargs):
+    """Use ``known_at < decision_at`` and ``visible_date`` for opening decisions.
+
+    Unknown revisions have null clocks. Check ``publication_date_source``
+    for estimated historical publication dates.
+    """
+    import pandas as pd
+
+    return pd.read_parquet(root / "short_interest.parquet", **kwargs)
+
+
+def load_short_volume(root: Path = ROOT.parent / "market-data" / "derived", **kwargs):
+    """FINRA off-exchange volume, known at publication-day end in New York.
+
+    The first eligible open is ``visible_date``.
+    """
+    import pandas as pd
+
+    return pd.read_parquet(root / "short_volume.parquet", **kwargs)
+
+
 #: Non-key feature columns of ``data/features/short_interest/{year}.parquet``,
 #: in table order. These five are the card's own list.
 SHORT_INTEREST_COLUMNS: tuple[str, ...] = (

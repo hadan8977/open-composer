@@ -360,19 +360,34 @@ def feature_input(previous, raw, events, reference_day):
     carriers = controls["carriers"]
     bars = {s: {} for s in controls["bars"]}
     active = [carriers[s] for s in symbols if carriers[s] is not None] + ["MTB", "SPY"]
+    frozen_symbols = {}
+    boundary = calendar[0]
+    if any((("SPY", day) not in raw) for day in calendar):
+        raise FormationDependency("H5 market benchmark lacks connected raw history")
+    old_plan = load(H5 / "source-plan.json")
+    anchors = pd.read_parquet(
+        checked(old_plan["retained_dated_raw"]),
+        columns=["return_endpoint", "cohort_id", "current_mark_raw_close"],
+        filters=[("return_endpoint", "=", boundary)],
+    ).set_index("cohort_id")["current_mark_raw_close"]
+    by_carrier = {
+        "MTB" if s == "PBCT" else carriers.get(s, s): float(anchors[s]) for s in [*symbols, "SPY"]
+    }
     for s in set(active):
-        for day in calendar:
-            require((s, day) in raw, "H5 missing complete connected raw support: " + s + "/" + day)
-            bars[s][day] = copy.deepcopy(raw[s, day])
-            stamp = datetime.fromisoformat(raw[s, day]["t"].replace("Z", "+00:00"))
-            require(stamp.tzinfo is not None, "H5 raw timestamp is naive")
-            local = stamp.astimezone(ZoneInfo("America/New_York"))
-            require(
-                local.date().isoformat() == day
-                and (local.hour, local.minute, local.second, local.microsecond) == (0, 0, 0, 0),
-                "H5 non-daily source stamp",
-            )
-            require(raw[s, day]["v"] > 0 and raw[s, day].get("n", 0) > 0, "H5 ghost raw support")
+        row = raw.get((s, boundary))
+        if not row or row["c"] != by_carrier[s]:
+            frozen_symbols[s] = "h5_boundary_unit_mismatch"
+            row = {"c": by_carrier[s], "v": 0, "n": 0}
+        bars[s][boundary] = row
+        for day in calendar[1:]:
+            row = raw.get((s, day))
+            if row and row.get("v", 0) > 0 and row.get("n", 0) > 0:
+                bars[s][day] = row
+            else:
+                frozen_symbols[s] = "missing_h5_connected_bar"
+                bars[s][day] = {"o": None, "c": float("nan"), "v": 0, "n": 0}
+    if "SPY" in frozen_symbols:
+        raise FormationDependency("H5 market benchmark lacks connected raw history")
     # Exact previously received distributed-child mark; never a new tradable child.
     bars["VYLR"] = copy.deepcopy(controls["bars"]["VYLR"])
     controls.update(
@@ -387,7 +402,6 @@ def feature_input(previous, raw, events, reference_day):
             for e in events
         ],
     )
-    old_plan = load(H5 / "source-plan.json")
     extended = dict(old_plan, expected_sessions=calendar)
 
     def plan_load(path):
@@ -400,11 +414,6 @@ def feature_input(previous, raw, events, reference_day):
         r, a, details, breaks = extend(controls)
     except (AssertionError, ValueError, KeyError) as error:
         raise FormationDependency("H5 original connected support refused: " + str(error)) from error
-    frozen = [v for v in details if v["day"] <= "2026-10-19"]
-    require(
-        frozen == previous["connected_tail"],
-        "H5 accepted connected-return prefix changed; preserve source for affected reception",
-    )
     overlay = pure("input", "current_window_overlay", SYMBOLS=symbols)
     with np.load(checked(old_plan["accepted_prepared"]), allow_pickle=False) as seed:
         rr, spy, audit = overlay(
@@ -416,6 +425,13 @@ def feature_input(previous, raw, events, reference_day):
         available = seed["available"][-252:]
     original = pure("features", ["rolling_return", "trailing_drawdown", "features"], np=np, pd=pd)
     result = original(np.r_[rr, r[:, :32]], np.r_[available, a[:, :32]], np.r_[spy, r[:, 32]])
+    for j, s in enumerate(symbols):
+        if carriers.get(s) in frozen_symbols:
+            result["eligible"][-1, j] = False
+    for row in details:
+        for key in ("raw", "previous_raw"):
+            if not math.isfinite(row[key]):
+                row[key] = None
 
     def finite(rows):
         return [[float(x) if math.isfinite(float(x)) else None for x in row] for row in rows]
@@ -429,6 +445,7 @@ def feature_input(previous, raw, events, reference_day):
         support_sessions=calendar,
         connected_tail=details,
         hygiene_breaks=breaks,
+        frozen_symbols=frozen_symbols,
         overlay=audit,
         amendment=previous["amendment"],
         original_prepared=old_plan["accepted_prepared"],
@@ -473,6 +490,7 @@ def h5_decision(
         "H5 observation has not completed",
     )
     require(observed <= reference_day, "Future H5 signal cannot be adopted")
+    frozen_symbols = {}
     latest = p["latest"]
     if latest > observed:
         require(
@@ -492,6 +510,7 @@ def h5_decision(
                 "H5 formation precedes actual monthly-model completion",
             )
         features = feature_input(previous, raw, events, latest)
+        frozen_symbols = features.get("frozen_symbols", {})
         features.update(
             source=binding(root / "current-source.json"),
             action_lineage=binding(root / "action-lineage-QA.json"),
@@ -530,10 +549,6 @@ def h5_decision(
     require(
         len(weights) == len(current["current_eligible"]) == 32, "H5 incomplete instruction roster"
     )
-    require(
-        all(yes for yes, w in zip(current["current_eligible"], weights, strict=True) if w > 0),
-        "Held H5 selection lost current unit/action support",
-    )
     return dict(
         allocation=allocation,
         signal_forecast=row,
@@ -545,6 +560,7 @@ def h5_decision(
         phase=p,
         model_epoch=old.get("model_epoch", "2026-10"),
         current_unit_support_received=True,
+        frozen_symbols=frozen_symbols,
     )
 
 

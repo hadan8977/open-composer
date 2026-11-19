@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -287,6 +288,32 @@ def _fetch_sec_filings(symbols: list[str]) -> list[EventRecord]:
                 )
             )
     return _dedupe_events(records)
+
+
+def sec_submission_tables(
+    filings: dict, *, start: str, read_page: Callable[[str], dict]
+) -> Iterator[dict]:
+    """Yield recent and historical SEC submissions arrays overlapping the start date."""
+    yield filings["recent"]
+    for page in filings["files"]:
+        if page["filingTo"] >= start:
+            yield read_page(page["name"])
+
+
+def download_sec_submissions(path: Path) -> None:
+    """Download the SEC bulk snapshot of the per-CIK submissions JSON and older pages."""
+    import httpx
+
+    url = "https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".part")
+    headers = {"User-Agent": _sec_user_agent()}
+    with httpx.stream("GET", url, headers=headers, timeout=120) as response:
+        response.raise_for_status()
+        with temporary.open("wb") as output:
+            for chunk in response.iter_bytes(1024 * 1024):
+                output.write(chunk)
+    temporary.replace(path)
 
 
 def _fetch_fred_series(series_ids: list[str]) -> list[EventRecord]:

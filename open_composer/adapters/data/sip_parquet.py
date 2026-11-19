@@ -46,7 +46,7 @@ def default_sip_root() -> Path:
 
 
 def load_sip_bars(
-    symbols: str | Iterable[str],
+    symbols: str | Iterable[str] | None,
     *,
     frequency: str = "daily",
     start: datetime | str | pd.Timestamp | None = None,
@@ -59,14 +59,15 @@ def load_sip_bars(
 
     UTC bounds are inclusive. The local view returns gaps as missing rows.
     Explicit roots keep frozen archive reads strict unless allow_missing is set.
+    Pass None to scan every symbol in the requested interval.
     """
     _validate_frequency(frequency)
     if adjustment not in ("all", "raw"):
         raise SipParquetError(f"unsupported SIP adjustment {adjustment!r}")
-    requested = sorted(
+    requested = None if symbols is None else sorted(
         {symbol.strip().upper() for symbol in ([symbols] if isinstance(symbols, str) else symbols)}
     )
-    if not requested or "" in requested:
+    if requested is not None and (not requested or "" in requested):
         raise SipParquetError("at least one nonblank symbol is required")
     start_ts = pd.to_datetime(start, utc=True)
     end_ts = pd.to_datetime(end, utc=True)
@@ -94,14 +95,22 @@ def load_sip_bars(
     parts = []
     for version, paths in sources:
         for path in paths:
-            stat = path.stat()
-            bounds = _symbol_range(path, stat.st_mtime_ns, stat.st_size)
-            if bounds is not None:
-                low, high = bounds
-                index = bisect_left(requested, low)
-                if index == len(requested) or requested[index] > high:
-                    continue
-            table = pq.read_table(path, filters=[("symbol", "in", requested)])
+            if requested is None:
+                filters = []
+                if start_ts is not None:
+                    filters.append(("timestamp", ">=", start_ts))
+                if end_ts is not None:
+                    filters.append(("timestamp", "<=", end_ts))
+            else:
+                stat = path.stat()
+                bounds = _symbol_range(path, stat.st_mtime_ns, stat.st_size)
+                if bounds is not None:
+                    low, high = bounds
+                    index = bisect_left(requested, low)
+                    if index == len(requested) or requested[index] > high:
+                        continue
+                filters = [("symbol", "in", requested)]
+            table = pq.read_table(path, filters=filters)
             if table.num_rows:
                 columns = (
                     *REQUIRED_COLUMNS,
@@ -112,9 +121,9 @@ def load_sip_bars(
 
     frame = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=RESULT_COLUMNS)
     frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
-    if start_ts is not None:
+    if start_ts is not None and requested is not None:
         frame = frame[frame["timestamp"] >= start_ts]
-    if end_ts is not None:
+    if end_ts is not None and requested is not None:
         frame = frame[frame["timestamp"] <= end_ts]
     frame = (
         frame.drop_duplicates(subset=["symbol", "timestamp"])
@@ -124,7 +133,7 @@ def load_sip_bars(
     for column in BAR_COLUMNS[2:]:
         frame[column] = pd.to_numeric(frame[column])
     frame["symbol"] = frame["symbol"].astype("string")
-    missing = sorted(set(requested) - set(frame["symbol"]))
+    missing = [] if requested is None else sorted(set(requested) - set(frame["symbol"]))
     if missing and not allow_missing:
         raise SipParquetError(
             f"no SIP {frequency} bars for {', '.join(missing)} in [{start_ts}, {end_ts}] under {directory}"

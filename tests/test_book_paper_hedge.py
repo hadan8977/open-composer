@@ -216,14 +216,14 @@ def test_max_name_weight_ignores_spy_and_sgov() -> None:
     assert checks["max_name_weight"]["passed"]
     assert checks["max_name_weight"]["value"] == pytest.approx(0.01)
     assert checks["gross_stock"]["passed"] and checks["net_dollar"]["passed"]
-    assert checks["exposures_complete"]["passed"]
 
 
-def test_core_leg_fails_when_the_tbill_leg_cannot_be_traded() -> None:
+def test_core_leg_is_frozen_when_it_cannot_be_traded() -> None:
     target = f1_target()
     client = client_for(*F1_SYMBOLS, positions={"SGOV": 1.5})  # fractional position is skipped
     plan = plan_for(target, client, limits=WIDE)
-    assert "core_leg" in failed_checks(plan)
+    assert "core_leg" not in failed_checks(plan)
+    assert any(row["symbol"] == "SGOV" for row in plan.payload["frozen"])
     assert plan.payload["fractional_held"] == ["SGOV"]
 
 

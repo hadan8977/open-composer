@@ -34,27 +34,21 @@ def received():
     )
 
 
-def test_full_history_accepts_and_missing_middle_rejects():
-    frame = received()
-    m.validate_received(frame, ["SPY"], datetime(2026, 10, 19, tzinfo=UTC), date(2026, 10, 22))
-    with pytest.raises(RuntimeError, match="Incomplete consumed"):
-        m.validate_received(
-            frame.drop(index=1), ["SPY"], datetime(2026, 10, 19, tzinfo=UTC), date(2026, 10, 22)
-        )
-
-
-def test_bad_prices_and_duplicate_reject():
-    frame = received()
-    frame.loc[0, "low"] = 12
-    with pytest.raises(RuntimeError, match="Unusable"):
-        m.validate_received(frame, ["SPY"], datetime(2026, 10, 19, tzinfo=UTC), date(2026, 10, 22))
-    with pytest.raises(RuntimeError, match="duplicate"):
-        m.validate_received(
-            pd.concat([received(), received().iloc[:1]]),
-            ["SPY"],
-            datetime(2026, 10, 19, tzinfo=UTC),
-            date(2026, 10, 22),
-        )
+def test_per_symbol_daily_history_freezes_leave_healthy_etfs():
+    valid = received().assign(symbol="QQQ")
+    start = datetime(2026, 10, 19, tzinfo=UTC)
+    expected = date(2026, 10, 22)
+    assert m.validate_received(received(), ["SPY"], start, expected) == {}
+    for bad, reason in [
+        (received().drop(index=1), "incomplete_daily_history"),
+        (received().assign(low=12), "invalid_daily_bar"),
+        (pd.concat([received(), received().iloc[:1]]), "incomplete_daily_history"),
+    ]:
+        assert m.validate_received(pd.concat([valid, bad]), ["QQQ", "SPY"], start, expected) == {
+            "SPY": reason,
+        }
+        with pytest.raises(RuntimeError, match="No usable ETF"):
+            m.validate_received(bad, ["SPY"], start, expected)
 
 
 def test_prior_month_signal_is_valid_but_stale_stop_marks_reject(tmp_path):

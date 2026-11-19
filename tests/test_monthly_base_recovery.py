@@ -82,11 +82,12 @@ def test_new_month_uses_new_BASE_and_same_causal_STATE_input(tmp_path, monkeypat
         signal_observation="2026-10-30", signal_application="2026-11-02",
         original_computed_at="2026-11-02T00:22:00+00:00",
         phase=dict(next_observation="2026-11-06", next_application="2026-11-09"),
-        model_epoch="2026-10", is_fresh_prediction=False, portfolio_action="hold"))
+        model_epoch="2026-10", is_fresh_prediction=False, portfolio_action="hold", frozen_symbols={}))
     marks = {s: 100.0 for s in symbols + hsymbols}
+    (packet / "frozen-symbols.json").write_text("{}")
     b, h = producer.prepare_core(packet, source,
         {("core", "raw-bars"): [dict(bars={})], ("core", "actions"): []}, {},
-        dict(BASE=(original, {}, None), H5=(previous_h5, {}, None)), [], {}, marks, {symbols[-1]}, lambda *a: [])
+        dict(BASE=(original, {}, None), H5=(previous_h5, {}, None)), [], {}, marks, {symbols[-1]: "missing_raw_reference_bar"})
     assert b["symbols"] == [symbols[26]] and b["weights"] == [0.2]
     assert b["held_model_origin"] == model_binding
     assert b["portfolio_action"] == "rebalance" and b["new_monthly_model_adoption"] is True

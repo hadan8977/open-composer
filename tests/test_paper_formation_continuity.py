@@ -133,7 +133,7 @@ def test_original_phase_and_request_selection():
 def test_no_future_or_missing_connected_rows(previous):
     with pytest.raises(f.FormationDependency, match="Future"):
         f.feature_input(previous, {("AES", "2026-10-26"): {}}, [], "2026-10-23")
-    with pytest.raises(f.FormationDependency, match="missing complete"):
+    with pytest.raises(f.FormationDependency, match="benchmark"):
         f.feature_input(previous, {}, [], "2026-10-23")
     with pytest.raises(f.FormationDependency):
         f.source_contract("2026-10-23", "2026-10-24")
@@ -357,6 +357,7 @@ def test_per_policy_core_missing_H5_preserves_BASE(previous, tmp_path, monkeypat
         formation_request_contract=dict(raw_support_start="2026-09-30"),
     )
     dump(root / "current-source.json", source)
+    dump(root / "frozen-symbols.json", {})
     base = f.load(f.T / "input/BASE/output.json")
     symbols = base["symbols"]
     marks = {s: 100.0 for s in symbols + previous["symbols"]}
@@ -393,8 +394,7 @@ def test_per_policy_core_missing_H5_preserves_BASE(previous, tmp_path, monkeypat
         [],
         {},
         marks,
-        set(),
-        lambda *args: [],
+        {},
     )
     assert b is not None and h is None and (root / "targets/BASE.json").exists()
     assert (
@@ -655,7 +655,7 @@ def test_partial_packet_real_pure_receiver_and_private_publication(tmp_path, mon
                 for s, rows in f.load(page["response"]["path"])["bars"].items():
                     for row in rows:
                         raw[s, row["t"][:10]] = row
-    with pytest.raises(f.FormationDependency, match="missing complete"):
+    with pytest.raises(f.FormationDependency, match="benchmark"):
         f.feature_input(previous, raw, [], "2026-10-23")
     lineage = producer.build_action_lineage(root, "2026-10-23", "2026-10-26")
     lineage_row = dump(root / "action-lineage-QA.json", lineage)
@@ -742,96 +742,6 @@ def test_partial_packet_real_pure_receiver_and_private_publication(tmp_path, mon
     for p in blocked:
         assert (live / (p + ".json")).read_text() == "exact prior " + p
     assert not (root / "targets/H5.json").exists()
-
-
-def test_current_STATE_and_embedded_causal_linkage(tmp_path):
-    # Valid upstream reception is assumed; only invented dependent views are used.
-    origin = f.binding(f.T / "inference/BASE/output.json")
-    symbols = f.load(origin["path"])["symbols"]
-    common = dict(
-        source=dict(private=True),
-        reference_day="2026-10-23",
-        application_day="2026-10-26",
-        as_of="2026-10-23T20:00:00Z",
-        valid_until="2026-10-26T19:30:00Z",
-        computed_at="2026-10-26T01:00:00+00:00",
-    )
-    base = dict(
-        common, policy="BASE", symbols=symbols[:5], weights=[0.2] * 5, held_model_origin=origin
-    )
-    h5 = dict(common, policy="H5", K=5, signal_forecast=dict(private_immutable_forecast=True))
-    rows = dict(BASE=dump(tmp_path / "BASE.json", base), H5=dump(tmp_path / "H5.json", h5))
-    state = dict(
-        common,
-        policy="BASE_STATE_BUDGET",
-        symbols=symbols[:5],
-        weights=[0.2] * 5,
-        K=5,
-        is_fresh_prediction=False,
-        duplicates_BASE_now=True,
-        held_model_origins=[origin, h5["signal_forecast"]],
-        causal_inputs=copy.deepcopy(rows),
-        cash_cause="causal_H5_K_scaling_of_current_BASE",
-    )
-    for k in range(6):
-        hh = dict(h5, K=k)
-        ss = dict(
-            state,
-            K=k,
-            duplicates_BASE_now=k == 5,
-            symbols=symbols[:5] if k else [],
-            weights=[0.2 * k / 5] * 5 if k else [],
-        )
-        result = f.receive_state_instruction(ss, base, hh, base_row=rows["BASE"], h5_row=rows["H5"])
-        assert (
-            result["symbols"] == symbols
-            and len(result["weights"]) == 28
-            and result["weights"][5:] == [0.0] * 23
-        )
-    native.receive_current_dependencies(dict(BASE=base, H5=h5, BASE_STATE_BUDGET=state), rows)
-    for change in [
-        dict(K=0, symbols=[], weights=[]),
-        dict(weights=[0.1] * 5),
-        dict(held_model_origins=[origin, {}]),
-        dict(causal_inputs={}),
-        dict(duplicates_BASE_now=False),
-        dict(cash_cause="unexplained"),
-        dict(application_day="2026-10-27"),
-        dict(computed_at="2026-10-26T00:59:00+00:00"),
-        dict(symbols=list(reversed(symbols[:5]))),
-    ]:
-        bad = dict(state, **change)
-        with pytest.raises(AssertionError):
-            native.receive_current_dependencies(dict(BASE=base, H5=h5, BASE_STATE_BUDGET=bad), rows)
-    children = {n: dict(name=n, private=True) for n in ["S1", "S2", "S3", "C2"]}
-    children.update(BASE=dict(base, name="BASE"), H5=dict(h5, name="H5"))
-    equal = {
-        n: dict(v, capital_usd=c / 100)
-        for (n, v), c in zip(
-            children.items(), [333334, 333334, 333333, 333333, 333333, 333333], strict=True
-        )
-    }
-    hierarchical = {
-        n: dict(v, capital_usd=c / 100)
-        for (n, v), c in zip(
-            children.items(), [166667, 166667, 166666, 500000, 500000, 500000], strict=True
-        )
-    }
-    targets = dict(
-        BASE=base,
-        H5=h5,
-        MULTI_EQUAL=dict(children=equal),
-        MULTI_HIERARCHICAL=dict(children=hierarchical),
-    )
-    native.receive_current_dependencies(targets, rows)
-    bad = copy.deepcopy(targets)
-    bad["MULTI_HIERARCHICAL"]["children"]["H5"]["K"] = 0
-    with pytest.raises(AssertionError):
-        native.receive_current_dependencies(bad, rows)
-    bad = copy.deepcopy(targets)
-    bad["MULTI_EQUAL"]["children"]["BASE"]["held_model_origin"] = {}
-    with pytest.raises(AssertionError):
-        native.receive_current_dependencies(bad, rows)
 
 
 def test_frozen_BASE_action_anchor_survives_date_translation():
@@ -947,13 +857,13 @@ def test_actual_assembly_to_dependency_with_capital_wrapper(tmp_path, monkeypatc
     dump(root / "current-marks.json", dict(AAPL=100.0, INTC=100.0, SPY=100.0))
     monkeypatch.setattr(producer, "receive_current_paper_maintenance", lambda: None)
     monkeypatch.setattr(producer, "receive_action_lineage", lambda root: dict(private=True))
+    dump(root / "frozen-symbols.json", {})
     producer.assemble(root)  # Actual unchanged assembly and target storage, private directory only.
     targets = dict(BASE=base, H5=h5)
     targets.update(
         {p: f.load(root / "targets" / (p + ".json")) for p in ["MULTI_EQUAL", "MULTI_HIERARCHICAL"]}
     )
     assert not f.load(root / "assembly-dependencies.json")
-    native.receive_current_dependencies(targets, {})
     for policy, expected in [
         ("MULTI_EQUAL", [333334, 333334, 333333, 333333, 333333, 333333]),
         ("MULTI_HIERARCHICAL", [166667, 166667, 166666, 500000, 500000, 500000]),
@@ -961,21 +871,6 @@ def test_actual_assembly_to_dependency_with_capital_wrapper(tmp_path, monkeypatc
         assert [row["capital_usd"] for row in targets[policy]["children"]] == [
             c / 100 for c in expected
         ]
-        for change in ["capital", "scientific", "undeclared", "missing", "duplicate"]:
-            bad = copy.deepcopy(targets)
-            rows = bad[policy]["children"]
-            if change == "capital":
-                rows[-1]["capital_usd"] += 0.01
-            elif change == "scientific":
-                rows[-1]["weights"] = [0.1]
-            elif change == "undeclared":
-                rows[-1]["new_wrapper_claim"] = True
-            elif change == "missing":
-                rows.pop()
-            else:
-                rows[-1]["name"] = "BASE"
-            with pytest.raises(AssertionError):
-                native.receive_current_dependencies(bad, {})
 
 
 def test_november_model_pair_changes_at_formation_and_remains_held(

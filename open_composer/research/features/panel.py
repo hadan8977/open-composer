@@ -28,16 +28,33 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Literal
 
 import duckdb
 import pandas as pd
 import pyarrow as pa
+
+from open_composer.adapters.data.sip_parquet import load_sip_bars
 
 ROOT = Path(__file__).resolve().parents[3]
 DAILY_FEATURES_ROOT = ROOT / "data" / "features" / "daily"
 LABELS_ROOT = ROOT / "data" / "features" / "labels"
 DEFAULT_MEMORY_LIMIT = "1GB"
 PRICE_COLUMNS: tuple[str, ...] = ("open", "close")
+
+
+def load_sip_daily_panel(
+    start: str, end: str, *, adjustment: Literal["raw", "all"] = "all"
+) -> pd.DataFrame:
+    """Read the archived daily SIP view on New York session dates.
+
+    These are bar dates. Use completed bars for next-session decisions and
+    restrict ALL prices to returns and internal execution accounting.
+    """
+    bars = load_sip_bars(None, start=start, end=end, adjustment=adjustment)
+    dates = bars.pop("timestamp").dt.tz_convert("America/New_York").dt.tz_localize(None)
+    bars["trade_date"] = dates.dt.normalize()
+    return bars.drop_duplicates(["symbol", "trade_date"])
 
 
 def _connect(memory_limit: str) -> duckdb.DuckDBPyConnection:

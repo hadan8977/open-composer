@@ -298,6 +298,7 @@ def _normalize_action_dates(
 def detect_price_breaks(
     close_wide: pd.DataFrame,
     *,
+    open_wide: pd.DataFrame | None = None,
     max_one_day_price_ratio: float = DEFAULT_MAX_ONE_DAY_PRICE_RATIO,
     max_gap_sessions: int = DEFAULT_MAX_GAP_SESSIONS,
     known_corporate_actions: Mapping[str, Collection[Any]] | None = None,
@@ -309,6 +310,10 @@ def detect_price_breaks(
     max_one_day_price_ratio]`` (``jump``) or which sit at least
     ``max_gap_sessions`` sessions apart in ``close_wide``'s own index
     (``gap``). A pair that is both is reported as a ``jump``.
+
+    With ``open_wide``, detect the boundary at the first price of the new
+    session when available. This lets next-open execution identify the
+    segment without reading the session's closing price.
 
     ``known_corporate_actions`` maps symbol -> dates explained by a real
     corporate-action feed; matching breaks are still reported but marked
@@ -328,7 +333,11 @@ def detect_price_breaks(
         valid = np.flatnonzero(np.isfinite(values) & (values > 0))
         if valid.size < 2:
             continue
-        ratios = values[valid[1:]] / values[valid[:-1]]
+        first_prices = values[valid[1:]]
+        if open_wide is not None:
+            opening = open_wide[symbol].to_numpy(dtype="float64")[valid[1:]]
+            first_prices = np.where(np.isfinite(opening) & (opening > 0), opening, first_prices)
+        ratios = first_prices / values[valid[:-1]]
         gaps = np.diff(valid)
         is_jump = (ratios > max_one_day_price_ratio) | (ratios < 1.0 / max_one_day_price_ratio)
         is_gap = gaps >= max_gap_sessions
@@ -387,6 +396,8 @@ def mask_regime_breaks(
     known_corporate_actions: Mapping[str, Collection[Any]] | None = None,
     corporate_action_feed: str | None = None,
     notes: Sequence[str] = (),
+    preserve_history: bool = False,
+    break_at_open: bool = False,
 ) -> tuple[list[pd.DataFrame | None], PriceHygieneReport]:
     """Blank each symbol's history up to and including its last *maskable*
     break (see :func:`_is_maskable`), in ``close_wide`` and in every frame of
@@ -397,21 +408,25 @@ def mask_regime_breaks(
     :func:`daily_returns_no_pad` refusing to invent the crossing return
     rather than by deleting history.
 
-    The inputs are never mutated: copies are returned, in the order
+    The inputs are never mutated: copies are returned unless preserve_history
+    requests the original frames, in the order
     ``[close_wide, *other_frames]`` (``None`` entries pass through as
     ``None`` so a close-only caller needs no special case).
     """
     detected = detect_price_breaks(
         close_wide,
+        open_wide=other_frames[0] if break_at_open else None,
         max_one_day_price_ratio=max_one_day_price_ratio,
         max_gap_sessions=max_gap_sessions,
         known_corporate_actions=known_corporate_actions,
     )
-    frames: list[pd.DataFrame | None] = [
-        None if frame is None else frame.copy() for frame in (close_wide, *other_frames)
+    frames = [
+        frame if preserve_history or frame is None else frame.copy()
+        for frame in (close_wide, *other_frames)
     ]
     index = pd.DatetimeIndex(close_wide.index)
     last_break: dict[str, PriceBreak] = {}
+    maskable = set()
     for break_ in detected:
         if not _is_maskable(
             break_,
@@ -419,11 +434,15 @@ def mask_regime_breaks(
             mask_gap_long_sessions=mask_gap_long_sessions,
         ):
             continue
+        maskable.add(break_)
         current = last_break.get(break_.symbol)
         if current is None or break_.first_session_after >= current.first_session_after:
             last_break[break_.symbol] = break_
     breaks = tuple(
-        dataclasses.replace(break_, masked=last_break.get(break_.symbol) is break_)
+        dataclasses.replace(
+            break_, masked=(break_ in maskable if preserve_history
+                            else last_break.get(break_.symbol) is break_)
+        )
         for break_ in detected
     )
 
@@ -434,6 +453,8 @@ def mask_regime_breaks(
         cutoff = index <= break_.last_session_before
         jump_symbols += break_.kind == "jump"
         gap_symbols += break_.kind == "gap"
+        if preserve_history:
+            continue
         for frame in frames:
             if frame is None or symbol not in frame.columns:
                 continue
@@ -495,9 +516,12 @@ def sanitize_price_matrices(
     mask_gap_long_sessions: int = DEFAULT_MASK_GAP_LONG_SESSIONS,
     known_corporate_actions: Mapping[str, Collection[Any]] | None = None,
     corporate_action_feed: str | None = None,
+    preserve_history: bool = False,
+    break_at_open: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame | None, PriceHygieneReport]:
     """``(close_wide, open_wide, report)`` with every symbol's pre-break
-    history blanked -- the one call a pricing path needs.
+    history blanked. With preserve_history, leave the frames intact and flag
+    every applicable break so a point-in-time consumer can segment forward.
     """
     frames, report = mask_regime_breaks(
         close_wide,
@@ -508,6 +532,8 @@ def sanitize_price_matrices(
         mask_gap_long_sessions=mask_gap_long_sessions,
         known_corporate_actions=known_corporate_actions,
         corporate_action_feed=corporate_action_feed,
+        preserve_history=preserve_history,
+        break_at_open=break_at_open,
     )
     masked_close, masked_open = frames
     assert masked_close is not None  # close_wide is never None

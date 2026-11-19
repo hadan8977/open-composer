@@ -84,6 +84,90 @@ adapter before using these daily statistics.
 
 ## Run a batch
 
+For a quick US stock screen, construct `ScreenData()` once and pass it to
+`run_daily_screen(data, decide, name=..., ledger=..., batch=...)` from
+`open_composer.research.equity_book.daily_screen`. The pre-open callback receives
+the prior observation date and its completed-bar cross-section indexed by
+`security_id`. The screen checks that each row's UTC `known_at` precedes the
+following regular open. By default the callback receives only `operating`
+and `adr` rows. Use `ScreenData(stock_only=False)` to inspect all SIP member
+types and select among them in the callback.
+Return signed target equity weights for the next session's open, an empty
+dict to flatten, or `None` to hold. `short_eligible` is the local borrow
+proxy available to the callback. The book uses 25 bp annual borrow for all
+shorts and charges the requested 10 and 20 bp per side separately. Use a
+deterministic rule because it is replayed at both costs.
+
+`trade_date` is the observation session, `known_at` is midnight New York time
+after the observation, and `session` is the next regular opening session.
+Membership uses observed SIP bars, including the available delisted archive.
+`security_type` uses the latest dated ticker–CIK observation available before
+the regular open. A date-only ticker link is available from the following
+New York midnight. Issuer evidence is timed by SEC filing acceptance and must
+also precede the open. Fund filings take precedence over foreign-issuer
+(20-F/6-K) and operating-company filings. Warrant, unit, right and preferred
+suffixes on the archived symbol take precedence and are known at the bar's
+`known_at`. `security_type_known_at` records the time the positive evidence
+became available. Rows with insufficient or ambiguous evidence are `unknown`
+with a null type timestamp. The foreign-issuer label includes foreign common
+shares and ADRs. Dated link coverage is incomplete and carried links can be
+stale when a ticker is reused. For a direct parquet read at the regular open,
+filter on `is_member`, `session` and the desired `security_type` values. A
+decision made earlier than the open also needs to check
+`security_type_known_at` against its own cutoff. `listing_date` is the first
+observed trade in the segment. An opening-price break, an ALL archive switch or 21 missing sessions
+can flag an old segment for simulated retirement at the following open, using
+its last mark. Returns and earnings gaps do not cross ALL archive versions. These
+rows and the ALL price levels used for execution accounting stay outside the
+callback. Missing RAW close and dollar volume stay null, and the trailing median
+requires 20 completed RAW bars. An order needs an observed opening price. The
+book ends on the last ALL close.
+
+Use SEC earnings `accepted_at` and Form 4 `known_at` for disclosure timing.
+`visible_date` gives the first eligible open. FINRA tables use publication
+day end as `known_at`, with unknown short-interest revisions left undated.
+Earnings gaps carry a scheduled-open timestamp for the opening feature and an
+overnight timestamp for the completed volume ratio. Intraday use of the gap
+requires an observed first trade. Market state is timed at the regular close,
+with FRED values from a prior observation of the currently published vintage.
+
+The two fixed calibration rules can be replayed with
+`.venv/Scripts/python.exe -m open_composer.research.equity_book.daily_screen calibrate`.
+Add `--all-securities` to calibrate the full SIP view. The `build` action
+materializes the parquet from local SIP archives, the existing SEC submissions
+snapshot and dated links. For calibration,
+each side is an equal-weight decile with 50% target gross exposure and
+assumed short availability. Turnover is cumulative traded notional over
+account equity at the fill. The top-five share uses the five largest
+positive realized closing-fill P&Ls over all positive realized closing-fill
+P&L, with entry/exit fees and excluding carry and synthetic exits.
+
+### Minute screen
+
+Call `run_minute_screen` in
+`open_composer.research.equity_book.minute_screen` with a `MinuteRule` and one
+row per `symbol, session` containing signed `side` (+1/-1), UTC `known_at` and
+`opening_half_spread_bp` estimated with `costs.half_spread_bp` from prior
+observations. Use a complete opening range or a limit trigger. The first
+eligible completed trigger submits for the exact next minute's RAW open. A
+limit requires that price or better. A breakout allows at most the declared
+adverse price guard. Entries cap at 1% of the trigger minute's volume. Stops
+win same-bar ties. Time exits use the final minute's close, or flag a stale
+mark when that minute is absent. Exits liquidate the position and flag any
+minute exit above the participation cap. Optional overnight holds use RAW
+daily bars and require observed continuation sessions.
+
+Replay the fixed earnings calibration with
+`.venv/Scripts/python.exe -m open_composer.research.equity_book.minute_screen calibrate`.
+It confirms the opening gap with the regular-session opening print, and uses
+the prior $20M trailing median-liquidity threshold and the dated stock-only
+view when present. One $100,000 account per cost view reserves gross entry
+notional against realized equity, with up to $10,000 per trade and assumed
+short availability. It charges 10/20 bp per side plus the modeled opening
+half-spread during the first 15 minutes. Reports use session-close equity
+drawdown and window-opening equity for returns. The two trade CSVs and summary
+JSON are recorded together in the daily screen's trial ledger.
+
 ```python
 from open_composer.lab import DSRConfig, Experiment, TrialLedger, Variant, run_batch
 

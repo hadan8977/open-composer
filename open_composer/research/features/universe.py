@@ -245,3 +245,168 @@ def universe_union_symbols(feature_root: Path | str, years: list[int] | None = N
     """
     panel = load_universe_panel(feature_root, years=years)
     return set(panel["symbol"].unique())
+
+
+
+def build_daily_sip_universe(stage: Path, output: Path) -> dict:
+    """Build the dated close observations and their next eligible execution session."""
+    from datetime import datetime, time, timedelta
+    from time import perf_counter
+
+    import numpy as np
+
+    from open_composer.research.equity_book.borrow import detect_reverse_splits, reverse_split_in_window
+    from open_composer.market_sessions import NEW_YORK, next_us_equity_session, us_equity_session_dates
+    from open_composer.research.features.panel import _connect, load_sip_daily_panel
+    from open_composer.research.features.price_hygiene import (
+        DEFAULT_MASK_GAP_LONG_SESSIONS,
+        drop_ghost_bars,
+        sanitize_price_matrices,
+    )
+    from open_composer.research.features.security_type import (
+        TYPED_MEMBERS,
+        register_security_evidence,
+    )
+
+    started = perf_counter()
+    stage.mkdir(parents=True, exist_ok=True)
+    for year in range(2016, datetime.now().year + 1):
+        for basis in ("all", "raw"):
+            if (stage / f"{basis}-{year}.parquet").exists():
+                continue
+            for start, end in (("01-01", "06-30"), ("07-01", "12-31")):
+                path = stage / f"{basis}-{year}-{start}.parquet"
+                if path.exists():
+                    continue
+                bars = load_sip_daily_panel(
+                    f"{year}-{start}", f"{year}-{end}T23:59:59Z", adjustment=basis,
+                )
+                bars = drop_ghost_bars(bars)
+                bars[["symbol", "trade_date", "open", "close", "volume", "source_version"]].to_parquet(
+                    path, index=False, row_group_size=65536,
+                )
+                del bars
+
+    pending = output.with_suffix(".partial")
+    with _connect("500MB") as con:
+        for view, basis in (("adj", "all"), ("raw", "raw")):
+            path = (stage / f"{basis}-*.parquet").as_posix()
+            con.execute(f"CREATE VIEW {view} AS SELECT * FROM read_parquet({path!r})")
+        first, last = con.sql(
+            "SELECT min(trade_date), max(trade_date) FROM adj WHERE symbol = 'SPY'"
+        ).fetchone()
+        sessions = us_equity_session_dates(first.date(), last.date())
+        dates = pd.DatetimeIndex(sessions)
+        members = pd.Index(con.sql("SELECT DISTINCT symbol FROM adj ORDER BY 1").fetchnumpy()["symbol"])
+        next_sessions = [next_us_equity_session(d) for d in sessions]
+        calendar = pd.DataFrame({
+            "trade_date": dates,
+            "session": pd.to_datetime(next_sessions),
+            "known_at": pd.to_datetime([
+                datetime.combine(d + timedelta(days=1), time(), NEW_YORK) for d in sessions
+            ], utc=True),
+            "decision_at": pd.to_datetime([
+                datetime.combine(d, time(9, 30), NEW_YORK) for d in next_sessions
+            ], utc=True),
+        })
+        con.register("calendar", calendar)
+        con.execute("""
+            CREATE TEMP TABLE joined AS
+            SELECT b.symbol, b.trade_date, b.open AS adjusted_open, b.close AS adjusted_close,
+                   r.open AS raw_open, r.close, r.close * r.volume AS dollar_volume,
+                   b.source_version
+            FROM adj b
+            LEFT JOIN raw r ON r.symbol = b.symbol AND r.trade_date = b.trade_date AND r.volume > 0
+            WHERE b.close > 0 AND b.trade_date IN (SELECT trade_date FROM calendar)
+            ORDER BY b.symbol, b.trade_date
+        """)
+        batches = []
+        for lo in range(0, len(members), 256):
+            keys = members[lo:lo + 256].tolist()
+            f = con.execute("""
+                SELECT * FROM joined WHERE symbol BETWEEN ? AND ? ORDER BY symbol, trade_date
+            """, [keys[0], keys[-1]]).df()
+            f["trade_date"] = f["trade_date"].astype("datetime64[ns]")
+            close = f.pivot(index="trade_date", columns="symbol", values="adjusted_close")
+            open_ = f.pivot(index="trade_date", columns="symbol", values="adjusted_open")
+            hygiene = sanitize_price_matrices(
+                close.reindex(dates), open_.reindex(dates), preserve_history=True, break_at_open=True,
+            )[2]
+            breaks = {(b.symbol, b.first_session_after) for b in hygiene.breaks if b.masked}
+            f["regime_start"] = [
+                (s, d) in breaks for s, d in zip(f.symbol, f.trade_date, strict=True)
+            ]
+            groups = f.groupby("symbol", sort=False)
+            previous_source = groups.source_version.shift()
+            f["regime_start"] |= previous_source.notna() & f.source_version.ne(previous_source)
+            f["regime"] = groups["regime_start"].cumsum()
+            f["security_id"] = f.symbol + "@" + f.regime.astype(str)
+            life = f.groupby("security_id", sort=False)
+            f["listing_date"] = life.trade_date.transform("first")
+            f["session_pos"] = dates.get_indexer(f.trade_date)
+            rows = f.session_pos.to_numpy()
+            ids = pd.Index(f.security_id.unique())
+            cols = ids.get_indexer(f.security_id)
+            shape = (len(dates), len(ids))
+            liquidity = pd.DataFrame(np.full(shape, np.nan))
+            liquidity.values[rows, cols] = f.dollar_volume
+            f["median_dollar_volume_20"] = liquidity.rolling(20).median().to_numpy()[rows, cols]
+            ro = pd.DataFrame(np.full(shape, np.nan))
+            rc = ro.copy()
+            ro.values[rows, cols], rc.values[rows, cols] = f.raw_open, f.close
+            rs = detect_reverse_splits(ro, rc)
+            f["reverse_split_252"] = reverse_split_in_window(rs).to_numpy()[rows, cols]
+            base = life.adjusted_close.transform("first")
+            f["adjusted_close"] = (100 * f.adjusted_close / base).astype("float32")
+            f["adjusted_open"] = (100 * f.adjusted_open / base).astype("float32")
+            f["last_trade_date"] = pd.NaT
+            f["is_member"] = True
+            exits = life.tail(1)[["symbol", "security_id", "listing_date", "trade_date", "session_pos"]].copy()
+            next_break = exits.symbol.eq(exits.symbol.shift(-1))
+            following = life.session_pos.first().shift(-1).reindex(exits.security_id).to_numpy()
+            expiry = exits.session_pos + DEFAULT_MASK_GAP_LONG_SESSIONS
+            exits["session_pos"] = np.where(next_break, np.minimum(expiry, following), expiry).astype(int)
+            exits = exits.loc[exits.session_pos < len(dates)].copy()
+            exits["last_trade_date"] = exits.trade_date
+            exits["trade_date"] = dates[exits.session_pos]
+            exits["is_member"] = False
+            fields = [
+                "trade_date", "symbol", "security_id", "close", "adjusted_open", "adjusted_close",
+                "dollar_volume", "median_dollar_volume_20", "reverse_split_252",
+                "listing_date", "last_trade_date", "is_member", "source_version",
+            ]
+            batch = stage / f"members-{lo}.parquet"
+            pd.concat([f, exits], ignore_index=True)[fields].to_parquet(batch, index=False)
+            batches.append(batch.as_posix())
+            del f, groups, life, close, open_, liquidity, ro, rc, rs
+
+        con.execute("DROP TABLE joined")
+        register_security_evidence(con, members)
+        con.execute(f"CREATE VIEW members AS SELECT * FROM read_parquet({batches!r})")
+        con.execute(f"""
+            COPY (
+                {TYPED_MEMBERS}
+                ORDER BY trade_date, security_id
+            ) TO {pending.as_posix()!r} (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 32768)
+        """)
+        report = con.execute("""
+            SELECT year(session) AS year, count(DISTINCT symbol) AS names,
+                   count(*) AS member_rows, count(close) AS raw_rows
+            FROM read_parquet(?) WHERE is_member AND session IS NOT NULL GROUP BY 1 ORDER BY 1
+        """, [str(pending)]).df().to_dict("records")
+        type_report = con.execute("""
+            SELECT year(session) AS year, security_type, count(*) AS member_rows,
+                   count(dollar_volume) AS raw_rows, sum(dollar_volume) AS dollar_volume
+            FROM read_parquet(?) WHERE is_member GROUP BY 1, 2 ORDER BY 1, 2
+        """, [str(pending)]).fetchall()
+        n_rows = con.execute("SELECT count(*) FROM read_parquet(?)", [str(pending)]).fetchone()[0]
+    pending.replace(output)
+    return {
+        "by_year": report,
+        "by_security_type": [
+            dict(year=year, security_type=kind, member_rows=rows, raw_rows=raw, dollar_volume=dollars)
+            for year, kind, rows, raw, dollars in type_report
+        ],
+        "symbols": len(members), "rows": n_rows, "first": str(dates[0].date()),
+        "last": str(dates[-1].date()), "build_seconds": perf_counter() - started,
+    }

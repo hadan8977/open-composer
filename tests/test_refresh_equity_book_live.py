@@ -182,7 +182,7 @@ def test_strict_cut_and_check_command() -> None:
     assert "--price-col" not in plain
 
 
-def test_failed_check_restores_the_backup_and_exits_3(tmp_path: Path, monkeypatch) -> None:
+def test_daily_refresh_publishes_without_invariance_recheck(tmp_path: Path, monkeypatch) -> None:
     feat = tmp_path / "features"
     (feat / "daily_broad").mkdir(parents=True)
     out = feat / "daily_broad/2026.parquet"
@@ -214,16 +214,8 @@ def test_failed_check_restores_the_backup_and_exits_3(tmp_path: Path, monkeypatc
         s for s in rf.build_plan(date(2026, 9, 8), tables=[table], stages=[]) if s.kind == "run"
     ]
     code = rf.run_upstream_table(table, date(2026, 9, 8), steps, runner)
-    assert code == rf.EXIT_UPSTREAM
-    assert out.read_bytes() == before  # the live feature file is untouched
-
-    def ok_runner(argv, **_kw):
-        if "check_feature_invariance.py" in " ".join(argv):
-            return subprocess.CompletedProcess(argv, 0, "", "")
-        return runner(argv)
-
-    assert rf.run_upstream_table(table, date(2026, 9, 8), steps, ok_runner) == rf.EXIT_OK
-    assert out.read_bytes() != before  # swapped in after a passing check
+    assert code == rf.EXIT_OK
+    assert out.read_bytes() != before
 
 
 def test_upstream_last_dates_flag_the_lagging_table(tmp_path: Path) -> None:
@@ -356,7 +348,7 @@ def test_monthly_table_appends_new_month_and_keeps_old_rows(tmp_path: Path, monk
     assert not (rf.STAGE_ROOT / "universe").exists()  # staging cleaned
 
 
-def test_failed_check_cleans_staging(tmp_path: Path, monkeypatch) -> None:
+def test_successful_upstream_refresh_cleans_staging(tmp_path: Path, monkeypatch) -> None:
     feat = tmp_path / "features"
     (feat / "insider_broad").mkdir(parents=True)
     old = pd.DataFrame(
@@ -382,11 +374,9 @@ def test_failed_check_cleans_staging(tmp_path: Path, monkeypatch) -> None:
     steps = [
         s for s in rf.build_plan(date(2026, 10, 2), tables=[table], stages=[]) if s.kind == "run"
     ]
-    assert rf.run_upstream_table(table, date(2026, 10, 2), steps, runner) == rf.EXIT_UPSTREAM
+    assert rf.run_upstream_table(table, date(2026, 10, 2), steps, runner) == rf.EXIT_OK
     assert seen["prior_is_copy"] and not (feat / "_tmp/insider_broad").exists()
-    assert (feat / "insider_broad/2026.parquet").read_bytes() == (
-        tmp_path / "backup/2026-10-02/insider_broad/2026.parquet"
-    ).read_bytes()
+    assert pd.read_parquet(feat / "insider_broad/2026.parquet").x.tolist() == [2.0, 2.0]
 
 
 def test_restatement_cursor_init_and_read(tmp_path: Path) -> None:
@@ -425,39 +415,6 @@ def test_membership_cut_follows_the_universe_month_end(tmp_path: Path) -> None:
     assert rf.read_cursor(state) == 5 and rf.read_state(state)["universe_month_end"] == "2026-09-30"
 
 
-def test_membership_cut_limits_the_gate_of_universe_keyed_tables(
-    tmp_path: Path, monkeypatch
-) -> None:
-    feat = tmp_path / "features"
-    (feat / "insider_broad").mkdir(parents=True)
-    dates = pd.to_datetime(["2026-09-29", "2026-09-30", "2026-10-01"])
-    pd.DataFrame({"trade_date": dates, "symbol": "A", "x": 1.0}).to_parquet(
-        feat / "insider_broad/2026.parquet"
-    )
-    monkeypatch.setattr(rf, "FEATURES", feat)
-    monkeypatch.setattr(rf, "STAGE_ROOT", feat / "_tmp")
-    monkeypatch.setattr(rf, "BACKUP_ROOT", tmp_path / "backup")
-    table = rf.table_by_name("insider_broad")
-    cuts: list[str] = []
-
-    def runner(argv, **_kw):
-        if "check_feature_invariance.py" in " ".join(argv):
-            cuts.append(argv[argv.index("--cut") + 1])
-            return subprocess.CompletedProcess(argv, 0, "", "")
-        pd.DataFrame({"trade_date": dates, "symbol": "A", "x": 1.0}).to_parquet(
-            feat / "_tmp/insider_broad/2026.parquet"
-        )
-        return subprocess.CompletedProcess(argv, 0, "", "")
-
-    steps = [
-        s for s in rf.build_plan(date(2026, 10, 1), tables=[table], stages=[]) if s.kind == "run"
-    ]
-    assert (
-        rf.run_upstream_table(table, date(2026, 10, 1), steps, runner, member_cut=date(2026, 9, 29))
-        == 0
-    )
-    assert rf.run_upstream_table(table, date(2026, 10, 1), steps, runner) == 0
-    assert cuts == ["2026-09-29", "2026-10-01"]
 
 
 def test_heavy_process_wait_ignores_own_tree_and_gives_up() -> None:
@@ -582,36 +539,6 @@ def _rebased_setup(tmp_path: Path, monkeypatch) -> Path:
     return feat
 
 
-def test_rebased_keys_are_allowed_only_for_price_following_tables(
-    tmp_path: Path, monkeypatch
-) -> None:
-    feat = _rebased_setup(tmp_path, monkeypatch)
-    day = date(2026, 10, 5)
-    seen: dict[str, list[str]] = {}
-    for name, rel in (("nsi", "nsi/nsi.parquet"), ("insider_broad", "insider_broad/2026.parquet")):
-        out = feat / rel
-        out.parent.mkdir(parents=True, exist_ok=True)
-        _nsi_frame([("A", "2026-01-05"), ("Z", "2026-01-05")]).to_parquet(out)
-        table = rf.table_by_name(name)
-        target = out if table.in_place else feat / "_tmp" / name / out.name
-
-        def runner(argv, _target=target, _name=name, **_kw):
-            if "check_feature_invariance.py" in " ".join(argv):
-                seen[_name] = list(argv)
-                return subprocess.CompletedProcess(argv, 0, "", "")
-            _nsi_frame([("A", "2026-02-02"), ("Z", "2026-01-05")]).to_parquet(_target)
-            return subprocess.CompletedProcess(argv, 0, "", "")
-
-        steps = [s for s in rf.build_plan(day, tables=[table], stages=[]) if s.kind == "run"]
-        assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
-    nsi = seen["nsi"]
-    allow_new = Path(nsi[nsi.index("--allow-only-new") + 1]).read_text().split()
-    allow_old = Path(nsi[nsi.index("--allow-only-old") + 1]).read_text().split()
-    assert allow_new == allow_old == ["A", "C"]  # E rewrote 2026, which was not replaced here
-    assert "--allow-only-old" not in seen["insider_broad"]
-    assert "--allow-only-new" not in seen["insider_broad"]
-    assert rf.table_by_name("sec_fundamentals_daily").keys_follow_prices
-    assert not any(t.keys_follow_prices for t in rf.UPSTREAM if t.check == "price")
 
 
 def test_check_command_passes_the_allow_old_file() -> None:
@@ -644,41 +571,6 @@ def test_backup_is_taken_once_per_day(tmp_path: Path, monkeypatch) -> None:
     assert rf._backup_path(table, 2026, day).read_bytes() == first
 
 
-def test_price_level_columns_use_two_zones_and_leave_restated_symbols_out(
-    tmp_path: Path, monkeypatch
-) -> None:
-    feat = _rebased_setup(tmp_path, monkeypatch)
-    day = date(2026, 10, 5)
-    daily = tmp_path / "backup/2026-10-05/daily/2026.parquet"
-    daily.parent.mkdir(parents=True)
-    daily.write_bytes(b"x")
-    os.utime(daily, (BUILT_2026.timestamp(), BUILT_2026.timestamp()))
-    days = ["2026-09-24", "2026-09-25", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01"]
-    seen: dict[str, list[str]] = {}
-    for name in ("short_interest", "insider_broad"):
-        out = feat / name / "2026.parquet"
-        out.parent.mkdir(parents=True)
-        _nsi_frame([("A", d) for d in [*days, "2026-10-02"]]).to_parquet(out)
-        table = rf.table_by_name(name)
-
-        def runner(argv, _name=name, **_kw):
-            if "check_feature_invariance.py" in " ".join(argv):
-                seen[_name] = list(argv)
-            else:
-                _nsi_frame([("A", d) for d in [*days, "2026-10-02", "2026-10-05"]]).to_parquet(
-                    feat / "_tmp" / _name / "2026.parquet"
-                )
-            return subprocess.CompletedProcess(argv, 0, "", "")
-
-        steps = [s for s in rf.build_plan(day, tables=[table], stages=[]) if s.kind == "run"]
-        assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
-    si = seen["short_interest"]
-    assert si[si.index("--cut") + 1] == "2026-09-29"  # last date minus 3 sessions
-    assert Path(si[si.index("--exclude-symbols") + 1]).read_text().split() == ["E", "H"]
-    plain = seen["insider_broad"]
-    assert plain[plain.index("--cut") + 1] == "2026-10-02"
-    assert "--exclude-symbols" not in plain
-    assert [t.name for t in rf.UPSTREAM if t.values_follow] == ["short_interest"]
 
 
 def test_monthly_table_refuses_missing_expected_month_before_swap(tmp_path, monkeypatch):

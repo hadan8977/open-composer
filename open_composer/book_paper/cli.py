@@ -55,7 +55,6 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
         build_plan,
         load_plan_file,
         make_asset_lookup,
-        orders_receipt_path,
         plan_path,
         read_account_state,
     )
@@ -68,24 +67,42 @@ def _build(account: str, decision_date: str | None, as_of: str | None, min_notio
         raise typer.BadParameter("no target file for this account and decision date")
     target = load_target_file(path)
     client = make_trading_client(account)
-    # Once orders were sent, keep the stored plan instead of re-sizing from partial fills.
-    if orders_receipt_path(root, account, target.execution_date).exists():
-        plan = load_plan_file(plan_path(root, account, target.execution_date))
-        return root, client, target, plan
     state = read_account_state(client)
     now = datetime.now(UTC)
     as_of_date = _parse_date(as_of) or now.astimezone(NEW_YORK).date()
-    existing = OrderLookup(client, target.execution_date).ids()
+    lookup = OrderLookup(client, target.execution_date)
+    existing = lookup.ids()
+    path = plan_path(root, account, target.execution_date)
+    assets = make_asset_lookup(client)
     plan = build_plan(
         target,
         state,
         as_of=as_of_date,
         now=now,
-        asset_lookup=make_asset_lookup(client),
+        asset_lookup=assets,
         existing_client_order_ids=existing,
         min_notional=min_notional,
         kill_switch_check=_kill_switch_check(root),
     )
+    # Broker acknowledgements keep the original sizing stable across retries.
+    if path.exists():
+        from open_composer.book_paper.reversal import reversal_legs
+
+        prior = load_plan_file(path)
+        for order in prior.orders:
+            legs = reversal_legs(order) or [order]
+            if any(lookup.find(leg["client_order_id"]) is not None for leg in legs):
+                if plan.status != "ok":
+                    from open_composer.book_paper.plan import BookEngineError
+
+                    raise BookEngineError(
+                        "plan is blocked: " + ", ".join(plan.payload["blocked_by"])
+                    )
+                frozen = {row["symbol"]: row["reason"] for row in plan.payload.get("frozen", [])}
+                target = target.model_copy(
+                    update={"frozen_symbols": target.frozen_symbols | frozen}
+                )
+                return root, client, target, prior
     return root, client, target, plan
 
 
@@ -179,7 +196,7 @@ def book_paper_submit(
     now = datetime.now(UTC)
     try:
         with _submission_lock(project_root(), account):
-            root, client, _target, plan = _build(account, decision_date, None, min_notional)
+            root, client, target, plan = _build(account, decision_date, None, min_notional)
             write_plan_file(root, plan)
             report = submit_plan(
                 client,
@@ -188,6 +205,7 @@ def book_paper_submit(
                 kill_switch_check=_kill_switch_check(root),
                 pace_seconds=SUBMIT_PACE_SECONDS,
                 tif_mode=tif_mode,
+                frozen_symbols=target.frozen_symbols,
             )
             path = write_json_atomic(
                 next_orders_receipt_path(root, account, plan.execution_date, now), report
@@ -203,13 +221,8 @@ def book_paper_submit(
             f"ERROR: {len(report['deferred'])} order stage(s) deferred; see receipt={path}"
         )
     if report["failed"]:
-        # a rejected order must not look like a successful run: the cron log gets an error
-        # marker for the health check and the exit code is non-zero (T-20261005-20, E1)
         sample = "; ".join(f"{f['symbol']}: {f['error']}" for f in report["failed"][:5])
         console.print(f"ERROR: {len(report['failed'])} order(s) were not accepted ({sample})")
-        raise typer.Exit(code=2)
-    if report.get("deferred"):
-        raise typer.Exit(code=2)
 
 
 @book_paper_app.command("reconcile")

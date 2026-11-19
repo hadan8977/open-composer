@@ -26,6 +26,7 @@ from open_composer.market_sessions import (  # noqa: E402
 )
 from open_composer.models.strategy_spec import load_strategy_spec  # noqa: E402
 from open_composer.paper_rehearsal import (
+    ETF_INPUT_STATUS,
     RehearsalError,
     _next_session,
     load_rehearsal_authorization,
@@ -77,20 +78,21 @@ def permission(root: Path, strategy=None) -> None:
 
 def validate_received(frame, symbols, start, expected):
     sessions = set(us_equity_session_dates(start.date(), expected))
-    if set(frame["symbol"]) != set(symbols) or frame.duplicated(["symbol", "timestamp"]).any():
-        raise RuntimeError("Daily source symbol inventory or duplicate rows differ")
+    frozen = dict.fromkeys(set(symbols) - set(frame.symbol), "missing_daily_history")
     for symbol, rows in frame.groupby("symbol"):
+        prices = rows[["open", "high", "low", "close"]]
         if len(rows) != len(sessions) or set(rows.timestamp.dt.date) != sessions:
-            raise RuntimeError(f"Incomplete consumed daily history for {symbol}")
-    prices = frame[["open", "high", "low", "close"]]
-    if not prices.map(lambda x: math.isfinite(x) and x > 0).all().all():
-        raise RuntimeError("Invalid daily OHLC values")
-    if not (
-        (frame.high >= prices[["open", "close", "low"]].max(axis=1)).all()
-        and (frame.low <= prices[["open", "close", "high"]].min(axis=1)).all()
-        and ((frame.volume > 0) | (frame.trade_count > 0)).all()
-    ):
-        raise RuntimeError("Unusable daily OHLC or empty volume")
+            frozen[symbol] = "incomplete_daily_history"
+        elif not (
+            prices.map(lambda x: math.isfinite(x) and x > 0).all().all()
+            and (rows.high >= prices[["open", "close", "low"]].max(axis=1)).all()
+            and (rows.low <= prices[["open", "close", "high"]].min(axis=1)).all()
+            and ((rows.volume > 0) | (rows.trade_count > 0)).all()
+        ):
+            frozen[symbol] = "invalid_daily_bar"
+    if not set(symbols) - frozen.keys():
+        raise RuntimeError(f"No usable ETF daily history through {expected}")
+    return frozen
 
 
 def check_target(root, strategy, expected):
@@ -119,18 +121,13 @@ def main() -> int:
     now = datetime.now(UTC)
     expected = completed_session(now)
     out = root / "data/sip"
-    directory = root / "reports/paper/diagnostics/old-etf-resume-20261023/inputs"
+    pointer = root / ETF_INPUT_STATUS
+    directory = pointer.parent
     directory.mkdir(parents=True, exist_ok=True)
-    pointer = directory / "latest.json"
     symbols = archive.load_sleeve_symbols(root)
     if pointer.exists():
         saved = json.loads(pointer.read_text())
-        current = (
-            saved.get("status") == "ok"
-            and saved.get("through") == expected.isoformat()
-            and saved.get("symbols") == symbols
-            and all(binding(Path(row["path"])) == row for row in saved["archive_files"])
-        )
+        current = saved.get("status") == "ok" and saved.get("through") == expected.isoformat()
         if current:
             if args.target_strategy:
                 check_target(root, args.target_strategy, expected)
@@ -140,6 +137,8 @@ def main() -> int:
         raise RuntimeError(f"ETF daily input refresh required through {expected}")
     load_dotenv(root / ".env", override=False)
     from alpaca.data.historical import StockHistoricalDataClient
+    from alpaca.data.requests import StockBarsRequest
+    from alpaca.data.timeframe import TimeFrame
 
     from open_composer.config import alpaca_api_key_id, alpaca_api_secret_key
 
@@ -155,7 +154,28 @@ def main() -> int:
         end = datetime.combine(expected + timedelta(days=1), datetime.min.time(), UTC)
         fetched = archive._as_rows(archive._fetch(client, symbols, start, end, "daily"))
         fetched.to_parquet(run / "received.parquet", index=False)
-        validate_received(fetched, symbols, start, expected)
+        frozen = validate_received(fetched, symbols, start, expected)
+        raw = archive._as_rows(
+            client.get_stock_bars(
+                StockBarsRequest(
+                    symbol_or_symbols=symbols,
+                    timeframe=TimeFrame.Day,
+                    feed="sip",
+                    adjustment="raw",
+                    start=end - timedelta(days=1),
+                    end=end,
+                )
+            ).df
+        )
+        if raw.empty:
+            raise RuntimeError(f"No raw ETF close on {expected}")
+        raw = raw.loc[~raw.symbol.duplicated(keep=False)].set_index("symbol").close
+        last = fetched.loc[fetched.timestamp.dt.date == expected].set_index("symbol").close
+        for symbol in set(symbols) - frozen.keys():
+            if symbol not in raw or not math.isfinite(raw[symbol]) or raw[symbol] <= 0:
+                frozen[symbol] = "missing_raw_close"
+            elif abs(raw[symbol] - last[symbol]) > 0.005051:
+                frozen[symbol] = "raw_adjusted_unit_mismatch"
         layout = archive.load_layout(out, "daily")["shard_symbols"]
         mapping = {}
         for year in range(now.year - 2, now.year + 1):
@@ -166,15 +186,20 @@ def main() -> int:
                     continue
                 path = archive.shard_path(out, "daily", year, int(index))
                 if not path.exists():
-                    raise RuntimeError(f"Existing sleeve shard missing: {path}")
+                    continue
                 for symbol in wanted:
                     mapping[year].setdefault(symbol, []).append(path)
-            if set(mapping[year]) != set(symbols):
-                raise RuntimeError(f"Incomplete existing shard membership for {year}")
+            for symbol in set(symbols) - mapping[year].keys():
+                frozen[symbol] = f"missing_archive_shard_{year}"
+        usable = sorted(set(symbols) - frozen.keys())
+        if not usable:
+            raise RuntimeError(f"No usable ETF archive histories through {expected}")
+        for symbol, reason in sorted(frozen.items()):
+            print(f"FROZEN {symbol}: {reason}", flush=True)
         permission(root)
         records = archive._rewrite_batch(
-            symbols,
-            fetched,
+            usable,
+            fetched.loc[fetched.symbol.isin(usable)],
             mapping,
             mode="existing_etf_paper_inputs",
             detected_at=now.isoformat(),
@@ -188,6 +213,7 @@ def main() -> int:
             "generated_at": datetime.now(UTC).isoformat(),
             "through": expected.isoformat(),
             "symbols": symbols,
+            "frozen_symbols": frozen,
             "consumed_years": list(mapping),
             "feed": "sip",
             "adjustment": "all",

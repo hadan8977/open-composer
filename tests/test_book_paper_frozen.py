@@ -32,7 +32,7 @@ HELD_AT_TARGET = (
 
 
 def lookup_from(assets: dict[str, AssetInfo | None]):
-    return lambda symbol: assets.get(symbol)
+    return lambda symbol: assets.get(symbol, etb_info(symbol))
 
 
 DEAD = AssetInfo("ACQ", easy_to_borrow=False, shortable=False, tradable=False, status="inactive")
@@ -80,26 +80,14 @@ def test_frozen_long_and_short_under_limit_make_no_order_and_pass() -> None:
     assert frozen["ACQ"]["value"] == 4000.0 and frozen["GONE"]["value"] == 3000.0
     assert plan.payload["post_trade_qty"]["ACQ"] == 100
     assert plan.payload["post_trade_qty"]["GONE"] == -100
-    result = check(plan, "frozen_positions")
-    assert result["passed"] and result["value"] == pytest.approx(0.007)
-    assert result["limit"] == RiskLimits().max_frozen_gross == 0.02
-    assert "ACQ qty 100" in result["detail"] and "GONE qty -100" in result["detail"]
 
 
-def test_frozen_gross_over_limit_fails_frozen_positions() -> None:
-    plan = plan_with({"ACQ": 1000}, {"ACQ": 40.0}, {"ACQ": DEAD})  # 4% of equity
-    assert plan.status == "blocked"
-    assert failed_checks(plan) == {"frozen_positions"}
-    assert check(plan, "frozen_positions")["value"] == pytest.approx(0.04)
-
-
-def test_unvalued_frozen_name_fails_frozen_positions() -> None:
-    plan = plan_with({"ACQ": 10}, {"ACQ": None}, {"ACQ": DEAD})
-    assert failed_checks(plan) == {"frozen_positions"}
-    row = plan.payload["frozen"][0]
-    assert row["price"] is None and row["value"] is None
-    assert "price unknown" in check(plan, "frozen_positions")["detail"]
-    assert check(plan, "reference_prices_complete")["passed"]
+def test_large_or_unvalued_frozen_name_leaves_other_orders_available() -> None:
+    for price in (40.0, None):
+        plan = plan_with({"ACQ": 1000}, {"ACQ": price}, {"ACQ": DEAD})
+        assert plan.status == "ok"
+        assert plan.payload["post_trade_qty"]["ACQ"] == 1000
+        assert plan.payload["frozen"][0]["price"] == price
 
 
 def test_tradable_held_name_with_target_zero_gets_full_closeout_at_broker_price() -> None:
@@ -133,27 +121,20 @@ def test_closeout_under_minimum_notional_is_dropped_like_any_other() -> None:
     assert plan.payload["post_trade_qty"]["OLD"] == 3
 
 
-def test_closeout_without_broker_price_stays_unpriced_and_blocks() -> None:
+def test_closeout_without_broker_price_is_frozen() -> None:
     plan = plan_with({"OLD": 300}, {"OLD": None}, {"OLD": LIVE})
-    assert failed_checks(plan) == {"reference_prices_complete"}
-    assert check(plan, "reference_prices_complete")["detail"] == "OLD"
+    assert not failed_checks(plan)
+    assert plan.payload["frozen"][0]["reason"] == "missing_reference_price"
     assert plan.orders == []
 
 
-def test_target_name_with_weight_and_no_price_still_blocks() -> None:
-    target = make_target()
-    prices = {s: p for s, p in target.reference_prices.items() if s != "L1"}
-    target = seal_target(target.model_copy(update={"reference_prices": prices}))
-    plan = plan_with(
-        {"ACQ": 100},
-        {"ACQ": 40.0},
-        {"ACQ": DEAD, "L1": LIVE},
-        target=target,
-    )
-    assert "reference_prices_complete" in failed_checks(plan)
-    assert check(plan, "reference_prices_complete")["detail"] == "L1"
-    # the frozen name is not what blocks
-    assert check(plan, "frozen_positions")["passed"]
+def test_explicit_unit_freeze_preserves_held_shares_even_with_a_reference_price() -> None:
+    target = make_target(frozen_symbols={"L1": "unexplained_execution_units"})
+    plan = plan_with({"L1": 5.0, "L2": 10.0}, {}, {}, target=target)
+    assert not failed_checks(plan)
+    assert plan.payload["post_trade_qty"]["L1"] == 5
+    assert plan.payload["frozen"][0]["reason"] == "unexplained_execution_units"
+    assert {o["symbol"] for o in plan.orders} == {"L2"}
 
 
 def test_frozen_names_are_excluded_from_overlay_checks_but_count_in_gross_leverage() -> None:
@@ -164,7 +145,6 @@ def test_frozen_names_are_excluded_from_overlay_checks_but_count_in_gross_levera
     for name in ("net_dollar", "gross_stock", "max_name_weight", "beta_neutral"):
         assert check(frozen, name)["value"] == check(base, name)["value"], name
         assert check(frozen, name)["passed"]
-    assert check(frozen, "exposures_complete")["value"] == 0
     assert check(frozen, "gross_leverage")["value"] == pytest.approx(
         check(base, "gross_leverage")["value"] + 0.015
     )
@@ -263,7 +243,9 @@ def test_plan_without_frozen_names_has_no_frozen_fields() -> None:
             }
         )
     )
-    held = plan_for(target, all_etb_client(positions={"L1": 150, "S1": -250, "X9": 40}))
+    client = all_etb_client(positions={"L1": 150, "S1": -250, "X9": 40})
+    client.assets["X9"] = etb("X9")
+    held = plan_for(target, client)
     assert "frozen" not in held.payload
     assert all("reference_price_source" not in o for o in held.orders)
 

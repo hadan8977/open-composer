@@ -532,7 +532,10 @@ def process_restatements(
     records = rewrite_full_history(
         data_client, out, ordered, now=now, mode="update", max_rel_diff=diffs, deadline=deadline
     )
-    done = {record["symbol"] for record in records}
+    done = {
+        record["symbol"] for record in records
+        if not record["refetch_empty"] and not record["rows_without_shard"]
+    }
     remaining = {symbol: diffs[symbol] for symbol in ordered if symbol not in done}
     _write_pending(out, remaining, now=now)
     if remaining:

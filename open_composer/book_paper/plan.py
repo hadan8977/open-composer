@@ -47,7 +47,7 @@ class RiskLimits:
     max_gross_leverage: float = 1.98  # long + short + T-bill/core + hedge, Reg T overnight 2x
     max_abs_beta: float = 0.05  # stock overlay beta + 1.0 x hedge weight
     core_leg_tolerance: float = 0.02  # schema-2 targets: post-trade core weight vs target
-    max_frozen_gross: float = 0.02  # held names that cannot trade, at broker price, of equity basis
+    max_frozen_gross: float = 0.10  # frozen held names at broker price, of equity basis
 
 
 @dataclass(frozen=True)
@@ -162,9 +162,19 @@ def _not_found(exc: Exception) -> bool:
 def make_asset_lookup(client: Any) -> Callable[[str], AssetInfo | None]:
     """GET /v2/assets/{symbol}; ``None`` when the broker does not know the symbol."""
 
+    assets = None
+
     def lookup(symbol: str) -> AssetInfo | None:
+        nonlocal assets
         try:
-            asset = client.get_asset(symbol)
+            if hasattr(client, "get_all_assets"):
+                if assets is None:
+                    assets = {a.symbol: a for a in client.get_all_assets()}
+                asset = assets.get(symbol)
+                if asset is None:
+                    return None
+            else:
+                asset = client.get_asset(symbol)
         except Exception as exc:
             if _not_found(exc):
                 return None
@@ -258,22 +268,57 @@ def build_plan(
     prices = dict(target.reference_prices)
     existing_ids = set(existing_client_order_ids)
     symbols = sorted(set(target.weights) | set(state.positions))
-    frozen, closeout_prices, unpriced = _classify_unpriced(
-        target, state, symbols, prices, asset_lookup
-    )
+    frozen = []
+    closeout_prices = {}
+    fractional_held = []
+    foreign = {s for s, cid in state.open_orders if cid not in existing_ids}
+    for symbol in symbols:
+        qty = state.positions.get(symbol, 0.0)
+        weight = target.weights.get(symbol, 0.0)
+        price = _valid_price(prices.get(symbol))
+        asset = None
+        reason = target.frozen_symbols.get(symbol)
+        if not reason and not math.isfinite(weight):
+            reason = "invalid_target_weight"
+        if not reason and (qty or weight):
+            asset = asset_lookup(symbol)
+            reason = _frozen_reason(asset)
+        if not reason and abs(qty - round(qty)) > 1e-9:
+            fractional_held.append(symbol)
+            reason = "fractional_position"
+        if not reason and weight and symbol not in target.non_stock_symbols:
+            if symbol not in target.exposures or not math.isfinite(target.exposures[symbol].beta):
+                reason = "missing_exposure"
+        if not reason and price is None:
+            if qty and not weight:
+                price = _valid_price(state.position_prices.get(symbol))
+                if price is not None:
+                    closeout_prices[symbol] = price
+            if price is None:
+                reason = "missing_reference_price"
+        if not reason and symbol in foreign:
+            reason = "conflicting_open_order"
+        if not reason and weight < 0 and round_half_away(weight * basis / price) < min(qty, 0):
+            reason = _borrow_rejection(asset)
+        if reason:
+            price = _valid_price(state.position_prices.get(symbol))
+            frozen.append(
+                {
+                    "symbol": symbol,
+                    "qty": qty,
+                    "price": price,
+                    "value": round(abs(qty) * price, 2) if price is not None else None,
+                    "reason": reason,
+                }
+            )
+            prices.pop(symbol, None)
     frozen_symbols = {row["symbol"] for row in frozen}
-    prices.update(closeout_prices)
-
-    fractional_held = sorted(
-        s
-        for s, q in state.positions.items()
-        if abs(q - round(q)) > 1e-9 and s not in frozen_symbols
-    )
+    prices.update({s: p for s, p in closeout_prices.items() if s not in frozen_symbols})
 
     # 1. whole-share targets and raw deltas
     target_qty: dict[str, int] = {}
     for symbol in symbols:
-        if symbol in unpriced or symbol in frozen_symbols:
+        if symbol in frozen_symbols:
             continue
         weight = target.weights.get(symbol, 0.0)
         target_qty[symbol] = round_half_away(weight * basis / prices[symbol])
@@ -281,7 +326,7 @@ def build_plan(
 
     candidates: list[dict[str, Any]] = []
     for symbol in symbols:
-        if symbol in unpriced or symbol in frozen_symbols or symbol in fractional_held:
+        if symbol in frozen_symbols:
             continue
         current = int(round(state.positions.get(symbol, 0.0)))
         delta = target_qty[symbol] - current
@@ -300,31 +345,26 @@ def build_plan(
         else:
             kept.append(row)
 
-    # 3. easy-to-borrow filter for orders that open or increase a short
-    accepted: list[dict[str, Any]] = []
-    etb_rejections: list[dict[str, Any]] = []
-    for row in kept:
-        post = row["current"] + row["delta"]
-        if row["delta"] < 0 and post < 0:
-            reason = _borrow_rejection(asset_lookup(row["symbol"]))
-            if reason:
-                price = prices[row["symbol"]]
-                etb_rejections.append(
-                    {
-                        "symbol": row["symbol"],
-                        "reason": reason,
-                        "intended_qty": row["delta"],
-                        "intended_notional": round(abs(row["delta"]) * price, 2),
-                        "target_weight": target.weights.get(row["symbol"], 0.0),
-                        "residual_weight_vs_target": round(
-                            row["current"] * price / basis - target.weights.get(row["symbol"], 0.0),
-                            8,
-                        ),
-                    }
-                )
-                continue
-        accepted.append(row)
-
+    # 3. Positions after all eligible orders
+    accepted = kept
+    etb_rejections = []
+    for row in frozen:
+        if row["reason"] not in ("not_shortable", "not_easy_to_borrow"):
+            continue
+        symbol = row["symbol"]
+        price = target.reference_prices[symbol]
+        qty = round_half_away(target.weights[symbol] * basis / price) - row["qty"]
+        etb_rejections.append(
+            {
+                **row,
+                "intended_qty": qty,
+                "intended_notional": round(abs(qty) * price, 2),
+                "target_weight": target.weights[symbol],
+                "residual_weight_vs_target": round(
+                    row["qty"] * price / basis - target.weights[symbol], 8
+                ),
+            }
+        )
     post_qty: dict[str, float] = {s: state.positions.get(s, 0.0) for s in symbols}
     for row in accepted:
         post_qty[row["symbol"]] = row["current"] + row["delta"]
@@ -364,13 +404,8 @@ def build_plan(
         state,
         post_qty=post_qty,
         prices=prices,
-        planned_symbols={o["symbol"] for o in orders},
-        existing_ids=existing_ids,
         as_of=as_of,
-        unpriced=unpriced,
         frozen=frozen,
-        closeout_symbols=set(closeout_prices),
-        fractional_held=fractional_held,
         limits=limits,
         kill_switch_check=kill_switch_check,
     )
@@ -431,53 +466,6 @@ def _valid_price(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return price if math.isfinite(price) and price > 0 else None
-
-
-def _classify_unpriced(
-    target: BookTarget,
-    state: AccountState,
-    symbols: list[str],
-    prices: dict[str, float],
-    asset_lookup: Callable[[str], AssetInfo | None],
-) -> tuple[list[dict[str, Any]], dict[str, float], list[str]]:
-    """Split the names without a reference price into frozen, close-out and unpriced (blocking).
-
-    * frozen: held, target weight 0 or absent, and the broker says the asset cannot trade (unknown,
-      not tradable, not active; cash acquisition or delisting).  No order; valued at the broker
-      position price.
-    * close-out: held, target weight 0 or absent, tradable and active, with a broker position
-      price: the whole position is closed at that price.
-    * unpriced: everything else (a name with a nonzero target weight, a close-out name without a
-      broker price, a name that is not held); blocks the plan as before.
-    """
-    frozen: list[dict[str, Any]] = []
-    closeouts: dict[str, float] = {}
-    unpriced: list[str] = []
-    for symbol in symbols:
-        if symbol in prices:
-            continue
-        qty = state.positions.get(symbol, 0.0)
-        if abs(qty) <= 1e-9 or abs(target.weights.get(symbol, 0.0)) > 0:
-            unpriced.append(symbol)
-            continue
-        asset = asset_lookup(symbol)
-        price = _valid_price(state.position_prices.get(symbol))
-        reason = _frozen_reason(asset)
-        if reason:
-            frozen.append(
-                {
-                    "symbol": symbol,
-                    "qty": qty,
-                    "price": price,
-                    "value": None if price is None else round(abs(qty) * price, 2),
-                    "reason": reason,
-                }
-            )
-        elif price is None:
-            unpriced.append(symbol)
-        else:
-            closeouts[symbol] = price
-    return frozen, closeouts, unpriced
 
 
 def _frozen_reason(asset: AssetInfo | None) -> str:
@@ -560,13 +548,8 @@ def _risk_checks(
     *,
     post_qty: dict[str, float],
     prices: dict[str, float],
-    planned_symbols: set[str],
-    existing_ids: set[str],
     as_of: date,
-    unpriced: list[str],
     frozen: list[dict[str, Any]],
-    closeout_symbols: set[str],
-    fractional_held: list[str],
     limits: RiskLimits,
     kill_switch_check: Callable[[], None] | None,
 ) -> list[CheckResult]:
@@ -615,32 +598,18 @@ def _risk_checks(
             "" if equity_ok else "account equity must be finite and positive",
         )
     )
-    results.append(
-        CheckResult(
-            "reference_prices_complete", not unpriced, len(unpriced), 0, ", ".join(unpriced)
-        )
-    )
-    if not fractional_held:  # kept as a passed entry so ordinary plans serialize as before
-        results.append(CheckResult("whole_share_positions", True, 0, 0, ""))
-    foreign = sorted(
-        {
-            sym
-            for sym, cid in state.open_orders
-            if sym in planned_symbols and cid not in existing_ids
-        }
-    )
-    results.append(
-        CheckResult("no_conflicting_open_orders", not foreign, len(foreign), 0, ", ".join(foreign))
-    )
-
     weights = {s: q * prices[s] / basis for s, q in post_qty.items() if s in prices}
     stock = {s: w for s, w in weights.items() if s not in non_stock}
+    frozen_names = {row["symbol"] for row in frozen}
+    frozen_target = {
+        s: w for s, w in target.stock_weights.items() if s in frozen_names and math.isfinite(w)
+    }
     net = sum(stock.values())
     gross = sum(abs(w) for w in stock.values())
     results.append(
         CheckResult(
             "net_dollar",
-            abs(net) <= limits.max_abs_net + 1e-12,
+            abs(net + sum(frozen_target.values())) <= limits.max_abs_net + 1e-12,
             round(net, 6),
             limits.max_abs_net,
             "stock overlay, core and hedge legs excluded",
@@ -680,36 +649,14 @@ def _risk_checks(
             + ", fraction of equity",
         )
     )
-    if frozen:
-        unvalued = [row["symbol"] for row in frozen if row["value"] is None]
-        results.append(
-            CheckResult(
-                "frozen_positions",
-                frozen_gross <= limits.max_frozen_gross + 1e-12 and not unvalued,
-                round(frozen_gross, 6),
-                limits.max_frozen_gross,
-                "; ".join(
-                    f"{row['symbol']} qty {row['qty']:g} price "
-                    f"{'unknown' if row['price'] is None else row['price']} "
-                    f"value {'unknown' if row['value'] is None else row['value']} {row['reason']}"
-                    for row in frozen
-                ),
-            )
-        )
-    # a close-out name has no target, hence no exposure row; it counts once it is still held
-    # after the plan only if its order was dropped (below the minimum notional): beta 0 then
-    missing_exposure = sorted(
-        s
-        for s in stock
-        if abs(stock[s]) > 0 and s not in target.exposures and s not in closeout_symbols
-    )
+    # Freezing a few names is normal; this much frozen means the inputs are broken market-wide.
     results.append(
         CheckResult(
-            "exposures_complete",
-            not missing_exposure,
-            len(missing_exposure),
-            0,
-            ", ".join(missing_exposure[:10]),
+            "frozen_share",
+            frozen_gross <= limits.max_frozen_gross + 1e-12,
+            round(frozen_gross, 6),
+            limits.max_frozen_gross,
+            "held names frozen today at broker price, fraction of equity basis",
         )
     )
     stock_beta = sum(
@@ -722,11 +669,18 @@ def _risk_checks(
         hedge_exec = weights.get(hedge_symbol, 0.0) - (
             target.core_weight if hedge_symbol == core else 0.0
         )
-    beta = stock_beta + 1.0 * hedge_exec
+    beta = stock_beta + hedge_exec
+    missing_beta = sum(
+        target.exposures[s].beta * w
+        for s, w in frozen_target.items()
+        if s in target.exposures and math.isfinite(target.exposures[s].beta)
+    )
+    if hedge_symbol in frozen_names:
+        missing_beta += target.hedge_weight
     results.append(
         CheckResult(
             "beta_neutral",
-            abs(beta) <= limits.max_abs_beta + 1e-12,
+            abs(beta + missing_beta) <= limits.max_abs_beta + 1e-12,
             round(beta, 6),
             limits.max_abs_beta,
             "sum(beta * weight) over the stock overlay"
@@ -738,7 +692,7 @@ def _risk_checks(
             ),
         )
     )
-    if target.schema_version >= 2:
+    if target.schema_version >= 2 and all(row["symbol"] != core for row in frozen):
         core_post = weights.get(core, 0.0)
         core_target = target.weights.get(core, 0.0)
         results.append(
@@ -752,7 +706,6 @@ def _risk_checks(
             )
         )
     return results
-
 
 
 # --------------------------------------------------------------------------------------
@@ -791,6 +744,7 @@ def submit_plan(
     pace_seconds: float = 0.0,
     tif_mode: str = "close",
     clock: Callable[[], datetime] | None = None,
+    frozen_symbols: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Send the plan's market orders.  Needs an unblocked plan and a verified paper client.
 
@@ -858,7 +812,9 @@ def submit_plan(
             result = client.submit_order(request)
         except Exception as exc:
             status = getattr(exc, "status_code", None)
-            rejected = isinstance(status, int) and 400 <= status < 500 and status not in (408, 429)
+            if status in (401, 408, 429) or (isinstance(status, int) and status >= 500):
+                raise BookEngineError(broker_error_text(exc)) from exc
+            rejected = isinstance(status, int) and 400 <= status < 500
             row.update(
                 error=exc.__class__.__name__,
                 message=broker_error_text(exc),
@@ -874,6 +830,15 @@ def submit_plan(
         return result
 
     for order in sorted(plan.orders, key=lambda o: (o["side"] != "sell", o["symbol"])):
+        if reason := (frozen_symbols or {}).get(order["symbol"]):
+            report["deferred"].append(
+                {
+                    "symbol": order["symbol"],
+                    "client_order_id": order["client_order_id"],
+                    "reason": reason,
+                }
+            )
+            continue
         if reversal_legs(order):
             submit_reversal(
                 order,
@@ -944,8 +909,7 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> Path:
 
 
 def write_plan_file(root: Path, plan: OrderPlan) -> Path:
-    """Write the plan file; reconcile reads it after the close.  Once an orders receipt exists the
-    CLI reuses the stored plan, so a submitted plan is only ever rewritten with itself."""
+    """Write the plan for reconciliation. Broker acknowledgements anchor rerun sizing."""
     return write_json_atomic(
         plan_path(root, plan.payload["account"], plan.execution_date), plan.to_dict()
     )

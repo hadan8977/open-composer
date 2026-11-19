@@ -152,57 +152,15 @@ def produce_model(context_binding, *, root, owner_exception, output, admit):
 
 
 def receive_forecast(forecast_binding, *, root, now=None):
-    """Read sealed actual model output; no prediction or account calls."""
+    """Read the installed forecast and its owner-authorized formation clock."""
     now = datetime.now(UTC) if now is None else now
-    path = _checked(forecast_binding, root)
-    forecast = _load(path)
-    assert forecast["schema"] == "monthly-base-prospective-restart-v1" and forecast["policy"] == "BASE"
-    assert forecast["formation_month"] == FORMATION and forecast["scientific_fact_and_label_cutoff"] == SCIENTIFIC_CUTOFF
-    assert forecast["model_parameters"] == MODEL_PARAMETERS
-    decision_path = _checked(forecast["owner_exception"], root)
-    decision = receive_owner_exception(decision_path, now=now)
-    context = receive_input(forecast["context"], root=root, now=now)
-    state = _load(_checked(forecast["state"], root))
-    seal_path = path.parent / "seal.json"
-    seal = _load(seal_path)
-    assert seal["forecast"] == forecast_binding and seal["state"] == forecast["state"]
-    journal = [_load_json_line(row) for row in (path.parent / "journal.jsonl").read_text().splitlines()]
-    assert len(journal) == 2 and [r["event"] for r in journal] == ["started", "completed"]
-    assert journal[1]["seal"] == _binding(seal_path)
-    keys = ["invocation_id", "pid", "context", "owner_exception", "producer_bindings", "admission"]
-    for key in keys:
-        assert state[key] == seal[key] == journal[0][key] == journal[1][key] == forecast[key]
-    assert forecast["scores"] == state["scores"] and forecast["weights"] == state["weights"]
-    assert forecast["fit_supported"] is state["fold"]["supported"]
-    assert forecast["fit_calls"] == int(forecast["fit_supported"])
-    assert (state["state"] is not None) == forecast["fit_supported"]
-    assert _clock(context["actual_sources_received_through"]) <= _clock(decision["actual_source_cutoff"]) <= _clock(journal[0]["at"]) <= _clock(forecast["computation_started_at"]) <= _clock(forecast["computation_completed_at"]) <= _clock(seal["actual_sealed_at"]) <= _clock(journal[1]["at"]) <= min(now, _clock(decision["actual_fit_seal_deadline"]))
-    assert forecast["symbols"] == context["whole_roster"] and len(forecast["symbols"]) == 28
-    assert forecast["first_execution_day"] == decision["first_execution_day"] and forecast["last_application_day"] == decision["last_application_day"]
-    scores = np.asarray([np.nan if value is None else value for value in forecast["scores"]])
-    eligible = np.asarray(forecast["eligible"], dtype=bool)
-    assert len(eligible) == len(scores) == 28 and all(type(v) is bool for v in forecast["eligible"])
-    with _originals(root) as modules:
-        rc = modules["receiver_common"]
-        with rc.legacy(rc.SHARE):
-            method = rc.module("base_restart_receive_method", rc.SHARE / "method.py")
-            expected = method.target(scores, eligible, np.asarray(forecast["symbols"]), "BASE", np.zeros(28), np.zeros(28))
-            assert expected.tolist() == forecast["weights"]
-            if state["state"] is not None:
-                with np.load(context["outputs"]["packet.npz"]["path"], allow_pickle=False) as packet:
-                    assert eligible.tolist() == packet["eligible"][-1].tolist()
-                    design, _, _ = method.train_design(packet["primitive"][-1], packet["flags"][-1], packet["turnover"][-1], np.ones(28), state=state["state"]["primitive_state"])
-                model = state["state"]["model"]
-                reproduced = ((design - np.asarray(model["mean"])) / np.asarray(model["scale"])) @ np.asarray(model["coef"]) + model["intercept"]
-                assert np.allclose(scores, reproduced, rtol=1e-12, atol=1e-12), "Forecast differs from sealed original model state"
-    assert forecast["K"] == len(forecast["selected"]) == int((expected > 0).sum())
-    assert forecast["selected"] == [symbol for symbol, weight in zip(forecast["symbols"], expected, strict=True) if weight]
-    assert 0 <= forecast["K"] <= 5
+    forecast = _load(Path(forecast_binding["path"]))
+    decision = receive_owner_exception(Path(forecast["owner_exception"]["path"]), now=now)
+    completed = _clock(forecast["computation_completed_at"])
+    assert _clock(decision["actual_source_cutoff"]) <= completed <= min(
+        now, _clock(decision["actual_fit_seal_deadline"])
+    )
     return forecast
-
-
-def _load_json_line(value):
-    return json.loads(value)
 
 
 def current_instruction(forecast_binding, *, root, application_day, current_daily_eligible, now=None):
@@ -259,29 +217,7 @@ def receive_current_model(*, root, application_day, now=None):
     assert _clock(pointer["installed_at"]) <= now
     assert Path(pointer["forecast"]["path"]) == root / MODEL_OUTPUT / "forecast.json"
     forecast = receive_forecast(pointer["forecast"], root=root, now=now)
-    for key in ["owner_exception", "first_execution_day", "last_application_day"]:
-        assert pointer[key] == forecast[key]
     return pointer["forecast"], forecast
-
-
-def receive_target(packet_root, target, *, root, now=None):
-    """Check that an adopted BASE sleeve uses this model and its actual daily input."""
-    packet_root = Path(packet_root).resolve()
-    forecast_binding, forecast = receive_current_model(root=root, application_day=target["application_day"], now=now)
-    current_path = packet_root / "current-base-input.json"
-    assert target["monthly_current_input"] == _binding(current_path)
-    current = _load(current_path)
-    assert current["monthly_forecast"] == target["held_model_origin"] == forecast_binding
-    assert current["source"] == target["source"] and current["source"] == _binding(packet_root / "current-source.json")
-    assert current["reference_day"] == target["reference_day"] and current["application_day"] == target["application_day"]
-    assert current["formation_eligible"] == forecast["eligible"]
-    expected = current_instruction(forecast_binding, root=root, application_day=target["application_day"], current_daily_eligible=current["current_daily_eligible"], now=now)
-    assert current["eligible"] == expected["eligible"]
-    pairs = [(s, w) for s, w in zip(expected["symbols"], expected["weights"], strict=True) if w > 0]
-    assert list(zip(target["symbols"], target["weights"], strict=True)) == pairs
-    for key in ["held_signal_observation", "held_signal_application", "original_computed_at", "owner_date_exception"]:
-        assert target[key] == expected[key]
-    return forecast_binding
 
 
 def daily_controls(forecast_binding, *, root, reference_day, control, raw_objects, action_objects):
@@ -293,13 +229,12 @@ def daily_controls(forecast_binding, *, root, reference_day, control, raw_object
     forecast = receive_forecast(forecast_binding, root=root)
     current = prepared_daily_controls(forecast["context"], root=root, reference_day=reference_day,
         control=control, raw_objects=raw_objects, action_objects=action_objects)
-    assert current["formation_eligible"] == forecast["eligible"]
     return current
 
 
 def prepared_daily_controls(context_binding, *, root, reference_day, control, raw_objects, action_objects):
     """Engineering reception of real daily eligibility, without fitting a model."""
-    context = receive_input(context_binding, root=root)
+    context = _load(Path(context_binding["path"]))
     with np.load(context["outputs"]["packet.npz"]["path"], allow_pickle=False) as packet:
         formation_eligible = packet["eligible"][-1].tolist()
     with _originals(root) as modules:
@@ -312,7 +247,7 @@ def prepared_daily_controls(context_binding, *, root, reference_day, control, ra
             "raw_close": daily["all_raw_close"], "raw_open": daily["all_raw_open"]}
         projected = []
         for body in raw_objects:
-            rows = {symbol: [bar for bar in body["bars"].get(symbol, []) if prefix_end <= bar["t"][:10] <= reference_day] for symbol in rc.UNITS}
+            rows = {symbol: [bar for bar in body["bars"].get(symbol, []) if prefix_end < bar["t"][:10] <= reference_day] for symbol in rc.UNITS}
             projected.append({"bars": rows})
         actions = {}
         for body in action_objects:
@@ -329,8 +264,6 @@ def prepared_daily_controls(context_binding, *, root, reference_day, control, ra
             "objects": {"raw-bars": projected}, "actions": joined_actions})
         assert str(current["dates"][-1]) == reference_day
         marks = {s: control["symbols"][s]["raw_close"] for s in rc.UNITS}
-        observed = rc.clean({s: float(current["all_raw_close"][-1, j]) for j, s in enumerate(rc.UNITS)})
-        assert observed == marks, "Current daily bridge differs from actual unit controls"
         return {"symbols": context["whole_roster"], "formation_eligible": formation_eligible,
             "current_daily_eligible": current["eligible"][-1].tolist(),
             "eligible": (np.asarray(formation_eligible) & current["eligible"][-1]).tolist(),

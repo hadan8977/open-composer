@@ -318,7 +318,7 @@ def test_ledger_nets_buys_and_sells_across_sessions(ledger_workspace) -> None:
     assert result.scoped_positions == {"IWM": 6.0}
 
 
-def test_ledger_position_not_held_anywhere_in_account_uses_artifact_reference_price(
+def test_ledger_position_missing_from_broker_is_frozen(
     sample_workspace: Path,
 ) -> None:
     root = sample_workspace
@@ -359,15 +359,15 @@ def test_ledger_position_not_held_anywhere_in_account_uses_artifact_reference_pr
         spec_path, root, allow_paper_orders=False, client=client, now=SUBMIT_TIME
     )
     sell = next(plan for plan in result.plans if plan.symbol == "GLD")
-    assert sell.side == "sell" and sell.qty == 4.0
-    assert sell.reference_price == 180.0  # fallback: the artifact's own reference_price
+    assert sell.decision == "frozen" and sell.qty == 0
+    assert sell.reason == "broker_quantity_mismatch"
 
 
 # ---------------------------------------------------------------------------
 # fail-closed guard: unreconciled ledger rows
 
 
-def test_unreconciled_earlier_session_row_fails_closed(ledger_workspace) -> None:
+def test_unreconciled_earlier_session_row_freezes_one_symbol(ledger_workspace) -> None:
     root, spec_path = ledger_workspace
     name = load_strategy_spec(spec_path).name
     _write_fills(
@@ -387,13 +387,13 @@ def test_unreconciled_earlier_session_row_fails_closed(ledger_workspace) -> None
     client = FakeClient()
     _authorize(root, spec_path, client)
 
-    with pytest.raises(RehearsalError, match="2026-09-15"):
-        run_portfolio_paper_rehearsal(
-            spec_path, root, allow_paper_orders=False, client=client, now=SUBMIT_TIME
-        )
+    result = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=False, client=client, now=SUBMIT_TIME
+    )
+    assert any(p.symbol == "AAOI" and p.decision == "frozen" for p in result.plans)
 
 
-def test_unreconciled_row_with_unknown_status_also_fails_closed(ledger_workspace) -> None:
+def test_unreconciled_row_with_unknown_status_also_freezes_one_symbol(ledger_workspace) -> None:
     root, spec_path = ledger_workspace
     name = load_strategy_spec(spec_path).name
     _write_fills(
@@ -413,10 +413,10 @@ def test_unreconciled_row_with_unknown_status_also_fails_closed(ledger_workspace
     client = FakeClient()
     _authorize(root, spec_path, client)
 
-    with pytest.raises(RehearsalError, match="unreconciled"):
-        run_portfolio_paper_rehearsal(
-            spec_path, root, allow_paper_orders=False, client=client, now=SUBMIT_TIME
-        )
+    result = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=False, client=client, now=SUBMIT_TIME
+    )
+    assert any(p.symbol == "AAOI" and p.decision == "frozen" for p in result.plans)
 
 
 def test_terminal_earlier_session_row_does_not_trigger_the_guard(ledger_workspace) -> None:
@@ -687,7 +687,7 @@ def test_liquidate_requires_a_reason(ledger_workspace) -> None:
         )
 
 
-def test_liquidate_still_fails_closed_on_an_unreconciled_ledger(ledger_workspace) -> None:
+def test_liquidate_skips_unreconciled_symbol(ledger_workspace) -> None:
     root, spec_path = ledger_workspace
     name = load_strategy_spec(spec_path).name
     _write_fills(
@@ -697,13 +697,8 @@ def test_liquidate_still_fails_closed_on_an_unreconciled_ledger(ledger_workspace
     )
     client = FakeClient()
     _authorize(root, spec_path, client)
-    with pytest.raises(RehearsalError, match="unreconciled"):
-        run_portfolio_paper_rehearsal(
-            spec_path,
-            root,
-            allow_paper_orders=True,
-            client=client,
-            now=SUBMIT_TIME,
-            liquidate=True,
-            liquidation_reason="retire",
-        )
+    result = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME, liquidate=True,
+        liquidation_reason="retire",
+    )
+    assert all(p.decision != "submitted" for p in result.plans)

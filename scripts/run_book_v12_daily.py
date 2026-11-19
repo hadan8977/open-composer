@@ -6,8 +6,8 @@ Modes (exactly one):
 
 * ``--targets``  after the live data refresh: write the F1/F2 target files of decision date D
   (default: the last session of the live equity-book root).  Exit 2: the data root is not fresh to
-  D (or is missing); exit 3: the generator or the target writer refused.  Re-running for a decision
-  date whose target files exist is a no-op (a logged target is never rewritten).
+  D (or is missing); exit 3: the generator refused. The current-unit refresh publishes
+  the dated freeze reasons together with the targets.
 * ``--plan``     on the execution date: build the dry-run plans of the accounts (``--accounts``,
   default both) from the targets of the previous session with ``oc book-paper plan`` (read-only
   broker calls; sends nothing).  ``--execution-date`` of a later session only previews.
@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import json
 import logging
 import os
 import subprocess
@@ -97,6 +98,7 @@ def run_targets(
     *,
     now: datetime | None = None,
     equity_basis: float | None = None,
+    frozen_symbols: dict[str, str] | None = None,
 ) -> int:
     if not (data_root / "panel/_calendar.parquet").exists():
         log.error("data root %s has no calendar: not fresh", data_root)
@@ -110,7 +112,7 @@ def run_targets(
     if last < day:
         log.error("data root last session %s is before decision date %s: not fresh", last, day)
         return EXIT_FRESH
-    if all(target_path(root, a, day).exists() for a in BOOK_ACCOUNTS):
+    if frozen_symbols is None and all(target_path(root, a, day).exists() for a in BOOK_ACCOUNTS):
         log.info("targets of %s already logged: nothing to do", day)
         return 0
     try:
@@ -123,13 +125,15 @@ def run_targets(
             **({"equity_basis": equity_basis} if equity_basis is not None else {}),
         )
         for target in bundle.targets.values():
+            frozen = {s: "missing_decision_close" for s in bundle.unpriced.get(target.form, [])}
+            target = target.model_copy(update={"frozen_symbols": frozen | (frozen_symbols or {})})
             info = v12.summarize_target(target)
             log.info("target %s", info)
             written = write_target_file(root, target)
             log.info("wrote %s", written)
         for form, names in bundle.unpriced.items():
             if names:
-                log.warning("%s: dropped without a close on D: %s", form, ", ".join(names))
+                log.warning("%s: frozen without a close on D: %s", form, ", ".join(names))
     except (v12.TargetRefused, BookTargetError) as exc:
         log.error("targets refused: %s", exc)
         return EXIT_REFUSED
@@ -304,6 +308,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
+    ap.add_argument("--frozen-symbols", type=Path)
     ap.add_argument("--root", default=str(ROOT), help="project root (tests)")
     ap.add_argument("--lock-file", default=str(LOCK_FILE))
     ap.add_argument("--log-file", default=str(LOG_FILE))
@@ -325,7 +330,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.targets:
             data_root = Path(args.data_root) if args.data_root else LIVE_ROOT
             return run_targets(
-                root, data_root, decision, args.variant, equity_basis=args.equity_basis
+                root,
+                data_root,
+                decision,
+                args.variant,
+                equity_basis=args.equity_basis,
+                frozen_symbols=(
+                    json.loads(args.frozen_symbols.read_text()) if args.frozen_symbols else None
+                ),
             )
         if args.reconcile:
             day = (

@@ -9,6 +9,10 @@ Authority
 - Within an authorization, paper is not strict: fix an unfilled or blocked
   paper order directly with a plain order after checking it is not already
   working. No quote gates, approval ceremonies or broker-support contact.
+- Paper runtime: bad or missing data for some names freezes those names (no
+  new trades, holdings kept) and is logged; it never stops the book. Only an
+  account or broker failure, the kill switch, or market-wide stale inputs stop
+  a run.
 - A research pause keeps authorized paper running. Owner chat alone does not
   pause authorized work.
 - No paid data, provider or budget without the owner. Modal: the owner authorizes
@@ -28,6 +32,10 @@ Authority
 
 Science (these make results real)
 - No look-ahead: match information arrival, labels, membership, execution.
+  Every research input carries the time it became known (filing acceptance,
+  publication, bar close); a decision reads only rows known before it.
+  Back-adjusted price levels, later delisting or listing facts and current
+  security names are not known in the past.
 - Research: market data from 2026-09-01 on is out-of-sample; never train, tune
   or select on it, only evaluate. Live paper models keep their native refits.
 - Never filter eligibility on later outcomes; never invent financial metrics.
@@ -57,4 +65,4 @@ Current state (update in place)
 - Roles: research/workflow.json. Paper authorizations: control.json.
 - DeepSeek stays parked. New research roles use Codex/gpt-6.2-sol per owner2026-11-17, retaining existing efforts; old sessions retain their original model. Current priorities: docs/research-mission.zh.md.
 - Owner report format: docs/owner-reporting.zh.md.
-- Pauses: owner2026-11-18 paused automatic research until paper repair and project code simplification are completed. Retain the original series/checkpoints; no new research or training meanwhile.
+- Research resumed 2026-11-19 by the main session after the paper repairs (owner pause of 2026-11-18 ended); priorities in docs/research-mission.zh.md.

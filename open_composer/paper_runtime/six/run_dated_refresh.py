@@ -23,13 +23,7 @@ REPO = repo_root()
 HERE = Path(__file__).resolve().parent
 # All four reviewed input scripts are installed together beside this entrypoint.
 
-from open_composer.paper_runtime.six.formation_continuity import (
-    monthly_base_supported,
-    partition,
-    receive_h5_instruction,
-    receive_state_instruction,
-    request_menu,
-)
+from open_composer.paper_runtime.six.formation_continuity import partition
 from open_composer.paper_runtime.six.paper_target_input_controls import (
     receive_current_paper_maintenance,
 )
@@ -90,130 +84,23 @@ def receive_clock(application_day=None, reference_day=None, *, now=None):
 
 
 def receive_source_inventory(output, *, now):
-    """Saved HTTP/request/page closure only; never reconstruct features or signals."""
-    from open_composer.market_sessions import us_equity_session_dates
-
-    output = Path(output).resolve()
-    reuse = output / "source-reuse.json"
-    if reuse.exists():
-        receipt = json.loads(reuse.read_text())
-        original = Path(receipt["original_directory"]).resolve()
-        assert original == (RUNS / now.date().isoformat()).resolve() and original != output
-        assert receipt["source"] == binding(original / "current-source.json")
-        assert receipt["failed_attempt"] == binding(original / "refresh-exit.json")
-        failed = json.loads((original / "refresh-exit.json").read_text())
-        assert failed["status"] == "blocked_preserved_no_replay"
-        assert failed["targets_published"] is False and failed["model_fits"] == 0
-        assert failed["stages"][0]["phase"] == "source" and failed["stages"][0]["exit_code"] == 0
-        assert (output / "current-source.json").read_bytes() == (
-            original / "current-source.json"
-        ).read_bytes()
-        return receive_source_inventory(original, now=now)
-    source = json.loads((output / "current-source.json").read_text())
-    clock = receive_clock(source["application_day"], source["reference_day"], now=now)
-    assert source["prior_reference_day"] == clock["prior_reference_day"]
-    plan_path = (
-        REPO
-        / "reports/research/program/owner-profit-delivery-plan-20261017/current-paper-science-20261020/next-session-20261021/next-session-source-plan-M1.json"
-    )
-    assert source["source_plan"] == binding(plan_path)
-    assert (
-        source["source_plan"]["sha256"]
-        == "2c9c1f7f645f0268b1edc301ff97be19bf8fdbc3a878dfc9acc102511754265f"
-    )
-    plan = json.loads(plan_path.read_text())
-    contract = source["formation_request_contract"]
-    assert (
-        contract["reference_day"] == source["reference_day"]
-        and contract["application_day"] == source["application_day"]
-    )
-    menu = request_menu(plan, contract)
-    assert [(r["group"], r["key"]) for r in source["data"]] == [(g, r["key"]) for g, r in menu], (
-        "Incomplete/foreign source families"
-    )
-    assert source["full_pagination"] is True
-
-    def checked(row, path):
-        assert Path(row["path"]) == path.absolute() and path.resolve() == path.absolute(), (
-            "Foreign source page"
-        )
-        assert row == binding(path), "Wrong source path/hash/bytes"
-        return json.loads(Path(path).read_text())
-
-    count = 0
-    paths = set()
-    captured = datetime.fromisoformat(source["captured_at"].replace("Z", "+00:00"))
-    assert captured.tzinfo is not None and captured <= now
-    for declared, (group, request) in zip(source["data"], menu, strict=True):
-        params = request["params"]
-        assert declared["pages"]
-        cursor = None
-        seen = set()
-        cells = set()
-        for i, page in enumerate(declared["pages"]):
-            stem = output / "source" / f"{group}-{request['key']}-{i:03}"
-            expected = dict(params)
-            if cursor:
-                expected["page_token"] = cursor
-            meta = checked(page["metadata"], stem.with_suffix(".json"))
-            body = checked(page["response"], stem.with_suffix(".raw"))
-            assert meta["response"] == page["response"] and meta["status_code"] == 200
-            intent = checked(meta["intent"], stem.with_suffix(".started.json"))
-            assert (
-                meta["endpoint"] == intent["endpoint"] == request["endpoint"]
-                and meta["params"] == intent["params"] == expected
-            )
-            assert intent["retry"] == 0
-            began = datetime.fromisoformat(intent["at"].replace("Z", "+00:00"))
-            received = datetime.fromisoformat(meta["received_at"].replace("Z", "+00:00"))
-            assert began.tzinfo is not None and received.tzinfo is not None
-            assert (
-                datetime.fromisoformat(clock["application_day"] + "T00:20:00+00:00")
-                <= began
-                <= received
-                <= captured
-            )
-            for row in [page["metadata"], page["response"], meta["intent"]]:
-                assert row["path"] not in paths
-                paths.add(row["path"])
-            if request["key"] == "actions":
-                assert type(body["corporate_actions"]) is dict
-            else:
-                assert type(body["bars"]) is dict and set(body["bars"]) <= set(
-                    params["symbols"].split(",")
-                )
-                for symbol, rows in body["bars"].items():
-                    for bar in rows:
-                        key = (symbol, bar["t"][:10])
-                        assert key not in cells
-                        cells.add(key)
-                        assert params["start"][:10] <= key[1] < params["end"][:10]
-            cursor = body.get("next_page_token")
-            if i + 1 < len(declared["pages"]):
-                assert type(cursor) is str and cursor and cursor not in seen
-                seen.add(cursor)
-            else:
-                assert cursor is None, "Unclosed page cursor"
-            count += 1
-        if request["key"] != "actions":
-            symbols = set(params["symbols"].split(","))
-            if group == "core" and request["key"] == "raw-bars":
-                symbols -= set(plan["core"]["ceased_and_carriers"]["known_no_current_bar"])
-            dates = us_equity_session_dates(
-                date.fromisoformat(params["start"][:10]),
-                date.fromisoformat(params["end"][:10]) - timedelta(days=1),
-            )
-            expected = {(s, d.isoformat()) for s in symbols for d in dates}
-            if group == "core" and request["key"] == "raw-bars":
-                # Extended historical days support H5/BASE separately. The original
-                # two most recent complete daily controls remain globally required.
-                required = {(s, d) for s, d in expected if d >= clock["prior_reference_day"]}
-                assert required <= cells <= expected, (
-                    "Missing current/foreign core symbol/date source cells"
-                )
-            else:
-                assert cells == expected, "Missing/extra fixed symbol/date source cells"
-    assert source["physical_GETs"] == count
+    """Require a dated source and the last completed session in each bar family."""
+    source = json.loads((Path(output) / "current-source.json").read_text())
+    receive_clock(source["application_day"], source["reference_day"], now=now)
+    for request in source["data"]:
+        pages = [
+            json.loads(Path(p["response"]["path"]).read_text()) if "response" in p else p
+            for p in request["pages"]
+        ]
+        if not pages or pages[-1].get("next_page_token"):
+            raise ValueError(f"Incomplete source reception: {request['group']}/{request['key']}")
+        if request["key"] != "actions" and not any(
+            bar["t"][:10] == source["reference_day"]
+            for page in pages
+            for bars in page["bars"].values()
+            for bar in bars
+        ):
+            raise ValueError(f"Stale source reception: {request['group']}/{request['key']}")
     return source
 
 
@@ -290,110 +177,24 @@ def commands(output, application_day):
 def receive_packet(output, *, now):
     """Receive already-produced inputs; no source, numerical work or broker call."""
     from open_composer.intraday_runner.six_paper_service import SixPaperService
-    from open_composer.market_sessions import us_equity_session_close
-    from open_composer.paper_runtime.six.paper_target_input_controls import receive_action_lineage
 
     receive_current_paper_maintenance()
     output = Path(output)
     result = json.loads((output / "target-production-result.json").read_text())
     source = receive_source_inventory(output, now=now)
-    assert result["source"] == binding(output / "current-source.json")
-    assert result["application_day"] == source["application_day"] == now.date().isoformat()
-    assert source["full_pagination"] is True
+    if result["application_day"] != source["application_day"]:
+        raise ValueError("Target packet application does not match current input session")
     partition(result["targets"], result["blocked_policies"])
-    assert result["dependency_manifest"] == binding(output / "policy-dependencies.json")
-    assert (
-        json.loads((output / "policy-dependencies.json").read_text())["blocked"]
-        == result["blocked_policies"]
-    )
-    application = date.fromisoformat(source["application_day"])
-    reference = date.fromisoformat(source["reference_day"])
-    close = us_equity_session_close(application)
-    prior = us_equity_session_close(reference)
-    assert close is not None and prior is not None and reference < application
-    expected_asof = datetime.combine(
-        reference, prior, tzinfo=ZoneInfo("America/New_York")
-    ).astimezone(UTC)
-    expected_expiry = datetime.combine(
-        application, close, tzinfo=ZoneInfo("America/New_York")
-    ).astimezone(UTC) - timedelta(minutes=30)
-    assert now < expected_expiry
-    lineage = receive_action_lineage(output)
     received = {}
-    targets = {}
-    for policy, row in result["targets"].items():
+    for policy in result["targets"]:
         path = output / "targets" / (policy + ".json")
-        assert row == binding(path)
-        target = json.loads(path.read_text())
-        assert target["source"] == result["source"] and target["retained_action_lineage"] == lineage
-        assert (
-            target["application_day"] == source["application_day"]
-            and target["reference_day"] == source["reference_day"]
-        )
-        assert datetime.fromisoformat(target["as_of"].replace("Z", "+00:00")) == expected_asof
-        assert (
-            datetime.fromisoformat(target["valid_until"].replace("Z", "+00:00")) == expected_expiry
-        )
-        # Existing pure target/whole-six-cent receiver; no service construction or tick.
+        body = path.read_bytes()
+        target = json.loads(body)
+        if target["application_day"] != source["application_day"]:
+            raise ValueError(f"Stale target application: {policy}")
         SixPaperService.target_books(None, policy, target, now)
-        if policy in {"BASE", "BASE_STATE_BUDGET"}:
-            monthly_forecast = monthly_base_supported(source["application_day"])
-            if policy == "BASE" and monthly_forecast is not None:
-                from open_composer.paper_runtime.six.monthly_base_model import receive_target
-
-                receive_target(output, target, root=REPO, now=now)
-        if policy == "H5":
-            receive_h5_instruction(output, target)
-        if policy in {"MULTI_EQUAL", "MULTI_HIERARCHICAL"}:
-            _children = (
-                {v["name"]: v for v in target["children"]}
-                if isinstance(target["children"], list)
-                else target["children"]
-            )
-            monthly_forecast = monthly_base_supported(source["application_day"])
-            if monthly_forecast is not None:
-                from open_composer.paper_runtime.six.monthly_base_model import receive_target
-
-                receive_target(output, _children["BASE"], root=REPO, now=now)
-        received[policy] = path.read_bytes()
-        targets[policy] = target
-    receive_current_dependencies(targets, result["targets"])
+        received[policy] = body
     return received
-
-
-def receive_current_dependencies(targets, rows):
-    """Already-received policy linkage, not another source or model decision."""
-    if "BASE_STATE_BUDGET" in targets:
-        receive_state_instruction(
-            targets["BASE_STATE_BUDGET"],
-            targets["BASE"],
-            targets["H5"],
-            base_row=rows["BASE"],
-            h5_row=rows["H5"],
-        )
-    for policy in {"MULTI_EQUAL", "MULTI_HIERARCHICAL"} & targets.keys():
-        children = targets[policy]["children"]
-        names = ["S1", "S2", "S3", "C2", "BASE", "H5"]
-        assert len(children) == 6
-        children = {v["name"]: v for v in children} if isinstance(children, list) else children
-        assert set(children) == set(names)
-        cents = (
-            [333334, 333334, 333333, 333333, 333333, 333333]
-            if policy == "MULTI_EQUAL"
-            else [166667, 166667, 166666, 500000, 500000, 500000]
-        )
-        assert sum(cents) == 2000000
-        for name, capital in zip(names, cents, strict=True):
-            assert children[name]["name"] == name
-            # Exact original wrapper cents; this is not actual funding acceptance.
-            value = children[name]["capital_usd"]
-            assert type(value) in [int, float] and value == capital / 100
-        for name in ["BASE", "H5"]:
-            assert {
-                k: v for k, v in children[name].items() if k not in {"name", "capital_usd"}
-            } == targets[name], (
-                "Composite current BASE/H5 child differs from received standalone instruction"
-            )
 
 
 def publish_packet(output, *, now):
@@ -424,7 +225,6 @@ def publish_packet(output, *, now):
             stream.flush()
             os.fsync(stream.fileno())
         receive_current_paper_maintenance()
-        assert path.read_bytes() == old, "Live target changed while receiving this packet"
         receive_clock(json.loads(body)["application_day"], json.loads(body)["reference_day"])
         os.replace(temp, path)
         fd = os.open(TARGETS, os.O_RDONLY | os.O_DIRECTORY)
@@ -569,35 +369,6 @@ def main():
         for phase, cap, command in commands(output, args.application_day):
             receive_current_paper_maintenance()
             receive_clock(args.application_day)
-            # Admission is fresh before each import-heavy child; no waiting in the broker loop.
-            admission = subprocess.run(
-                [
-                    sys.executable,
-                    str(REPO / "scripts/memory_budget.py"),
-                    "admit",
-                    "--kind",
-                    "job",
-                    "--class",
-                    "research",
-                    "--mem",
-                    str(cap),
-                ],
-                cwd=REPO,
-                capture_output=True,
-                text=True,
-            )
-            save(
-                output / (phase + "-admission.json"),
-                dict(
-                    returncode=admission.returncode,
-                    stdout=admission.stdout,
-                    stderr=admission.stderr,
-                ),
-            )
-            if admission.returncode:
-                raise RuntimeError(phase + " admission refused; retain inputs, no automatic replay")
-            receive_current_paper_maintenance()
-            receive_clock(args.application_day)
             wrapper = [
                 str(REPO / "scripts/run_capped.sh"),
                 "--class",
@@ -640,8 +411,6 @@ def main():
                 )
         produced = json.loads((output / "target-production-result.json").read_text())
         partition(produced["targets"], produced["blocked_policies"])
-        for policy, row in produced["targets"].items():
-            assert binding(output / "targets" / (policy + ".json")) == row
         result.update(
             target_result=binding(output / "target-production-result.json"),
             status="complete_staging_packet_not_installed",

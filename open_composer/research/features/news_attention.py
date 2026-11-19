@@ -58,6 +58,25 @@ ROOT = Path(__file__).resolve().parents[3]
 NEWS_ATTENTION_ROOT = ROOT / "data" / "features" / "news_attention"
 NEWS_PACKETS_ROOT = ROOT / "data" / "features" / "news_packets"
 
+
+def load_earnings_releases(root: Path = ROOT.parent / "market-data" / "derived", **kwargs):
+    """Use UTC ``accepted_at`` for visibility and CIK for issuer identity."""
+    import pandas as pd
+
+    return pd.read_parquet(root / "earnings_releases.parquet", **kwargs)
+
+
+def load_earnings_gaps(root: Path = ROOT.parent / "market-data" / "derived", **kwargs):
+    """For whole rows require ``known_at < decision_at`` (completed session).
+
+    An opening-only projection can use ``gap_available_at`` instead. This is the
+    scheduled open. For an intraday replay confirm the first actual trade.
+    """
+    import pandas as pd
+
+    return pd.read_parquet(root / "earnings_gaps.parquet", **kwargs)
+
+
 #: Trailing windows, in US equity sessions.
 SHORT_WINDOW = 5
 LONG_WINDOW = 20

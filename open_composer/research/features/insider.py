@@ -41,6 +41,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 INSIDER_ROOT = ROOT / "data" / "features" / "insider"
 
+
+def load_insider_daily(root: Path = ROOT.parent / "market-data" / "derived", **kwargs):
+    """Form 4 daily buckets use the latest acceptance and the following open."""
+    import pandas as pd
+
+    return pd.read_parquet(root / "insider_daily.parquet", **kwargs)
+
+
 #: Non-key feature columns of ``data/features/insider/{year}.parquet``, in
 #: table order. ``visible_at`` is metadata (the row's own session open in
 #: UTC), not a factor, and is deliberately excluded.

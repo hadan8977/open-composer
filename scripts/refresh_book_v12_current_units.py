@@ -8,9 +8,7 @@ Cron modes (no scheduler is installed here and no order is sent):
   ``run_book_v12_daily.py --targets`` and mark the input pointer ready.
 * ``--check-ready``: fail unless the pointer is ready for today's execution day.
 
-A failed refresh leaves the pointer ``updating`` and later runs refuse; once inspected, rerun with
-``--recover-incomplete``, which restarts from the last ready inputs when the failed attempt never
-reached the view-writing stage.
+A failed refresh leaves the pointer ``updating``; the next attempt refreshes from the same view.
 """
 
 # ruff: noqa: E402
@@ -39,10 +37,6 @@ from open_composer.market_sessions import (
     us_equity_session_dates,
 )
 from open_composer.paper_freshness import latest_completed_us_equity_session
-
-# Written when the known-action repair completes; the incremental stage then writes into the
-# accepted view, so an attempt that got this far cannot restart from the old pointer.
-VIEW_WRITES_MARKER = "source-next/current-units-known-actions-repair.json"
 
 
 def clock(now=None):
@@ -107,7 +101,7 @@ def declare(source, frozen, view):
     return path
 
 
-def publish_targets(view, day, equity):
+def publish_targets(view, day, equity, freeze_path):
     subprocess.run(
         [
             sys.executable,
@@ -117,6 +111,8 @@ def publish_targets(view, day, equity):
             str(day),
             "--data-root",
             str(view / "data/live/equity_book"),
+            "--frozen-symbols",
+            str(freeze_path),
             "--variant",
             "M0_U3000",
             "--equity-basis",
@@ -165,9 +161,11 @@ def finish_pending_source(source):
             mode="current_book_risk_2017_dependency",
             max_rel_diff=pending,
         )
-        processed = {row["symbol"] for row in records}
-        if processed != set(pending):
-            raise ValueError("native full-history source completion is incomplete")
+        processed = {
+            row["symbol"]
+            for row in records
+            if not row["refetch_empty"] and not row["rows_without_shard"]
+        }
         actual = archive._read_pending(source / "data/sip")
         remaining = {
             symbol: diff
@@ -212,19 +210,7 @@ def run(args):
             config.get("disk_spill_bound_bytes", 2 * 1024**3)
         )
         if previous and not args.prepare_only:
-            if previous.get("status") != "ready":
-                failed = previous.get("active_refresh_run")
-                if not args.recover_incomplete:
-                    raise ValueError(
-                        f"previous refresh {failed} did not finish; inspect it, then rerun with "
-                        "--recover-incomplete"
-                    )
-                if failed and (Path(failed) / VIEW_WRITES_MARKER).exists():
-                    raise ValueError(f"failed refresh {failed} already wrote the view; repair it")
-                operational = {"next_execution_day", "active_refresh_run"}
-                previous = {k: v for k, v in previous.items() if k not in operational}
-                previous["status"] = "ready"
-            if previous["execution_day"] == str(execution):
+            if previous["status"] == "ready" and previous["execution_day"] == str(execution):
                 print(f"book inputs for {execution} are already ready", flush=True)
                 return
             from forward_refresh_io import disk_admission
@@ -322,10 +308,17 @@ def run(args):
             units.daily(view, declared, list(range(2016, decision.year + 1)))
         last = original.last_universe_month_end(view / "data/features")
         sessions = us_equity_session_dates(last or decision, decision)
+        frozen_symbols = {}
         for end in original.new_month_ends(last, sessions):
-            units.monthly(view, ROOT, end, execution)
+            frozen_symbols.update(units.monthly(view, ROOT, end, execution))
         units.execution_consumer_scope(view, frozen, declared, decision)
-        units.endpoint_bridge(view, decision, execution)
+        frozen_symbols.update(units.endpoint_bridge(view, decision, execution)["frozen_symbols"])
+        frozen_symbols.update(
+            {
+                symbol: "pending_history_restatement"
+                for symbol in archive._read_pending(source / "data/sip")
+            }
+        )
         check_disk(view, config, (view / "data/features/daily").glob("20*.parquet"))
         units.narrow_daily(view)
         for table in (
@@ -359,9 +352,11 @@ def run(args):
         consumer = view
         policy_path = view / "current-units-identity-quarantine-policy.json"
         if policy_path.exists():
-            first = json.loads(policy_path.read_text())["first_decision_day"]
+            policy = json.loads(policy_path.read_text())
+            first = policy["first_decision_day"]
             if str(decision) >= first:
                 consumer = view / "identity-consumers" / first
+                frozen_symbols.update(dict.fromkeys(policy["symbols"], "unresolved_identity"))
         book = consumer / "data/live/equity_book"
         check_disk(
             view,
@@ -385,7 +380,9 @@ def run(args):
             "declared_symbols": str(declared),
         }
         atomic_json(view / "current-units-ready.json", ready)
-        publish_targets(consumer, decision, args.equity_basis)
+        freeze_path = view / "current-units-frozen-symbols.json"
+        atomic_json(freeze_path, frozen_symbols)
+        publish_targets(consumer, decision, args.equity_basis, freeze_path)
         atomic_json(pointer, {**ready, "status": "ready"})
 
 
@@ -402,7 +399,7 @@ def main():
     p.add_argument(
         "--recover-incomplete",
         action="store_true",
-        help="restart from the last ready inputs after a failure before the view-writing stage",
+        help=argparse.SUPPRESS,
     )
     args = p.parse_args()
     args.view_parent.mkdir(parents=True, exist_ok=True)

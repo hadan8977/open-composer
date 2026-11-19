@@ -163,10 +163,6 @@ def validate_target(value, policy, now, *, max_weight=None):
         or sum(map(float, weights)) > 1 + 1e-12
     ):
         raise ValueError("target concentration/gross differs")
-    for symbol, weight in zip(symbols, weights, strict=True):
-        mark = float(value["reference_marks"].get(symbol, 0))
-        if weight and (not math.isfinite(mark) or mark < 1):
-            raise ValueError("positive target lacks reference price")
     return value
 
 
@@ -365,8 +361,12 @@ class SixPaperService:
             if abs(expected.get(s, 0) - actual.get(s, 0)) > 1e-6
         }
         self.state["position_mismatch"] = mismatch
-        if len(opened) >= 500 or foreign:
-            mismatch["unattributed_open_orders"] = foreign or ["order_page_saturated"]
+        if len(opened) >= 500:
+            raise ValueError("broker open-order page is saturated")
+        foreign_ids = set(foreign)
+        for order in opened:
+            if order["client_order_id"] in foreign_ids:
+                mismatch.setdefault(order["symbol"], "foreign_open_order")
         self.save()
         return positions, mismatch
 
@@ -608,6 +608,7 @@ class SixPaperService:
         if cid in self.state["orders"]:
             return
 
+        from alpaca.common.exceptions import APIError
         from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import LimitOrderRequest
 
@@ -618,7 +619,10 @@ class SixPaperService:
         cash = source_module(self.root, "cash")
         due = cash.cash_due_date(day, cash.settlement_calendar())
         # Marketable limit: fills through an ordinary gap but caps a bad print.
-        price = round(float(reference) * (1 - MARKETABLE_BUFFER if side == "sell" else 1 + MARKETABLE_BUFFER), 2)
+        price = round(
+            float(reference) * (1 - MARKETABLE_BUFFER if side == "sell" else 1 + MARKETABLE_BUFFER),
+            2,
+        )
         if side == "buy":
             qty = min(qty, math.floor(state.available(due) / (price * 1.001)))
             if qty <= 0:
@@ -692,64 +696,120 @@ class SixPaperService:
                     < min(final_close - timedelta(minutes=30), instant(valid_until))
                 ):
                     raise ValueError("dated target expired before POST")
-            response = plain(self.client.submit_order(request))
+            try:
+                response = plain(self.client.submit_order(request))
+            except APIError as exc:
+                message = str(exc).lower()
+                if not any(
+                    term in message
+                    for term in ("not tradable", "asset not found", "inactive asset")
+                ):
+                    raise
+                reason = "broker_asset_unavailable"
+                self.state.setdefault("symbol_freezes", {})[f"{book}/{symbol}"] = {
+                    "day": day,
+                    "reason": reason,
+                }
+                self.event("symbol_frozen", book=book, symbol=symbol, reason=reason)
+                self.save()
+                return
             self.state["orders"][cid].update(observation=response, status=str(response["status"]))
             self.event("order_acknowledgement", client_order_id=cid, observation=response)
             self.save()
 
-    def operate(self, policy, target, positions, now, *, new_risk):
+    def operate(self, policy, target, positions, now, *, new_risk, frozen_symbols=None):
+        from open_composer.book_paper.plan import _frozen_reason, _valid_price
         from open_composer.intraday_runner.state_quantity_lock_transition import retired
 
         rows = self.target_books(policy, target, now)
-        if any(
-            record.get("current_quantity_lock_conflict") and record["book"] in {r[0] for r in rows}
+        conflicting = {
+            record["symbol"]: "unresolved_order_quantity"
             for record in self.state["orders"].values()
-        ):
-            raise ValueError("late quantity-liability evidence requires focused reconciliation")
+            if record.get("current_quantity_lock_conflict")
+        }
         cycle = hashlib.sha256(json.dumps(target, sort_keys=True).encode()).hexdigest()
         retiring = policy in RETIRING_POLICIES
         liquidating = (
             retiring and target["portfolio_action"] == "rebalance" and not target["symbols"]
         )
-        marks = {s: float(p["current_price"]) for s, p in positions.items()}
+        marks = {
+            s: mark
+            for s, p in positions.items()
+            if (frozen_symbols or {}).get(s) != "broker_quantity_mismatch"
+            and (mark := _valid_price(p.get("current_price"))) is not None
+        }
         day = now.astimezone(NEW_YORK).date().isoformat()
         parent_killed = False
         if policy in CHILD_CAPITAL:
             total = 0.0
+            fully_marked = True
             for book, _, _, _ in rows:
                 child_state, _, _, _ = restore(self.root, self.state["books"][book])
+                fully_marked &= all(
+                    s in marks
+                    for s in child_state.cashbook.lots
+                    if child_state.cashbook.quantity(s)
+                )
                 total += child_state.cashbook.nav_cash() + sum(
-                    child_state.cashbook.quantity(s) * marks[s]
+                    child_state.cashbook.quantity(s) * marks.get(s, 0.0)
                     for s in child_state.cashbook.lots
                     if child_state.cashbook.quantity(s)
                 )
             parent = self.state.setdefault("parent_risk", {}).setdefault(
                 policy, {"high_water": 20000.0, "killed": False}
             )
-            parent["high_water"] = max(parent["high_water"], total)
-            parent["killed"] = parent["killed"] or total <= parent["high_water"] * 0.75
+            if fully_marked:
+                parent["high_water"] = max(parent["high_water"], total)
+                parent["killed"] = parent["killed"] or total <= parent["high_water"] * 0.75
             parent_killed = parent["killed"]
         for book, instruction, capital, drawdown in rows:
             state, fills, fees, evidence = restore(self.root, self.state["books"][book])
             held = {s: state.cashbook.quantity(s) for s in state.cashbook.lots}
-            if any(s not in marks for s, q in held.items() if q):
-                raise ValueError("held position lacks current mark")
-            nav = state.cashbook.nav_cash() + sum(q * marks[s] for s, q in held.items() if q)
+            references = instruction["reference_marks"]
+            frozen = (
+                dict(frozen_symbols or {}) | instruction.get("frozen_symbols", {}) | conflicting
+            )
+            active = {s for s, q in held.items() if q} | set(instruction["symbols"])
+            for symbol in active - frozen.keys():
+                reason = ""
+                if held.get(symbol) and symbol not in marks:
+                    reason = "missing_position_mark"
+                elif symbol in instruction["symbols"]:
+                    mark = _valid_price(references.get(symbol))
+                    if mark is None or mark < 1:
+                        reason = "invalid_reference_price"
+                lookup = getattr(self, "_asset_lookup", None)
+                if not reason and lookup is not None:
+                    reason = _frozen_reason(lookup(symbol))
+                if reason:
+                    frozen[symbol] = reason
+            seen = self.state.setdefault("symbol_freezes", {})
+            for symbol in sorted(active):
+                key = f"{book}/{symbol}"
+                if symbol in frozen and seen.get(key, {}).get("day") != day:
+                    seen[key] = dict(day=day, reason=frozen[symbol])
+                    self.event("symbol_frozen", book=book, symbol=symbol, reason=frozen[symbol])
+                elif seen.get(key, {}).get("day") == day:
+                    frozen[symbol] = seen[key]["reason"]
+            unmarked = any(q and s not in marks for s, q in held.items())
+            nav = state.cashbook.nav_cash() + sum(q * marks.get(s, 0.0) for s, q in held.items())
             risk = evidence["risk"]
-            if risk.get("day") != day:
+            if not unmarked and risk.get("day") != day:
                 risk.update(day=day, day_open_nav=nav, halted=bool(risk.get("killed")))
-            risk["high_water"] = max(float(risk["high_water"]), nav)
+            if not unmarked:
+                risk["high_water"] = max(float(risk["high_water"]), nav)
             risk["killed"] = (
                 bool(risk.get("killed"))
                 or parent_killed
-                or nav <= risk["high_water"] * (1 - drawdown)
+                or (not unmarked and nav <= risk["high_water"] * (1 - drawdown))
             )
             risk["halted"] = (
                 bool(risk.get("halted"))
                 or risk["killed"]
-                or nav <= float(risk["day_open_nav"]) * 0.95
+                or (not unmarked and nav <= float(risk["day_open_nav"]) * 0.95)
             )
-            risk["last_nav"] = nav
+            if not unmarked:
+                risk["last_nav"] = nav
             self.state["books"][book] = snapshot(state, fills, fees, evidence=evidence)
             self.save()
             if risk["killed"] or (liquidating and new_risk):
@@ -759,14 +819,21 @@ class SixPaperService:
             else:
                 import numpy as np
 
-                symbols = sorted(set(instruction["symbols"]) | set(held))
+                symbols = sorted(active - frozen.keys())
+                if not symbols:
+                    continue
                 weights = dict(zip(instruction["symbols"], instruction["weights"], strict=True))
                 references = {
                     s: float(instruction["reference_marks"].get(s, marks.get(s, 0)))
                     for s in symbols
                 }
                 result, _ = source_module(self.root, "cash").target_quantities(
-                    min(capital, nav) - state.cash_reserved(),
+                    max(
+                        0.0,
+                        min(capital, nav)
+                        - state.cash_reserved()
+                        - sum(held.get(s, 0.0) * marks.get(s, 0.0) for s in frozen),
+                    ),
                     np.array([held.get(s, 0.0) for s in symbols]),
                     np.array(
                         [
@@ -810,6 +877,8 @@ class SixPaperService:
                     cycle = cycle + ":drift"
                     desired = {s: held.get(s, 0) + d for s, d in drift.items()}
             for symbol in sorted(desired, key=lambda s: desired[s] - held.get(s, 0)):
+                if symbol in frozen:
+                    continue
                 delta = whole_share_delta(desired[symbol] - held.get(symbol, 0))
                 reference = instruction["reference_marks"].get(symbol, marks.get(symbol))
                 # No-trade band: small resizes of a name that is held and stays held.
@@ -861,7 +930,7 @@ class SixPaperService:
             self.call("cancel_order_by_id", record["observation"]["id"])
             self.event("cancel_acknowledgement_not_terminal", client_order_id=cid)
 
-    def protective(self, policy, positions, now):
+    def protective(self, policy, positions, now, *, frozen_symbols=None):
         target = dict(
             policy=policy,
             as_of=now.isoformat(),
@@ -876,7 +945,7 @@ class SixPaperService:
                 name: dict(portfolio_action="hold", symbols=[], weights=[], reference_marks={})
                 for name in CHILDREN
             }
-        self.operate(policy, target, positions, now, new_risk=False)
+        self.operate(policy, target, positions, now, new_risk=False, frozen_symbols=frozen_symbols)
 
     def publish_dashboard(self):
         """Project actual service/account state; uncertified money remains N/A."""
@@ -956,20 +1025,33 @@ class SixPaperService:
             opening = close = now
         rth = bool(market["is_open"]) and opening <= now < close
         new_risk = rth and opening + timedelta(minutes=10) <= now < close - timedelta(minutes=30)
+        frozen = {
+            symbol: detail if isinstance(detail, str) else "broker_quantity_mismatch"
+            for symbol, detail in mismatch.items()
+        }
         if rth:
+            from open_composer.book_paper.plan import make_asset_lookup
+
             self.cancel_due(now, close)
+            if hasattr(self.client, "get_all_assets"):
+                self._asset_lookup = make_asset_lookup(self.client)
         for policy in POLICIES:
             try:
-                if rth and not mismatch:
-                    self.protective(policy, positions, now)
-                target = json.loads(
-                    (Path(self.config["targets_root"]) / (policy + ".json")).read_text()
-                )
-                self.target_books(policy, target, now)
-                if mismatch:
-                    raise ValueError("actual positions differ from preserved books")
+                path = Path(self.config["targets_root"]) / (policy + ".json")
+                target = json.loads(path.read_text()) if path.exists() else {}
+                policy_frozen = frozen
+                if target.get("application_day") == now.astimezone(NEW_YORK).date().isoformat():
+                    policy_frozen = frozen | target.get("frozen_symbols", {})
+                    children = target.get("children", [])
+                    for child in children.values() if isinstance(children, dict) else children:
+                        policy_frozen.update(child.get("frozen_symbols", {}))
                 if rth:
-                    self.operate(policy, target, positions, now, new_risk=new_risk)
+                    self.protective(policy, positions, now, frozen_symbols=policy_frozen)
+                self.target_books(policy, target, now)
+                if rth:
+                    self.operate(
+                        policy, target, positions, now, new_risk=new_risk, frozen_symbols=frozen
+                    )
                 self.state["policy_status"][policy] = {
                     "status": "ready_waiting_rth" if not rth else "operating",
                     "observed_at": now.isoformat(),

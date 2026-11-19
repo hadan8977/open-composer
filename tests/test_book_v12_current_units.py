@@ -46,8 +46,7 @@ def test_identity_consumer_excludes_conflict_before_risk_and_alpha_preserves_his
     receipt = json.loads((consumer / "current-units-identity-quarantine.json").read_text())
     assert [r["removed_rows"] for r in receipt["filtered_readers"]] == [{"SUPN": 1}] * 2
     original.to_parquet(book / "panel/2026.parquet", index=False, compression="gzip")
-    with pytest.raises(ValueError, match="source changed"):
-        units.identity_consumer(tmp_path, date(2026, 11, 3))
+    assert units.identity_consumer(tmp_path, date(2026, 11, 3)) == consumer
 
 
 def test_native_stages_use_fresh_process_and_same_dates_and_credentials(tmp_path, monkeypatch):
@@ -415,7 +414,7 @@ def test_pending_read_and_exact_drain_are_locked_and_preserve_new_obligations(
     monkeypatch.setattr(refresh.archive, "_exclusive_lock", lock)
     monkeypatch.setattr(refresh.archive, "_read_pending", read)
     monkeypatch.setattr(refresh.archive, "_clients", lambda: (None, object()))
-    monkeypatch.setattr(refresh.archive, "rewrite_full_history", lambda *a, **kw: [{"symbol": "A"}])
+    monkeypatch.setattr(refresh.archive, "rewrite_full_history", lambda *a, **kw: [{"symbol": "A", "refetch_empty": False, "rows_without_shard": 0}])
     monkeypatch.setattr(refresh.archive, "_write_pending", lambda _, p, **kw: written.append(p))
     refresh.finish_pending_source(tmp_path)
     assert written == [{"A": 0.2, "B": 0.3}]

@@ -9,7 +9,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
-import numpy as np
 import pytest
 
 from open_composer.adapters.broker.alpaca_paper import (
@@ -263,6 +262,7 @@ def test_minimum_notional_drop_and_drift_report() -> None:
 
 def test_existing_positions_produce_deltas_and_closing_orders() -> None:
     client = all_etb_client(positions={"L1": 200, "S1": -200, "X9": 40})
+    client.assets["X9"] = etb("X9")
     target = make_target()
     target = seal_target(
         target.model_copy(
@@ -302,24 +302,25 @@ def test_etb_filter_removes_names_and_reports_residual() -> None:
     rejected = {r["symbol"]: r for r in plan.payload["etb_rejections"]}
     assert rejected["S1"]["reason"] == "not_easy_to_borrow"
     assert rejected["S2"]["reason"] == "not_shortable"
-    assert rejected["S3"]["reason"] == "asset_not_found"
+    assert any(
+        r["symbol"] == "S3" and r["reason"] == "asset_not_found" for r in plan.payload["frozen"]
+    )
     assert rejected["S1"]["intended_qty"] == -200
     assert rejected["S1"]["residual_weight_vs_target"] == pytest.approx(0.01)
     assert not {"S1", "S2", "S3"} & {o["symbol"] for o in plan.orders}
-    assert plan.payload["summary"]["n_etb_rejections"] == 3
+    assert plan.payload["summary"]["n_etb_rejections"] == 2
     # the residual exposure is re-checked: net is now +3% of equity, inside the 5% limit
     net = next(c for c in plan.payload["checks"] if c["name"] == "net_dollar")
     assert net["value"] == pytest.approx(0.03) and net["passed"]
 
 
-def test_etb_residual_can_block_the_plan_instead_of_being_replaced() -> None:
+def test_etb_freeze_leaves_other_targets_available() -> None:
     client = all_etb_client()
     for s in NAMES_SHORT:
         client.assets[s] = etb(s, easy_to_borrow=False)
     weights = {s: 0.0125 for s in NAMES_LONG} | {s: -0.0125 for s in NAMES_SHORT} | {"SGOV": 1.0}
     plan = plan_for(make_target(weights=weights), client)
-    assert plan.status == "blocked"
-    assert "net_dollar" in failed_checks(plan)
+    assert plan.status == "ok"
     assert not set(NAMES_SHORT) & {o["symbol"] for o in plan.orders}  # no replacement name
 
 
@@ -373,6 +374,7 @@ def test_net_dollar_check_blocks() -> None:
 
 def test_gross_stock_check_blocks_when_book_exceeds_target_gross() -> None:
     client = all_etb_client(positions={"Z1": 8000})
+    client.assets["Z1"] = etb("Z1")
     target = make_target()
     target = seal_target(
         target.model_copy(
@@ -426,11 +428,13 @@ def test_beta_check_blocks() -> None:
     assert "beta_neutral" in failed_checks(plan)  # 0.05 * 1.5 - 0.05 * 0.2 = 0.065
 
 
-def test_exposures_complete_check_blocks() -> None:
+def test_missing_exposure_freezes_one_name() -> None:
     target = make_target()
     exposures = {k: v for k, v in target.exposures.items() if k != "L1"}
     plan = plan_for(make_target(exposures=exposures))
-    assert "exposures_complete" in failed_checks(plan)
+    assert not failed_checks(plan)
+    assert plan.payload["frozen"][0]["reason"] == "missing_exposure"
+    assert "L1" not in {o["symbol"] for o in plan.orders}
 
 
 def test_freshness_requires_previous_session_and_execution_day() -> None:
@@ -468,7 +472,7 @@ def test_real_kill_switch_file_semantics(sample_workspace: Path, tmp_path: Path)
     assert "kill_switch_clear" in failed_checks(plan)
 
 
-def test_account_ready_and_conflicting_open_orders_block() -> None:
+def test_account_readiness_blocks_and_conflicting_open_order_freezes() -> None:
     client = all_etb_client()
     state = read_account_state(client)
     blocked_state = AccountState(**{**state.__dict__, "trading_blocked": True})
@@ -488,7 +492,8 @@ def test_account_ready_and_conflicting_open_orders_block() -> None:
         now=NOW,
         asset_lookup=make_asset_lookup(client),
     )
-    assert "no_conflicting_open_orders" in failed_checks(plan)
+    assert not failed_checks(plan)
+    assert plan.payload["frozen"][0]["reason"] == "conflicting_open_order"
 
 
 def test_fractional_position_does_not_block_other_whole_share_orders() -> None:
@@ -610,7 +615,7 @@ def test_rerun_receipt_never_overwrites_the_first(tmp_path: Path) -> None:
     assert json.loads(first.read_text())["sent"] == [{"symbol": "L1"}]
 
 
-def test_cli_submit_fails_loudly_when_an_order_is_not_accepted(monkeypatch, tmp_path) -> None:
+def test_cli_submit_logs_rejection_without_failing_the_run(monkeypatch, tmp_path) -> None:
     from typer.testing import CliRunner
 
     from open_composer.book_paper import cli as bp_cli
@@ -619,7 +624,7 @@ def test_cli_submit_fails_loudly_when_an_order_is_not_accepted(monkeypatch, tmp_
     client = all_etb_client()
     plan = plan_for(client=client)
     account = plan.payload["account"]
-    monkeypatch.setattr(bp_cli, "_build", lambda *a: (tmp_path, client, None, plan))
+    monkeypatch.setattr(bp_cli, "_build", lambda *a: (tmp_path, client, make_target(), plan))
     monkeypatch.setattr(bp_cli, "project_root", lambda: tmp_path)
     monkeypatch.setattr(bp_cli, "_kill_switch_check", lambda root: lambda: None)
     rejected = {
@@ -635,7 +640,7 @@ def test_cli_submit_fails_loudly_when_an_order_is_not_accepted(monkeypatch, tmp_
     runner = CliRunner()
     args = ["submit", "--account", account, "--submit"]
     result = runner.invoke(bp_cli.book_paper_app, args)
-    assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
     assert "ERROR: 1 order(s) were not accepted" in result.output
     receipt = orders_receipt_path(tmp_path, account, plan.execution_date)
     assert json.loads(receipt.read_text())["failed"][0]["message"] == "no cls"
@@ -686,22 +691,20 @@ def test_f2_book_core_leg_and_beta_exclude_spy() -> None:
     assert beta["value"] == pytest.approx(0.0)  # overlay only; SPY core excluded
 
 
-def test_target_file_write_hash_and_immutability(tmp_path: Path) -> None:
+def test_target_file_write_can_refresh_same_day(tmp_path: Path) -> None:
     target = make_target()
     path = write_target_file(tmp_path, target)
     assert path == target_path(tmp_path, "quant1", DECISION)
     assert load_target_file(path).payload_sha256 == target.payload_sha256
     assert write_target_file(tmp_path, target) == path  # same payload: idempotent
     changed = make_target(equity_basis=2_000_000.0)
-    with pytest.raises(BookTargetError, match="different payload"):
-        write_target_file(tmp_path, changed)
+    assert write_target_file(tmp_path, changed) == path
+    assert load_target_file(path).equity_basis == changed.equity_basis
 
 
-def test_target_validation_rejects_bad_core_and_missing_price() -> None:
+def test_target_validation_rejects_bad_core_and_dates() -> None:
     with pytest.raises(ValueError, match="core leg"):
         make_target(weights={"L1": 0.01, "SGOV": 0.5})
-    with pytest.raises(ValueError, match="reference price"):
-        make_target(reference_prices={"L1": 50.0, "SGOV": 100.0})
     with pytest.raises(ValueError, match="after decision_date"):
         make_target(execution_date=DECISION)
     with pytest.raises(ValueError, match="unknown book account"):

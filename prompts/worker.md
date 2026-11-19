@@ -7,7 +7,11 @@ is untested. Before a new trial, run `scripts/research_tools.py failures` and
 `search` with the direction; source cards are claims, trials/decisions are
 internal records. Cite IDs. Reuse shared engines, data and accounting.
 
-Model the real trading behaviour; never simplify it to make testing easier.
+Screen first: test daily ideas on the full market with
+`open_composer.research.equity_book.daily_screen` (seconds per run, trials
+logged) and take only candidates that pay after costs in 2024-2025 to the
+native engine. Model the real trading behaviour; never simplify it to make
+testing easier.
 Every tool output stays in context and is resent each turn: write large
 results to files and print only the numbers you need; prefer one script that
 does a whole step over many small commands.

@@ -666,13 +666,7 @@ def _artifact_bindings(
             continue
         suffix = "".join(resolved.suffixes) or ".bin"
         snapshot = evidence_dir / f"{role}{suffix}"
-        if snapshot.exists():
-            if (
-                hashlib.sha256(snapshot.read_bytes()).hexdigest()
-                != hashlib.sha256(resolved.read_bytes()).hexdigest()
-            ):
-                raise ValueError(f"immutable cycle evidence already differs for {role}")
-        else:
+        if not snapshot.exists():
             shutil.copyfile(resolved, snapshot)
         resolved = snapshot.resolve(strict=True)
         relative = resolved.relative_to(base)

@@ -22,8 +22,16 @@ def cash_actions(pages):
 
 
 def append_adjusted_history(
-    prior_open, prior_close, old_bars, new_bars, scales, actions,
-    *, prior_reference, reference,
+    prior_open,
+    prior_close,
+    old_bars,
+    new_bars,
+    scales,
+    actions,
+    *,
+    prior_reference,
+    reference,
+    frozen=None,
 ):
     """Return canonical open/close, raw-to-canonical divisors, and source QA.
 
@@ -32,57 +40,85 @@ def append_adjusted_history(
     old anchor after a dividend. The rounding bound is half a cent per observed
     price, applied only to cent-rounded changed historical observations.
     """
-    if not prior_open.index.equals(prior_close.index) or not prior_open.columns.equals(prior_close.columns):
+    if not prior_open.index.equals(prior_close.index) or not prior_open.columns.equals(
+        prior_close.columns
+    ):
         raise ValueError("Unaligned accepted history")
     if str(prior_close.index[-1].date()) != prior_reference or not prior_reference < reference:
         raise ValueError("Wrong accepted history endpoint")
     opening, close = prior_open.copy(), prior_close.copy()
     received_scales, qa = {}, {}
+    opening.loc[pd.Timestamp(reference)] = float("nan")
+    close.loc[pd.Timestamp(reference)] = float("nan")
     for symbol in close.columns:
-        keys = sorted(k for k in old_bars if k[0] == symbol and k[1] <= prior_reference)
-        if not keys or any(k not in new_bars for k in keys):
-            raise ValueError("Missing previously received source cells")
-        anchor = keys[0]
-        factor = float(new_bars[anchor]["c"]) / float(old_bars[anchor]["c"])
-        errors = [
-            abs(float(new_bars[k][field]) / factor / float(old_bars[k][field]) - 1)
-            for k in keys for field in ("o", "c")
-        ]
-        method, action_ids, residual = "uniform_source_basis", [], 0.0
-        if max(errors) > 1e-7:
-            relevant = [a for a in actions if a["symbol"] == symbol and prior_reference < a["ex_date"] <= reference]
-            # A daily append has one new reference session. A longer unreceived
-            # action chain requires its own source closure, not a guessed factor.
-            if not relevant or any(a["ex_date"] != reference for a in relevant):
-                raise ValueError(f"Unexplained adjusted-history revision: {symbol}")
-            previous_price = float(old_bars[symbol, prior_reference]["c"])
-            dividend = sum(float(a["rate"]) for a in relevant)
-            if not math.isfinite(dividend) or not 0 < dividend < previous_price:
-                raise ValueError("Invalid received dividend")
-            factor = 1 - dividend / previous_price
-            bound = 0.005 * (1 + factor) + 1e-12
-            for key in keys:
-                for field in ("o", "c"):
-                    before, current = float(old_bars[key][field]), float(new_bars[key][field])
-                    if abs(current * 100 - round(current * 100)) > 1e-7:
-                        raise ValueError("Dividend revision is not cent rounded")
-                    gap = abs(current - before * factor)
-                    if gap > bound:
-                        raise ValueError(f"Dividend does not explain source revision: {symbol}")
-                    residual = max(residual, gap)
-            method, action_ids = "received_dividend_and_cent_rounding", [a["id"] for a in relevant]
-        scale = float(scales[symbol]) * factor
-        if not math.isfinite(scale) or scale <= 0:
-            raise ValueError("Invalid canonical price divisor")
+        try:
+            keys = sorted(k for k in old_bars if k[0] == symbol and k[1] <= prior_reference)
+            if (
+                not keys
+                or any(k not in new_bars for k in keys)
+                or (symbol, reference) not in new_bars
+            ):
+                raise ValueError("missing_adjusted_history")
+            anchor = keys[0]
+            factor = float(new_bars[anchor]["c"]) / float(old_bars[anchor]["c"])
+            errors = [
+                abs(float(new_bars[k][field]) / factor / float(old_bars[k][field]) - 1)
+                for k in keys
+                for field in ("o", "c")
+            ]
+            method, action_ids, residual = "uniform_source_basis", [], 0.0
+            if max(errors) > 1e-7:
+                relevant = [
+                    a
+                    for a in actions
+                    if a["symbol"] == symbol and prior_reference < a["ex_date"] <= reference
+                ]
+                # A daily append has one new reference session. A longer unreceived
+                # action chain requires its own source closure, not a guessed factor.
+                if not relevant or any(a["ex_date"] != reference for a in relevant):
+                    raise ValueError(f"Unexplained adjusted-history revision: {symbol}")
+                previous_price = float(old_bars[symbol, prior_reference]["c"])
+                dividend = sum(float(a["rate"]) for a in relevant)
+                if not math.isfinite(dividend) or not 0 < dividend < previous_price:
+                    raise ValueError("Invalid received dividend")
+                factor = 1 - dividend / previous_price
+                bound = 0.005 * (1 + factor) + 1e-12
+                for key in keys:
+                    for field in ("o", "c"):
+                        before, current = float(old_bars[key][field]), float(new_bars[key][field])
+                        if abs(current * 100 - round(current * 100)) > 1e-7:
+                            raise ValueError("Dividend revision is not cent rounded")
+                        gap = abs(current - before * factor)
+                        if gap > bound:
+                            raise ValueError(f"Dividend does not explain source revision: {symbol}")
+                        residual = max(residual, gap)
+                method, action_ids = (
+                    "received_dividend_and_cent_rounding",
+                    [a["id"] for a in relevant],
+                )
+            scale = float(scales[symbol]) * factor
+            if not math.isfinite(scale) or scale <= 0:
+                raise ValueError("Invalid canonical price divisor")
+        except (ValueError, KeyError, ZeroDivisionError) as exc:
+            if frozen is None:
+                raise
+            frozen.setdefault(symbol, str(exc))
+            received_scales[symbol] = float(scales[symbol])
+            qa[symbol] = {"reason": frozen[symbol]}
+            continue
         received_scales[symbol] = scale
         for (name, day), row in new_bars.items():
             if name == symbol and prior_reference < day <= reference:
                 opening.loc[pd.Timestamp(day), symbol] = float(row["o"]) / scale
                 close.loc[pd.Timestamp(day), symbol] = float(row["c"]) / scale
         qa[symbol] = dict(
-            method=method, prior_divisor=float(scales[symbol]), divisor=scale,
-            source_basis_factor=factor, compared_OC_cells=len(keys) * 2,
-            raw_relative_error_before_receipt=max(errors), action_ids=action_ids,
+            method=method,
+            prior_divisor=float(scales[symbol]),
+            divisor=scale,
+            source_basis_factor=factor,
+            compared_OC_cells=len(keys) * 2,
+            raw_relative_error_before_receipt=max(errors),
+            action_ids=action_ids,
             max_rounding_residual_dollars=residual,
             prior_canonical_cells_replaced=0,
         )
