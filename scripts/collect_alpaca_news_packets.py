@@ -11,14 +11,10 @@ Usage::
     # Full historical backfill (resumable -- safe to kill and rerun):
     uv run python scripts/collect_alpaca_news_packets.py --start 2024-01-01
 
-    # Forward mode (daily cron target -- last 3 days, always fresh fetch):
-    uv run python scripts/collect_alpaca_news_packets.py --forward
+    # Forward mode via the Windows data profile:
+    agent-env run opencomposer-research .venv/Scripts/python.exe scripts/collect_alpaca_news_packets.py --forward
 
-Credentials come from ``.env`` via ``load_dotenv()`` below -- this script
-loads it once at startup and never reads or prints its contents; the actual
-HTTP calls read ``ALPACA_API_KEY_ID``/``ALPACA_API_SECRET_KEY`` out of
-``os.environ`` through ``open_composer.config`` (see collector.py's
-docstring).
+Forward mode uses process environment credentials. Historical mode supports .env.
 """
 
 from __future__ import annotations
@@ -90,8 +86,9 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
-    load_dotenv(dotenv_path=ROOT / ".env")
     args = _parse_args()
+    if not args.forward:
+        load_dotenv(dotenv_path=ROOT / ".env")
 
     if args.smoke_day:
         print(
@@ -115,10 +112,6 @@ def main() -> int:
         )
         summary = collect_forward(lookback_days=args.lookback_days)
         print(summary, flush=True)
-        years = {date.today().year}
-        for year in sorted(years):
-            path = consolidate_year(year)
-            print(f"consolidated {year} -> {path}", flush=True)
         return 0
 
     end = args.end or datetime.utcnow().date()

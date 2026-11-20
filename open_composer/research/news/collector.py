@@ -23,10 +23,7 @@ contract's ``knowledge_time_disclosure`` block
   forward collection starts (see ``collect_forward``).
 
 Credentials: ``ALPACA_API_KEY_ID`` / ``ALPACA_API_SECRET_KEY`` via
-``open_composer.config`` (``os.environ`` accessors) -- this module never
-calls ``load_dotenv()`` itself and never reads/prints ``.env``; the caller
-(``scripts/collect_alpaca_news_packets.py``) loads it once at process start,
-same pattern as ``scripts/update_sip_archive.py``.
+``open_composer.config`` (``os.environ`` accessors).
 
 Layout on disk (``data/features/news_packets/``):
 
@@ -36,8 +33,9 @@ Layout on disk (``data/features/news_packets/``):
   partial day to re-fetch, never corrupts an already-written day).
 - ``{year}.parquet``: consolidated view for a year, built by
   ``consolidate_year`` from that year's ``_daily/*.parquet`` files,
-  deduplicated by ``id`` (keep last -- a forward re-fetch of a recent day
-  can see a provider-side update to an already-collected article).
+  deduplicated by ``id``.
+- ``_forward_daily/{YYYY-MM-DD}.parquet``: first observed packet per article
+  in each UTC query day. Overlapping fetches add IDs and preserve first-seen packets.
 """
 
 from __future__ import annotations
@@ -201,13 +199,10 @@ def fetch_window(
     max_pages: int | None = None,
 ) -> list[dict[str, Any]]:
     """All articles published in ``[start, end)``, paginated to exhaustion
-    (or ``max_pages``, for tests). One ``fetched_at`` timestamp is shared by
-    every packet from this call -- they were all fetched "now", by
-    construction.
+    (or ``max_pages``, for tests). Stamp each page after its response arrives.
     """
     start_iso = _to_utc_iso(start)
     end_iso = _to_utc_iso(end)
-    fetched_at = datetime.now(UTC)
     packets: list[dict[str, Any]] = []
     page_token: str | None = None
     pages_fetched = 0
@@ -215,6 +210,7 @@ def fetch_window(
         page = _fetch_page(
             start_iso=start_iso, end_iso=end_iso, page_token=page_token, session=session
         )
+        fetched_at = datetime.now(UTC)
         for article in page.articles:
             packet = _article_to_packet(article, fetched_at=fetched_at, historical=historical)
             if packet is not None:
@@ -299,9 +295,7 @@ def collect_historical_range(
 
 def consolidate_year(year: int) -> Path:
     """Concatenate every collected day in ``year`` into one
-    ``{year}.parquet``, deduplicated by ``id`` (keep last -- a forward
-    re-fetch of an already-collected recent day may see a provider-side
-    update)."""
+    ``{year}.parquet``, deduplicated by ``id`` (keep last)."""
     NEWS_PACKETS_ROOT.mkdir(parents=True, exist_ok=True)
     day_paths = sorted(DAILY_ROOT.glob(f"{year}-*.parquet"))
     frames = [pd.read_parquet(path) for path in day_paths]
@@ -320,23 +314,27 @@ def consolidate_year(year: int) -> Path:
 def collect_forward(
     lookback_days: int = 3, *, session: Any = None, today: date | None = None
 ) -> HistoricalCollectionSummary:
-    """Forward mode (plan section 4.1's ``--forward``): re-fetch the last
-    ``lookback_days`` calendar days fresh every time (``historical=False``,
-    so ``visible_at = fetched_at`` -- the only clean PIT evidence this
-    pipeline produces), overwriting each day's ``_daily`` file (not
-    resumable by design -- forward mode always wants the latest provider
-    state for recent days, and dedup-by-id at consolidation time handles
-    the overlap with whatever historical/earlier-forward data already
-    exists for the same days).
-    """
-    DAILY_ROOT.mkdir(parents=True, exist_ok=True)
+    """Add first-seen packets from the last ``lookback_days`` UTC dates."""
+    forward_root = NEWS_PACKETS_ROOT / "_forward_daily"
+    forward_root.mkdir(parents=True, exist_ok=True)
     today = today or datetime.now(UTC).date()
     total_articles = 0
     days_fetched = 0
     for offset in range(lookback_days):
         day = today - timedelta(days=offset)
-        frame = collect_day(day, historical=False, session=session)
-        frame.to_parquet(daily_packet_path(day), index=False)
+        path = forward_root / f"{day.isoformat()}.parquet"
+        frame = collect_day(day, historical=False, session=session).drop_duplicates("id")
+        combined = frame
+        if path.exists():
+            prior = pd.read_parquet(path)
+            frame = frame.loc[~frame["id"].isin(prior["id"])]
+            if frame.empty:
+                days_fetched += 1
+                continue
+            combined = pd.concat([prior, frame], ignore_index=True)
+        pending = path.with_suffix(".tmp")
+        combined.to_parquet(pending, index=False)
+        pending.replace(path)
         days_fetched += 1
         total_articles += len(frame)
     return HistoricalCollectionSummary(

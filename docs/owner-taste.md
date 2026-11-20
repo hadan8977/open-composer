@@ -45,7 +45,10 @@ ranked; always obey them.
   sample must be large enough to support it. Use a backtest to confirm a
   mechanism, not to search for one: first show at trade level which
   conditions carry the money, then test the rule built on them.
-- No paid data: find what is needed (AI native, not cost saving).
+- No paid data: find what is needed (AI native, not cost saving). Search the
+  web first for everything, not only research ideas: newest datasets, open
+  projects, shared collections, skills and sites for data and tools, before
+  building a collector or method yourself.
 - Look beyond price bars. Prefer systems that use alternative data and text
   (filings, transcripts, news, social attention, web data) processed by LLMs
   at scale with point-in-time timestamps; cheap models make bulk extraction
@@ -55,9 +58,14 @@ ranked; always obey them.
   use shorts only in large, easy-to-borrow stocks, or take the short view
   through listed index or inverse ETFs. Judge feasibility (borrow, fees,
   capacity, leveraged-ETF decay) before results.
-- Scope is everything the paper account can trade, including leveraged ETFs
-  such as TQQQ, without lowering the bar. Any narrowing is your own choice; own
-  it and undo it when it stops helping.
+- Scope is US stocks and ETFs, including leveraged ETFs such as TQQQ, at any
+  horizon including intraday, without lowering the bar; options and crypto
+  wait (owner 2026-11-19). Opportunities too small for institutions are an
+  edge of this account size: look for them, priced at real capacity. Any
+  further narrowing is your own choice; own it and undo it when it stops helping.
+- Shared research tools are a toolbox, not a cage: agents may add operators,
+  models or methods and change shared code (with review) when a better method
+  needs it. Roles (decide, design, run, bulk work) are not tied to fixed models.
 
 ## Depth: when is it enough
 Depth means you can explain, at the level of individual trades, why the system

@@ -73,7 +73,23 @@ class ExposureSpec(SpecFields):
     parameters: ExposureParameters
 
 
-SPEC = TypeAdapter(Annotated[FamilySpec | BridgeSpec | ExposureSpec, Field(discriminator="adapter")])
+class FactorParameters(SpecFields):
+    slate: str
+    library_batch: str | None = None
+    official_interest: bool = False
+    preceding_statistics: str | None = None
+    split: Literal["development", "validation", "context"]
+    capital: PositiveInt
+
+
+class FactorSpec(SpecFields):
+    adapter: Literal["dated_factor_screen"]
+    experiment: Experiment
+    parameters: FactorParameters
+
+
+SPEC = TypeAdapter(Annotated[FamilySpec | BridgeSpec | ExposureSpec | FactorSpec,
+                             Field(discriminator="adapter")])
 
 
 class FrozenComparison(BaseModel):
@@ -94,6 +110,12 @@ def resolve_spec(root, spec_path, batch_id):
     direction = root / "research" / identifier(experiment.direction)
     folder = direction / "batches" / identifier(batch_id) / spec.adapter
     params = spec.parameters
+    if isinstance(spec, FactorSpec):
+        from research.factor_factory.run import run_wave
+
+        if experiment.kind != "diagnostic" or (folder.parent / "results.json").exists():
+            raise ValueError("A factor wave requires a new diagnostic batch")
+        return experiment, partial(run_wave, root, folder.parent, spec)
     if experiment.kind == "financial":
         ledger = TrialLedger(direction / "trials.jsonl")
         if not ledger.path.is_file() or ledger.n_trials == 0:
@@ -158,6 +180,8 @@ def resolve_spec(root, spec_path, batch_id):
 
 def run_spec(root, spec_path, batch_id):
     experiment, variant = resolve_spec(root, spec_path, batch_id)
+    if callable(variant):
+        return variant()
     return run_batch(root, experiment=experiment, batch_id=batch_id, variants=[variant], selected_id=variant.id)
 
 
