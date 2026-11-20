@@ -163,7 +163,7 @@ def main() -> int:
                     feed="sip",
                     adjustment="raw",
                     start=end - timedelta(days=1),
-                    end=end,
+                    end=min(end, now - timedelta(minutes=16)),
                 )
             ).df
         )
