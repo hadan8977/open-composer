@@ -1,0 +1,10 @@
+[Unit]
+Description=Open Composer Paper position prices
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/codex-test/open-composer
+ExecStart=/root/codex-test/open-composer/.venv/bin/python -m scripts.refresh_paper_prices
+TimeoutStartSec=25s
+Nice=10

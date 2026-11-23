@@ -123,15 +123,20 @@ def projection_symbols(root: Path, sealed_history: Path, inputs: Path) -> list[s
     return sorted(names)
 
 
-def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: dict) -> None:
+def market_data_client():
     from alpaca.data.historical import StockHistoricalDataClient
+
+    values = dotenv_values(LEGACY_ENV)
+    return StockHistoricalDataClient(
+        values["ALPACA_API_KEY_ID"], values["ALPACA_API_SECRET_KEY"]
+    )
+
+
+def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: dict) -> None:
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
 
-    values = dotenv_values(LEGACY_ENV)
-    client = StockHistoricalDataClient(
-        values["ALPACA_API_KEY_ID"], values["ALPACA_API_SECRET_KEY"]
-    )
+    client = market_data_client()
     ny = ZoneInfo("America/New_York")
     # Basic Alpaca SIP access requires the request end to be at least 15 minutes old.
     request_end = min(

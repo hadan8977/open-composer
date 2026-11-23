@@ -103,6 +103,7 @@ from open_composer.cockpit.data.paper_dashboard import (
 )
 from open_composer.cockpit.data.paper_history import load_paper_account_snapshots, load_paper_history
 from open_composer.cockpit.data.paper_overview import load_paper_overview
+from open_composer.cockpit.data.paper_prices import load_paper_prices
 from open_composer.cockpit.data.queue import load_queue_glance
 from open_composer.cockpit.data.quota import (
     QUOTA_DISABLED_REASON,
@@ -959,6 +960,14 @@ def create_app(*, warm: bool = True) -> FastAPI:
             equity=build_account_equity_history(root),
         )
         return templates.TemplateResponse(request, "paper_accounts.html", context)
+
+    @app.get("/paper/prices", response_class=HTMLResponse)
+    def paper_prices_page(request: Request) -> HTMLResponse:
+        context = _base_context(request, "paper")
+        context.update(paper_tab="prices", prices=load_paper_prices(project_root()))
+        return templates.TemplateResponse(
+            request, "paper_prices.html", context, headers={"Cache-Control": "no-store"}
+        )
 
     @app.get("/paper/history", response_class=HTMLResponse)
     def paper_history_page(request: Request) -> HTMLResponse:

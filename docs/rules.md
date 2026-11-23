@@ -67,7 +67,8 @@ Machine and repo
   Canonical skills in .agents/skills/; .claude/skills links to that directory.
 
 Current state (update in place)
-- Roles: research/workflow.json. Paper authorizations: control.json.
+- Roles: research/workflow.json. Paper authorizations: control.json. The paper
+  dashboard shows timestamped intraday prices for current stock positions.
 - Model tiers: judgment, plans, reviews and research roles use the strongest models (Claude main session; Codex gpt-6.2-sol, owner 2026-11-17). Simple low-judgment work where a smaller model does not change quality (crawling and refreshing public data, bulk text extraction or labelling, format conversion, routine lookups) goes to pi's DeepSeek V4.1 Flash (provider pi, model commandcode/deepseek/deepseek-v4.1-flash; owner 2026-11-19: cheap, tokens plentiful). The delegating agent spot-checks its output. Current priorities: docs/research-mission.zh.md.
 - Owner report format: docs/owner-reporting.zh.md.
 - Research resumed 2026-11-19 by the main session after the paper repairs (owner pause of 2026-11-18 ended); priorities in docs/research-mission.zh.md.
