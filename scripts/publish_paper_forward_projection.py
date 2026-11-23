@@ -170,6 +170,9 @@ def main() -> int:
 
     # --- rows -------------------------------------------------------------
     histories = {row["id"]: row for row in history["histories"]}
+    control = json.loads((root / "control.json").read_text())["paper"]
+    retired_etfs = {"legacy/" + name for name in control["etf"].get("retired", [])}
+    active_six = {"six/" + name for name in control["six"]["policies"]}
     rows = []
     for row in sealed_overview["snapshot"]["rows"]:
         updated = dict(row)
@@ -181,6 +184,9 @@ def main() -> int:
             last = histories[row["id"]]["points"][-1]
             pnl = num(last.get("trading_pnl_usd"))
             capital = num(last.get("capital_usd"))
+        identity = row["id"]
+        if identity in retired_etfs or (identity.startswith("six/") and identity not in active_six):
+            updated["status"] = "已退出"
         updated["capital_usd"] = None if capital is None else float(capital)
         updated["precise_pnl_usd"] = None if pnl is None else float(pnl)
         updated["pnl_usd"] = None if pnl is None else float(pnl.quantize(CENT))
@@ -209,15 +215,25 @@ def main() -> int:
 
     # --- daily ------------------------------------------------------------
     daily = list(sealed_overview["daily"])
-    sealed_days = {point["day"] for point in daily}
+    for index, point in enumerate(daily):
+        if point["pnl_usd"] is not None or point["capital_missing"] or not point["pools"]:
+            continue
+        capital = num(point["capital_usd"])
+        if capital is None or capital <= 0:
+            continue
+        values = [pool_pnl(alias, point["day"]) for alias in point["pools"]]
+        if all(value is not None for value in values):
+            pnl = sum(values, D(0))
+            daily[index] = dict(
+                point, pnl_usd=float(pnl), missing=[],
+                return_pct=float(pnl / capital * 100),
+            )
     sessions = [
         day
         for day in sorted({*equity["legacy"], *equity["six"], *equity["quant1"]})
         if day > sealed_overview["through_session"] and day <= through
     ]
     for day in sessions:
-        if day in sealed_days:
-            continue
         pools, missing = [], []
         for alias in ("legacy", "six", "F1"):
             key = "quant1" if alias == "F1" else alias

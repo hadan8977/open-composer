@@ -13,11 +13,13 @@ import argparse
 import hashlib
 import json
 import socket
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from dotenv import dotenv_values
 
+ROOT = Path(__file__).resolve().parents[1]
 LEGACY_ENV = Path("/root/codex-test/open-composer/.env")
 BOOK_ENV = Path("/root/.config/open-composer/paper-book-accounts.env")
 VALIDATION_ENV = Path("/root/.config/open-composer/paper-validation-20261019.env")
@@ -58,18 +60,19 @@ def plain(value):
     return json.loads(value.model_dump_json()) if hasattr(value, "model_dump_json") else value
 
 
-def capture_accounts(out: Path, after: str, manifest: dict) -> None:
+def capture_accounts(out: Path, after: str, start: str, manifest: dict) -> None:
     from alpaca.trading.requests import GetPortfolioHistoryRequest
 
+    history_request = GetPortfolioHistoryRequest(
+        start=datetime.fromisoformat(start).replace(tzinfo=UTC),
+        end=datetime.now(UTC),
+        timeframe="1D",
+    )
     for alias in ACCOUNTS:
         client = trading_client(alias)
         account = plain(client.get_account())
         positions = [plain(p) for p in client.get_all_positions()]
-        history = plain(
-            client.get_portfolio_history(
-                GetPortfolioHistoryRequest(period="3M", timeframe="1D")
-            )
-        )
+        history = plain(client.get_portfolio_history(history_request))
         manifest[f"account/{alias}"] = write(
             out / f"account-{alias}.json",
             dict(
@@ -102,6 +105,24 @@ def capture_accounts(out: Path, after: str, manifest: dict) -> None:
         print(f"{alias}: account + {len(positions)} positions + {len(rows)} activities")
 
 
+def projection_symbols(root: Path, sealed_history: Path, inputs: Path) -> list[str]:
+    from scripts.extend_paper_projection_forward import executions_by_pool
+
+    sealed = json.loads(sealed_history.read_text())
+    start = date.fromisoformat(sealed["through_session"])
+    names = {
+        symbol
+        for row in sealed["histories"]
+        if row["kind"] == "trading_component"
+        for point in row["points"]
+        for symbol, qty in (point.get("quantity") or {}).items()
+        if qty
+    }
+    for rows in executions_by_pool(root, inputs, start).values():
+        names.update(row["symbol"] for row in rows)
+    return sorted(names)
+
+
 def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: dict) -> None:
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockBarsRequest
@@ -111,11 +132,12 @@ def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: 
     client = StockHistoricalDataClient(
         values["ALPACA_API_KEY_ID"], values["ALPACA_API_SECRET_KEY"]
     )
-    from datetime import time as clock_time
-
-    from zoneinfo import ZoneInfo
-
     ny = ZoneInfo("America/New_York")
+    # Basic Alpaca SIP access requires the request end to be at least 15 minutes old.
+    request_end = min(
+        datetime.fromisoformat(end).replace(tzinfo=UTC),
+        datetime.now(UTC) - timedelta(minutes=16),
+    )
     bars: dict[str, list] = {}
     for offset in range(0, len(symbols), 100):
         batch = symbols[offset : offset + 100]
@@ -123,7 +145,7 @@ def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: 
             symbol_or_symbols=batch,
             timeframe=TimeFrame.Day,
             start=datetime.fromisoformat(start).replace(tzinfo=UTC),
-            end=datetime.fromisoformat(end).replace(tzinfo=UTC),
+            end=request_end,
             feed="sip",
             adjustment="raw",
         )
@@ -143,6 +165,7 @@ def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: 
             captured_at=datetime.now(UTC).isoformat(),
             start=start,
             end=end,
+            request_end=request_end.isoformat(),
             adjustment="raw",
             feed="sip",
             symbols=bars,
@@ -157,7 +180,12 @@ def main() -> int:
     parser.add_argument("--after", required=True, help="Sealed cut-off, e.g. 2026-10-26T00:00:00Z")
     parser.add_argument("--bars-start", required=True)
     parser.add_argument("--bars-end", required=True)
-    parser.add_argument("--symbols", type=Path, required=True, help="JSON list of symbols")
+    parser.add_argument("--root", type=Path, default=ROOT)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--symbols", type=Path, help="JSON list of symbols")
+    selection.add_argument(
+        "--sealed-history", type=Path, help="Use sealed holdings and subsequent owned executions"
+    )
     parser.add_argument(
         "--bars-only",
         action="store_true",
@@ -171,8 +199,12 @@ def main() -> int:
         json.loads(manifest_path.read_text()) if args.bars_only else {}
     ) | {"captured_at": datetime.now(UTC).isoformat()}
     if not args.bars_only:
-        capture_accounts(out, args.after, manifest)
-    symbols = sorted({str(s).upper() for s in json.loads(args.symbols.read_text())})
+        capture_accounts(out, args.after, args.bars_start, manifest)
+    symbols = (
+        projection_symbols(args.root, args.sealed_history, out)
+        if args.sealed_history
+        else sorted({str(s).upper() for s in json.loads(args.symbols.read_text())})
+    )
     capture_bars(out, symbols, args.bars_start, args.bars_end, manifest)
     write(manifest_path, {k: v for k, v in manifest.items() if k != "manifest"})
     print(json.dumps({"out": str(out), "inputs": sorted(k for k in manifest if k != "manifest")}))

@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from open_composer.market_sessions import us_equity_session_dates
+from open_composer.reports.paper_equity import parse_stamp
 
 
 def _number(value):
@@ -46,6 +47,34 @@ def _chart(points, account):
             }
         )
     return {"bars": bars, "baseline": baseline}
+
+
+def load_paper_account_snapshots(root: Path) -> list[dict]:
+    cutoff = datetime.now(UTC) - timedelta(minutes=3)
+    aliases = ("legacy", "six", "quant1")
+    rows = {}
+    for alias in aliases:
+        path = root / f"runtime/paper/account-{alias}-snapshot.json"
+        try:
+            row = json.loads(path.read_text())
+            at = parse_stamp(row["at"])
+            rows[alias] = dict(
+                account=alias,
+                at=at.isoformat(),
+                equity_usd=_number(row["equity_usd"]),
+                cash_usd=_number(row["cash_usd"]),
+                stale=at < cutoff,
+            )
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    if len(rows) < len(aliases):
+        for row in load_paper_history(root).get("latest_account_observations", []):
+            alias = row.get("account")
+            if alias == "F1":
+                alias = "quant1"
+            if alias in aliases:
+                rows.setdefault(alias, dict(row, account=alias, stale=True))
+    return list(rows.values())
 
 
 def load_paper_history(root: Path) -> dict:
@@ -138,8 +167,6 @@ def load_paper_history(root: Path) -> dict:
                     "chart": _chart(points, row["kind"] == "account"),
                 }
             )
-        from datetime import UTC, datetime
-
         from open_composer.cockpit.data.paper_books import latest_completed_session
 
         expected = latest_completed_session(datetime.now(UTC))

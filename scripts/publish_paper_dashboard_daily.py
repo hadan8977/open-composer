@@ -37,30 +37,6 @@ def python() -> str:
     return str(ROOT / ".venv/bin/python")
 
 
-def symbols(sealed: dict) -> list[str]:
-    names: set[str] = set()
-    for row in sealed["histories"]:
-        if row.get("kind") != "trading_component":
-            continue
-        for point in row["points"]:
-            names.update((point.get("quantity") or {}).keys())
-    for path in (ROOT / "reports/paper/rehearsal").glob("*-fills.jsonl"):
-        for line in path.read_text().splitlines():
-            if line.strip():
-                names.add(str(json.loads(line)["symbol"]).upper())
-    positions = ROOT / "reports/paper/positions.json"
-    if positions.exists():
-        for row in json.loads(positions.read_text()).get("positions") or []:
-            names.add(str(row["symbol"]).upper())
-    state = ROOT / "runtime/paper/six/runtime-state.json"
-    if state.exists():
-        for book in json.loads(state.read_text())["books"].values():
-            for symbol, lots in (book.get("cashbook") or {}).get("lots", {}).items():
-                if lots:
-                    names.add(str(symbol).upper())
-    return sorted(names)
-
-
 def run(step: str, command: list[str]) -> dict:
     started = datetime.now(UTC)
     proc = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
@@ -109,14 +85,10 @@ def main() -> int:
 
     through = None
     try:
-        sealed = json.loads(SEALED_HISTORY.read_text())
         work.mkdir(parents=True, exist_ok=True)
         # A partial/failed capture must never reuse receipts from an earlier run.
         inputs = Path(tempfile.mkdtemp(prefix="inputs-", dir=work))
         summary["inputs"] = str(inputs)
-        symbols_list = symbols(sealed)
-        summary["symbols"] = len(symbols_list)
-        (work / "symbols.json").write_text(json.dumps(symbols_list))
         execute(
             "capture",
             [
@@ -130,8 +102,8 @@ def main() -> int:
                 "2026-09-01",
                 "--bars-end",
                 (target + timedelta(days=1)).isoformat(),
-                "--symbols",
-                str(work / "symbols.json"),
+                "--sealed-history",
+                str(SEALED_HISTORY),
             ],
         )
         # The broker posts a paper session's equity later than the session close, so

@@ -101,7 +101,7 @@ from open_composer.cockpit.data.paper_dashboard import (
     find_ledger_detail,
     get_dashboard_report,
 )
-from open_composer.cockpit.data.paper_history import load_paper_history
+from open_composer.cockpit.data.paper_history import load_paper_account_snapshots, load_paper_history
 from open_composer.cockpit.data.paper_overview import load_paper_overview
 from open_composer.cockpit.data.queue import load_queue_glance
 from open_composer.cockpit.data.quota import (
@@ -955,7 +955,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
             paper_tab="accounts",
             report=get_dashboard_report(root),
             paper_overview=load_paper_overview(root),
-            paper_history=load_paper_history(root),
+            paper_snapshots=load_paper_account_snapshots(root),
             equity=build_account_equity_history(root),
         )
         return templates.TemplateResponse(request, "paper_accounts.html", context)

@@ -50,6 +50,17 @@ The unit keeps the existing slice, memory, swap, nice, thread and stop settings.
 Its drop-in preserves the SIGTERM restart and OOM score repair. The Cockpit reads
 the service state and the target identities.
 
+## Cockpit updates
+
+Keep the existing daily publisher on the two root crontab slots. It rebuilds
+closed-session history from broker equity, owned fills and raw SIP closes.
+Use a separate read-only cron entry for current balances on `/paper/accounts`.
+On the VPS, `/etc/cron.d/open-composer-paper-snapshots` runs:
+
+```cron
+* * * * * root cd /root/codex-test/open-composer && flock -n runtime/paper/account-snapshots.lock sh -c 'for account in legacy six quant1; do timeout -k 3 15 .venv/bin/python -m scripts.capture_paper_account_snapshots "$account" || logger -t oc-paper-snapshots "$account refresh failed"; done' >> logs/paper_account_snapshots.log 2>&1
+```
+
 ## Tests
 
 Run one pytest process at a time. `make verify` runs the release checks; the

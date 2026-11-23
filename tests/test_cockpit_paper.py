@@ -590,3 +590,18 @@ def test_rehearsal_countdown_reflects_real_authorizations() -> None:
     countdown = P.build_rehearsal_countdown(REPO_ROOT, now=_NOW)
     assert countdown.status in ("ok", "warn", "stale", "unknown")
     assert countdown.label != "no rehearsal authorizations on file"
+
+
+def test_account_snapshots_keep_healthy_accounts_when_one_file_is_bad(tmp_path: Path) -> None:
+    from open_composer.cockpit.data.paper_history import load_paper_account_snapshots
+
+    root = tmp_path / "runtime" / "paper"
+    root.mkdir(parents=True)
+    (root / "account-legacy-snapshot.json").write_text('{"account":"legacy"}')
+    for alias, at in (("six", "2026-11-23T12:00:00"), ("quant1", "2026-11-23T12:00:00+00:00")):
+        (root / f"account-{alias}-snapshot.json").write_text(
+            json.dumps(dict(account=alias, at=at, equity_usd=1000, cash_usd=500))
+        )
+    snapshots = load_paper_account_snapshots(tmp_path)
+    assert [row["account"] for row in snapshots] == ["six", "quant1"]
+    assert all(row["at"] == "2026-11-23T12:00:00+00:00" for row in snapshots)

@@ -250,11 +250,8 @@ def extend_parent(row: dict, histories: dict, days, session_dates) -> list[dict]
     return points
 
 
-def extend_account(row: dict, capture: dict, days) -> list[dict]:
+def extend_account(by_day: dict, days) -> list[dict]:
     """Keep missing sessions explicit and preserve actual observation times."""
-    from open_composer.reports.paper_equity import account_equity_points
-
-    by_day = account_equity_points(capture)
     points = []
     for day in days:
         hit = by_day.get(day)
@@ -304,6 +301,7 @@ def main() -> int:
         alias: load_json(inputs / f"account-{alias}.json") for alias in ("legacy", "quant1", "six")
     }
     from open_composer.reports.paper_equity import account_equity_points
+    from open_composer.paper_authorization import broker_account_id_hash
 
     available = {alias: account_equity_points(capture) for alias, capture in accounts.items()}
     if not stamped or any(not points for points in available.values()):
@@ -330,9 +328,24 @@ def main() -> int:
             )
         elif row["kind"] == "account":
             alias = next(
-                (a for a in accounts if row["id"].startswith(f"account/{a}")), None
+                (a for a in accounts if row["id"] in (f"account/{a}", f"account/{a}/broker-daily")),
+                None,
             )
-            added[row["id"]] = extend_account(row, accounts[alias], days) if alias else []
+            added[row["id"]] = extend_account(available[alias], days) if alias else []
+            if alias and row["id"].endswith("/broker-daily"):
+                if broker_account_id_hash(accounts[alias]["account"]["id"]) != row["account_hash"]:
+                    raise SystemExit(f"{alias}: capture and sealed account identities differ")
+                original = {p["day"]: p for p in row["points"]}
+                first_day = date.fromisoformat(min(original))
+                recovered = [
+                    day for day, evidence in available[alias].items()
+                    if first_day <= day <= last_sealed
+                    and evidence["source"] == "alpaca_portfolio_history_1D"
+                    and original.get(str(day), {}).get("equity_usd") is None
+                ]
+                for point in extend_account(available[alias], recovered):
+                    original[point["day"]] = point
+                row["points"] = [original[day] for day in sorted(original)]
         elif row["kind"] == "composite_parent":
             continue
         else:
