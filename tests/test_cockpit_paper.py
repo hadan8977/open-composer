@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 from cockpit_contract_fixture import cockpit_workspace as cockpit_workspace
@@ -606,35 +605,3 @@ def test_account_snapshots_keep_healthy_accounts_when_one_file_is_bad(tmp_path: 
     snapshots = load_paper_account_snapshots(tmp_path)
     assert [row["account"] for row in snapshots] == ["six", "quant1"]
     assert all(row["at"] == "2026-11-23T12:00:00+00:00" for row in snapshots)
-
-
-def test_intraday_price_prefers_recent_iex_and_preserves_broker_timestamp() -> None:
-    from scripts.refresh_paper_prices import price_row
-
-    now = datetime(2026, 11, 23, 16, tzinfo=UTC)
-    broker_at = now - timedelta(seconds=55)
-    position = dict(accounts=["legacy"], broker=(broker_at, 100.65))
-    trade = SimpleNamespace(timestamp=now - timedelta(seconds=20), price=100.64)
-    assert price_row("SGOV", position, trade, now)["source"] == "iex"
-    trade.timestamp = now - timedelta(minutes=4)
-    assert price_row("SGOV", position, trade, now) == dict(
-        symbol="SGOV", accounts=["legacy"], price=100.65, at=broker_at.isoformat(), source="broker"
-    )
-    assert price_row("SGOV", position, trade, now + timedelta(minutes=4))["at"] == trade.timestamp.isoformat()
-
-
-def test_paper_prices_page_shows_source_and_pacific_time(cockpit_workspace: Path) -> None:
-    directory = cockpit_workspace / "runtime/paper"
-    directory.mkdir(parents=True)
-    stamp = "2026-11-23T15:55:35+00:00"
-    (directory / "position-prices.json").write_text(json.dumps(dict(
-        at=stamp,
-        rows=[dict(symbol="SGOV", price=100.64, at=stamp, source="broker", accounts=["quant1"])],
-    )))
-    with TestClient(create_app(warm=False)) as client:
-        response = client.get("/paper/prices")
-    assert response.status_code == 200
-    assert response.headers["cache-control"] == "no-store"
-    assert 'data-paper-refresh="10000"' in response.text
-    for expected in ("SGOV", "$100.640", "11-23 07:55:35 PST", "券商持仓价", "Quant1"):
-        assert expected in response.text

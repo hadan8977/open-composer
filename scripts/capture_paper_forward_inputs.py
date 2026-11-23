@@ -60,6 +60,23 @@ def plain(value):
     return json.loads(value.model_dump_json()) if hasattr(value, "model_dump_json") else value
 
 
+def account_activities(
+    client, after: str, *, before: str | None = None, activity_types: set[str] | None = None
+) -> list[dict]:
+    params = {"after": after, "page_size": 100, "direction": "asc"}
+    if before is not None:
+        params["until"] = before
+    if activity_types is not None:
+        params["activity_types"] = ",".join(sorted(activity_types))
+    rows = []
+    while True:
+        page = client.get("/account/activities", data=params)
+        rows.extend(page)
+        if len(page) < 100:
+            return rows
+        params["page_token"] = str(page[-1]["id"])
+
+
 def capture_accounts(out: Path, after: str, start: str, manifest: dict) -> None:
     from alpaca.trading.requests import GetPortfolioHistoryRequest
 
@@ -83,16 +100,7 @@ def capture_accounts(out: Path, after: str, start: str, manifest: dict) -> None:
                 portfolio_history=history,
             ),
         )
-        rows, page_token = [], None
-        while True:
-            params = {"after": after, "page_size": 100, "direction": "asc"}
-            if page_token:
-                params["page_token"] = page_token
-            page = client.get("/account/activities", data=params)
-            rows.extend(page)
-            if len(page) < 100:
-                break
-            page_token = str(page[-1].get("id"))
+        rows = account_activities(client, after)
         manifest[f"activities/{alias}"] = write(
             out / f"activities-{alias}.json",
             dict(
@@ -123,20 +131,15 @@ def projection_symbols(root: Path, sealed_history: Path, inputs: Path) -> list[s
     return sorted(names)
 
 
-def market_data_client():
-    from alpaca.data.historical import StockHistoricalDataClient
-
-    values = dotenv_values(LEGACY_ENV)
-    return StockHistoricalDataClient(
-        values["ALPACA_API_KEY_ID"], values["ALPACA_API_SECRET_KEY"]
-    )
-
-
 def capture_bars(out: Path, symbols: list[str], start: str, end: str, manifest: dict) -> None:
+    from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
 
-    client = market_data_client()
+    values = dotenv_values(LEGACY_ENV)
+    client = StockHistoricalDataClient(
+        values["ALPACA_API_KEY_ID"], values["ALPACA_API_SECRET_KEY"]
+    )
     ny = ZoneInfo("America/New_York")
     # Basic Alpaca SIP access requires the request end to be at least 15 minutes old.
     request_end = min(

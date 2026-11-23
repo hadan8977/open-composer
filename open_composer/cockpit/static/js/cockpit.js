@@ -348,7 +348,7 @@
   })();
 
   function isScreen(path) {
-    return screens.indexOf(path) >= 0 || ['/paper/accounts', '/paper/prices', '/paper/history', '/research/overview'].includes(path);
+    return screens.indexOf(path) >= 0 || path === '/paper/accounts' || path === '/paper/history' || path === '/research/overview';
   }
 
   function fetchPage(path) {
@@ -598,12 +598,10 @@
   // Refresh only the financial workspace; retain route, open detail, filter,
   // chart unit and scroll. A new HTTP response never changes valuation time.
   var paperRefreshing = false;
-  var paperRefreshedAt = Date.now();
   async function refreshPaper() {
     var workspace = document.querySelector('[data-paper-refresh]');
     if (document.hidden || paperRefreshing || !workspace) return;
     paperRefreshing = true;
-    paperRefreshedAt = Date.now();
     var route = location.pathname;
     try {
       var response = await fetch(route, {cache:'no-store', credentials:'same-origin'});
@@ -636,10 +634,7 @@
       // Keep the last complete view on a transport failure.
     } finally { paperRefreshing = false; }
   }
-  setInterval(function () {
-    var view = document.querySelector('[data-paper-refresh]');
-    if (view && Date.now() - paperRefreshedAt >= Number(view.dataset.paperRefresh || 30000)) refreshPaper();
-  }, 5000);
+  setInterval(refreshPaper, 30000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshPaper(); });
   // One floating card for every [data-tip] mark (equity columns, activity
   // LEDs, token bars, status ticks). Text goes in with textContent. Tiles get

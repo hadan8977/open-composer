@@ -26,6 +26,7 @@ const pct = value => finite(value) ? `${value > 0 ? '+' : ''}${value.toFixed(2)}
 const money = value => finite(value) ? `${value < 0 ? '-' : ''}$${Math.abs(value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '—';
 const tone = value => !finite(value) || value === 0 ? '' : value > 0 ? 'pc-up' : 'pc-down';
 const utc = value => { const date = new Date(value); return Number.isNaN(date.getTime()) ? '暂无估值' : `${date.toISOString().slice(5,16).replace('T',' ')} UTC`; };
+const pacific = new Intl.DateTimeFormat('en-US', {timeZone:'America/Los_Angeles', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23', timeZoneName:'short'});
 const PREF_KEY = 'oc-paper-comparison-v1';
 
 export function mountPaperComparison(element, initialPayload) {
@@ -91,27 +92,29 @@ export function mountPaperComparison(element, initialPayload) {
   }
   function readout() {
     const day=hoverDay || pinnedDay;
+    const liveDay=payload.intraday_day;
+    const rowDay=day || liveDay;
     const point=day?calculated.series.find(p=>p.day===day):calculated.latest;
     const current=point || calculated.latest;
     const ret=element.querySelector('[data-pc-return]'); ret.textContent=pct(current.return_pct);ret.className=tone(current.return_pct);
     element.querySelector('[data-pc-equity]').textContent=money(current.equity_usd);
     element.querySelector('[data-pc-extra-label]').textContent=day?'当日涨跌':'参考盈亏';
     const extra=element.querySelector('[data-pc-extra]');extra.textContent=day?pct(current.daily_pct):money(current.pnl_usd);extra.className=tone(day?current.daily_pct:current.pnl_usd);
-    element.querySelector('[data-pc-date]').textContent=day || utc(payload.snapshot_at);
+    element.querySelector('[data-pc-date]').textContent=liveDay && (!day || day===liveDay) ? `盘中 · ${pacific.format(new Date(payload.snapshot_at))}` : day || utc(payload.snapshot_at);
     element.querySelector('[data-pc-day-label]').textContent=day || shown.at(-1)?.day || '—';
     element.querySelector('[data-pc-day-status]').textContent=!calculated.selected.length?'':current.return_pct===null?(day?`${day} · 所选策略缺少估值`:'所选策略收益率待补'):!day&&shown.at(-1)?.return_pct===null?`${shown.at(-1).day} 缺少估值`:'';
     const cursor=element.querySelector('[data-pc-cursor]');
     if(cursor){const i=shown.findIndex(p=>p.day===day);cursor.setAttribute('visibility',i<0?'hidden':'visible');if(i>=0){const x=20+i/Math.max(1,shown.length-1)*870;cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);element.querySelector('[data-pc-slider]').value=String(i);}}
     element.querySelectorAll('[data-pc-row]').forEach(row=>{
       const s=payload.strategies.find(s=>s.id===row.dataset.pcRow);
-      const i=payload.days.indexOf(day);
-      const p=day?s.points.find(p=>p.day===day):null;
-      const value=day?(day<s.start_day?0:p?.return_pct??null):s.latest_return_pct;
+      const i=payload.days.indexOf(rowDay);
+      const p=rowDay?s.points.find(p=>p.day===rowDay):null;
+      const value=rowDay?(rowDay<s.start_day?0:p?.return_pct??null):s.latest_return_pct;
       const prev=i>0?s.points.find(p=>p.day===payload.days[i-1]):null;
       const prevValue=i>0&&payload.days[i-1]<s.start_day?0:prev?.return_pct;
       const daily=finite(value)&&finite(prevValue)&&prevValue>-100?((1+value/100)/(1+prevValue/100)-1)*100:null;
       const r=row.querySelector('[data-pc-row-return]');r.textContent=pct(value);r.className=`pc-percent ${tone(value)}`;
-      const d=row.querySelector('[data-pc-row-daily]');d.textContent=pct(day?daily:null);d.className=`pc-day-return ${tone(day?daily:null)}`;
+      const d=row.querySelector('[data-pc-row-daily]');d.textContent=pct(daily);d.className=`pc-day-return ${tone(daily)}`;
       row.classList.toggle('pc-selected',selected.has(s.id));
     });
   }

@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -103,6 +104,68 @@ def test_cumulative_mean_has_equal_shares_and_is_not_a_rebalanced_or_money_weigh
     assert "2026-10-10" not in daily  # Friday to Monday are adjacent sessions.
     assert result["snapshot"]["at"] == "2026-10-13T04:00:00Z"
     assert result["daily"][-1]["day"] == "2026-10-12"  # Current values are never appended.
+
+
+def test_home_intraday_revalues_owned_fills_and_preserves_closed_history(tmp_path):
+    from open_composer.cockpit.data.paper_home_intraday import apply_home_intraday
+
+    now = datetime.fromisoformat("2026-11-23T16:10:30+00:00")
+    prior, today, stamp = "2026-11-20", "2026-11-23", "2026-11-23T16:10:00+00:00"
+    directory = tmp_path / "runtime/paper"
+    directory.mkdir(parents=True)
+    ledger = tmp_path / "reports/paper/rehearsal"
+    ledger.mkdir(parents=True)
+    (ledger / "rotation-orders.jsonl").write_text('{"broker_order_id":"owned"}\n')
+    fill = dict(order_id="owned", transaction_time=stamp, symbol="SPY", side="buy",
+                qty="1", price="110")
+    (directory / "home-legacy.json").write_text(
+        json.dumps(dict(account="legacy", at=stamp, marks={"SPY": "112"}, activities=[fill]))
+    )
+    (directory / "home-quant1.json").write_text(
+        json.dumps(dict(account="quant1", at=stamp, equity_usd=1020, activities=[dict(net_amount="10")]))
+    )
+
+    def strategy(identity, old_return):
+        return dict(
+            id=identity, archived=False, start_day=prior, latest_return_pct=old_return,
+            default_selected=True, selectable=True, points=[dict(day=prior, return_pct=old_return)],
+        )
+
+    comparison = dict(
+        through_session=prior, days=[prior], initial_capital_usd=100000,
+        strategies=[strategy("legacy/rotation", 0), strategy("F1", 1)],
+    )
+    closing_position = dict(
+        day=prior, capital_usd=1000, cash_from_principal_usd=500, quantity={"SPY": 5}
+    )
+    history = dict(histories=[
+        dict(id="legacy/rotation", kind="trading_component", points=[closing_position]),
+        dict(id="account/quant1/broker-daily", kind="account", points=[dict(day=prior, equity_usd=1000)]),
+    ])
+    apply_home_intraday(comparison, history, {"initial_pool_capital": {"F1": 1000}}, tmp_path, now)
+    assert comparison["through_session"] == prior
+    assert comparison["days"] == [prior, today]
+    result = compare_paper_strategies(comparison)
+    assert result["daily"][0]["equity_usd"] == pytest.approx(100500)
+    assert result["snapshot"]["equity_usd"] == pytest.approx(104100)
+
+
+def test_home_intraday_keeps_published_data_if_live_receipts_cannot_be_read(tmp_path):
+    from open_composer.cockpit.data.paper_home_intraday import apply_home_intraday
+
+    prior, stamp = "2026-11-20", "2026-11-23T16:10:00+00:00"
+    directory = tmp_path / "runtime/paper"
+    directory.mkdir(parents=True)
+    (directory / "home-legacy.json").write_text(
+        json.dumps(dict(account="legacy", at=stamp, marks=None, activities=[]))
+    )
+    (directory / "home-six.json").write_text(
+        json.dumps(dict(account="six", at=stamp, activities=[{}]))
+    )
+    comparison = dict(through_session=prior, days=[prior], strategies=[])
+    original = copy.deepcopy(comparison)
+    apply_home_intraday(comparison, {"histories": []}, {}, tmp_path, datetime.fromisoformat(stamp))
+    assert comparison == original
 
 
 def test_solo_selection_and_archived_or_child_choices(comparison):

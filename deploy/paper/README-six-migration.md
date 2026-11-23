@@ -61,13 +61,6 @@ On the VPS, `/etc/cron.d/open-composer-paper-snapshots` runs:
 * * * * * root cd /root/codex-test/open-composer && flock -n runtime/paper/account-snapshots.lock sh -c 'for account in legacy six quant1; do timeout -k 3 15 .venv/bin/python -m scripts.capture_paper_account_snapshots "$account" || logger -t oc-paper-snapshots "$account refresh failed"; done' >> logs/paper_account_snapshots.log 2>&1
 ```
 
-The same cron collects broker marks and held symbols. Install
-`systemd/oc-paper-prices.service` and `systemd/oc-paper-prices.timer` under
-`/etc/systemd/system/`, run `systemctl daemon-reload`, then enable and start
-the timer. It reads IEX trades every 15 seconds during the US equity session
-for `/paper/prices`. A recent broker mark covers symbols without a recent IEX
-trade, with the source and time shown beside each price.
-
 ## Tests
 
 Run one pytest process at a time. `make verify` runs the release checks; the
