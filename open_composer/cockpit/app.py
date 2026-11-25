@@ -37,6 +37,7 @@ Interface for T7-T8
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import threading
 import time
@@ -166,6 +167,7 @@ def _asset_version() -> str:
     digest = hashlib.sha256()
     for name in (
         "css/cockpit.css",
+        "css/research-digest.css",
         "js/cockpit.js",
         "css/paper-comparison.css",
         "js/paper-comparison.mjs",
@@ -773,6 +775,25 @@ def create_app(*, warm: bool = True) -> FastAPI:
         return _reports_page(request, kind, report_id)
 
     @app.get("/research", response_class=HTMLResponse)
+    def research_page(
+        request: Request, direction: str = "", period: str = "", status: str = ""
+    ) -> HTMLResponse:
+        path = project_root() / "reports/owner/research-digest.json"
+        digest = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+        rows = digest["directions"] if digest else []
+        periods = digest["periods"] if digest else []
+        line = next((row for row in rows if row["id"] == direction), None)
+        interval = next((row for row in periods if row["id"] == period), None)
+        if (direction and not line) or (period and period != "latest" and not interval):
+            raise HTTPException(status_code=404, detail="Research record not found")
+        context = _base_context(request, "research")
+        context.update(
+            digest=digest, line=line, period_view=bool(period),
+            interval=interval or next((p for p in periods if p["kind"] == "day"), None),
+            status=status, statuses=list(dict.fromkeys(row["status"] for row in rows)),
+        )
+        return templates.TemplateResponse(request, "research_digest.html", context)
+
     @app.get("/hypotheses", response_class=HTMLResponse)
     def hypotheses_page(request: Request) -> HTMLResponse:
         """Research: the task queue and the hypothesis-card board (plan

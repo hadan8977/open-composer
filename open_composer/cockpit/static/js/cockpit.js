@@ -520,6 +520,7 @@
 
   document.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (location.search && location.pathname === "/research") return;
     var a = e.target.closest("a[href]");
     if (!a || a.hasAttribute("data-detail") || a.getAttribute("target")) return;
     var href = a.getAttribute("href");
@@ -547,6 +548,7 @@
   });
 
   window.addEventListener("popstate", function () {
+    if (location.search && location.pathname === "/research") return;
     if (isScreen(location.pathname)) go(location.pathname, "pop");
   });
 
@@ -554,6 +556,7 @@
     if (document.visibilityState !== "visible") return;
     if (document.querySelector('[data-paper-refresh]')) return;
     var here = location.pathname;
+    if (here === "/research" && location.search) return;
     if (!isScreen(here) || current) return;
     var have = pages[here];
     if (have && Date.now() - have.at < FRESH_MS) return;

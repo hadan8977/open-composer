@@ -187,7 +187,8 @@ def test_blocked_worker_only_reaches_lead_for_material_science(root, science_dec
     assert state["phases"]["worker"]["status"] == "blocked"
 
 
-def test_checkpoint_resume_keeps_worker_session_and_applies_current_effort(root):
+@pytest.mark.parametrize("old_provider", ["codex", "claude"])
+def test_checkpoint_resume_keeps_worker_session_and_uses_current_codex_model(root, old_provider):
     calls = []
     state = run_round(
         root,
@@ -196,16 +197,48 @@ def test_checkpoint_resume_keeps_worker_session_and_applies_current_effort(root)
         10,
         execute_fn=fake_agent(calls, {"worker": {"status": "blocked", "results": None}}),
     )
-    state["phases"]["worker"]["requested_runtime"]["effort"] = "xhigh"
+    prior = state["phases"]["worker"]["requested_runtime"]
+    prior.update(provider=old_provider, model="old-model", effort="xhigh")
     save(root / "research/example/runs/r1/run.json", state)
-    resumed = run_round(root, "example", "r1", 10, resume=True, execute_fn=fake_agent(calls))
+
+    def transport(command, prompt, folder, timeout):
+        reply = fake_agent(calls)(command, prompt, folder, timeout)
+        if folder.name == "worker_resume_1":
+            if old_provider == "claude":
+                reply["session"] = command[command.index("--resume") + 1]
+            else:
+                assert command[command.index("--model") + 1] == "test-model"
+        return reply
+
+    resumed = run_round(root, "example", "r1", 10, resume=True, execute_fn=transport)
     assert calls == ["worker", "worker_resume_1", "lead"]
     worker = resumed["phases"]["worker_resume_1"]
     assert worker["session"] == worker["resumes_session"] == "fixture-worker"
     assert worker["requested_runtime"]["effort"] == "high"
+    assert worker["requested_runtime"]["provider"] == old_provider
+    assert worker["requested_runtime"]["model"] == ("test-model" if old_provider == "codex" else "old-model")
     assert resumed["phases"]["worker"]["requested_runtime"]["effort"] == "xhigh"
+    assert resumed["phases"]["worker"]["requested_runtime"]["model"] == "old-model"
     assert resumed["phases"]["worker"]["resolved_by"] == "worker_resume_1"
     assert resumed["status"] == "round_finished"
+
+
+def test_plan_reviewer_resume_uses_current_codex_model(root):
+    calls = []
+    state = run_round(
+        root, "example", "r1", 10, review_plan=True,
+        execute_fn=fake_agent(calls, {"plan_review": {"decision": "revise", "results": None}}),
+    )
+    state["phases"]["plan_review"]["requested_runtime"]["model"] = "old-reviewer"
+    save(root / "research/example/runs/r1/run.json", state)
+    resumed = run_round(
+        root, "example", "r1", 10, resume=True,
+        execute_fn=fake_agent(calls, {"plan_review": {"decision": "accept"}}),
+    )
+    assert resumed["phases"]["plan_review"]["requested_runtime"]["model"] == "old-reviewer"
+    reviewer = resumed["phases"]["plan_review_resume_1"]
+    assert reviewer["requested_runtime"]["model"] == "test-model"
+    assert reviewer["resumes_session"] == "fixture-plan_review"
 
 
 def test_missing_raw_evidence_cannot_reach_result_review(root):
@@ -964,9 +997,12 @@ def test_closed_round_cannot_resume_or_change_its_evidence(root, monkeypatch):
     assert not (run / "reply.schema.json").exists()
 
 
-def test_closed_round_stops_series_and_retains_original_failed_dispatch(root, monkeypatch):
+@pytest.mark.parametrize("status", ["interrupted_or_failed", "running"])
+def test_closed_round_stops_series_and_retains_original_failed_dispatch(root, monkeypatch, status):
     run = closed_round(root)
     record = failed_series(root, run)
+    series = json.loads(record.read_text())
+    save(record, {**series, "status": status})
     before_run, before_series = (run / "run.json").read_bytes(), record.read_bytes()
     monkeypatch.setattr(agent_workflow, "run_round", lambda *_a, **_kw: pytest.fail("No replay"))
     monkeypatch.setattr(

@@ -1,7 +1,8 @@
 # Open Composer
 
 Goal: build a trading system that earns large after-cost returns in one funded
-account, using AI research. Annual return first; Sharpe second.
+account, using AI research. Judge the funded edge by after-cost excess-return
+Sharpe and executable leverage. Report realized net annual return and drawdown.
 
 Read on start: this file and docs/rules.md (constraints, owner standing
 instructions, current state); for research judgment also docs/owner-taste.md.
@@ -13,18 +14,16 @@ Shared skills live in .agents/skills/. Evidence on demand.
 Before a new trial or on resume: `scripts/research_tools.py tasks` (if the
 direction name is unknown), then `map/failures/search/context` with the exact
 task; source cards are claims, trials/decisions/verdicts are internal records.
-Cite IDs; do not treat a repeated citation as new evidence.
+For related work across directions also search research/findings.tsv by mechanism. Cite the underlying trial; a shared topic alone does not duplicate an experiment.
 Owner taste decides research judgment. Constraints are hard limits and current
 state. Owner messages prevail over both. "Continue" resumes interrupted work only.
 
 Work like a professional trader and quant researcher:
-- Start from recent evidence of what makes money (papers, institutions,
-  practitioners), chosen before any result is read. Candidates are trained
-  models on point-in-time non-price information from the first round;
-  practitioner rules and price-only models are the baselines they must beat.
-- One research = one trading system in one chronological account. Its
+- Explain the mechanism before reading a new trial's results. It can come
+  from outside evidence, a profitable project system or our prior trades. Prioritize trained candidates using point-in-time non-price information from the first round. Choose the clocks, universe and comparison for the question. Signals, timing, execution, original hypotheses and faithful price/volume replications can be studied directly.
+- Evaluate a complete trading system in one chronological account. Its
   situations are labelled modules with their own rules, researched and judged
-  together; no stand-alone return claims per module.
+  together; no stand-alone return claims per module. Judge component studies by the question they answer.
 - Go deep: explain wins and losses at the trade level before changing course.
 - Decide reversible things yourself, including which research to do next.
   Ask first only for money, accounts, live trading, the owner's machine,
@@ -54,7 +53,9 @@ reports are costs, not results):
 - config/code-budget.json caps open_composer/, scripts/ and tests/; the
   pre-commit hook (.githooks) rejects growth beyond it. Raise it only by editing
   that file in the commit and saying why. Research code under research/ is not
-  capped. Claude reviews Codex changes to paper and shared code before merge.
+  capped. OpenComposer 决策 reviews paper code prepared by OpenComposer 汇报 before merge. Shared
+  research code (research core, driver, lab) gets an independent technical review
+  with Sol xhigh and the relevant tests. Research plan and promotion decisions belong to Astra xhigh.
   Crawling, data refreshes and bulk text extraction go to pi DeepSeek V4.1
   Flash (docs/rules.md, model tiers).
 

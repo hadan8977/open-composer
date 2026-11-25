@@ -3,8 +3,7 @@
 Hard limits. Each rule appears once here; code enforces what it can.
 
 Authority
-- No real-money orders. Paper needs a written authorization with caps, stops
-  and expiry; delegation does not create accounts or renew expired ones. Log
+- No real-money orders. Live trading requires written owner authorization. For paper, OpenComposer 决策 reviews the proposal and deploys within documented caps, stops and expiry. Delegation does not create accounts or renew expired sleeves. Log
   signals before orders. Source authorizations prevail; control.json indexes them.
 - Within an authorization, paper is not strict: fix an unfilled or blocked
   paper order directly with a plain order after checking it is not already
@@ -36,16 +35,27 @@ Science (these make results real)
   publication, bar close); a decision reads only rows known before it.
   Back-adjusted price levels, later delisting or listing facts and current
   security names are not known in the past.
-- Research: market data from 2026-09-01 on is out-of-sample; never train, tune
-  or select on it, only evaluate. Live paper models keep their native refits.
+- Research: apply the declared window to source searches and reads. For prior
+  trial deduplication, use IDs and definitions until the covered dates are known.
+  Filter returns to the admitted end date at the source before reading them.
+  Log local market data or results from 2026-10-01 onward accidentally loaded, with
+  file and date range, and do not reread them. Incidental web snippets need no entry.
+  Development runs from 2016 through 2026-09-30. Fit each evaluation year
+  using only earlier data with mature labels. Evaluate the frozen finalist
+  once on the holdout from 2026-10-01 before paper. A3 is the frozen
+  price-only baseline. Run A15 once as registered. If the check supports
+  the frozen rules, the owner has authorized A3 as a paper baseline for
+  OpenComposer 决策 to review and deploy. Live paper models keep their native refits.
 - Never filter eligibility on later outcomes; never invent financial metrics.
 - Real costs; never change costs, windows or leverage after seeing results.
+  Research margin follows Schwab's instrument and account requirements. Charge
+  the published current borrowing rates on settled debits and distinguish
+  intraday limits from overnight buying power.
 - Report what the account could actually trade: a long/short result shows the
   short side's weight in names under $5 or under $10M median dollar volume and
   the result on a liquid, borrowable universe; an edge that only exists in
   unborrowable shorts is not an edge.
-- Keep frozen studies, seen-data exposure and every trial; count all trials and
-  apply multiple-testing checks (DSR where relevant; DSR alone promotes nothing).
+- Keep frozen studies, seen-data exposure and every trial. In final review report BY across trials and apply the versioned P1 effective-trial DSR threshold and remaining P1 criteria before paper. For the A3 direction placebo, rank a path whose equity reaches zero or less below every solvent path, counting all seeds with their own equity denominators.
 - A success claim needs out-of-sample or forward evidence, not only the window
   it was selected on.
 - Validate a StrategySpec before strategy code; register required data. Stock
@@ -68,6 +78,6 @@ Machine and repo
 
 Current state (update in place)
 - Roles: research/workflow.json. Paper authorizations: control.json.
-- Model tiers: judgment, plans, reviews and research roles use the strongest models (Claude main session; Codex gpt-6.2-sol, owner 2026-11-17). Simple low-judgment work where a smaller model does not change quality (crawling and refreshing public data, bulk text extraction or labelling, format conversion, routine lookups) goes to pi's DeepSeek V4.1 Flash (provider pi, model commandcode/deepseek/deepseek-v4.1-flash; owner 2026-11-19: cheap, tokens plentiful). The delegating agent spot-checks its output. Current priorities: docs/research-mission.zh.md.
+- Model tiers: OpenComposer 决策 (GPT-6.2 Astra xhigh) uses Astra for research planning, judgments and authorized paper decisions. The current owner conversation may use Astra for temporary supervision. OpenComposer 汇报 (GPT-6.2 Sol xhigh) owns implementation, technical review, operations and reporting. These two existing threads run autonomous research. Temporary supervision ends when autonomous handoffs and execution are demonstrated (owner 2026-11-24). Simple low-judgment work where a smaller model does not change quality (crawling and refreshing public data, bulk text extraction or labelling, format conversion, event counts, publication-time lookups and fixed scenario arithmetic) goes to pi's DeepSeek V4.1 Flash (provider pi, model commandcode/deepseek/deepseek-v4.1-flash; owner 2026-11-19: cheap, tokens plentiful). The delegating agent spot-checks its output. The Sunday review uses the project module review in C:/OpenComposer/ops/module-review.zh.md. Current priorities: research/charter.zh.md and the latest research decisions. Prior studies and their adapter defaults describe their own designs.
 - Owner report format: docs/owner-reporting.zh.md.
 - Research resumed 2026-11-19 by the main session after the paper repairs (owner pause of 2026-11-18 ended); priorities in docs/research-mission.zh.md.

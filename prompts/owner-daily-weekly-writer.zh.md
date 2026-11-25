@@ -15,9 +15,12 @@ Write in Chinese, in this order:
    return, and SPY over the same days. One sentence on what moved it.
 2. 运行: orders, fills, and anything that failed, did not fill or was blocked,
    with what was done about it. A healthy unchanged day is one line.
-3. 研究: conclusions accepted since the last report, one or two sentences each
-   with the dollar result; otherwise "无新结论".
-4. 需要你决定: only money, account, live-trading or goal decisions, with your
+3. 量化研究: active hypotheses, actual stage and new economic findings. For a
+   funded comparison include net excess Sharpe, leverage, net annual return
+   and drawdown over the stated sample. Give components their own measures.
+4. 项目优化: when material, name the data, tooling or workflow change, the work
+   in progress and what it now enables. Keep sample fills with tooling results.
+5. 需要你决定: only money, account, live-trading or goal decisions, with your
    recommendation; otherwise "无".
 The weekly report adds the week and since-start result per account, drawdown,
 strategy changes and next week's plan.

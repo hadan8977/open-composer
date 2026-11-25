@@ -25,7 +25,7 @@ Use [idea-to-paper](../idea-to-paper/SKILL.md) to frame an economic question, [r
 | Required inputs | `uv run --no-sync oc spec capabilities <spec> --json`; [data review](../data-capability-reviewer/SKILL.md). Use [capability-evaluator](../capability-evaluator/SKILL.md) for registry/fixture hygiene. |
 | Unstable external claims | [source-researcher](../source-researcher/SKILL.md). |
 | Economic admission | `uv run --no-sync oc research direction-check <path>` and `uv run --no-sync oc research iteration validate <iter_id>`; apply campaign and knowledge gates where the contract requires them. |
-| Registered family | Worker writes the phase’s `experiment.json` for the shared adapter. The driver resolves it, launches the detached numerical batch and waits without model calls. The original Worker validates the terminal packet; a fresh Lead receives its costed comparisons and linked ledgers together. |
+| Registered family | Worker writes the phase’s `experiment.json` for the shared adapter. The driver resolves it, launches the detached numerical batch and waits without model calls. A fresh Worker session validates the terminal packet from the compact handoff; a fresh Lead receives its costed comparisons and linked ledgers together. |
 | Refresh evidence | `uv run --no-sync oc strategy evidence <spec>` after relevant artifact changes; do not use the deprecated hidden `research-control` path. |
 | Optimized strategy validity | [backtest-forensics](../backtest-forensics/SKILL.md). |
 | Daily-open, leveraged-ETF or paper-auto execution | [execution-reality-reviewer](../execution-reality-reviewer/SKILL.md). |

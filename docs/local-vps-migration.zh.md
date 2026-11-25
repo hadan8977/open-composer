@@ -9,8 +9,8 @@
 
 ## 本机研究
 
-本机沿用原任务、原会话和冻结输入。第四轮按机主要求暂停，`control.json`
-中 `research=false`。当前轮次、证据和恢复方法见
+本机沿用原任务、原会话和冻结输入。研究开关以 `control.json` 的
+`research` 为准。当前轮次、证据和恢复方法见
 [研究入口](../research/README.md)及[知识工具](research-tools.md)。新研究暂停期间，
 行情维护和纸盘运行仍按各自既有权限执行。2026 年 9 月 1 日后的行情供 OOS 使用。
 
@@ -23,6 +23,11 @@ Windows 数值作业用 `scripts/run_capped.py`：每个作业一个原生 Job O
 
 - 网站由 `quant.service` 和 `cloudflared-quant.service` 提供。
   用 `systemctl is-active` 及网站 `/`、`/healthz`、`/paper` 检查。
+- 研究方向与轮次 (`/research`)及分期总报 (`/research?period=latest`)读取 Windows 发布的摘要。
+  本机计划任务 `OpenComposer Research Digest` 每两小时运行
+  `deploy/windows/publish-research-digest.ps1`，将 `reports/owner/research-digest.json` 发布到 VPS 同路径。
+  首页与分期总报复用 DeepSeek Flash 为新增或修订裁决写的中文短讯；编辑口径见
+  [网站短讯规范](../prompts/research-digest-editor.zh.md)。逐轮页保留研究负责人的原摘要。
 - 六策略由 `oc-six-paper-validation.service` 运行，输入绑定在
   `config/paper/six-service.json` 和目标收据，复现代码在
   `research/paper_recovery_20261103` 及 `open_composer/paper_runtime`。

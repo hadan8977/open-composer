@@ -1120,13 +1120,57 @@ def launch_experiment(root, run, folder, session, batch_id=None):
         raise ValueError("Experiment must belong to the assigned direction")
     command = capped_command(root, [sys.executable, "-m", "open_composer.lab.experiment",
                                     str(spec), batch_id or run.name, "--terminal"], "2400M")
+    launch_options = {}
+    if experiment.direction == "equity_ml_20261120":
+        launch_options["env"] = {
+            **os.environ, "POLARS_MAX_THREADS": "2", "OPENBLAS_NUM_THREADS": "2", "OMP_NUM_THREADS": "2",
+        }
     with (folder / "batch.log").open("x", encoding="utf-8") as log:
         child = subprocess.Popen(command, cwd=root, stdin=subprocess.DEVNULL, stdout=log,
-                                 stderr=subprocess.STDOUT, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                                 stderr=subprocess.STDOUT, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                                 **launch_options)
     process = folder / "batch-process.json"
     write_json(process, identity(child.pid))
     return WaitSpec(session=session, local_only=True, process=process.relative_to(root).as_posix(),
                     completion_marker=(folder / "batch-results.json").relative_to(root).as_posix())
+
+
+def completed_batch_handoff(
+    root: Path, run: Path, brief: Path, event: dict, wait: dict, plan_reply: str | None
+) -> dict | None:
+    marker = event["evidence"]
+    if (
+        marker != wait["completion_marker"]
+        or not wait["local_only"]
+        or not marker.endswith("/batch-results.json")
+        or wait["process"] != marker.removesuffix("batch-results.json") + "batch-process.json"
+    ):
+        return None
+    packet = Results.model_validate_json(local_path(root, marker).read_text(encoding="utf-8"))
+    return {
+        "brief": brief.relative_to(root).as_posix(),
+        "checkpoint": marker.removesuffix("batch-results.json") + "experiment.json",
+        "plan_review_reply": plan_reply,
+        "results": marker,
+        "trial_ledger": (run.parents[1] / "trials.jsonl").relative_to(root).as_posix(),
+        "n_trials_at_batch_close": packet.n_trials,
+    }
+
+
+def require_phase_session(state: dict, name: str, session: str | None) -> None:
+    phase = state["phases"][name]
+    resumed = phase["resumes_session"]
+    if resumed and session != resumed:
+        raise ValueError("Recovery did not return the original session")
+    if phase.get("batch_handoff") and not session:
+        raise ValueError("Completed batch reception requires a fresh session")
+    if session and any(
+        prior.get("session") == session
+        for key, prior in state["phases"].items()
+        if key != name and (phase_kind(key) != phase_kind(name) or not resumed)
+    ):
+        raise ValueError("Worker, Lead and review phases require independent sessions")
+
 
 def reconcile_event_attempts(root: Path, run: Path, state: dict, deadline: float) -> None:
     """Receive started event continuations under the direction lock; never dispatch."""
@@ -1158,8 +1202,7 @@ def reconcile_event_attempts(root: Path, run: Path, state: dict, deadline: float
             raise ValueError("Uncertain event dispatch; reconcile original session before retry")
         if transport.get("exit_code") != 0:
             raise ValueError("Event continuation failed; preserve checkpoint for reconciliation")
-        if transport.get("session") != phase.get("resumes_session"):
-            raise ValueError("Event continuation did not return original session")
+        require_phase_session(state, name, transport.get("session"))
         reply = Reply.model_validate_json((folder / "reply.json").read_text(encoding="utf-8"))
         validate_reply(root, reply, phase_kind(name), state["direction"])
         phase.update(transport)
@@ -1393,8 +1436,11 @@ def run_round(
                 )
                 while True:
                     require_research(root)
-                    event_record = prior.get("wait_state") if kind == "worker" else None
-                    if event_record and not changed_upstream:
+                    event_record = (
+                        prior.get("wait_state") if kind == "worker" and not changed_upstream else None
+                    )
+                    handoff = None
+                    if event_record:
                         if event_record.get("state") == "dispatching":
                             raise ValueError("Uncertain event attempt; reconcile original session")
                         observed = wait_event(root, run, event_record, deadline, require_research)
@@ -1418,20 +1464,34 @@ def run_round(
                             break
                         event_record["state"] = "observed"
                         write_json(run / "run.json", state)
+                        plan_reply = (
+                            (phase_folder(run, upstream[0], state["phases"][upstream[0]])
+                             / "reply.json").relative_to(root).as_posix()
+                            if upstream else None
+                        )
+                        handoff = completed_batch_handoff(
+                            root, run, brief, observed, event_record["spec"], plan_reply
+                        )
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         raise TimeoutError("Round deadline reached; preserve existing job state")
                     role_name = "reviewer" if kind == "plan_review" else kind
-                    # Resume the original provider/model/session, but apply the
-                    # installed effort to each new invocation, including recovery.
-                    role = dict(prior.get("requested_runtime", config["roles"][role_name]))
-                    role["effort"] = config["roles"][role_name]["effort"]
+                    installed_role = config["roles"][role_name]
+                    role = dict(prior.get("requested_runtime", installed_role))
+                    role["effort"] = installed_role["effort"]
+                    # A saved Codex session can change models, but a provider
+                    # switch cannot change the owner of an existing session.
+                    if (
+                        role_name in ("worker", "reviewer")
+                        and role["provider"] == installed_role["provider"] == "codex"
+                    ):
+                        role["model"] = installed_role["model"]
                     session_to_resume = (
                         (prior.get("session") or prior.get("resumes_session"))
-                        if prior and not changed_upstream
+                        if prior and not changed_upstream and handoff is None
                         else None
                     )
-                    if prior and not changed_upstream and not session_to_resume:
+                    if prior and not changed_upstream and handoff is None and not session_to_resume:
                         old_folder = phase_folder(run, prior_name, prior)
                         if (old_folder / "process.json").exists():
                             raise ValueError(
@@ -1458,6 +1518,12 @@ def run_round(
                         "depends_on": list(upstream),
                         "automatic_recovery": recovery_reason,
                     }
+                    if handoff is not None:
+                        handoff_path = folder / "batch-handoff.json"
+                        write_json(handoff_path, handoff)
+                        state["phases"][phase]["batch_handoff"] = handoff_path.relative_to(
+                            root
+                        ).as_posix()
                     if event_record:
                         event_record.update(state="dispatching", attempt=phase)
                         state["phases"][phase]["event_attempt"] = {
@@ -1487,7 +1553,15 @@ def run_round(
                             "unresolved checkpoints. Return Reply; engine schema: "
                             "research/schemas/results.schema.json.\n"
                         )
-                    if recovery_reason == "reply_only":
+                    if handoff is not None:
+                        dispatch = (
+                            f"\nPhase: {phase}\nBrief: see handoff\n"
+                            f"Completed batch handoff: {handoff_path.relative_to(root).as_posix()}\n"
+                            "Receive the existing batch. Read the handoff and its linked evidence "
+                            "as needed. Do not load old chat logs or rerun the completed batch. "
+                            "Validate Results and return Reply for the Lead. Preserve trial exposure.\n"
+                        )
+                    elif recovery_reason == "reply_only":
                         error_note = (
                             str(prior.get("error", "")).encode()[:80].decode(errors="ignore")
                         )
@@ -1516,16 +1590,7 @@ def run_round(
                         if (folder / "events.jsonl").exists():
                             state["phases"][phase].update(read_events(folder))
                     session = state["phases"][phase].get("session")
-                    if session_to_resume and session != session_to_resume:
-                        raise ValueError("Recovery did not return the original session")
-                    if session and any(
-                        prior.get("session") == session
-                        for name, prior in state["phases"].items()
-                        if name != phase and (phase_kind(name) != kind or not session_to_resume)
-                    ):
-                        raise ValueError(
-                            "Worker, Lead and review phases require independent sessions"
-                        )
+                    require_phase_session(state, phase, session)
                     write_json(run / "run.json", state)
                     if transport["exit_code"]:
                         failure = f"Agent exited {transport['exit_code']}; inspect {folder}"

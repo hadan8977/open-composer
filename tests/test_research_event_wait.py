@@ -100,6 +100,98 @@ def test_real_process_wait_resumes_original_session_once_and_zero_calls_while_wa
     assert calls == ["worker", "worker_resume_1", "lead"]
 
 
+@pytest.mark.parametrize("case", ["complete", "receipt_recovery", "reply_recovery", "process_exit"])
+def test_driver_batch_handoff_only_starts_fresh_for_result_marker(root, monkeypatch, case):
+    calls, launches = [], []
+    provider = fake_agent(calls)
+    run = root / "research/example/runs/batch"
+    ledger = run.parents[1] / "trials.jsonl"
+    ledger.write_text("prior trial evidence\n")
+    marker = run / "worker/batch-results.json"
+    checkpoint = marker.with_name("experiment.json")
+    reception = run / "worker_resume_1"
+
+    def launch(root, run, folder, session):
+        launches.append(folder)
+        process = folder / "batch-process.json"
+        save(process, {"pid": 999999999, "start_ticks": 1})
+        if case != "process_exit":
+            packet = json.loads((root / "research/example/results.json").read_text())
+            packet["n_trials"] = 17
+            save(marker, packet)
+        return WaitSpec(
+            session=session,
+            process=process.relative_to(root).as_posix(),
+            completion_marker=marker.relative_to(root).as_posix(),
+            local_only=True,
+        )
+
+    def agent(command, prompt, folder, timeout):
+        transport = provider(command, prompt, folder, timeout)
+        reply = json.loads((folder / "reply.json").read_text())
+        if folder.name == "worker":
+            save(checkpoint, {})
+            reply.update(status="blocked", decision="none", results=None,
+                         checkpoint=checkpoint.relative_to(root).as_posix())
+        elif folder == reception and case == "process_exit":
+            assert "resume" in command and "Completed batch handoff" not in prompt
+        elif folder == reception:
+            assert "resume" not in command and "Completed batch handoff:" in prompt
+            assert json.loads((folder / "batch-handoff.json").read_text()) == {
+                "brief": (run / "brief.md").relative_to(root).as_posix(),
+                "checkpoint": checkpoint.relative_to(root).as_posix(),
+                "plan_review_reply": (run / "plan_review/reply.json").relative_to(root).as_posix(),
+                "results": marker.relative_to(root).as_posix(),
+                "trial_ledger": ledger.relative_to(root).as_posix(),
+                "n_trials_at_batch_close": 17,
+            }
+            reply["results"] = marker.relative_to(root).as_posix()
+            if case == "reply_recovery":
+                reply["checkpoint"] = "research/example/missing.json"
+        elif folder.name == "worker_resume_2":
+            assert "resume" in command and transport["session"] == "fixture-worker_resume_1"
+            assert "Correct Reply only" in prompt
+            reply["results"] = marker.relative_to(root).as_posix()
+        elif folder.name == "lead":
+            assert "resume" not in command
+            state = json.loads((run / "run.json").read_text())
+            worker = state["phases"][state["latest_worker_phase"]]
+            if case != "process_exit":
+                assert worker["results"] == marker.relative_to(root).as_posix()
+        save(folder / "reply.json", reply)
+        return transport
+
+    monkeypatch.setattr(workflow, "launch_experiment", launch)
+    if case == "receipt_recovery":
+        write = workflow.write_json
+
+        def interrupt_after_receipt(path, value):
+            phase = value.get("phases", {}).get(reception.name, {})
+            if path.name == "run.json" and phase.get("exit_code") == 0 and not phase.get("results"):
+                raise OSError("fixture driver crash after fresh transport receipt")
+            write(path, value)
+
+        with monkeypatch.context() as crash:
+            crash.setattr(workflow, "write_json", interrupt_after_receipt)
+            with pytest.raises(OSError, match="driver crash"):
+                workflow.run_round(root, "example", "batch", 5, review_plan=True, execute_fn=agent)
+        state = workflow.run_round(root, "example", "batch", 5, resume=True, execute_fn=agent)
+    else:
+        state = workflow.run_round(root, "example", "batch", 5, review_plan=True, execute_fn=agent)
+    expected = ["plan_review", "worker", reception.name]
+    if case == "reply_recovery":
+        expected.append("worker_resume_2")
+    assert calls == [*expected, "lead"] and launches == [marker.parent]
+    assert state["status"] == "round_finished" and not workflow.has_checkpoint(state)
+    assert ledger.read_text() == "prior trial evidence\n"
+    received = state["phases"][reception.name]
+    if case == "process_exit":
+        assert received["session"] == received["resumes_session"] == "fixture-worker"
+    else:
+        assert received["session"] == "fixture-worker_resume_1"
+        assert received["resumes_session"] is None
+
+
 @pytest.mark.parametrize("diagnosis", ["receipt", "quota", "authorization", "resource"])
 def test_failure_reconciles_once_and_unresolved_blocker_stays_checkpoint(root, diagnosis):
     calls = []

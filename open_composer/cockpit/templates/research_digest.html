@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Research · Quant{% endblock %}
+{% macro tag(state) %}<span class="rd-state">{{ state }}</span>{% endmacro %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/research-digest.css?v={{ asset_v }}">
+<article class="rd" lang="zh">
+  <header class="page-head"><h1>研究</h1>{% if digest %}<span class="aside num">更新于 {{ digest.generated_at }}</span>{% endif %}</header>
+  <nav class="rd-tabs" aria-label="研究视图">
+    <a href="/research" {% if not period_view %}aria-current="page"{% endif %}>研究方向</a>
+    <a href="/research?period=latest" {% if period_view %}aria-current="page"{% endif %}>分期总报</a>
+    <a href="/hypotheses">历史假设</a>
+  </nav>
+  {% if not digest %}
+    <p>尚未收到本机发布的研究摘要。</p>
+  {% elif line %}
+    <p class="rd-back"><a href="/research">返回方向列表</a></p>
+    <header class="rd-heading"><h2>{{ line.name }}</h2>{{ tag(line.status) }}</header>
+    <p class="rd-lead">{{ line.summary }}</p>
+    {% if line.next %}<p><b>下一步</b>　{{ line.next }}</p>{% endif %}
+    {% if line.sources or line.data %}
+    <div class="rd-method">
+      {% if line.sources %}<section><h3>研究依据</h3><ul>{% for source in line.sources %}<li>{% if source.url and source.url.startswith(('https://','http://')) %}<a href="{{ source.url }}" rel="noreferrer">{{ source.label }}</a>{% else %}{{ source.label }}{% endif %}</li>{% endfor %}</ul></section>{% endif %}
+      {% if line.data %}<section><h3>使用数据</h3><ul>{% for entry in line.data %}<li>{{ entry }}</li>{% endfor %}</ul></section>{% endif %}
+    </div>{% endif %}
+    {% if line.evidence %}<details class="rd-evidence"><summary>方向登记与数据出处</summary><ul>{% for entry in line.evidence %}<li><code>{{ entry }}</code></li>{% endfor %}</ul></details>{% endif %}
+    <h3>研究轮次 <small>{{ line.rounds|length }}</small></h3>
+    {% for r in line.rounds %}
+    <section class="rd-round" id="round-{{ r.id }}" data-filter="{{ r.id }} {{ r.status }} {{ r.summary }}">
+      <header class="rd-meta"><time>{{ r.at }}</time>{{ tag(r.status) }}<span>{{ r.id }}</span></header>
+      <p>{{ r.summary }}</p>
+      {% if r.metrics %}<dl class="rd-metrics">{% for m in r.metrics %}<div><dt>{{ m.label }}</dt><dd>{{ m.value }}</dd></div>{% endfor %}</dl>{% endif %}
+      {% if r.data or r.sources %}<details><summary>本轮依据、样本及口径</summary><ul>{% for source in r.sources %}{% if source.url.startswith(('https://','http://')) %}<li><a href="{{ source.url }}" rel="noreferrer">{{ source.label }}</a></li>{% endif %}{% endfor %}{% for entry in r.data %}<li>{{ entry }}</li>{% endfor %}</ul></details>{% endif %}
+      {% if r.evidence %}<details><summary>轮次记录</summary><ul>{% for entry in r.evidence %}<li><code>{{ entry }}</code></li>{% endfor %}</ul></details>{% endif %}
+    </section>
+    {% else %}<p>尚无已登记轮次。</p>{% endfor %}
+  {% elif period_view %}
+    <header class="rd-heading"><h2>分期总报</h2></header>
+    {% if interval %}
+    <form class="rd-controls" method="get" action="/research"><label for="rd-period">报告时段</label>
+      <select name="period" id="rd-period">{% for k, label in [('day','日报'),('week','周报')] %}<optgroup label="{{ label }}">{% for p in digest.periods if p.kind == k %}<option value="{{ p.id }}" {% if p.id == interval.id %}selected{% endif %}>{{ p.label }}</option>{% endfor %}</optgroup>{% endfor %}</select>
+      <button type="submit">查看</button></form>
+    <section class="rd-period"><h3>{{ interval.label }}</h3>
+      <p>{{ interval.summary }}</p>
+      {% for h in interval.highlights %}
+      <div class="rd-entry" data-filter="{{ h.name }} {{ h.summary }}"><a href="/research?direction={{ h.direction_id|urlencode }}#round-{{ h.round_id|urlencode }}">{{ h.name }}</a><p>{{ h.summary }}</p></div>
+      {% else %}<p>该时段暂无轮次产出。</p>{% endfor %}
+    </section>{% else %}<p>尚无时段报告。</p>{% endif %}
+  {% else %}
+    {% if interval and interval.highlights %}
+    <section class="rd-latest"><header class="rd-heading"><h2>最近研究产出</h2><a href="/research?period={{ interval.id|urlencode }}">{{ interval.label }} · 全部</a></header>
+      {% for h in interval.highlights[:3] %}<div class="rd-entry"><a href="/research?direction={{ h.direction_id|urlencode }}#round-{{ h.round_id|urlencode }}">{{ h.name }}</a><p>{{ h.summary }}</p></div>{% endfor %}
+    </section>{% endif %}
+    <header class="rd-heading"><h2>方向与进度</h2><form class="rd-controls" method="get" action="/research">
+      <label for="rd-status">状态</label><select id="rd-status" name="status"><option value="">全部状态</option>{% for s in statuses %}<option {% if s == status %}selected{% endif %}>{{ s }}</option>{% endfor %}</select><button type="submit">筛选</button>
+    </form></header>
+    <div class="rd-list">{% for d in digest.directions if not status or d.status == status %}
+      <div class="rd-item" data-filter="{{ d.name }} {{ d.summary }} {{ d.status }}">
+        <div>{{ tag(d.status) }}</div>
+        <div><a class="rd-name" href="/research?direction={{ d.id|urlencode }}">{{ d.name }}</a><p>{{ d.summary }}</p></div>
+        <span class="rd-count">{{ d.rounds|length }} 轮</span>
+      </div>{% else %}<p>没有符合此状态的方向。</p>{% endfor %}</div>
+  {% endif %}
+</article>
+{% endblock %}

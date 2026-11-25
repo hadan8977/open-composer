@@ -23,7 +23,7 @@ Design search respects evidence partitions. Use scoped `map` or `context` for th
 
 ## Waiting and checkpoints
 
-For a supported lab adapter, write the approved `experiment.json` under the current Worker phase. Return `blocked` with its repository-relative forward-slash path as `checkpoint`, `decision=none`, `wait=null`, and `next_review=reuse`. The driver validates the spec before launching the capped child. It binds the process identity and phase-local `batch-results.json`, waits within its deadline under the direction lock, then resumes the original Worker. Leave the driver unattended through terminal reception. Worker, Lead and implementer issue zero requests while the batch is pending.
+For a supported lab adapter, write the approved `experiment.json` under the current Worker phase. Return `blocked` with its repository-relative forward-slash path as `checkpoint`, `decision=none`, `wait=null`, and `next_review=reuse`. The driver validates the spec before launching the capped child. It binds the process identity and phase-local `batch-results.json` and waits within its deadline under the direction lock. The result marker starts a fresh Worker session with `batch-handoff.json`, which points to the run brief, executed spec, plan reply when present, results and cumulative trial ledger and records the batch-close trial count. A process exit without the result marker resumes the original Worker for reconciliation. Worker, Lead and implementer issue zero requests while the batch is pending.
 
 On completion the Worker calls `agent_workflow.validate_results(root, packet_path, direction)` and returns the packet path in `results`. A fresh Lead receives the bounded packet and follows linked native evidence as needed. Keep full ledgers on disk. Use the [workflow](../research/README.md) for the decisive-review modes and the accepted A3 example.
 
@@ -42,6 +42,6 @@ Use the standalone `research_tools.py wait <run> --phase <phase> --timeout-secon
 
 ## Provider and usage records
 
-`research/workflow.json` selects the installed provider, model, effort and prompt for each role. Codex, Claude and pi use the same Reply and Results contracts. Resumes preserve the original session, provider and model. The Claude adapter runs the official headless CLI from the repo with structured output and session resumption; its offline fixtures cover the transport. [Headless CLI](https://code.claude.com/docs/en/headless) · [Authentication](https://code.claude.com/docs/en/authentication)
+`research/workflow.json` selects the installed provider, model, effort and prompt for each role. Codex, Claude and pi use the same Reply and Results contracts. Recovery resumes preserve the session, provider and model of the phase being recovered. The Claude adapter runs the official headless CLI from the repo with structured output and session resumption; its offline fixtures cover the transport. [Headless CLI](https://code.claude.com/docs/en/headless) · [Authentication](https://code.claude.com/docs/en/authentication)
 
 Use `scripts/research_usage.py --run <run>` for shared account pacing. For measured throughput include queueing, all attempts, waits and independent reception. Count distinct native responses across resumed sessions, include cached tokens in total input and report uncached input separately. Missing usage stays unknown. Bill the shared build once.
